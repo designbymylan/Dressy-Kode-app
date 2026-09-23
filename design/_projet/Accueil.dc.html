@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E;text-decoration:none}a:hover{color:#A88B61}
+[data-scroll]{scrollbar-width:none}[data-scroll]::-webkit-scrollbar{display:none}
+@keyframes ribbon{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes halo{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.5);opacity:0}}
+@keyframes rise{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="padding:48px 40px 80px;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:500 11px 'Satoshi',sans-serif;padding:3px 7px;background:#0D0D0E;color:#fff;border-radius:999px">3</span>
+      <span style="font-size:13px;font-weight:500">Accueil — modules réordonnables, Kode dans la barre</span>
+    </div>
+
+    <div style="width:390px;height:844px;border-radius:44px;background:#EEEDEA;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.14);display:flex;flex-direction:column">
+
+      <div style="height:52px;padding:0 28px 6px;display:flex;align-items:flex-end;justify-content:space-between;font-size:13px;font-weight:500">
+        <span>9:41</span>
+        <div style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border-radius:2px;background:#0D0D0E"></span><span style="width:20px;height:9px;border-radius:3px;background:#0D0D0E"></span></div>
+      </div>
+
+      <div style="padding:6px 20px 0;display:flex;align-items:center;justify-content:space-between">
+        <div style="height:36px;padding:0 14px 0 6px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(0,0,0,.05)">
+          <span style="width:26px;height:26px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></span>
+          <span style="font-family:'Gambarino',serif;font-weight:400;font-size:10px;letter-spacing:.2em">DRESSKODE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button type="button" onClick="{{ toggleEdit }}" aria-label="Personnaliser" style="height:36px;padding:0 14px;border:none;border-radius:999px;background:{{ editBg }};color:{{ editFg }};font-family:'Satoshi',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.95)">{{ editLabel }}</button>
+          <a href="Parametres.dc.html" aria-label="Mon compte" style="width:36px;height:36px;border-radius:999px;background:#DEDAF6;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#3F3A7A">S</a>
+        </div>
+      </div>
+
+      <div style="height:42px;overflow:hidden;position:relative;margin-top:6px">
+        <div style="position:absolute;left:0;top:0;display:flex;width:200%;animation:ribbon 26s linear infinite">
+          <svg width="390" height="42" viewBox="0 0 390 42" fill="none" aria-hidden="true"><path id="wave1" d="M0 30 Q 60 8 120 24 T 240 24 T 390 16" stroke="none" fill="none"/><text font-family="Satoshi" font-size="12" font-weight="500" letter-spacing="2.4" fill="#6B63B8"><textPath href="#wave1">PORTE MIEUX · ACHÈTE MOINS · PORTE MIEUX ·</textPath></text></svg>
+          <svg width="390" height="42" viewBox="0 0 390 42" fill="none" aria-hidden="true"><path id="wave2" d="M0 30 Q 60 8 120 24 T 240 24 T 390 16" stroke="none" fill="none"/><text font-family="Satoshi" font-size="12" font-weight="500" letter-spacing="2.4" fill="#6B63B8"><textPath href="#wave2">PORTE MIEUX · ACHÈTE MOINS · PORTE MIEUX ·</textPath></text></svg>
+        </div>
+      </div>
+
+      <div style="padding:4px 20px 14px;display:flex;align-items:flex-end;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-family:'Gambarino',serif;font-weight:400;font-size:30px;letter-spacing:-.03em;line-height:1">Salut, Sarah</div>
+          <div style="font-size:12px;color:#5F5D59">Jeudi 17 septembre · 19°, couvert</div>
+        </div>
+      </div>
+
+      <div data-scroll="" style="flex:1;overflow-y:auto;padding:10px 20px 120px;display:flex;flex-direction:column;gap:32px">
+
+        <sc-for list="{{ modules }}" as="m" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:12px">
+
+            <sc-if value="{{ editing }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:8px;padding:0 4px">
+                <span style="flex:1;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">{{ m.title }}</span>
+                <button type="button" aria-label="Monter" onClick="{{ m.up }}" style="width:44px;height:34px;border:none;border-radius:999px;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V6m-6 6 6-6 6 6"/></svg></button>
+                <button type="button" aria-label="Descendre" onClick="{{ m.down }}" style="width:44px;height:34px;border:none;border-radius:999px;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v13m6-6-6 6-6-6"/></svg></button>
+                <button type="button" aria-label="Masquer" onClick="{{ m.hide }}" style="width:44px;height:34px;border:none;border-radius:999px;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isOutfit }}" hint-placeholder-val="{{ true }}">
+              <div style="background:transparent;border-radius:30px;padding:0;display:flex;flex-direction:column;gap:18px;position:relative">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;position:relative">
+                  <div style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-family:'Gambarino',serif;font-weight:400;font-size:22px;letter-spacing:-.025em">Tenue du jour</span>
+                    <span style="font-size:11.5px;color:#6B5C4E">{{ outfitSub }}</span>
+                  </div>
+                  <span style="height:30px;padding:0 12px;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 15a5 5 0 0 1 1-9.9A6 6 0 0 1 18.5 8 4 4 0 0 1 18 16H6Z"/></svg>19°</span>
+                </div>
+
+                <div style="background:#FFFFFF;border-radius:28px;height:430px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;align-items:center;padding:16px 0 12px;box-sizing:border-box">
+                  <div style="display:flex;align-items:center;justify-content:center;height:152px;transition:all 280ms cubic-bezier(.2,.8,.2,1)">
+                    <svg width="150" height="150" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ outfitTop }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:center;height:150px;margin-top:-10px;transition:all 280ms cubic-bezier(.2,.8,.2,1)">
+                    <svg width="146" height="146" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ outfitBottom }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:28px;margin-top:-6px">
+                    <svg width="100" height="100" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ outfitShoes }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg>
+                    <svg width="88" height="88" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ outfitExtra }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg>
+                  </div>
+                  <div style="position:absolute;left:16px;top:16px;display:flex;flex-direction:column;gap:6px">
+                    <span style="height:26px;padding:0 11px;border-radius:999px;background:#F7F6F3;font-size:11.5px;font-weight:500;color:#5F5D59;display:flex;align-items:center">Haut</span>
+                  </div>
+                  <div style="position:absolute;left:16px;top:170px;display:flex;flex-direction:column;gap:6px">
+                    <span style="height:26px;padding:0 11px;border-radius:999px;background:#F7F6F3;font-size:11.5px;font-weight:500;color:#5F5D59;display:flex;align-items:center">Bas</span>
+                  </div>
+                  <div style="position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;gap:6px">
+                    <span style="height:26px;padding:0 11px;border-radius:999px;background:#F7F6F3;font-size:11.5px;font-weight:500;color:#5F5D59;display:flex;align-items:center">Pieds et accessoire</span>
+                  </div>
+                  <div style="position:absolute;right:14px;bottom:14px;height:26px;padding:0 10px;border-radius:999px;background:#F4EBC6;font-size:10.5px;font-weight:500;color:#6B5B14;display:flex;align-items:center">4 pièces que tu as déjà</div>
+                </div>
+
+                <div style="display:flex;gap:8px">
+                  <button type="button" onClick="{{ wear }}" style="flex:2;height:50px;border:none;border-radius:999px;background:{{ wearBg }};color:{{ wearFg }};font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.97)">{{ wearLabel }}</button>
+                  <button type="button" onClick="{{ other }}" style="flex:1;height:50px;border:none;border-radius:999px;background:#FFFFFF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.97)">Autre</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isWeek }}" hint-placeholder-val="{{ true }}">
+              <div style="background:transparent;border-radius:30px;padding:0;display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:19px;letter-spacing:-.02em">Cette semaine</span>
+                  <span style="font-size:11.5px;color:#5F5D59">2 tenues prévues</span>
+                </div>
+                <div style="display:flex;gap:4px">
+                  <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+                    <div style="flex:1;border-radius:20px;background:{{ d.bg }};padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all 240ms cubic-bezier(.2,.8,.2,1)">
+                      <span style="font-size:10px;color:{{ d.muted }}">{{ d.day }}</span>
+                      <span style="font-size:15px;font-weight:500;color:{{ d.fg }}">{{ d.num }}</span>
+                      <span style="font-size:9.5px;color:{{ d.muted }}">{{ d.temp }}</span>
+                      <span style="width:16px;height:16px;border-radius:999px;background:{{ d.dotBg }};display:flex;align-items:center;justify-content:center"><span style="width:5px;height:5px;border-radius:999px;background:{{ d.dot }}"></span></span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isBack }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:19px;letter-spacing:-.02em">À ressortir</span>
+                  <span style="font-size:11.5px;color:#5F5D59">3 pièces oubliées</span>
+                </div>
+                <div data-scroll="" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:2px">
+                  <sc-for list="{{ neglected }}" as="n" hint-placeholder-count="3">
+                    <a href="Fiche vetement.dc.html" style="flex:none;width:132px;border-radius:26px;background:transparent;padding:12px 8px;display:flex;flex-direction:column;gap:8px;position:relative;transition:transform 240ms cubic-bezier(.2,.8,.2,1)" style-hover="transform:translateY(-3px)">
+                      <span style="align-self:flex-start;height:24px;padding:0 10px;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);font-size:10px;font-weight:500;color:{{ n.badgeFg }};display:inline-flex;align-items:center">{{ n.since }}</span>
+                      <div style="height:104px;display:flex;align-items:center;justify-content:center"><svg width="86" height="86" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ n.paths }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg></div>
+                      <span style="font-size:12px;font-weight:500">{{ n.name }}</span>
+                    </a>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isFriends }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#DEDAF6;border-radius:30px;padding:18px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden">
+                <div style="position:absolute;left:-30px;bottom:-40px;width:110px;height:110px;border-radius:999px;background:rgba(255,255,255,.45)"></div>
+                <div style="display:flex;position:relative">
+                  <span style="width:38px;height:38px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#3F3A7A">J</span>
+                  <span style="width:38px;height:38px;border-radius:999px;background:#C7C1EF;margin-left:-13px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#3F3A7A">I</span>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;position:relative">
+                  <span style="font-size:14px;font-weight:500;color:#241F52">Prêtés par tes amies</span>
+                  <span style="font-size:11.5px;color:#4B4488">Julie t'a prêté une veste en jean jusqu'au 1er oct.</span>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#241F52" stroke-width="1.8" stroke-linecap="round" style="position:relative" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isStats }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#FFFFFF;border-radius:30px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:18px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:19px;letter-spacing:-.02em">En chiffres</span>
+                  <span style="font-size:11.5px;color:#5F5D59">3 derniers mois</span>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:8px;height:96px;padding:0 2px">
+                  <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%">
+                      <div style="width:100%;height:{{ b.h }};border-radius:999px;background:{{ b.color }};transition:height 280ms cubic-bezier(.2,.8,.2,1)"></div>
+                      <span style="font-size:9.5px;color:#5F5D59">{{ b.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:10px">
+                  <div style="flex:1;background:#F3F2EF;border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:1px"><span style="font-family:'Gambarino',serif;font-weight:400;font-size:24px;letter-spacing:-.02em">128</span><span style="font-size:11px;color:#5F5D59">pièces</span></div>
+                  <div style="flex:1;background:#F4EBC6;border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:1px"><span style="font-family:'Gambarino',serif;font-weight:400;font-size:24px;letter-spacing:-.02em;color:#4A3F0B">71 %</span><span style="font-size:11px;color:#6B5B14">portées ce trimestre</span></div>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ editing }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#FFFFFF;border-radius:30px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:10px">
+            <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Modules masqués</span>
+            <sc-if value="{{ hasHidden }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ hidden }}" as="h" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ h.show }}" style="height:38px;padding:0 14px;border:none;border-radius:999px;background:#F3F2EF;font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#E7E5E0">+ {{ h.title }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noHidden }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size:13px;color:#5F5D59">Tous tes modules sont affichés. Tu pourrais en masquer un avec le bouton −.</span>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="position:absolute;inset:0;background:rgba(13,13,14,{{ scrimA }});backdrop-filter:blur({{ scrimBlur }});-webkit-backdrop-filter:blur({{ scrimBlur }});opacity:{{ scrimO }};pointer-events:{{ menuPE }};transition:all 260ms cubic-bezier(.2,.8,.2,1)" onClick="{{ closeMenu }}"></div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:86px;display:flex;flex-direction:column;gap:10px;pointer-events:{{ menuPE }}">
+        <div style="align-self:flex-start;max-width:300px;background:#0D0D0E;color:#F2F1EE;border-radius:24px 24px 24px 8px;padding:14px 16px;font-size:13px;line-height:1.45;transform:{{ introT }};opacity:{{ introO }};transition:all 280ms cubic-bezier(.2,.8,.2,1) 40ms">
+          <b style="font-weight:500">Salut, moi c'est Kode.</b> Je compose avec ce que tu as déjà. Ajoute une pièce ou pose-moi ta question.
+        </div>
+        <button type="button" onClick="{{ goAdd }}" style="height:60px;border:none;border-radius:22px;background:#DEDAF6;display:flex;align-items:center;gap:12px;padding:0 16px;cursor:pointer;font-family:'Satoshi',sans-serif;transform:{{ i1T }};opacity:{{ i1O }};transition:all 260ms cubic-bezier(.2,.8,.2,1) 60ms">
+          <span style="width:38px;height:38px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3F3A7A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span style="flex:1;text-align:left;display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:500;color:#241F52">Ajouter un vêtement</span><span style="font-size:11px;color:#4B4488">Depuis ta galerie</span></span>
+        </button>
+        <button type="button" onClick="{{ goPhoto }}" style="height:60px;border:none;border-radius:22px;background:#F4EBC6;display:flex;align-items:center;gap:12px;padding:0 16px;cursor:pointer;font-family:'Satoshi',sans-serif;transform:{{ i2T }};opacity:{{ i2O }};transition:all 260ms cubic-bezier(.2,.8,.2,1) 110ms">
+          <span style="width:38px;height:38px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B5B14" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg></span>
+          <span style="flex:1;text-align:left;display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:500;color:#4A3F0B">Prendre une photo</span><span style="font-size:11px;color:#6B5B14">Ou scanner l'étiquette</span></span>
+        </button>
+        <a href="Kode.dc.html" style="height:60px;border-radius:22px;background:#FFFFFF;display:flex;align-items:center;gap:12px;padding:0 16px;transform:{{ i3T }};opacity:{{ i3O }};transition:all 260ms cubic-bezier(.2,.8,.2,1) 160ms">
+          <span style="width:38px;height:38px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></span>
+          <span style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:500">Parler avec Kode</span><span style="font-size:11px;color:#5F5D59">12 questions restantes</span></span>
+        </a>
+      </div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:12px;height:62px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 12px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+        <a href="Dressing Portants.dc.html" aria-label="Dressing" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+        <button type="button" onClick="{{ toggleMenu }}" aria-label="Kode et ajouts" style="position:relative;width:56px;height:56px;border:none;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center;cursor:pointer;transform:{{ fabT }};transition:transform 280ms cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 24px rgba(13,13,14,.35)">
+          <span style="position:absolute;inset:0;border-radius:999px;background:#0D0D0E;animation:halo 2.8s cubic-bezier(.2,.8,.2,1) infinite"></span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" style="position:relative" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg>
+        </button>
+        <a href="Calendrier.dc.html" aria-label="Calendrier" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></a>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+      </div>
+
+      <sc-if value="{{ worn }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:20px;right:20px;bottom:86px;background:#0D0D0E;color:#F2F1EE;border-radius:22px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:rise 240ms cubic-bezier(.2,.8,.2,1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2F1EE" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5 11-11"/></svg>
+          <span style="font-size:13px">Noté pour aujourd'hui. Chaque pièce gagne un port.</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="width:320px;display:flex;flex-direction:column;gap:12px;padding-top:34px">
+    <div style="font-size:13px;font-weight:500">Kode vit dans la barre</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Appuie sur la pastille noire : le fond se voile, la pastille pivote en croix et trois actions montent l'une après l'autre — ajouter un vêtement, prendre une photo, parler avec Kode. Kode se présente en une phrase au-dessus. Plus aucune place prise par un module Kode dans le flux.
+    </div>
+    <div style="font-size:13px;font-weight:500;margin-top:8px">Nouvelles couleurs</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;height:48px;border-radius:14px;background:#EDE3D8"></div>
+        <div style="flex:1;height:48px;border-radius:14px;background:#DEDAF6"></div>
+        <div style="flex:1;height:48px;border-radius:14px;background:#F4EBC6"></div>
+        <div style="flex:1;height:48px;border-radius:14px;background:#0D0D0E"></div>
+      </div>
+      <div style="font-size:13px;line-height:1.6;color:#5F5D59">Sable pour la tenue du jour, lilas pour le social et l'ajout, beurre pour les chiffres et la photo, encre pour l'action. Les vêtements gardent leurs vraies couleurs par-dessus ces fonds pâles.</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <a href="Dressing Portants.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Dressing</a>
+      <a href="Kode.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Kode</a>
+      <a href="Design System.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Design system</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980}}">
+const G = {
+  tshirt: { out: "M22 8 L26 6 Q32 11 38 6 L42 8 L55 16 L50 25 L45 21 V56 H19 V21 L14 25 L9 16 Z", det: ["M26 7 Q32 12 38 7"] },
+  chemise: { out: "M23 8 L32 15 L41 8 L54 15 L49 25 L45 22 V56 H19 V22 L15 25 L10 15 Z", det: ["M27 8 L32 15 L37 8", "M32 15 V56", "M19 48 H45"] },
+  maille: { out: "M22 8 L26 6 Q32 11 38 6 L42 8 L56 17 L51 41 L44 38 V56 H20 V38 L13 41 L8 17 Z", det: ["M20 50 H44", "M51 41 L45 39", "M13 41 L19 39"] },
+  blazer: { out: "M23 9 L32 17 L41 9 L52 13 L56 40 L48 42 V54 H16 V42 L8 40 L12 13 Z", lapels: ["M23 9 L26 12 L32 26 L38 12 L41 9", "M32 26 V54"] },
+  trench: { out: "M24 8 L32 15 L40 8 L50 12 L54 38 L47 40 L49 60 H15 L17 40 L10 38 L14 12 Z", det: ["M32 15 V60", "M24 8 L28 13 L32 15 L36 13 L40 8"], belt: "M17 34 H47" },
+  robe: { out: "M24 7 L32 13 L40 7 L52 14 L47 24 L43 21 L50 57 H14 L21 21 L17 24 L12 14 Z", det: ["M22 30 H42"] },
+  jean: { out: "M19 7 H45 L48 30 L44 58 H35 L32 32 L29 58 H20 L16 30 Z", det: ["M19 13 H45", "M32 14 V22"] },
+  jupe: { out: "M21 10 H43 L52 44 H12 Z", det: ["M21 15 H43"] },
+  basket: { out: "M9 43 H20 L29 36 L35 38 L40 44 H53 Q59 46 59 51 V54 H9 Z", det: ["M20 43 L29 36", "M9 50 H59"] },
+  escarpin: { out: "M13 44 Q26 39 38 20 L45 24 L32 46 H45 V54 H13 Z", det: [] },
+  sac: { out: "M17 22 H47 L51 54 H13 Z", det: ["M25 22 V18 A7 7 0 0 1 39 18 V22"] },
+  chapeau: { out: "M8 46 Q32 34 56 46 V52 H8 Z", det: ["M19 47 Q23 17 32 17 Q41 17 45 47"] }
+};
+function paths(shape, fill, stroke, lapel) {
+  const g = G[shape];
+  const out = [{ d: g.out, fill: fill, stroke: stroke, w: "1.2" }];
+  if (g.lapels) for (const d of g.lapels) out.push({ d: d, fill: "none", stroke: lapel || stroke, w: "1.6" });
+  if (g.belt) out.push({ d: g.belt, fill: "none", stroke: stroke, w: "3.4" });
+  for (const d of g.det || []) out.push({ d: d, fill: "none", stroke: stroke, w: "1.2" });
+  return out;
+}
+function piece(shape, fill, stroke, x, y, r, size, lapel) {
+  return { paths: paths(shape, fill, stroke, lapel), x: x + "px", y: y + "px", r: r + "deg", size: size };
+}
+const OUTFITS = {
+  Confortable: [
+    { sub: "Maille olive, jean brut, baskets blanches", pieces: [
+      piece("maille", "#6E7048", "#585A38", 22, 14, -6, 114),
+      piece("jean", "#5C7492", "#4A5F79", 128, 34, 5, 110),
+      piece("basket", "#FFFFFF", "#D8D6D1", 198, 118, -3, 88),
+      piece("sac", "#C9B9A6", "#B3A392", 34, 126, 6, 78)
+    ]},
+    { sub: "T-shirt écru, jean clair, baskets grises", pieces: [
+      piece("tshirt", "#E9E2D6", "#D2CABC", 24, 18, -5, 110),
+      piece("jean", "#9FB3C8", "#8497AB", 130, 32, 4, 112),
+      piece("basket", "#B9BCC0", "#A0A3A8", 198, 120, -2, 86),
+      piece("chapeau", "#E9E2D6", "#D2CABC", 38, 132, 0, 74)
+    ]}
+  ],
+  Soignée: [
+    { sub: "Blazer noir, pantalon écru, escarpins", pieces: [
+      piece("blazer", "#2B2E33", "#1D2024", 18, 10, -4, 122, "#6E7176"),
+      piece("jean", "#E9E2D6", "#D2CABC", 132, 36, 4, 110),
+      piece("escarpin", "#2B2E33", "#1D2024", 202, 120, 0, 84),
+      piece("sac", "#2B2E33", "#1D2024", 38, 134, 5, 74)
+    ]},
+    { sub: "Chemise blanche, jupe noire, escarpins", pieces: [
+      piece("chemise", "#FFFFFF", "#D8D6D1", 22, 14, -5, 114),
+      piece("jupe", "#2B2E33", "#1D2024", 130, 40, 3, 110),
+      piece("escarpin", "#2B2E33", "#1D2024", 202, 118, -2, 84),
+      piece("sac", "#7A3B44", "#612F37", 36, 132, 4, 74)
+    ]}
+  ],
+  Discrète: [
+    { sub: "Pull camel, jean brut, baskets blanches", pieces: [
+      piece("maille", "#C9B9A6", "#B3A392", 22, 14, -5, 114),
+      piece("jean", "#5C7492", "#4A5F79", 130, 34, 4, 110),
+      piece("basket", "#FFFFFF", "#D8D6D1", 198, 120, -3, 86),
+      piece("chapeau", "#E9E2D6", "#D2CABC", 38, 132, 0, 72)
+    ]},
+    { sub: "Trench beige, robe noire, escarpins", pieces: [
+      piece("trench", "#C9B9A6", "#B3A392", 18, 8, -4, 124),
+      piece("robe", "#2B2E33", "#1D2024", 134, 36, 4, 108),
+      piece("escarpin", "#2B2E33", "#1D2024", 202, 122, 0, 82),
+      piece("sac", "#C9B9A6", "#B3A392", 38, 134, 5, 72)
+    ]}
+  ],
+  Audacieuse: [
+    { sub: "Blouse bordeaux, jupe camel, escarpins", pieces: [
+      piece("chemise", "#7A3B44", "#612F37", 22, 12, -6, 116),
+      piece("jupe", "#C9B9A6", "#B3A392", 132, 38, 4, 110),
+      piece("escarpin", "#2B2E33", "#1D2024", 202, 120, -2, 84),
+      piece("sac", "#7A3B44", "#612F37", 36, 134, 6, 74)
+    ]},
+    { sub: "Robe olive, veste en jean, baskets blanches", pieces: [
+      piece("robe", "#6E7048", "#585A38", 20, 10, -5, 120),
+      piece("blazer", "#7D94AD", "#6B7F96", 130, 32, 5, 112, "#BBCBDB"),
+      piece("basket", "#FFFFFF", "#D8D6D1", 200, 120, -2, 86),
+      piece("chapeau", "#C9B9A6", "#B3A392", 38, 134, 0, 72)
+    ]}
+  ]
+};
+const MODULES = [
+  { id: "outfit", title: "Tenue du jour" },
+  { id: "week", title: "Cette semaine" },
+  { id: "back", title: "À ressortir" },
+  { id: "friends", title: "Prêtés par tes amies" },
+  { id: "stats", title: "En chiffres" }
+];
+class Component extends DCLogic {
+  state = { order: MODULES.map(m => m.id), hidden: [], mood: "Confortable", variant: 0, worn: false, editing: false, menu: false };
+  move(id, dir) {
+    this.setState(s => {
+      const order = s.order.slice();
+      const i = order.indexOf(id);
+      const j = i + dir;
+      if (j < 0 || j >= order.length) return null;
+      order[i] = order[j];
+      order[j] = id;
+      return { order: order };
+    });
+  }
+  renderVals() {
+    const s = this.state;
+    const outfit = OUTFITS[s.mood][s.variant % OUTFITS[s.mood].length];
+    const open = s.menu;
+    const modules = s.order.filter(id => s.hidden.indexOf(id) < 0).map(id => {
+      const def = MODULES.find(m => m.id === id);
+      return {
+        title: def.title,
+        isOutfit: id === "outfit", isWeek: id === "week", isBack: id === "back",
+        isFriends: id === "friends", isStats: id === "stats",
+        up: () => this.move(id, -1),
+        down: () => this.move(id, 1),
+        hide: () => this.setState(st => ({ hidden: st.hidden.concat([id]) }))
+      };
+    });
+    const week = [
+      ["Dim", "14", "17°", false], ["Lun", "15", "18°", true], ["Mar", "16", "21°", false],
+      ["Mer", "17", "19°", "today"], ["Jeu", "18", "16°", true], ["Ven", "19", "15°", true], ["Sam", "20", "18°", false]
+    ].map(d => ({
+      day: d[0], num: d[1], temp: d[2],
+      bg: d[3] === "today" ? "#0D0D0E" : "#FFFFFF",
+      fg: d[3] === "today" ? "#FFFFFF" : "#0D0D0E",
+      muted: d[3] === "today" ? "#C9C7C2" : "#5F5D59",
+      dotBg: d[3] === "today" ? "rgba(255,255,255,.18)" : (d[3] ? "#DEDAF6" : "transparent"),
+      dot: d[3] === "today" ? "#FFFFFF" : (d[3] ? "#5A51A8" : "transparent")
+    }));
+    const bars = [["Avr", 38, "#EDE3D8"], ["Mai", 62, "#EDE3D8"], ["Juin", 74, "#DEDAF6"], ["Juil", 46, "#EDE3D8"], ["Août", 55, "#F4EBC6"], ["Sept", 82, "#0D0D0E"]]
+      .map(b => ({ label: b[0], h: b[1] + "%", color: b[2] }));
+    return {
+      modules: modules,
+      editing: s.editing,
+      editLabel: s.editing ? "Terminé" : "Personnaliser",
+      editBg: s.editing ? "#0D0D0E" : "#FFFFFF",
+      editFg: s.editing ? "#FFFFFF" : "#0D0D0E",
+      toggleEdit: () => this.setState(st => ({ editing: !st.editing, menu: false })),
+      hidden: s.hidden.map(id => ({ title: MODULES.find(m => m.id === id).title, show: () => this.setState(st => ({ hidden: st.hidden.filter(h => h !== id) })) })),
+      hasHidden: s.hidden.length > 0,
+      noHidden: s.hidden.length === 0,
+      outfitPieces: outfit.pieces,
+      outfitTop: outfit.pieces[0].paths,
+      outfitBottom: outfit.pieces[1].paths,
+      outfitShoes: outfit.pieces[2].paths,
+      outfitExtra: outfit.pieces[3].paths,
+      outfitSub: outfit.sub,
+      moods: Object.keys(OUTFITS).map(k => ({
+        label: k,
+        bg: k === s.mood ? "#0D0D0E" : "#FFFFFF",
+        fg: k === s.mood ? "#FFFFFF" : "#0D0D0E",
+        pick: () => this.setState({ mood: k, variant: 0, worn: false })
+      })),
+      other: () => this.setState(st => ({ variant: st.variant + 1, worn: false })),
+      wear: () => this.setState(st => ({ worn: !st.worn })),
+      worn: s.worn && !open,
+      wearLabel: s.worn ? "Portée aujourd'hui" : "Je la porte",
+      wearBg: s.worn ? "#FFFFFF" : "#0D0D0E",
+      wearFg: s.worn ? "#5F5D59" : "#FFFFFF",
+      week: week,
+      bars: bars,
+      neglected: [
+        { name: "Trench beige", since: "5 mois", tint: "#EDE3D8", badgeFg: "#6B5C4E", paths: paths("trench", "#C9B9A6", "#B3A392") },
+        { name: "Robe fleurie", since: "4 mois", tint: "#DEDAF6", badgeFg: "#4B4488", paths: paths("robe", "#D8C7C9", "#BFACAF") },
+        { name: "Jupe camel", since: "7 mois", tint: "#F4EBC6", badgeFg: "#6B5B14", paths: paths("jupe", "#C9B9A6", "#B3A392") }
+      ],
+      toggleMenu: () => this.setState(st => ({ menu: !st.menu })),
+      closeMenu: () => this.setState({ menu: false }),
+      menuPE: open ? "auto" : "none",
+      scrimO: open ? 1 : 0,
+      scrimA: open ? ".38" : "0",
+      scrimBlur: open ? "6px" : "0px",
+      fabT: open ? "rotate(135deg)" : "rotate(0deg)",
+      introT: open ? "translateY(0)" : "translateY(14px)",
+      introO: open ? 1 : 0,
+      i1T: open ? "translateY(0)" : "translateY(18px)",
+      i1O: open ? 1 : 0,
+      i2T: open ? "translateY(0)" : "translateY(18px)",
+      i2O: open ? 1 : 0,
+      i3T: open ? "translateY(0)" : "translateY(18px)",
+      i3O: open ? 1 : 0,
+      goAdd: () => this.setState({ menu: false }),
+      goPhoto: () => this.setState({ menu: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

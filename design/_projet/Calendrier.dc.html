@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E;text-decoration:none}a:hover{color:#A88B61}
+[data-scroll]{scrollbar-width:none}[data-scroll]::-webkit-scrollbar{display:none}
+:focus-visible{outline:2px solid #0D0D0E;outline-offset:3px;border-radius:999px}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="padding:48px 40px 80px;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:500 11px 'Satoshi',sans-serif;padding:3px 7px;background:#0D0D0E;color:#fff;border-radius:999px">18</span>
+      <span style="font-size:13px;font-weight:500">Calendrier — tenues planifiées, occasions, prêts, voyage</span>
+    </div>
+
+    <div style="width:390px;height:844px;border-radius:44px;background:#EEEDEA;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.14);display:flex;flex-direction:column">
+
+      <div style="height:52px;padding:0 28px 6px;display:flex;align-items:flex-end;justify-content:space-between;font-size:13px;font-weight:500">
+        <span>9:41</span>
+        <div style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border-radius:2px;background:#0D0D0E"></span><span style="width:20px;height:9px;border-radius:3px;background:#0D0D0E"></span></div>
+      </div>
+
+      <div style="padding:6px 20px 0;display:flex;align-items:center;justify-content:space-between">
+        <a href="Accueil.dc.html" aria-label="Retour" style="width:44px;height:44px;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></a>
+        <span style="font-size:13px;font-weight:500">Calendrier</span>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="width:44px;height:44px;border-radius:999px;background:#DEDAF6;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#3F3A7A">S</a>
+      </div>
+
+      <div style="padding:16px 20px 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+          <span style="font-family:'Gambarino',serif;font-weight:400;font-size:30px;letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ monthLabel }}</span>
+          <span style="font-size:12px;color:#5F5D59;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ monthSummary }}</span>
+        </div>
+        <div style="flex:none;display:flex;gap:6px;align-items:center">
+          <button type="button" onClick="{{ openForm }}" style="height:44px;padding:0 14px;border:none;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px" style-active="transform:scale(.96)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F2F1EE" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Événement</button>
+          <button type="button" onClick="{{ prevMonth }}" aria-label="Mois précédent" style="width:44px;height:44px;border:none;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+          <button type="button" onClick="{{ nextMonth }}" aria-label="Mois suivant" style="width:44px;height:44px;border:none;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+        </div>
+      </div>
+
+      <div data-scroll="" style="flex:1;overflow-y:auto;padding:0 20px 120px;display:flex;flex-direction:column;gap:26px">
+
+        <div style="background:#FFFFFF;border-radius:30px;padding:18px 16px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+            <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+              <span style="text-align:center;font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#5F5D59">{{ w }}</span>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+            <sc-for list="{{ cells }}" as="c" hint-placeholder-count="35">
+              <button type="button" onClick="{{ c.pick }}" aria-label="{{ c.aria }}" aria-pressed="{{ c.on }}" disabled="{{ c.disabled }}" style="border:none;background:transparent;padding:3px 0;cursor:{{ c.cursor }};display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Satoshi',sans-serif">
+                <span style="width:34px;height:34px;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};border:1.5px solid {{ c.ring }};display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:{{ c.weight }};box-sizing:border-box;transition:all 200ms cubic-bezier(.2,.8,.2,1)">{{ c.label }}</span>
+                <span style="height:5px;display:flex;gap:3px;align-items:center">
+                  <sc-for list="{{ c.dots }}" as="d" hint-placeholder-count="0">
+                    <span style="width:5px;height:5px;border-radius:999px;background:{{ d.color }}"></span>
+                  </sc-for>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;padding-top:6px;border-top:1px solid rgba(13,13,14,.06)">
+            <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+              <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5F5D59"><span style="width:6px;height:6px;border-radius:999px;background:{{ l.color }}"></span>{{ l.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:0 4px">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <span style="font-family:'Gambarino',serif;font-weight:400;font-size:23px;letter-spacing:-.02em;line-height:1.1">{{ dayTitle }}</span>
+              <span style="font-size:12px;color:#5F5D59">{{ dayWeather }}</span>
+            </div>
+            <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+              <span style="height:24px;padding:0 10px;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-size:11px;font-weight:500;display:inline-flex;align-items:center">Aujourd'hui</span>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ hasOutfit }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#FFFFFF;border-radius:30px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Tenue prévue</span>
+                <span style="height:22px;padding:0 9px;border-radius:999px;background:{{ outfitTagBg }};color:{{ outfitTagFg }};font-size:10.5px;font-weight:500;display:inline-flex;align-items:center">{{ outfitTag }}</span>
+              </div>
+              <div style="display:flex;gap:10px">
+                <sc-for list="{{ outfit }}" as="o" hint-placeholder-count="3">
+                  <a href="Fiche vetement.dc.html" style="flex:1;display:flex;flex-direction:column;gap:6px;align-items:center">
+                    <span style="width:100%;height:92px;border-radius:20px;background:{{ o.tint }};display:flex;align-items:center;justify-content:center"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ o.paths }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg></span>
+                    <span style="font-size:11px;color:#5F5D59;text-align:center">{{ o.name }}</span>
+                  </a>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button type="button" onClick="{{ markWorn }}" aria-pressed="{{ wornOn }}" style="flex:2;height:48px;border:none;border-radius:999px;background:{{ wornBg }};color:{{ wornFg }};font-family:'Satoshi',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.98)">{{ wornLabel }}</button>
+                <a href="Kode.dc.html" style="flex:1;height:48px;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-size:13.5px;font-weight:500;display:flex;align-items:center;justify-content:center">Changer</a>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasEntries }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ entries }}" as="e" hint-placeholder-count="2">
+                <div style="background:{{ e.bg }};border-radius:26px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+                  <span style="width:44px;height:44px;border-radius:999px;background:{{ e.iconBg }};display:flex;align-items:center;justify-content:center;flex:none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ e.ink }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ e.icon }}"/></svg></span>
+                  <span style="flex:1;display:flex;flex-direction:column;gap:3px;min-width:0">
+                    <span style="font-size:14.5px;font-weight:500;color:{{ e.titleColor }}">{{ e.title }}</span>
+                    <span style="font-size:12px;line-height:1.4;color:{{ e.metaColor }}">{{ e.meta }}</span>
+                  </span>
+                  <sc-if value="{{ e.action }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ e.href }}" style="height:44px;padding:0 15px;border-radius:999px;background:{{ e.actionBg }};color:{{ e.actionFg }};font-size:12px;font-weight:500;flex:none;display:inline-flex;align-items:center">{{ e.action }}</a>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFFFFF;border-radius:30px;padding:24px 20px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+              <span style="font-size:14px;line-height:1.5;color:#5F5D59">Rien de prévu ce jour-là. Tu peux poser une tenue à l'avance, Kode la préparera avec la météo du matin.</span>
+              <button type="button" onClick="{{ planDay }}" style="height:46px;padding:0 20px;border:none;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-family:'Satoshi',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Planifier une tenue</button>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59;padding:0 4px">À venir</span>
+          <div style="background:#FFFFFF;border-radius:30px;padding:6px 18px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column">
+            <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+              <button type="button" onClick="{{ u.go }}" style="border:none;background:transparent;padding:15px 0;cursor:pointer;display:flex;align-items:center;gap:14px;font-family:'Satoshi',sans-serif;text-align:left;border-bottom:1px solid {{ u.divider }}">
+                <span style="width:44px;display:flex;flex-direction:column;align-items:center;flex:none">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:20px;line-height:1;letter-spacing:-.02em">{{ u.day }}</span>
+                  <span style="font-size:10px;color:#5F5D59;text-transform:uppercase;letter-spacing:.04em">{{ u.dow }}</span>
+                </span>
+                <span style="width:3px;height:34px;border-radius:999px;background:{{ u.color }};flex:none"></span>
+                <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:14px;font-weight:500">{{ u.title }}</span>
+                  <span style="font-size:12px;color:#5F5D59">{{ u.meta }}</span>
+                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" style="flex:none" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#DEDAF6;border-radius:30px;padding:20px;display:flex;align-items:center;gap:14px">
+          <span style="width:44px;height:44px;border-radius:999px;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B4488" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></span>
+          <span style="flex:1;display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:14.5px;font-weight:500;color:#241F52">Kode a vu ta semaine</span>
+            <span style="font-size:12.5px;line-height:1.45;color:#4B4488">Trois sorties, une pluie jeudi et un mariage samedi : il propose de bloquer les tenues dès ce soir.</span>
+          </span>
+        </div>
+      </div>
+
+      <div style="position:absolute;inset:0;z-index:2;background:rgba(13,13,14,.38);opacity:{{ scrimO }};pointer-events:{{ sheetPE }};transition:opacity 260ms cubic-bezier(.2,.8,.2,1)" onClick="{{ closeSheet }}"></div>
+
+      <div data-scroll="" style="position:absolute;left:0;right:0;bottom:0;max-height:780px;box-sizing:border-box;overflow-y:auto;z-index:2;background:#F3F2EF;border-radius:32px 32px 44px 44px;padding:14px 20px 96px;display:flex;flex-direction:column;gap:20px;transform:{{ sheetT }};pointer-events:{{ sheetPE }};transition:transform 300ms cubic-bezier(.2,.8,.2,1);box-shadow:0 -20px 60px rgba(0,0,0,.2)">
+        <div style="width:40px;height:4px;border-radius:999px;background:#D6D4CF;align-self:center;flex:none"></div>
+
+        <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:22px">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-family:'Gambarino',serif;font-weight:400;font-size:26px;letter-spacing:-.025em;line-height:1.05">Un événement à habiller</span>
+              <span style="font-size:13px;line-height:1.45;color:#5F5D59">Plus tu en dis, plus Kode cherche dans le bon coin du dressing.</span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Quoi</span>
+              <input type="text" value="{{ fTitle }}" onChange="{{ setTitle }}" placeholder="Dîner chez les parents de Théo" style="height:52px;border:none;border-radius:18px;background:#FFFFFF;padding:0 18px;font-family:'Satoshi',sans-serif;font-size:15px;color:#0D0D0E;outline:none;box-shadow:0 6px 18px rgba(0,0,0,.04)" />
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Quand</span>
+              <div data-scroll="" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px">
+                <sc-for list="{{ dayChips }}" as="d" hint-placeholder-count="10">
+                  <button type="button" onClick="{{ d.pick }}" style="flex:none;width:52px;height:62px;border:none;border-radius:18px;background:{{ d.bg }};color:{{ d.fg }};font-family:'Satoshi',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 200ms cubic-bezier(.2,.8,.2,1)">
+                    <span style="font-size:10px;text-transform:uppercase;letter-spacing:.04em;opacity:.7">{{ d.dow }}</span>
+                    <span style="font-family:'Gambarino',serif;font-weight:400;font-size:20px;letter-spacing:-.02em">{{ d.n }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="display:flex;background:#FFFFFF;border-radius:999px;padding:4px;gap:4px">
+                <sc-for list="{{ slots }}" as="t" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ t.pick }}" style="flex:1;height:44px;border:none;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};font-family:'Satoshi',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 200ms cubic-bezier(.2,.8,.2,1)">{{ t.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Le cadre</span>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ kinds }}" as="k" hint-placeholder-count="5">
+                  <button type="button" onClick="{{ k.pick }}" style="height:44px;padding:0 18px;border:none;border-radius:999px;background:{{ k.bg }};color:{{ k.fg }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 200ms cubic-bezier(.2,.8,.2,1)">{{ k.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Code vestimentaire</span>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ codes }}" as="c" hint-placeholder-count="5">
+                  <button type="button" onClick="{{ c.pick }}" style="height:44px;padding:0 18px;border:none;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 200ms cubic-bezier(.2,.8,.2,1)">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <span style="font-size:12px;line-height:1.45;color:#5F5D59">{{ codeHint }}</span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Ce qui est en jeu</span>
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ stakes }}" as="st" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ st.pick }}" style="flex:1;border:none;border-radius:20px;background:{{ st.bg }};color:{{ st.fg }};font-family:'Satoshi',sans-serif;cursor:pointer;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all 200ms cubic-bezier(.2,.8,.2,1)">
+                    <span style="display:flex;gap:3px">
+                      <sc-for list="{{ st.bars }}" as="b" hint-placeholder-count="3">
+                        <span style="width:5px;height:14px;border-radius:999px;background:{{ b.color }}"></span>
+                      </sc-for>
+                    </span>
+                    <span style="font-size:12.5px;font-weight:500">{{ st.label }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <span style="font-size:12px;line-height:1.45;color:#5F5D59">{{ stakeHint }}</span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">À savoir</span>
+              <input type="text" value="{{ fNote }}" onChange="{{ setNote }}" placeholder="Debout toute la soirée, il fera frais" style="height:52px;border:none;border-radius:18px;background:#FFFFFF;padding:0 18px;font-family:'Satoshi',sans-serif;font-size:15px;color:#0D0D0E;outline:none;box-shadow:0 6px 18px rgba(0,0,0,.04)" />
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ flags }}" as="fl" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ fl.toggle }}" style="height:44px;padding:0 16px;border:none;border-radius:999px;background:{{ fl.bg }};color:{{ fl.fg }};font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer">{{ fl.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex:none">
+              <button type="button" onClick="{{ closeSheet }}" style="flex:1;height:54px;border:none;border-radius:999px;background:#E7E5E0;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:500;cursor:pointer">Annuler</button>
+              <button type="button" onClick="{{ submit }}" style="flex:2;height:54px;border:none;border-radius:999px;background:{{ submitBg }};color:{{ submitFg }};font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 200ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.98)">{{ submitLabel }}</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="width:44px;height:44px;border-radius:999px;background:#DEDAF6;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B4488" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span style="font-family:'Gambarino',serif;font-weight:400;font-size:22px;letter-spacing:-.02em;line-height:1.1">{{ resultTitle }}</span>
+                <span style="font-size:12.5px;color:#5F5D59">{{ resultMeta }}</span>
+              </span>
+            </div>
+
+            <div style="background:#FFFFFF;border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:16px;box-shadow:0 10px 30px rgba(0,0,0,.05)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Proposition {{ variantIndex }}</span>
+                <button type="button" onClick="{{ nextVariant }}" style="height:44px;padding:0 15px;border:none;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Une autre</button>
+              </div>
+              <div style="display:flex;gap:10px">
+                <sc-for list="{{ recoPieces }}" as="o" hint-placeholder-count="3">
+                  <div style="flex:1;display:flex;flex-direction:column;gap:6px;align-items:center">
+                    <span style="width:100%;height:96px;border-radius:20px;background:{{ o.tint }};display:flex;align-items:center;justify-content:center"><svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ o.paths }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg></span>
+                    <span style="font-size:11px;color:#5F5D59;text-align:center">{{ o.name }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ reasons }}" as="r" hint-placeholder-count="3">
+                  <span style="display:flex;gap:10px;align-items:flex-start">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A51A8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:3px;flex:none" aria-hidden="true"><path d="m4 12 5 5 11-11"/></svg>
+                    <span style="font-size:13px;line-height:1.45;color:#3C3A37">{{ r.label }}</span>
+                  </span>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#F4EBC6;border-radius:24px;padding:16px 18px;display:flex;align-items:flex-start;gap:12px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B5B14" stroke-width="1.8" stroke-linecap="round" style="margin-top:2px;flex:none" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+              <span style="flex:1;display:flex;flex-direction:column;gap:3px">
+                <span style="font-size:13.5px;font-weight:500;color:#4A3F0B">{{ gapTitle }}</span>
+                <span style="font-size:12.5px;line-height:1.45;color:#6B5B14">{{ gapBody }}</span>
+              </span>
+            </div>
+
+            <div style="display:flex;gap:8px;flex:none">
+              <button type="button" onClick="{{ backToForm }}" style="flex:1;height:54px;border:none;border-radius:999px;background:#E7E5E0;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:500;cursor:pointer">Modifier</button>
+              <button type="button" onClick="{{ saveEvent }}" style="flex:2;height:54px;border:none;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.98)">Poser dans le calendrier</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:12px;height:62px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 12px">
+        <a href="Accueil.dc.html" aria-label="Accueil" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg></a>
+        <a href="Dressing Portants.dc.html" aria-label="Dressing" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+        <a href="Kode.dc.html" aria-label="Kode" style="width:56px;height:56px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(13,13,14,.35)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></a>
+        <a href="Calendrier.dc.html" aria-label="Calendrier" aria-current="page" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></a>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:320px;display:flex;flex-direction:column;gap:12px;padding-top:34px">
+    <div style="font-size:13px;font-weight:500">Un mois, quatre natures d'événement</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Tenue posée, occasion à code vestimentaire, prêt à rendre, voyage. Chaque jour porte au plus trois points, la légende reste sous la grille, et le détail du jour se lit sous le mois — jamais dans une fenêtre qui recouvre le calendrier.
+    </div>
+    <div style="font-size:13px;font-weight:500;margin-top:8px">Le jour vide est utile</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Sans rien de prévu, l'écran ne se contente pas d'être vide : il propose de poser une tenue à l'avance. C'est là que Kode récupère la météo du matin plutôt que d'improviser à 7 h 30.
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <a href="Accueil.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Accueil</a>
+      <a href="Kode.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Kode</a>
+      <a href="Parametres.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Mon compte</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980}}">
+const G = {
+  blazer: { out: "M23 9 L32 17 L41 9 L52 13 L56 40 L48 42 V54 H16 V42 L8 40 L12 13 Z", lapels: ["M23 9 L26 12 L32 26 L38 12 L41 9", "M32 26 V54"] },
+  jean: { out: "M19 7 H45 L48 30 L44 58 H35 L32 32 L29 58 H20 L16 30 Z", det: ["M19 13 H45", "M32 14 V22"] },
+  chemise: { out: "M23 8 L32 15 L41 8 L54 15 L49 25 L45 22 V56 H19 V22 L15 25 L10 15 Z", det: ["M27 8 L32 15 L37 8", "M32 15 V56", "M19 48 H45"] },
+  robe: { out: "M24 8 L32 14 L40 8 L46 14 L42 24 L50 56 H14 L22 24 L18 14 Z", det: ["M32 14 V40"] },
+  escarpin: { out: "M13 44 Q26 39 38 20 L45 24 L32 46 H45 V54 H13 Z", det: [] },
+  trench: { out: "M22 9 L32 16 L42 9 L54 14 L52 40 L46 41 V56 H18 V41 L12 40 L10 14 Z", det: ["M32 16 V56", "M16 34 H48"] }
+};
+function paths(shape, fill, stroke, accent) {
+  const g = G[shape];
+  const out = [{ d: g.out, fill: fill, stroke: stroke, w: "1.2" }];
+  for (const d of g.lapels || []) out.push({ d: d, fill: "none", stroke: accent || stroke, w: "1.6" });
+  for (const d of g.det || []) out.push({ d: d, fill: "none", stroke: stroke, w: "1.2" });
+  return out;
+}
+const COL = { outfit: "#0D0D0E", event: "#A88B61", lend: "#6B63B8", trip: "#9E9371" };
+const ICON = {
+  event: "M12 3l1.9 4.6L19 8.2l-3.8 3.4 1.1 5-4.3-2.6L7.7 16.6l1.1-5L5 8.2l5.1-.6Z",
+  lend: "M4 8h12l-3-3M20 16H8l3 3",
+  trip: "M4 8h16v12H4zM9 8V5h6v3",
+  wash: "M5 4h14v16H5zM9 4v3h6V4M12 11a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z",
+  defi: "M6 4v9a6 6 0 0 0 12 0V4M9 20h6",
+  weather: "M7 17a4 4 0 0 1 .6-7.96A5.5 5.5 0 0 1 18 10a3.5 3.5 0 0 1 0 7Z"
+};
+const DAYS = {
+  17: { weather: "19°, couvert · pluie vers 18 h",
+    outfit: { tag: "Posée hier soir", pieces: [
+      { name: "Blazer noir", shape: "blazer", fill: "#2B2E33", stroke: "#1D2024", accent: "#6E7176", tint: "#EDE3D8" },
+      { name: "Pantalon écru", shape: "jean", fill: "#E9E2D6", stroke: "#D2CABC", tint: "#F7F3EE" },
+      { name: "Trench sable", shape: "trench", fill: "#D9C7A8", stroke: "#BFA980", tint: "#F4EBC6" }] },
+    entries: [
+      { type: "event", title: "Déjeuner client · 12 h 30", meta: "Smart casual · Bellecour", action: "Voir" },
+      { type: "wash", title: "Machine conseillée", meta: "4 pièces portées trois fois" }] },
+  19: { weather: "17°, averses",
+    outfit: { tag: "Proposée par Kode", pieces: [
+      { name: "Robe noire", shape: "robe", fill: "#2B2E33", stroke: "#1D2024", tint: "#EDE3D8" },
+      { name: "Trench sable", shape: "trench", fill: "#D9C7A8", stroke: "#BFA980", tint: "#F4EBC6" },
+      { name: "Escarpins", shape: "escarpin", fill: "#2B2E33", stroke: "#1D2024", tint: "#F7F3EE" }] },
+    entries: [
+      { type: "event", title: "Anniversaire de Léa · 20 h", meta: "Cocktail · Pack Occasion appliqué", action: "Ouvrir" }] },
+  21: { weather: "21°, dégagé",
+    entries: [{ type: "wash", title: "Lessive foncés", meta: "Blazer noir et jean brut en attente" }] },
+  24: { weather: "16°, vent",
+    entries: [
+      { type: "lend", title: "Blazer noir à récupérer", meta: "Prêté à Julie depuis le 17 septembre", action: "Relancer" }] },
+  26: { weather: "22°, soleil",
+    outfit: { tag: "Pack Occasion", pieces: [
+      { name: "Robe noire", shape: "robe", fill: "#2B2E33", stroke: "#1D2024", tint: "#EDE3D8" },
+      { name: "Chemise ivoire", shape: "chemise", fill: "#FFFFFF", stroke: "#D8D6D1", tint: "#F7F3EE" },
+      { name: "Escarpins", shape: "escarpin", fill: "#2B2E33", stroke: "#1D2024", tint: "#F7F3EE" }] },
+    entries: [
+      { type: "event", title: "Mariage de Camille · 15 h", meta: "Tenue de ville · Annecy", action: "Ouvrir" },
+      { type: "lend", title: "Pochette empruntée à Inès", meta: "À rendre le 29 septembre" }] },
+  28: { weather: "24°, soleil · Lisbonne",
+    entries: [{ type: "trip", title: "Départ pour Lisbonne", meta: "Capsule voyage · 12 pièces, 9 tenues", action: "Valise" }] },
+  29: { weather: "25°, soleil · Lisbonne", entries: [{ type: "trip", title: "Lisbonne, jour 2", meta: "Tenue 3 de la capsule" }] },
+  30: { weather: "25°, soleil · Lisbonne", entries: [{ type: "trip", title: "Lisbonne, jour 3", meta: "Tenue 5 de la capsule" }] }
+};
+const UPCOMING = [
+  { d: 19, type: "event", title: "Anniversaire de Léa", meta: "Cocktail · 20 h" },
+  { d: 24, type: "lend", title: "Retour du blazer noir", meta: "Julie · prêté depuis 7 jours" },
+  { d: 26, type: "event", title: "Mariage de Camille", meta: "Tenue de ville · Annecy" },
+  { d: 28, type: "trip", title: "Lisbonne, 4 jours", meta: "Capsule voyage prête" }
+];
+const ENTRY_STYLE = {
+  event: { bg: "#FFFFFF", iconBg: "#EDE3D8", ink: "#6B5C4E", title: "#0D0D0E", meta: "#5F5D59", actionBg: "#0D0D0E", actionFg: "#FFFFFF" },
+  lend: { bg: "#DEDAF6", iconBg: "rgba(255,255,255,.72)", ink: "#4B4488", title: "#241F52", meta: "#4B4488", actionBg: "#FFFFFF", actionFg: "#241F52" },
+  trip: { bg: "#F4EBC6", iconBg: "rgba(255,255,255,.7)", ink: "#6B5B14", title: "#4A3F0B", meta: "#6B5B14", actionBg: "#FFFFFF", actionFg: "#4A3F0B" },
+  wash: { bg: "#FFFFFF", iconBg: "#F3F2EF", ink: "#5F5D59", title: "#0D0D0E", meta: "#5F5D59", actionBg: "#F3F2EF", actionFg: "#0D0D0E" }
+};
+const DOW = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
+const DOW_LONG = { lun: "Lundi", mar: "Mardi", mer: "Mercredi", jeu: "Jeudi", ven: "Vendredi", sam: "Samedi", dim: "Dimanche" };
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+// Les données de démonstration décrivent septembre 2026. Le 17 y est un JEUDI :
+// la grille et les libellés se déduisent du calendrier réel, jamais d'un décalage supposé.
+const REF_Y = 2026, REF_M = 8, TODAY = 17;
+// Semaine à la française : getUTCDay() rend 0 le dimanche, on ramène lundi à 0.
+function dowIndex(y, m, d) { return (new Date(Date.UTC(y, m, d)).getUTCDay() + 6) % 7; }
+function daysInMonth(y, m) { return new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); }
+const ENTRY_HREF = { event: "Kode.dc.html", lend: "Fiche vetement.dc.html", trip: "Kode.dc.html", wash: "Dressing Portants.dc.html" };
+const ENTRY_NOUN = { event: "occasion", lend: "prêt", trip: "voyage", wash: "lessive" };
+const PIECE = {
+  blazerNoir: { name: "Blazer noir", shape: "blazer", fill: "#2B2E33", stroke: "#1D2024", accent: "#6E7176", tint: "#EDE3D8" },
+  pantEcru: { name: "Pantalon écru", shape: "jean", fill: "#E9E2D6", stroke: "#D2CABC", tint: "#F7F3EE" },
+  jeanBrut: { name: "Jean brut", shape: "jean", fill: "#3B4A63", stroke: "#2A374B", tint: "#F7F3EE" },
+  chemiseIvoire: { name: "Chemise ivoire", shape: "chemise", fill: "#FFFFFF", stroke: "#D8D6D1", tint: "#F7F3EE" },
+  robeNoire: { name: "Robe noire", shape: "robe", fill: "#2B2E33", stroke: "#1D2024", tint: "#EDE3D8" },
+  trench: { name: "Trench sable", shape: "trench", fill: "#D9C7A8", stroke: "#BFA980", tint: "#F4EBC6" },
+  escarpins: { name: "Escarpins noirs", shape: "escarpin", fill: "#2B2E33", stroke: "#1D2024", tint: "#F7F3EE" }
+};
+const CODES = ["Décontracté", "Smart casual", "Chic", "Cocktail", "Tenue de ville"];
+const CODE_HINT = {
+  "Décontracté": "Ce que tu porterais un samedi, en un peu mieux tenu.",
+  "Smart casual": "Une veste, pas de cravate. La règle des dîners de travail.",
+  "Chic": "Une pièce forte, deux pièces calmes.",
+  "Cocktail": "Robe courte ou ensemble habillé, après 18 h.",
+  "Tenue de ville": "Le registre mariage et cérémonie de jour."
+};
+const RECO = {
+  "Décontracté": [["jeanBrut", "chemiseIvoire", "trench"], ["pantEcru", "chemiseIvoire", "blazerNoir"]],
+  "Smart casual": [["blazerNoir", "pantEcru", "chemiseIvoire"], ["jeanBrut", "blazerNoir", "escarpins"]],
+  "Chic": [["robeNoire", "blazerNoir", "escarpins"], ["pantEcru", "chemiseIvoire", "escarpins"]],
+  "Cocktail": [["robeNoire", "escarpins", "trench"], ["robeNoire", "blazerNoir", "escarpins"]],
+  "Tenue de ville": [["robeNoire", "trench", "escarpins"], ["pantEcru", "blazerNoir", "escarpins"]]
+};
+const KINDS = ["Travail", "Dîner", "Cérémonie", "Sortie", "Voyage"];
+const SLOTS = ["Matin", "Après-midi", "Soir"];
+const STAKES = ["Tranquille", "Important", "Décisif"];
+const STAKE_HINT = {
+  "Tranquille": "Kode reste sur des pièces déjà éprouvées, sans te faire réfléchir.",
+  "Important": "Kode évite les associations jamais testées et prévoit une solution de repli.",
+  "Décisif": "Kode ne propose que des pièces déjà portées ensemble, et signale ce qui manque assez tôt pour l'emprunter."
+};
+const FLAGS = ["En extérieur", "Debout longtemps", "Photos", "Il fera frais"];
+const FLAG_REASON = {
+  "En extérieur": "Dehors une partie du temps : le trench couvre sans casser la ligne.",
+  "Debout longtemps": "Debout toute la soirée : escarpins déjà rodés, pas de talon neuf.",
+  "Photos": "Il y aura des photos : pas de blanc pur près du visage, l'ivoire passe mieux.",
+  "Il fera frais": "Frais annoncé : une couche de plus, prévue dans la tenue."
+};
+class Component extends DCLogic {
+  state = {
+    y: REF_Y, m: REF_M, day: TODAY,
+    // « portée » appartient au jour, pas à l'écran : revenir sur un jour retrouve son état.
+    worn: {},
+    sheet: null, variant: 0, custom: {},
+    f: { title: "", day: 22, slot: "Soir", kind: "Dîner", code: "Smart casual", stake: "Important", note: "", flags: {} }
+  };
+  onRefMonth() { return this.state.y === REF_Y && this.state.m === REF_M; }
+  dayKey(d) { return this.state.y + "-" + this.state.m + "-" + d; }
+  setF(key, value) { this.setState(s => { const f = Object.assign({}, s.f); f[key] = value; return { f: f }; }); }
+  flipFlag(name) { this.setState(s => { const fl = Object.assign({}, s.f.flags); fl[name] = !fl[name]; return { f: Object.assign({}, s.f, { flags: fl }) }; }); }
+  recoList() { return RECO[this.state.f.code] || RECO["Smart casual"]; }
+  reco() { const l = this.recoList(); return l[this.state.variant % l.length].map(k => PIECE[k]); }
+  shiftMonth(delta) {
+    this.setState(s => {
+      const t = new Date(Date.UTC(s.y, s.m + delta, 1));
+      const y = t.getUTCFullYear(), m = t.getUTCMonth();
+      return { y: y, m: m, day: (y === REF_Y && m === REF_M) ? TODAY : 1 };
+    });
+  }
+  goToRefDay(d) { this.setState({ y: REF_Y, m: REF_M, day: d }); }
+  dayData(d) {
+    if (!this.onRefMonth()) return null;
+    const base = DAYS[d], extra = this.state.custom[d];
+    if (!base) return extra || null;
+    if (!extra) return base;
+    return {
+      weather: base.weather,
+      outfit: extra.outfit || base.outfit,
+      entries: (base.entries || []).concat(extra.entries || [])
+    };
+  }
+  monthSummary() {
+    if (!this.onRefMonth()) return "Rien de prévu";
+    let occasions = 0, voyages = 0, prevTrip = false;
+    for (let d = 1; d <= daysInMonth(this.state.y, this.state.m); d++) {
+      const info = this.dayData(d);
+      let trip = false;
+      for (const e of (info && info.entries) || []) {
+        if (e.type === "event") occasions++;
+        if (e.type === "trip") trip = true;
+      }
+      // Un séjour occupe plusieurs jours de suite : seul son premier jour compte.
+      if (trip && !prevTrip) voyages++;
+      prevTrip = trip;
+    }
+    const parts = [];
+    if (occasions) parts.push(occasions + (occasions > 1 ? " occasions" : " occasion"));
+    if (voyages) parts.push(voyages + (voyages > 1 ? " voyages" : " voyage"));
+    return parts.length ? parts.join(" · ") : "Rien de prévu";
+  }
+  renderVals() {
+    const s = this.state, f = s.f;
+    const y = s.y, m = s.m;
+    const nDays = daysInMonth(y, m);
+    const data = this.dayData(s.day);
+    const outfit = data && data.outfit;
+    const entries = (data && data.entries) || [];
+    const pieces = this.reco();
+    const wornOn = !!s.worn[this.dayKey(s.day)];
+
+    // Cases vides avant le 1er, pour que chaque quantième tombe sous son jour de semaine.
+    const cells = [];
+    for (let i = 0; i < dowIndex(y, m, 1); i++) cells.push({ blank: true });
+    for (let d = 1; d <= nDays; d++) cells.push({ blank: false, n: d, label: String(d) });
+
+    const reasons = [{ label: CODE_HINT[f.code] + " Kode part de ce que tu as déjà porté dans ce registre." }];
+    if (f.stake === "Décisif") reasons.push({ label: "Enjeu élevé : ces trois pièces ont déjà été portées ensemble le 12 juin, rien à tester le jour même." });
+    else if (f.stake === "Important") reasons.push({ label: "Une seule association nouvelle, le reste est éprouvé." });
+    else reasons.push({ label: "Rien à prouver : confort d'abord, les pièces les plus portées de ton dressing." });
+    if (f.slot === "Soir") reasons.push({ label: "En soirée, les matières mates rendent mieux sous lumière chaude que le satiné." });
+    if (f.kind === "Cérémonie") reasons.push({ label: "Cérémonie : pas de noir intégral, le trench sable casse le bloc." });
+    for (const n of FLAGS.filter(n => f.flags[n])) reasons.push({ label: FLAG_REASON[n] });
+
+    // Les pastilles couvrent du 17 à la fin du mois, et toujours le jour déjà choisi.
+    const chipDays = [];
+    for (let d = Math.min(TODAY, f.day); d <= daysInMonth(REF_Y, REF_M); d++) chipDays.push(d);
+
+    return {
+      weekdays: ["L", "M", "M", "J", "V", "S", "D"],
+      monthLabel: MONTHS[m] + (y === REF_Y ? "" : " " + y),
+      monthSummary: this.monthSummary(),
+      prevMonth: () => this.shiftMonth(-1),
+      nextMonth: () => this.shiftMonth(1),
+      legend: [
+        { label: "Tenue posée", color: COL.outfit },
+        { label: "Occasion", color: COL.event },
+        { label: "Prêt", color: COL.lend },
+        { label: "Voyage", color: COL.trip }
+      ],
+      cells: cells.map(c => {
+        if (c.blank) return { label: "", dots: [], bg: "transparent", fg: "transparent", ring: "transparent", weight: "400", cursor: "default", aria: "", on: false, disabled: true, pick: () => {} };
+        const d = c.n;
+        const info = this.dayData(d);
+        const dots = [];
+        const noun = [];
+        if (info && info.outfit) { dots.push({ color: COL.outfit }); noun.push("tenue posée"); }
+        for (const e of (info && info.entries) || []) {
+          if (e.type === "event") dots.push({ color: COL.event });
+          if (e.type === "lend") dots.push({ color: COL.lend });
+          if (e.type === "trip") dots.push({ color: COL.trip });
+          if (ENTRY_NOUN[e.type] && noun.indexOf(ENTRY_NOUN[e.type]) < 0) noun.push(ENTRY_NOUN[e.type]);
+        }
+        const on = d === s.day;
+        const isToday = this.onRefMonth() && d === TODAY;
+        // Le lecteur d'écran doit entendre ce que porte le jour, pas seulement son numéro.
+        let aria = d + " " + MONTHS[m].toLowerCase();
+        if (isToday) aria += ", aujourd'hui";
+        if (noun.length) aria += ", " + noun.join(", ");
+        return {
+          label: c.label, dots: dots.slice(0, 3),
+          bg: on ? "#0D0D0E" : "transparent",
+          fg: on ? "#F2F1EE" : "#0D0D0E",
+          ring: !on && isToday ? "#0D0D0E" : "transparent",
+          weight: on || isToday ? "700" : "400",
+          cursor: "pointer", aria: aria, on: on, disabled: false,
+          pick: () => this.setState({ day: d })
+        };
+      }),
+      dayTitle: DOW_LONG[DOW[dowIndex(y, m, s.day)]] + " " + s.day + " " + MONTHS[m].toLowerCase(),
+      dayWeather: data ? data.weather : "Météo disponible 5 jours avant",
+      isToday: this.onRefMonth() && s.day === TODAY,
+      hasOutfit: !!outfit,
+      outfitTag: outfit ? outfit.tag : "",
+      outfitTagBg: outfit && outfit.tag === "Pack Occasion" ? "#F4EBC6" : "#DEDAF6",
+      outfitTagFg: outfit && outfit.tag === "Pack Occasion" ? "#6B5B14" : "#3F3A7A",
+      outfit: outfit ? outfit.pieces.map(p => ({ name: p.name, tint: p.tint, paths: paths(p.shape, p.fill, p.stroke, p.accent) })) : [],
+      wornOn: wornOn,
+      wornLabel: wornOn ? "Marquée portée" : "Marquer comme portée",
+      wornBg: wornOn ? "#DEDAF6" : "#0D0D0E",
+      wornFg: wornOn ? "#241F52" : "#F2F1EE",
+      markWorn: () => this.setState(st => {
+        const key = st.y + "-" + st.m + "-" + st.day;
+        const w = Object.assign({}, st.worn);
+        if (w[key]) delete w[key]; else w[key] = true;
+        return { worn: w };
+      }),
+      hasEntries: entries.length > 0,
+      entries: entries.map(e => {
+        const st = ENTRY_STYLE[e.type];
+        return {
+          title: e.title, meta: e.meta, icon: ICON[e.type],
+          bg: st.bg, iconBg: st.iconBg, ink: st.ink,
+          titleColor: st.title, metaColor: st.meta,
+          action: e.action || false, actionBg: st.actionBg, actionFg: st.actionFg,
+          href: ENTRY_HREF[e.type] || "Kode.dc.html"
+        };
+      }),
+      isEmpty: !outfit && entries.length === 0,
+      planDay: () => this.setState(st => ({
+        sheet: "form",
+        f: Object.assign({}, st.f, { day: (st.y === REF_Y && st.m === REF_M) ? st.day : st.f.day })
+      })),
+      openForm: () => this.setState({ sheet: "form" }),
+      closeSheet: () => this.setState({ sheet: null }),
+      backToForm: () => this.setState({ sheet: "form" }),
+      isForm: s.sheet === "form",
+      isResult: s.sheet === "result",
+      sheetT: s.sheet ? "translateY(0)" : "translateY(110%)",
+      sheetPE: s.sheet ? "auto" : "none",
+      scrimO: s.sheet ? 1 : 0,
+      fTitle: f.title,
+      fNote: f.note,
+      setTitle: e => this.setF("title", e.target.value),
+      setNote: e => this.setF("note", e.target.value),
+      dayChips: chipDays.map(d => ({
+        n: String(d), dow: DOW[dowIndex(REF_Y, REF_M, d)],
+        bg: f.day === d ? "#0D0D0E" : "#FFFFFF",
+        fg: f.day === d ? "#F2F1EE" : "#0D0D0E",
+        pick: () => this.setF("day", d)
+      })),
+      slots: SLOTS.map(t => ({
+        label: t,
+        bg: f.slot === t ? "#0D0D0E" : "transparent",
+        fg: f.slot === t ? "#F2F1EE" : "#5F5D59",
+        pick: () => this.setF("slot", t)
+      })),
+      kinds: KINDS.map(k => ({
+        label: k,
+        bg: f.kind === k ? "#0D0D0E" : "#FFFFFF",
+        fg: f.kind === k ? "#F2F1EE" : "#0D0D0E",
+        pick: () => this.setF("kind", k)
+      })),
+      codes: CODES.map(c => ({
+        label: c,
+        bg: f.code === c ? "#0D0D0E" : "#FFFFFF",
+        fg: f.code === c ? "#F2F1EE" : "#0D0D0E",
+        pick: () => this.setState(st => ({ f: Object.assign({}, st.f, { code: c }), variant: 0 }))
+      })),
+      codeHint: CODE_HINT[f.code],
+      stakes: STAKES.map((st, i) => {
+        const on = f.stake === st;
+        return {
+          label: st,
+          bg: on ? "#0D0D0E" : "#FFFFFF",
+          fg: on ? "#F2F1EE" : "#0D0D0E",
+          bars: [0, 1, 2].map(b => ({ color: b <= i ? (on ? "#F2F1EE" : "#0D0D0E") : (on ? "rgba(242,241,238,.28)" : "#E7E5E0") })),
+          pick: () => this.setF("stake", st)
+        };
+      }),
+      stakeHint: STAKE_HINT[f.stake],
+      flags: FLAGS.map(n => ({
+        label: n,
+        bg: f.flags[n] ? "#DEDAF6" : "#FFFFFF",
+        fg: f.flags[n] ? "#241F52" : "#0D0D0E",
+        toggle: () => this.flipFlag(n)
+      })),
+      submitLabel: "Demander à Kode",
+      submitBg: "#0D0D0E",
+      submitFg: "#F2F1EE",
+      submit: () => this.setState({ sheet: "result", variant: 0 }),
+      resultTitle: f.title || (f.kind + " du " + f.day + " septembre"),
+      resultMeta: f.day + " sept. · " + f.slot.toLowerCase() + " · " + f.code.toLowerCase() + " · enjeu " + f.stake.toLowerCase(),
+      variantIndex: (s.variant % this.recoList().length) + 1,
+      nextVariant: () => this.setState(st => ({ variant: st.variant + 1 })),
+      recoPieces: pieces.map(p => ({ name: p.name, tint: p.tint, paths: paths(p.shape, p.fill, p.stroke, p.accent) })),
+      reasons: reasons,
+      gapTitle: f.stake === "Décisif" ? "Il manque une pochette du soir" : "Rien à acheter",
+      gapBody: f.stake === "Décisif"
+        ? "Inès en a une noire, libre jusqu'au 29 septembre. Demande-lui maintenant plutôt que la veille."
+        : "Les trois pièces sont déjà dans ton dressing, aucune n'est prêtée ni au lavage.",
+      saveEvent: () => {
+        const title = f.title || (f.kind + " · " + f.code);
+        const meta = f.slot + " · " + f.code + (f.note ? " · " + f.note : "");
+        this.setState(st => {
+          const custom = Object.assign({}, st.custom);
+          const prev = custom[f.day];
+          custom[f.day] = {
+            weather: (prev && prev.weather) || (DAYS[f.day] && DAYS[f.day].weather) || "Météo disponible 5 jours avant",
+            outfit: { tag: "Posée pour l'événement", pieces: pieces },
+            // Un jour peut porter plusieurs événements : on ajoute à la suite.
+            entries: ((prev && prev.entries) || []).concat([{ type: "event", title: title, meta: meta, action: "Voir" }])
+          };
+          const w = Object.assign({}, st.worn);
+          delete w[REF_Y + "-" + REF_M + "-" + f.day];
+          return { custom: custom, sheet: null, y: REF_Y, m: REF_M, day: f.day, worn: w };
+        });
+      },
+      upcoming: UPCOMING.map((u, i) => ({
+        day: String(u.d), dow: DOW[dowIndex(REF_Y, REF_M, u.d)], title: u.title, meta: u.meta,
+        color: COL[u.type],
+        divider: i === UPCOMING.length - 1 ? "transparent" : "rgba(13,13,14,.06)",
+        go: () => this.goToRefDay(u.d)
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

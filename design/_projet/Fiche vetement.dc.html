@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E;text-decoration:none}a:hover{color:#A88B61}
+[data-scroll]{scrollbar-width:none}[data-scroll]::-webkit-scrollbar{display:none}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+<div style="padding:48px 40px 80px;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:500 11px 'Satoshi',sans-serif;padding:3px 7px;background:#0D0D0E;color:#fff;border-radius:999px">6</span>
+      <span style="font-size:13px;font-weight:500">Fiche vêtement</span>
+    </div>
+
+    <div style="width:390px;height:844px;border-radius:44px;background:#FFFFFF;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.14);display:flex;flex-direction:column">
+
+      <div style="height:52px;padding:0 28px 6px;display:flex;align-items:flex-end;justify-content:space-between;font-size:13px;font-weight:500">
+        <span>9:41</span>
+        <div style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border-radius:2px;background:#0D0D0E"></span><span style="width:20px;height:9px;border-radius:3px;background:#0D0D0E"></span></div>
+      </div>
+
+      <div data-scroll="" style="flex:1;overflow-y:auto;padding:0 0 110px;display:flex;flex-direction:column;gap:18px">
+
+        <div style="position:relative;flex:none;margin:0 20px;height:330px;border-radius:30px;background:#EDE3D8;overflow:hidden">
+          <image-slot id="fv-hero" shape="rect" placeholder="Photo du blazer noir"></image-slot>
+          <a href="Dressing Portants.dc.html" aria-label="Retour au dressing" style="position:absolute;left:14px;top:14px;width:44px;height:44px;border-radius:999px;background:rgba(255,255,255,.8);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></a>
+          <button type="button" onClick="{{ toggleArchive }}" aria-label="Archiver" style="position:absolute;right:14px;top:14px;height:44px;padding:0 16px;border:none;border-radius:999px;background:{{ archiveBg }};color:{{ archiveFg }};font-family:'Satoshi',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.95)">{{ archiveLabel }}</button>
+          <sc-if value="{{ lent }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:14px;bottom:14px;right:14px;background:#0D0D0E;color:#F2F1EE;border-radius:18px;padding:12px 16px;font-size:12.5px;pointer-events:none">{{ lentLabel }}</div>
+          </sc-if>
+        </div>
+
+        <div style="padding:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div style="aspect-ratio:1;border-radius:18px;overflow:hidden;background:#F3F2EF"><image-slot id="fv-v2" shape="rect" placeholder="Dos"></image-slot></div>
+          <div style="aspect-ratio:1;border-radius:18px;overflow:hidden;background:#F3F2EF"><image-slot id="fv-v3" shape="rect" placeholder="Détail"></image-slot></div>
+          <div style="aspect-ratio:1;border-radius:18px;overflow:hidden;background:#F3F2EF"><image-slot id="fv-v4" shape="rect" placeholder="Porté"></image-slot></div>
+        </div>
+
+        <div style="padding:0 20px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'Gambarino',serif;font-weight:400;font-size:28px;letter-spacing:-.025em;line-height:1.1">Blazer noir</div>
+          <div style="font-size:13px;color:#5F5D59">Vestes et manteaux · noir · taille 38</div>
+        </div>
+
+        <div style="margin:0 20px;background:#F3F2EF;border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <span style="font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Étiquette</span>
+          <div style="display:flex;gap:22px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11.5px;color:#5F5D59">Matière</span><span style="font-size:14px;font-weight:500">68 % laine, 30 % viscose</span></div>
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11.5px;color:#5F5D59">Entretien</span><span style="font-size:14px;font-weight:500">Nettoyage à sec</span></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;color:#5F5D59">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.4" aria-hidden="true"><path d="M4 8h16l-2 11H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.4" aria-hidden="true"><path d="M3 18 13 6l3 3-2 9Z"/><path d="M14 18h7"/></svg>
+            <span style="font-size:11.5px">Pas de sèche-linge · repassage doux</span>
+          </div>
+        </div>
+
+        <div style="padding:0 20px;display:flex;gap:10px">
+          <div style="flex:1;background:#FFFFFF;border-radius:22px;padding:16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:2px">
+            <span style="font-family:'Gambarino',serif;font-weight:400;font-size:26px;letter-spacing:-.02em">{{ ports }}</span>
+            <span style="font-size:11.5px;color:#5F5D59">ports</span>
+          </div>
+          <div style="flex:1;background:#FFFFFF;border-radius:22px;padding:16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:2px">
+            <span style="font-family:'Gambarino',serif;font-weight:400;font-size:26px;letter-spacing:-.02em">{{ lastShort }}</span>
+            <span style="font-size:11.5px;color:#5F5D59">dernier port</span>
+          </div>
+          <sc-if value="{{ priceOn }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;background:#FFFFFF;border-radius:22px;padding:16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:2px">
+              <span style="font-family:'Gambarino',serif;font-weight:400;font-size:26px;letter-spacing:-.02em">{{ cpp }}</span>
+              <span style="font-size:11.5px;color:#5F5D59">coût par port</span>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="padding:0 20px;display:flex;align-items:center;gap:10px">
+          <button type="button" onClick="{{ togglePrice }}" style="height:40px;padding:0 16px;border:none;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:background 240ms cubic-bezier(.2,.8,.2,1)" style-hover="background:#E7E5E0" style-active="transform:scale(.96)">{{ priceLabel }}</button>
+          <span style="flex:1;font-size:11.5px;color:#5F5D59;line-height:1.4">{{ priceNote }}</span>
+        </div>
+
+        <div style="padding:0 20px;display:flex;gap:8px">
+          <a href="Composer une tenue.dc.html" style="flex:1;height:52px;border-radius:999px;background:#0D0D0E;color:#FFFFFF;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center">Créer une tenue</a>
+          <a href="Kode.dc.html" style="flex:1;height:52px;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center">Demander à Kode</a>
+        </div>
+
+        <div style="padding:0 20px;display:flex;flex-direction:column;gap:8px">
+          <button type="button" onClick="{{ openLend }}" style="height:60px;border:none;border-radius:22px;background:#DEDAF6;display:flex;align-items:center;gap:12px;padding:0 16px;cursor:pointer;font-family:'Satoshi',sans-serif;transition:transform 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.98)">
+            <span style="width:38px;height:38px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3F3A7A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h12l-3-3M20 16H8l3 3"/></svg></span>
+            <span style="flex:1;text-align:left;font-size:15px;font-weight:500;color:#241F52">{{ lendLabel }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#241F52" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+          <div style="height:60px;border-radius:22px;background:#F3F2EF;display:flex;align-items:center;gap:12px;padding:0 16px">
+            <span style="width:38px;height:38px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v13H4z"/><path d="M4 7l2-3h12l2 3M10 12h4"/></svg></span>
+            <span style="flex:1;font-size:15px;font-weight:500;color:#5F5D59">{{ archiveRow }}</span>
+          </div>
+        </div>
+
+        <div style="margin:0 20px;background:#FFFFFF;border-radius:24px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Porté avec</span>
+          <div style="display:flex;gap:10px">
+            <sc-for list="{{ worn }}" as="w" hint-placeholder-count="3">
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;align-items:center">
+                <div style="width:100%;height:92px;border-radius:18px;background:#F7F3EE;display:flex;align-items:center;justify-content:center"><svg width="66" height="66" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ w.paths }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg></div>
+                <span style="font-size:11px;color:#5F5D59">{{ w.name }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:12px;height:62px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 12px">
+        <a href="Accueil.dc.html" aria-label="Accueil" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg></a>
+        <a href="Dressing Portants.dc.html" aria-label="Dressing" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+        <a href="Kode.dc.html" aria-label="Kode" style="width:48px;height:48px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></a>
+        <a href="Calendrier.dc.html" aria-label="Calendrier" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></a>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+      </div>
+
+      <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:rgba(13,13,14,.32);display:flex;align-items:flex-end">
+          <div style="width:100%;background:#FFFFFF;border-radius:28px 28px 44px 44px;padding:14px 20px 26px;display:flex;flex-direction:column;gap:16px">
+            <div style="width:40px;height:4px;border-radius:999px;background:#E7E5E0;align-self:center"></div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-family:'Gambarino',serif;font-weight:400;font-size:22px;letter-spacing:-.02em">Prêter le blazer noir</span>
+              <span style="font-size:13px;color:#5F5D59">Elle le verra dans son dressing, marqué comme prêté par toi.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ friends }}" as="fr" hint-placeholder-count="3">
+                <button type="button" onClick="{{ fr.pick }}" style="height:60px;border:none;border-radius:20px;background:{{ fr.bg }};display:flex;align-items:center;gap:12px;padding:0 16px;cursor:pointer;font-family:'Satoshi',sans-serif;transition:background 240ms cubic-bezier(.2,.8,.2,1)">
+                  <span style="width:36px;height:36px;border-radius:999px;background:#E7E5E0"></span>
+                  <span style="flex:1;text-align:left;font-size:15px;font-weight:500;color:{{ fr.fg }}">{{ fr.name }}</span>
+                  <sc-if value="{{ fr.picked }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5 11-11"/></svg></sc-if>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Durée du prêt</span>
+              <div style="display:flex;background:#F3F2EF;border-radius:999px;padding:4px;gap:4px">
+                <sc-for list="{{ durations }}" as="du" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ du.pick }}" style="flex:1;height:40px;border:none;border-radius:999px;background:{{ du.bg }};color:{{ du.fg }};font-family:'Satoshi',sans-serif;font-size:13px;font-weight:500;cursor:pointer;box-shadow:{{ du.shadow }}">{{ du.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" onClick="{{ closeSheet }}" style="flex:1;height:52px;border:none;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:500;cursor:pointer">Annuler</button>
+              <button type="button" onClick="{{ confirmLend }}" style="flex:2;height:52px;border:none;border-radius:999px;background:{{ confirmBg }};color:{{ confirmFg }};font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer">{{ confirmLabel }}</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="width:320px;display:flex;flex-direction:column;gap:12px;padding-top:34px">
+    <div style="font-size:13px;font-weight:500">Ce qui est vivant</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      « Prêter » ouvre la feuille : choisis une amie et une durée, la confirmation s'inscrit sur la grande image et le coût par port se recalcule quand la pièce revient. « Archiver » sort la pièce des portants sans l'effacer — l'étiquette de l'écran change en conséquence.
+    </div>
+    <div style="font-size:13px;font-weight:500;margin-top:8px">Trois chiffres, une règle</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Nombre de ports et dernier port, rien d'autre par défaut. Le coût par port n'apparaît que si tu ajoutes toi-même un prix d'achat, et se retire d'un geste.
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <a href="Dressing Portants.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Dressing</a>
+      <a href="Composer une tenue.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Composer</a>
+      <a href="Accueil.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Accueil</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980}}">
+const G = {
+  blazer: { out: "M23 9 L32 17 L41 9 L52 13 L56 40 L48 42 V54 H16 V42 L8 40 L12 13 Z", lapels: ["M23 9 L26 12 L32 26 L38 12 L41 9", "M32 26 V54"] },
+  jean: { out: "M19 7 H45 L48 30 L44 58 H35 L32 32 L29 58 H20 L16 30 Z", det: ["M19 13 H45", "M32 14 V22"] },
+  chemise: { out: "M23 8 L32 15 L41 8 L54 15 L49 25 L45 22 V56 H19 V22 L15 25 L10 15 Z", det: ["M27 8 L32 15 L37 8", "M32 15 V56", "M19 48 H45"] },
+  escarpin: { out: "M13 44 Q26 39 38 20 L45 24 L32 46 H45 V54 H13 Z", det: [] }
+};
+function paths(shape, fill, stroke, lapel) {
+  const g = G[shape];
+  const out = [{ d: g.out, fill: fill, stroke: stroke, w: "1.2" }];
+  if (g.lapels) for (const d of g.lapels) out.push({ d: d, fill: "none", stroke: lapel || stroke, w: "1.6" });
+  for (const d of g.det || []) out.push({ d: d, fill: "none", stroke: stroke, w: "1.2" });
+  return out;
+}
+const DURATIONS = ["3 jours", "1 semaine", "2 semaines"];
+const RETURN = { "3 jours": "20 sept.", "1 semaine": "24 sept.", "2 semaines": "1er oct." };
+class Component extends DCLogic {
+  state = { sheet: false, friend: null, duration: "1 semaine", lentTo: null, lentUntil: null, archived: false, price: false };
+  renderVals() {
+    const s = this.state;
+    const ports = s.lentTo ? 8 : 8;
+    return {
+      hero: paths("blazer", "#2B2E33", "#1D2024", "#6E7176"),
+      ports: ports,
+      cpp: "11,25 €",
+      priceOn: s.price,
+      priceLabel: s.price ? "Retirer le prix" : "Ajouter le prix d'achat",
+      priceNote: s.price ? "90 € à l'achat, 8 ports. Visible seulement par toi." : "Le coût par port n'apparaît que si tu renseignes un prix.",
+      togglePrice: () => this.setState(st => ({ price: !st.price })),
+      lastShort: "12 juin",
+      lent: !!s.lentTo,
+      lentLabel: s.lentTo ? "Prêté à " + s.lentTo + " jusqu'au " + s.lentUntil : "",
+      lendLabel: s.lentTo ? "Prêté à " + s.lentTo + " · modifier" : "Prêter à une amie",
+      archived: s.archived,
+      archiveLabel: s.archived ? "Archivé" : "Archiver",
+      archiveBg: s.archived ? "#0D0D0E" : "rgba(255,255,255,.8)",
+      archiveFg: s.archived ? "#FFFFFF" : "#0D0D0E",
+      archiveRow: s.archived ? "Rangé hors des portants" : "Visible dans tes portants",
+      toggleArchive: () => this.setState(st => ({ archived: !st.archived })),
+      openLend: () => this.setState({ sheet: true }),
+      closeSheet: () => this.setState({ sheet: false }),
+      sheetOpen: s.sheet,
+      friends: ["Julie", "Inès", "Maya"].map(n => ({
+        name: n,
+        picked: s.friend === n,
+        bg: s.friend === n ? "#0D0D0E" : "#F3F2EF",
+        fg: s.friend === n ? "#FFFFFF" : "#0D0D0E",
+        pick: () => this.setState({ friend: n })
+      })),
+      durations: DURATIONS.map(d => ({
+        label: d,
+        bg: s.duration === d ? "#FFFFFF" : "transparent",
+        fg: s.duration === d ? "#0D0D0E" : "#5F5D59",
+        shadow: s.duration === d ? "0 2px 8px rgba(0,0,0,.08)" : "none",
+        pick: () => this.setState({ duration: d })
+      })),
+      confirmLabel: s.friend ? "Prêter à " + s.friend : "Choisis une amie",
+      confirmBg: s.friend ? "#0D0D0E" : "#E7E5E0",
+      confirmFg: s.friend ? "#FFFFFF" : "#5F5D59",
+      confirmLend: () => {
+        if (!this.state.friend) return;
+        this.setState(st => ({ sheet: false, lentTo: st.friend, lentUntil: RETURN[st.duration] }));
+      },
+      worn: [
+        { name: "Pantalon écru", paths: paths("jean", "#E9E2D6", "#D2CABC") },
+        { name: "Chemise blanche", paths: paths("chemise", "#FFFFFF", "#D8D6D1") },
+        { name: "Escarpins noirs", paths: paths("escarpin", "#2B2E33", "#1D2024") }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

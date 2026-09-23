@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E;text-decoration:none}a:hover{color:#A88B61}
+[data-scroll]{scrollbar-width:none}[data-scroll]::-webkit-scrollbar{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+<div style="padding:48px 40px 80px;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:500 11px 'Satoshi',sans-serif;padding:3px 7px;background:#0D0D0E;color:#fff;border-radius:999px">17</span>
+      <span style="font-size:13px;font-weight:500">Mon compte — réglages, apparence, amies, paiement</span>
+    </div>
+
+    <div style="width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.14);display:flex;flex-direction:column;background:{{ bg }};color:{{ ink }};transition:background 320ms cubic-bezier(.2,.8,.2,1),color 320ms cubic-bezier(.2,.8,.2,1)">
+
+      <div style="height:52px;padding:0 28px 6px;display:flex;align-items:flex-end;justify-content:space-between;font-size:13px;font-weight:500">
+        <span>9:41</span>
+        <div style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border-radius:2px;background:{{ ink }}"></span><span style="width:20px;height:9px;border-radius:3px;background:{{ ink }}"></span></div>
+      </div>
+
+      <div style="padding:6px 20px 0;display:flex;align-items:center;justify-content:space-between">
+        <a href="Accueil.dc.html" aria-label="Retour" style="width:36px;height:36px;border-radius:999px;background:{{ card }};display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ ink }}" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></a>
+        <span style="font-size:13px;font-weight:500">Mon compte</span>
+        <button type="button" onClick="{{ signOut }}" style="height:36px;padding:0 14px;border:none;border-radius:999px;background:{{ card }};color:{{ sub }};font-family:'Satoshi',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Sortir</button>
+      </div>
+
+      <div data-scroll="" style="flex:1;overflow-y:auto;padding:20px 20px 120px;display:flex;flex-direction:column;gap:30px">
+
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:84px;height:84px;border-radius:999px;overflow:hidden;background:{{ accentTint }};flex:none;position:relative">
+            <image-slot id="pf-avatar" shape="circle" placeholder="Photo"></image-slot>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0">
+            <span style="font-family:'Gambarino',serif;font-weight:400;font-size:26px;letter-spacing:-.025em;line-height:1">Sarah Meunier</span>
+            <span style="font-size:12.5px;color:{{ sub }}">@sarah.m · Lyon · 128 pièces</span>
+            <div style="display:flex;gap:8px;margin-top:2px">
+              <button type="button" onClick="{{ noop }}" style="height:32px;padding:0 14px;border:none;border-radius:999px;background:{{ ink }};color:{{ bg }};font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer">Modifier</button>
+              <button type="button" onClick="{{ noop }}" style="height:32px;padding:0 14px;border:none;border-radius:999px;background:{{ card }};color:{{ ink }};font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer">Mes tailles</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:{{ sub }};padding:0 4px">Apparence</span>
+          <div style="background:{{ card }};border-radius:26px;padding:18px;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;gap:10px">
+              <sc-for list="{{ themes }}" as="t" hint-placeholder-count="3">
+                <button type="button" onClick="{{ t.pick }}" style="flex:1;border:none;background:transparent;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:center;font-family:'Satoshi',sans-serif">
+                  <span style="width:100%;height:74px;border-radius:18px;background:{{ t.swatchBg }};border:2px solid {{ t.ring }};display:flex;flex-direction:column;justify-content:flex-end;gap:5px;padding:10px;box-sizing:border-box;transition:border-color 200ms">
+                    <span style="height:7px;width:70%;border-radius:999px;background:{{ t.barA }}"></span>
+                    <span style="height:7px;width:45%;border-radius:999px;background:{{ t.barB }}"></span>
+                  </span>
+                  <span style="font-size:12.5px;font-weight:500;color:{{ t.labelColor }}">{{ t.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="height:1px;background:{{ line }}"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14.5px;font-weight:500">Couleur d'accent</span>
+                <span style="font-size:12px;color:{{ sub }}">{{ accentName }}</span>
+              </span>
+              <span style="display:flex;gap:8px">
+                <sc-for list="{{ accents }}" as="a" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ a.pick }}" aria-label="{{ a.name }}" style="width:30px;height:30px;border-radius:999px;background:{{ a.color }};border:2px solid {{ a.ring }};cursor:pointer;transition:border-color 200ms"></button>
+                </sc-for>
+              </span>
+            </div>
+            <sc-for list="{{ appearanceRows }}" as="r" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+                <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:14.5px;font-weight:500">{{ r.label }}</span>
+                  <span style="font-size:12px;line-height:1.4;color:{{ sub }}">{{ r.note }}</span>
+                </span>
+                <button type="button" onClick="{{ r.toggle }}" role="switch" aria-label="{{ r.label }}" style="width:50px;height:30px;border-radius:999px;border:none;background:{{ r.trackBg }};cursor:pointer;padding:3px;display:flex;flex:none;transition:background 220ms cubic-bezier(.2,.8,.2,1)">
+                  <span style="width:24px;height:24px;border-radius:999px;background:#FFFFFF;box-shadow:0 2px 6px rgba(0,0,0,.2);transform:{{ r.knob }};transition:transform 220ms cubic-bezier(.2,.8,.2,1)"></span>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:{{ sub }};padding:0 4px">Kode</span>
+          <div style="background:{{ card }};border-radius:26px;padding:18px;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="width:54px;height:54px;border-radius:{{ kodeRadius }};background:{{ accentStrong }};display:flex;align-items:center;justify-content:center;flex:none;transition:border-radius 260ms cubic-bezier(.2,.8,.2,1)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:3px;min-width:0">
+                <span style="font-size:14.5px;font-weight:500">Son nom</span>
+                <span style="font-size:12.5px;color:{{ sub }}">Kode · appelle-le comme tu veux</span>
+              </span>
+              <span style="display:flex;gap:6px;flex:none">
+                <sc-for list="{{ shapes }}" as="sh" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ sh.pick }}" aria-label="{{ sh.name }}" style="width:30px;height:30px;border-radius:{{ sh.radius }};background:{{ sh.bg }};border:2px solid {{ sh.ring }};cursor:pointer"></button>
+                </sc-for>
+              </span>
+            </div>
+            <div style="height:1px;background:{{ line }}"></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <span style="font-size:14.5px;font-weight:500">Son ton</span>
+              <div style="display:flex;background:{{ trackNeutral }};border-radius:999px;padding:4px;gap:4px">
+                <sc-for list="{{ tones }}" as="tn" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ tn.pick }}" style="flex:1;height:36px;border:none;border-radius:999px;background:{{ tn.bg }};color:{{ tn.fg }};font-family:'Satoshi',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 220ms cubic-bezier(.2,.8,.2,1)">{{ tn.label }}</button>
+                </sc-for>
+              </div>
+              <span style="font-size:12px;line-height:1.45;color:{{ sub }}">{{ toneExample }}</span>
+            </div>
+            <div style="height:1px;background:{{ line }}"></div>
+            <sc-for list="{{ kodeRows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+                <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:14.5px;font-weight:500">{{ r.label }}</span>
+                  <span style="font-size:12px;line-height:1.4;color:{{ sub }}">{{ r.note }}</span>
+                </span>
+                <button type="button" onClick="{{ r.toggle }}" role="switch" aria-label="{{ r.label }}" style="width:50px;height:30px;border-radius:999px;border:none;background:{{ r.trackBg }};cursor:pointer;padding:3px;display:flex;flex:none;transition:background 220ms cubic-bezier(.2,.8,.2,1)">
+                  <span style="width:24px;height:24px;border-radius:999px;background:#FFFFFF;box-shadow:0 2px 6px rgba(0,0,0,.2);transform:{{ r.knob }};transition:transform 220ms cubic-bezier(.2,.8,.2,1)"></span>
+                </button>
+              </div>
+            </sc-for>
+            <button type="button" onClick="{{ noop }}" style="height:46px;border:none;border-radius:999px;background:{{ trackNeutral }};color:{{ ink }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer">Ce que Kode retient de moi</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px">
+            <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:{{ sub }}">Mes amies</span>
+            <span style="font-size:11.5px;color:{{ sub }}">{{ friendCount }}</span>
+          </div>
+          <div style="background:{{ card }};border-radius:26px;padding:18px;display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ friends }}" as="f" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="width:42px;height:42px;border-radius:999px;background:{{ f.tint }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:{{ f.initialColor }};flex:none">{{ f.initial }}</span>
+                <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:14.5px;font-weight:500">{{ f.name }}</span>
+                  <span style="font-size:12px;color:{{ sub }}">{{ f.status }}</span>
+                </span>
+                <button type="button" onClick="{{ f.toggle }}" style="height:32px;padding:0 13px;border:none;border-radius:999px;background:{{ f.btnBg }};color:{{ f.btnFg }};font-family:'Satoshi',sans-serif;font-size:12px;font-weight:500;cursor:pointer;flex:none">{{ f.btnLabel }}</button>
+              </div>
+            </sc-for>
+            <div style="height:1px;background:{{ line }}"></div>
+            <div style="display:flex;gap:8px">
+              <button type="button" onClick="{{ openInvite }}" style="flex:2;height:46px;border:none;border-radius:999px;background:{{ ink }};color:{{ bg }};font-family:'Satoshi',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Ajouter une amie</button>
+              <button type="button" onClick="{{ noop }}" style="flex:1;height:46px;border:none;border-radius:999px;background:{{ trackNeutral }};color:{{ ink }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer">Demandes</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14.5px;font-weight:500">Qui voit mes tenues</span>
+                <span style="font-size:12px;color:{{ sub }}">{{ visibilityNote }}</span>
+              </span>
+              <div style="display:flex;background:{{ trackNeutral }};border-radius:999px;padding:3px;gap:3px;flex:none">
+                <sc-for list="{{ visibilities }}" as="v" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ v.pick }}" style="height:30px;padding:0 12px;border:none;border-radius:999px;background:{{ v.bg }};color:{{ v.fg }};font-family:'Satoshi',sans-serif;font-size:12px;font-weight:500;cursor:pointer">{{ v.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:{{ sub }};padding:0 4px">Abonnement et paiement</span>
+          <div style="background:{{ card }};border-radius:26px;padding:18px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="flex:1;display:flex;flex-direction:column;gap:3px">
+                <span style="font-family:'Gambarino',serif;font-weight:400;font-size:21px;letter-spacing:-.02em">Atelier · annuel</span>
+                <span style="font-size:12.5px;color:{{ sub }}">109,99 € — se renouvelle le 14 mars 2027</span>
+              </span>
+              <a href="Offres.dc.html" style="height:36px;padding:0 14px;border-radius:999px;background:{{ trackNeutral }};display:inline-flex;align-items:center;font-size:12.5px;font-weight:500;color:{{ ink }};flex:none">Changer</a>
+            </div>
+            <div style="height:1px;background:{{ line }}"></div>
+            <sc-for list="{{ cards }}" as="c" hint-placeholder-count="2">
+              <button type="button" onClick="{{ c.pick }}" style="border:none;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:'Satoshi',sans-serif;text-align:left">
+                <span style="width:44px;height:30px;border-radius:7px;background:{{ c.brandBg }};color:{{ c.brandFg }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:.04em;flex:none">{{ c.brand }}</span>
+                <span style="flex:1;display:flex;flex-direction:column;gap:1px;min-width:0">
+                  <span style="font-size:14px;font-weight:500;color:{{ ink }}">{{ c.number }}</span>
+                  <span style="font-size:11.5px;color:{{ sub }}">{{ c.note }}</span>
+                </span>
+                <span style="width:22px;height:22px;border-radius:999px;border:2px solid {{ c.dotRing }};background:{{ c.dotBg }};flex:none"></span>
+              </button>
+            </sc-for>
+            <button type="button" onClick="{{ noop }}" style="height:46px;border:none;border-radius:999px;background:{{ trackNeutral }};color:{{ ink }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer">Ajouter un moyen de paiement</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="font-size:13px;color:{{ sub }}">Achats à l'unité</span>
+              <span style="font-size:13px;font-weight:500">3 packs · 12,97 €</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:{{ sub }};padding:0 4px">Notifications</span>
+          <div style="background:{{ card }};border-radius:26px;padding:18px;display:flex;flex-direction:column;gap:18px">
+            <sc-for list="{{ notifRows }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+                <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:14.5px;font-weight:500">{{ r.label }}</span>
+                  <span style="font-size:12px;line-height:1.4;color:{{ sub }}">{{ r.note }}</span>
+                </span>
+                <button type="button" onClick="{{ r.toggle }}" role="switch" aria-label="{{ r.label }}" style="width:50px;height:30px;border-radius:999px;border:none;background:{{ r.trackBg }};cursor:pointer;padding:3px;display:flex;flex:none;transition:background 220ms cubic-bezier(.2,.8,.2,1)">
+                  <span style="width:24px;height:24px;border-radius:999px;background:#FFFFFF;box-shadow:0 2px 6px rgba(0,0,0,.2);transform:{{ r.knob }};transition:transform 220ms cubic-bezier(.2,.8,.2,1)"></span>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:{{ sub }};padding:0 4px">Données et confidentialité</span>
+          <div style="background:{{ card }};border-radius:26px;padding:6px 18px;display:flex;flex-direction:column">
+            <sc-for list="{{ dataRows }}" as="r" hint-placeholder-count="4">
+              <button type="button" onClick="{{ r.go }}" style="border:none;background:transparent;padding:16px 0;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:'Satoshi',sans-serif;text-align:left;border-bottom:1px solid {{ r.divider }}">
+                <span style="flex:1;font-size:14.5px;font-weight:500;color:{{ r.color }}">{{ r.label }}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ r.color }}" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+              </button>
+            </sc-for>
+          </div>
+          <span style="font-size:11px;color:{{ sub }};text-align:center;padding-top:4px">Dresskode 1.4.0 · Lyon, France</span>
+        </div>
+      </div>
+
+      <div style="position:absolute;inset:0;z-index:2;background:rgba(13,13,14,{{ scrimA }});opacity:{{ scrimO }};pointer-events:{{ sheetPE }};transition:all 260ms cubic-bezier(.2,.8,.2,1)" onClick="{{ closeSheet }}"></div>
+
+      <div style="position:absolute;left:0;right:0;bottom:0;background:{{ card }};border-radius:32px 32px 44px 44px;padding:14px 20px 96px;z-index:2;display:flex;flex-direction:column;gap:16px;transform:{{ sheetT }};pointer-events:{{ sheetPE }};transition:transform 280ms cubic-bezier(.2,.8,.2,1);box-shadow:0 -20px 60px rgba(0,0,0,.18)">
+        <div style="width:40px;height:4px;border-radius:999px;background:{{ line }};align-self:center"></div>
+        <div style="font-family:'Gambarino',serif;font-weight:400;font-size:24px;letter-spacing:-.02em">Ajouter une amie</div>
+        <div style="font-size:13.5px;line-height:1.5;color:{{ sub }}">Partage ton code : elle te retrouve sans chercher ton nom. Vous voyez alors vos tenues et pouvez vous prêter des pièces.</div>
+        <div style="background:{{ accentTint }};border-radius:22px;padding:18px;display:flex;align-items:center;justify-content:center;gap:10px">
+          <span style="font-family:'Gambarino',serif;font-weight:400;font-size:30px;letter-spacing:.14em;color:{{ accentInk }}">SARAH-4K2</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="button" onClick="{{ closeSheet }}" style="flex:1;height:50px;border:none;border-radius:999px;background:{{ trackNeutral }};color:{{ ink }};font-family:'Satoshi',sans-serif;font-size:14.5px;font-weight:500;cursor:pointer">Copier</button>
+          <button type="button" onClick="{{ closeSheet }}" style="flex:2;height:50px;border:none;border-radius:999px;background:{{ ink }};color:{{ bg }};font-family:'Satoshi',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer">Partager le code</button>
+        </div>
+      </div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:12px;height:62px;border-radius:999px;background:{{ navBg }};backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 12px">
+        <a href="Accueil.dc.html" aria-label="Accueil" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ navIdle }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg></a>
+        <a href="Dressing Portants.dc.html" aria-label="Dressing" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ navIdle }}" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+        <a href="Kode.dc.html" aria-label="Kode" style="width:56px;height:56px;border-radius:999px;background:{{ accentStrong }};display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(13,13,14,.3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></a>
+        <a href="Calendrier.dc.html" aria-label="Calendrier" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ navIdle }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></a>
+        <span style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ navActive }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:320px;display:flex;flex-direction:column;gap:12px;padding-top:34px">
+    <div style="font-size:13px;font-weight:500">Le thème se voit tout de suite</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Clair, Sombre, Auto : l'écran bascule pendant que tu choisis, pas après un redémarrage. La couleur d'accent suit — elle repeint Kode, le bouton central et les surfaces teintées de toute l'app.
+    </div>
+    <div style="font-size:13px;font-weight:500;margin-top:8px">Kode se règle comme une personne</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Son nom, sa forme, son ton, et ce qu'il a le droit de voir — agenda, météo, prêts. Chaque ton change l'exemple affiché juste en dessous, pour choisir sur pièce plutôt que sur une étiquette.
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <a href="Accueil.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Accueil</a>
+      <a href="Calendrier.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Calendrier</a>
+      <a href="Offres.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Offres</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980}}">
+const ACCENTS = [
+  { id: "lilas", name: "Lilas", color: "#DEDAF6", strong: "#5A51A8", tint: "#DEDAF6", tintDark: "#2A2752", ink: "#241F52" },
+  { id: "sable", name: "Sable", color: "#EDE3D8", strong: "#8A6F52", tint: "#EDE3D8", tintDark: "#332A22", ink: "#5B4630" },
+  { id: "jaune", name: "Blé", color: "#F4EBC6", strong: "#8A7418", tint: "#F4EBC6", tintDark: "#332E12", ink: "#6B5B14" },
+  { id: "encre", name: "Encre", color: "#0D0D0E", strong: "#0D0D0E", tint: "#E7E5E0", tintDark: "#25252A", ink: "#0D0D0E" }
+];
+const TONES = {
+  Direct: "« Le blazer noir, le pantalon écru, les bottines. Il pleut à 18 h, prends le trench. »",
+  Doux: "« Je partirais sur le blazer noir avec le pantalon écru — et un trench, la pluie arrive vers 18 h. »",
+  Complice: "« Blazer noir, pantalon écru : tu ne l'as pas sortie depuis mars, celle-là. Trench dans le sac, ça tombe à 18 h. »"
+};
+class Component extends DCLogic {
+  state = {
+    theme: "Clair", accent: "lilas", shape: 0, tone: "Doux", visibility: "Mes amies",
+    card: "visa", sheet: false,
+    app: { contrast: false, motion: false },
+    kode: { matin: true, agenda: true, meteo: true },
+    notif: { matin: true, pret: true, defi: false, news: false },
+    friends: { Julie: true, Inès: true, Maya: false, Chloé: false }
+  };
+  flip(group, key) { this.setState(s => { const g = Object.assign({}, s[group]); g[key] = !g[key]; const o = {}; o[group] = g; return o; }); }
+  sw(on, accentStrong, neutral) {
+    return { trackBg: on ? accentStrong : neutral, knob: on ? "translateX(20px)" : "translateX(0)" };
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.theme === "Sombre";
+    const acc = ACCENTS.find(a => a.id === s.accent);
+    const bg = dark ? "#151517" : "#EEEDEA";
+    const card = dark ? "#1F1F23" : "#FFFFFF";
+    const ink = dark ? "#F2F1EE" : "#0D0D0E";
+    const sub = dark ? "#9A9894" : "#5F5D59";
+    const line = dark ? "rgba(255,255,255,.09)" : "rgba(13,13,14,.07)";
+    const neutral = dark ? "rgba(255,255,255,.12)" : "#F3F2EF";
+    const accentStrong = s.accent === "encre" && dark ? "#6B63B8" : acc.strong;
+    const accentTint = dark ? acc.tintDark : acc.tint;
+    const row = (group, key, label, note) => {
+      const on = s[group][key];
+      const t = this.sw(on, accentStrong, neutral);
+      return { label: label, note: note, trackBg: t.trackBg, knob: t.knob, toggle: () => this.flip(group, key) };
+    };
+    const shapes = [999, 18, 6].map((r, i) => ({
+      name: "Forme " + (i + 1),
+      radius: r + "px",
+      bg: s.shape === i ? accentStrong : neutral,
+      ring: s.shape === i ? ink : "transparent",
+      pick: () => this.setState({ shape: i })
+    }));
+    const friendNames = Object.keys(s.friends);
+    const statuses = {
+      Julie: "Blazer noir prêté jusqu'au 24 sept.",
+      Inès: "12 tenues partagées",
+      Maya: "Vous ne partagez rien pour l'instant",
+      Chloé: "Invitée hier, en attente"
+    };
+    const dataRows = [
+      { label: "Dressing privé", color: ink },
+      { label: "Exporter mes données", color: ink },
+      { label: "Conditions et confidentialité", color: ink },
+      { label: "Supprimer mon compte", color: "#B4402F", last: true }
+    ].map(r => ({ label: r.label, color: r.color, divider: r.last ? "transparent" : line, go: () => {} }));
+    return {
+      bg: bg, card: card, ink: ink, sub: sub, line: line,
+      trackNeutral: neutral,
+      accentTint: accentTint, accentStrong: accentStrong, accentInk: dark ? "#F2F1EE" : acc.ink,
+      accentName: acc.name,
+      navBg: dark ? "rgba(31,31,35,.82)" : "rgba(255,255,255,.72)",
+      navIdle: dark ? "#7C7A77" : "#5F5D59",
+      navActive: ink,
+      noop: () => {},
+      signOut: () => {},
+      themes: ["Clair", "Sombre", "Auto"].map(t => {
+        const on = s.theme === t;
+        const swatch = t === "Sombre" ? "#151517" : t === "Auto" ? "linear-gradient(105deg,#EEEDEA 0 50%,#151517 50% 100%)" : "#EEEDEA";
+        return {
+          label: t, pick: () => this.setState({ theme: t }),
+          swatchBg: swatch,
+          ring: on ? accentStrong : "transparent",
+          barA: t === "Sombre" ? "rgba(255,255,255,.34)" : "rgba(13,13,14,.24)",
+          barB: t === "Sombre" ? "rgba(255,255,255,.18)" : "rgba(13,13,14,.12)",
+          labelColor: on ? ink : sub
+        };
+      }),
+      accents: ACCENTS.map(a => ({
+        name: a.name, color: a.id === "encre" && dark ? "#F2F1EE" : a.color,
+        ring: s.accent === a.id ? ink : (dark ? "rgba(255,255,255,.18)" : "transparent"),
+        pick: () => this.setState({ accent: a.id })
+      })),
+      appearanceRows: [
+        row("app", "contrast", "Contraste élevé", "Textes plus appuyés, ombres retirées"),
+        row("app", "motion", "Réduire les animations", "Les transitions deviennent instantanées")
+      ],
+      shapes: shapes,
+      kodeRadius: [999, 18, 6][s.shape] + "px",
+      tones: ["Direct", "Doux", "Complice"].map(t => ({
+        label: t,
+        bg: s.tone === t ? card : "transparent",
+        fg: s.tone === t ? ink : sub,
+        pick: () => this.setState({ tone: t })
+      })),
+      toneExample: TONES[s.tone],
+      kodeRows: [
+        row("kode", "matin", "Proposer la tenue du matin", "Chaque jour à 7 h 30"),
+        row("kode", "agenda", "Lire mon agenda", "Pour anticiper les codes vestimentaires"),
+        row("kode", "meteo", "Tenir compte de la météo", "Lyon, mise à jour deux fois par jour")
+      ],
+      friendCount: friendNames.filter(n => s.friends[n]).length + " sur " + friendNames.length,
+      friends: friendNames.map(n => {
+        const on = s.friends[n];
+        return {
+          name: n, initial: n[0], status: statuses[n],
+          tint: on ? accentTint : neutral,
+          initialColor: on ? (dark ? "#F2F1EE" : acc.ink) : sub,
+          btnLabel: on ? "Partagé" : "Partager",
+          btnBg: on ? accentStrong : neutral,
+          btnFg: on ? "#FFFFFF" : ink,
+          toggle: () => this.flip("friends", n)
+        };
+      }),
+      visibilities: ["Mes amies", "Personne"].map(v => ({
+        label: v,
+        bg: s.visibility === v ? card : "transparent",
+        fg: s.visibility === v ? ink : sub,
+        pick: () => this.setState({ visibility: v })
+      })),
+      visibilityNote: s.visibility === "Mes amies" ? "Seules tes amies acceptées" : "Ton dressing reste invisible",
+      cards: [
+        { id: "visa", brand: "VISA", brandBg: "#1A1F71", brandFg: "#FFFFFF", number: "•••• •••• •••• 4242", note: "Expire 06/29 · principale" },
+        { id: "apple", brand: "PAY", brandBg: dark ? "#2C2C31" : "#0D0D0E", brandFg: "#FFFFFF", number: "Apple Pay", note: "iPhone de Sarah" }
+      ].map(c => ({
+        brand: c.brand, brandBg: c.brandBg, brandFg: c.brandFg, number: c.number, note: c.note,
+        dotRing: s.card === c.id ? accentStrong : (dark ? "rgba(255,255,255,.2)" : "#E7E5E0"),
+        dotBg: s.card === c.id ? accentStrong : "transparent",
+        pick: () => this.setState({ card: c.id })
+      })),
+      notifRows: [
+        row("notif", "matin", "Tenue du matin", "Une notification, pas un flux"),
+        row("notif", "pret", "Retours de prêt", "Deux jours avant la date prévue"),
+        row("notif", "defi", "Défi en cours", "La contrainte du jour à 8 h"),
+        row("notif", "news", "Nouveautés Dresskode", "Une fois par mois maximum")
+      ],
+      dataRows: dataRows,
+      openInvite: () => this.setState({ sheet: true }),
+      closeSheet: () => this.setState({ sheet: false }),
+      sheetT: s.sheet ? "translateY(0)" : "translateY(110%)",
+      sheetPE: s.sheet ? "auto" : "none",
+      scrimO: s.sheet ? 1 : 0,
+      scrimA: s.sheet ? ".38" : "0"
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E;text-decoration:none}a:hover{color:#A88B61}
+[data-scroll]{scrollbar-width:none}[data-scroll]::-webkit-scrollbar{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="padding:48px 40px 80px;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:500 11px 'Satoshi',sans-serif;padding:3px 7px;background:#0D0D0E;color:#fff;border-radius:999px">15 · 16</span>
+      <span style="font-size:13px;font-weight:500">Offres et boutique — agrandir sa garde-robe</span>
+    </div>
+
+    <div style="width:390px;height:844px;border-radius:44px;background:#EEEDEA;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.14);display:flex;flex-direction:column">
+
+      <div style="height:52px;padding:0 28px 6px;display:flex;align-items:flex-end;justify-content:space-between;font-size:13px;font-weight:500">
+        <span>9:41</span>
+        <div style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border-radius:2px;background:#0D0D0E"></span><span style="width:20px;height:9px;border-radius:3px;background:#0D0D0E"></span></div>
+      </div>
+
+      <div style="padding:6px 20px 0;display:flex;align-items:center;justify-content:space-between">
+        <a href="Accueil.dc.html" aria-label="Retour" style="width:36px;height:36px;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></a>
+        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:10px;letter-spacing:.2em">DRESSKODE</span>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="width:36px;height:36px;border-radius:999px;background:#DEDAF6;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#3F3A7A">S</a>
+      </div>
+
+      <div style="padding:18px 20px 0;display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'Gambarino',serif;font-weight:400;font-size:32px;letter-spacing:-.02em;line-height:1.05">Porte mieux, achète moins.</div>
+        <div style="height:42px;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);display:flex;align-items:center;padding:4px;gap:4px">
+          <button type="button" onClick="{{ showPlans }}" style="flex:1;height:34px;border:none;border-radius:999px;background:{{ tabPlansBg }};color:{{ tabPlansFg }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)">Abonnements</button>
+          <button type="button" onClick="{{ showShop }}" style="flex:1;height:34px;border:none;border-radius:999px;background:{{ tabShopBg }};color:{{ tabShopFg }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)">Boutique</button>
+        </div>
+      </div>
+
+      <div data-scroll="" style="flex:1;overflow-y:auto;padding:18px 20px 200px;display:flex;flex-direction:column;gap:26px">
+
+        <sc-if value="{{ isPlans }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:26px">
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="height:44px;border-radius:999px;background:#FFFFFF;box-shadow:0 6px 18px rgba(0,0,0,.05);display:flex;align-items:center;padding:4px;gap:4px">
+                <button type="button" onClick="{{ pickYear }}" style="flex:1;height:36px;border:none;border-radius:999px;background:{{ yearBg }};color:{{ yearFg }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 240ms cubic-bezier(.2,.8,.2,1)">Annuel <span style="height:20px;padding:0 8px;border-radius:999px;background:{{ yearTagBg }};color:{{ yearTagFg }};font-size:10.5px;font-weight:500;display:inline-flex;align-items:center">1er mois offert</span></button>
+                <button type="button" onClick="{{ pickMonth }}" style="flex:1;height:36px;border:none;border-radius:999px;background:{{ monthBg }};color:{{ monthFg }};font-family:'Satoshi',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)">Mensuel</button>
+              </div>
+
+              <div style="background:#F4EBC6;border-radius:24px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+                <span style="width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6B5B14" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5 11-11"/></svg></span>
+                <span style="flex:1;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:14px;font-weight:500;color:#4A3F0B">Achat déduit</span>
+                  <span style="font-size:12px;line-height:1.45;color:#6B5B14">Ce que tu prends à l'unité est déduit : premier mois d'Atelier à −50 %.</span>
+                </span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+                <button type="button" onClick="{{ p.pick }}" style="text-align:left;border:none;background:{{ p.bg }};border-radius:28px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:14px;cursor:pointer;font-family:'Satoshi',sans-serif;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.99)">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                    <div style="display:flex;flex-direction:column;gap:3px">
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:22px;letter-spacing:-.02em;color:{{ p.fg }}">{{ p.name }}</span>
+                        <sc-if value="{{ p.flagged }}" hint-placeholder-val="{{ false }}">
+                          <span style="height:22px;padding:0 9px;border-radius:999px;background:#DEDAF6;color:#3F3A7A;font-size:10.5px;font-weight:500;display:inline-flex;align-items:center">Le plus choisi</span>
+                        </sc-if>
+                      </div>
+                      <span style="font-size:12px;color:{{ p.muted }}">{{ p.note }}</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                      <span style="font-family:'Gambarino',serif;font-weight:400;font-size:24px;letter-spacing:-.02em;color:{{ p.fg }}">{{ p.price }}</span>
+                      <span style="font-size:11px;color:{{ p.muted }}">{{ p.period }}</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <sc-for list="{{ p.features }}" as="f" hint-placeholder-count="3">
+                      <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:{{ f.color }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ f.color }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5 11-11"/></svg>{{ f.label }}</span>
+                    </sc-for>
+                  </div>
+                </button>
+              </sc-for>
+            </div>
+
+            <span style="font-size:11.5px;line-height:1.5;color:#5F5D59;padding:0 4px">Sans engagement, résiliable à tout moment depuis Mon compte. Prix en euros, TVA comprise.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:26px">
+
+            <div style="background:#0D0D0E;border-radius:30px;padding:22px;display:flex;flex-direction:column;gap:18px;position:relative;overflow:hidden">
+              <span style="position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:999px;background:rgba(222,218,246,.16)"></span>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative">
+                <span style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#B7B5B1">Ton dressing</span>
+                <span style="height:22px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.12);color:#F2F1EE;font-size:10.5px;font-weight:500;display:inline-flex;align-items:center">{{ spaceLeftLabel }}</span>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:10px;position:relative">
+                <span style="font-family:'Gambarino',serif;font-weight:400;font-size:44px;line-height:.9;letter-spacing:-.03em;color:#F2F1EE">{{ used }}</span>
+                <span style="font-size:13px;color:#B7B5B1;padding-bottom:5px">pièces sur {{ places }} places</span>
+              </div>
+              <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.14);overflow:hidden;position:relative"><div style="height:10px;width:{{ fill }};border-radius:999px;background:#DEDAF6;transition:width 320ms cubic-bezier(.2,.8,.2,1)"></div></div>
+              <div style="display:flex;align-items:center;gap:12px;position:relative">
+                <span style="flex:1;font-size:12.5px;line-height:1.45;color:#B7B5B1">30 places de plus, achetées une fois, gardées à vie.</span>
+                <button type="button" onClick="{{ buySpace }}" style="height:46px;padding:0 18px;border:none;border-radius:999px;background:#F2F1EE;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:14px;font-weight:700;cursor:pointer;flex:none;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.97)">+30 · 4,99 €</button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px">
+                <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Les packs</span>
+                <span style="font-size:11.5px;color:#5F5D59">Achat unique, sans abonnement</span>
+              </div>
+
+              <sc-for list="{{ items }}" as="i" hint-placeholder-count="5">
+                <div style="background:{{ i.bg }};border-radius:28px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.05);transition:background 240ms cubic-bezier(.2,.8,.2,1)">
+                  <button type="button" onClick="{{ i.toggle }}" style="width:100%;border:none;background:transparent;padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:'Satoshi',sans-serif;text-align:left">
+                    <span style="width:52px;height:52px;border-radius:20px;background:{{ i.tint }};display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ i.ink }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ i.icon }}"/></svg></span>
+                    <span style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">
+                      <span style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:19px;letter-spacing:-.02em">{{ i.name }}</span>
+                        <sc-if value="{{ i.tag }}" hint-placeholder-val="{{ false }}">
+                          <span style="height:20px;padding:0 8px;border-radius:999px;background:{{ i.tagBg }};color:{{ i.tagFg }};font-size:10px;font-weight:500;display:inline-flex;align-items:center">{{ i.tag }}</span>
+                        </sc-if>
+                      </span>
+                      <span style="font-size:12.5px;line-height:1.4;color:#5F5D59">{{ i.desc }}</span>
+                    </span>
+                    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none">
+                      <span style="font-family:'Gambarino',serif;font-weight:400;font-size:20px;letter-spacing:-.02em">{{ i.price }}</span>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:{{ i.chev }};transition:transform 240ms cubic-bezier(.2,.8,.2,1)" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </span>
+                  </button>
+                  <div style="height:{{ i.h }};overflow:hidden;transition:height 280ms cubic-bezier(.2,.8,.2,1)">
+                    <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:14px">
+                      <div style="height:1px;background:rgba(13,13,14,.07)"></div>
+                      <div style="display:flex;flex-direction:column;gap:10px">
+                        <span style="font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5F5D59">Ce que tu reçois</span>
+                        <sc-for list="{{ i.contents }}" as="c" hint-placeholder-count="4">
+                          <span style="display:flex;gap:10px;align-items:flex-start">
+                            <span style="width:20px;height:20px;border-radius:999px;background:{{ i.tint }};color:{{ i.ink }};font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px">{{ c.n }}</span>
+                            <span style="font-size:13px;line-height:1.45;color:#3C3A37">{{ c.label }}</span>
+                          </span>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;color:#5F5D59">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        <span>{{ i.delivery }}</span>
+                      </div>
+                      <button type="button" onClick="{{ i.buy }}" style="height:50px;border:none;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-family:'Satoshi',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.98)">{{ i.cta }}</button>
+                      <sc-if value="{{ i.included }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:11.5px;line-height:1.45;color:#5F5D59;text-align:center">Déjà inclus dans Atelier — <a href="#plans" onClick="{{ showPlans }}" style="font-weight:500;color:#0D0D0E">voir l'abonnement</a></span>
+                      </sc-if>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background:#DEDAF6;border-radius:30px;padding:22px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:23px;letter-spacing:-.02em;color:#241F52">Les cinq packs</span>
+                  <span style="font-size:12.5px;line-height:1.45;color:#4B4488">Occasion, Voyage, Audit, Couleurs, Défi. Utilisables quand tu veux.</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;flex:none">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:24px;letter-spacing:-.02em;color:#241F52">14,99 €</span>
+                  <span style="font-size:11.5px;color:#4B4488;text-decoration:line-through">19,95 €</span>
+                </div>
+              </div>
+              <button type="button" onClick="{{ buyBundle }}" style="height:50px;border:none;border-radius:999px;background:#FFFFFF;color:#241F52;font-family:'Satoshi',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.98)">Prendre les cinq — 14,99 €</button>
+            </div>
+
+            <span style="font-size:11.5px;line-height:1.5;color:#5F5D59;padding:0 4px">Paiement une fois, accès définitif. Ce que tu achètes ici est déduit de ton premier mois d'Atelier.</span>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ isPlans }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute;left:0;right:0;bottom:86px;padding:14px 20px 16px;background:linear-gradient(to top,rgba(238,237,234,1) 62%,rgba(238,237,234,0));display:flex;flex-direction:column;gap:8px">
+          <button type="button" onClick="{{ subscribe }}" style="height:54px;border:none;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.98)">{{ ctaLabel }}</button>
+          <span style="text-align:center;font-size:11px;color:#5F5D59">{{ ctaNote }}</span>
+        </div>
+      </sc-if>
+
+      <div style="position:absolute;inset:0;z-index:2;background:rgba(13,13,14,{{ scrimA }});opacity:{{ scrimO }};pointer-events:{{ sheetPE }};transition:all 260ms cubic-bezier(.2,.8,.2,1)" onClick="{{ closeSheet }}"></div>
+
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#F3F2EF;border-radius:32px 32px 44px 44px;padding:14px 20px 96px;z-index:2;display:flex;flex-direction:column;gap:14px;transform:{{ sheetT }};pointer-events:{{ sheetPE }};transition:transform 280ms cubic-bezier(.2,.8,.2,1);box-shadow:0 -20px 60px rgba(0,0,0,.18)">
+        <div style="width:40px;height:4px;border-radius:999px;background:#D6D4CF;align-self:center"></div>
+        <div style="font-family:'Gambarino',serif;font-weight:400;font-size:24px;letter-spacing:-.02em">{{ sheetTitle }}</div>
+        <div style="font-size:13.5px;line-height:1.5;color:#5F5D59">{{ sheetBody }}</div>
+        <sc-if value="{{ sheetHasPromo }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#F4EBC6;border-radius:20px;padding:14px 16px;font-size:12.5px;line-height:1.45;color:#6B5B14">Ton premier mois d'Atelier passe à −50 %, cet achat est déduit.</div>
+        </sc-if>
+        <button type="button" onClick="{{ closeSheet }}" style="height:52px;border:none;border-radius:999px;background:#0D0D0E;color:#F2F1EE;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.98)">C'est noté</button>
+      </div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:12px;height:62px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 12px">
+        <a href="Accueil.dc.html" aria-label="Accueil" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg></a>
+        <a href="Dressing Portants.dc.html" aria-label="Dressing" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+        <a href="Kode.dc.html" aria-label="Kode" style="position:relative;width:56px;height:56px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(13,13,14,.35)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></a>
+        <a href="Calendrier.dc.html" aria-label="Calendrier" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></a>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:320px;display:flex;flex-direction:column;gap:12px;padding-top:34px">
+    <div style="font-size:13px;font-weight:500">Deux façons de payer</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Abonnements pour la durée, boutique pour l'unité. Chaque pack s'ouvre sur le détail de ce qu'il contient : quatre lignes concrètes, un délai, un prix. L'alternative « déjà inclus dans Atelier » est écrite sous le bouton plutôt qu'imposée en pop-up.
+    </div>
+    <div style="font-size:13px;font-weight:500;margin-top:8px">Agrandir la garde-robe</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      La jauge de places ouvre la boutique en noir : c'est la seule limite visible du dressing. L'extension de 30 places s'achète une fois, la jauge se met à jour sous les yeux. Au-delà, c'est Couture qui lève la limite.
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <a href="Accueil.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Accueil</a>
+      <a href="Calendrier.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Calendrier</a>
+      <a href="Parametres.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Mon compte</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980}}">
+const PLANS = [
+  { id: "capsule", name: "Capsule", note: "Pour commencer sans se presser", month: "6,99 €", year: "59,99 €", perMonth: "soit 5,00 € par mois",
+    features: ["Jusqu'à 60 pièces", "20 questions à Kode par mois", "Tenue du jour et agenda"] },
+  { id: "atelier", name: "Atelier", note: "Le dressing complet, Kode sans limite", month: "12,99 €", year: "109,99 €", perMonth: "soit 9,17 € par mois", flagged: true,
+    features: ["Jusqu'à 200 pièces", "Kode sans limite", "Les cinq packs inclus"] },
+  { id: "couture", name: "Couture", note: "Pour les garde-robes sans fin", month: "24,99 €", year: "219,99 €", perMonth: "soit 18,33 € par mois",
+    features: ["Pièces illimitées", "Audit de garde-robe chaque trimestre", "Prêts entre amies illimités"] }
+];
+const ITEMS = [
+  { id: "occasion", name: "Pack Occasion", price: "3,99 €", tag: "Le plus pris", tagBg: "#F4EBC6", tagFg: "#6B5B14", included: true,
+    desc: "Un mariage, un entretien, un dîner : la tenue est trouvée.",
+    tint: "#EDE3D8", ink: "#6B5C4E", icon: "M12 3l1.9 4.6L19 8.2l-3.8 3.4 1.1 5-4.3-2.6L7.7 16.6l1.1-5L5 8.2l5.1-.6Z",
+    delivery: "Prêt en 2 minutes, valable 30 jours",
+    cta: "Préparer mon occasion — 3,99 €",
+    contents: ["Le code vestimentaire décrypté : cocktail, black tie, casual chic, ce qui se porte et ce qui se remarque", "Trois tenues complètes montées depuis tes propres pièces", "Ce qui manque, et par quoi le remplacer dans ton dressing", "La check-list accessoires, chaussures et plan B si la météo tourne"] },
+  { id: "voyage", name: "Capsule voyage", price: "5,99 €", included: true,
+    desc: "Tes dates, ta destination, une valise qui tient debout.",
+    tint: "#DEDAF6", ink: "#4B4488", icon: "M4 8h16v12H4zM9 8V5h6v3",
+    delivery: "Prêt en 3 minutes, modifiable jusqu'au départ",
+    cta: "Composer ma valise — 5,99 €",
+    contents: ["La valise calibrée sur la durée du séjour et la météo sur place", "Douze pièces qui font neuf tenues, sans doublon", "L'ordre de portage jour par jour, y compris l'avion", "La liste de rangement à cocher et ce qui se relave sur place"] },
+  { id: "audit", name: "Audit de garde-robe", price: "5,99 €",
+    desc: "Ce qui dort, ce qui double, ce qui manque vraiment.",
+    tint: "#F4EBC6", ink: "#6B5B14", icon: "M5 19V9m7 10V5m7 14v-6",
+    delivery: "Rapport complet en 5 minutes",
+    cta: "Lancer l'audit — 5,99 €",
+    contents: ["Les pièces qui n'ont pas bougé depuis six mois, listées et chiffrées", "Tes doublons réels : combien de chemises blanches, combien portées", "Les cinq trous de ta garde-robe, classés par usage", "Ton coût par port moyen et un plan d'achat sur trois mois"] },
+  { id: "couleurs", name: "Analyse couleurs", price: "2,99 €",
+    desc: "Tes teintes, testées sur les vêtements que tu as déjà.",
+    tint: "#EDE3D8", ink: "#6B5C4E", icon: "M12 4a8 8 0 1 0 0 16h2a2 2 0 0 0 0-4 2 2 0 0 1 0-4h2a2 2 0 0 0 2-2 8 8 0 0 0-6-6Z",
+    delivery: "Résultat immédiat, gardé dans ton profil",
+    cta: "Trouver ma palette — 2,99 €",
+    contents: ["Ta palette en douze teintes, appliquée à tes pièces et pas à une photo générique", "Les trois couleurs qui t'éteignent, avec leur remplacement", "Les associations qui marchent déjà dans tes portants", "Un filtre palette activable sur tout le dressing"] },
+  { id: "defi", name: "Défi 30 jours", price: "0,99 €", tag: "Nouveau", tagBg: "#DEDAF6", tagFg: "#3F3A7A",
+    desc: "Un mois sans rien acheter de neuf, une contrainte par jour.",
+    tint: "#DEDAF6", ink: "#4B4488", icon: "M6 4v9a6 6 0 0 0 12 0V4M9 20h6",
+    delivery: "Commence demain matin, s'arrête quand tu veux",
+    cta: "Relever le défi — 0,99 €",
+    contents: ["Trente jours sans achat neuf, suivis dans l'app", "Une contrainte par jour tirée de ton dressing : une couleur, une pièce oubliée, un accessoire", "Les pièces qui n'avaient pas servi depuis six mois remises en jeu", "Le bilan à la fin : ports gagnés, euros non dépensés"] }
+];
+class Component extends DCLogic {
+  state = { tab: "plans", period: "year", plan: "atelier", sheet: null, extra: 0, open: null };
+  open_(title, body, promo) { this.setState({ sheet: { title: title, body: body, promo: !!promo } }); }
+  renderVals() {
+    const s = this.state;
+    const yearly = s.period === "year";
+    const sel = PLANS.find(p => p.id === s.plan);
+    const places = 200 + s.extra * 30;
+    const used = 128;
+    const left = places - used;
+    return {
+      isPlans: s.tab === "plans",
+      isShop: s.tab === "shop",
+      showPlans: () => this.setState({ tab: "plans" }),
+      showShop: () => this.setState({ tab: "shop" }),
+      tabPlansBg: s.tab === "plans" ? "#0D0D0E" : "transparent",
+      tabPlansFg: s.tab === "plans" ? "#FFFFFF" : "#5F5D59",
+      tabShopBg: s.tab === "shop" ? "#0D0D0E" : "transparent",
+      tabShopFg: s.tab === "shop" ? "#FFFFFF" : "#5F5D59",
+      pickYear: () => this.setState({ period: "year" }),
+      pickMonth: () => this.setState({ period: "month" }),
+      yearBg: yearly ? "#0D0D0E" : "transparent",
+      yearFg: yearly ? "#FFFFFF" : "#5F5D59",
+      yearTagBg: yearly ? "rgba(255,255,255,.16)" : "#F3F2EF",
+      yearTagFg: yearly ? "#F2F1EE" : "#5F5D59",
+      monthBg: yearly ? "transparent" : "#0D0D0E",
+      monthFg: yearly ? "#5F5D59" : "#FFFFFF",
+      plans: PLANS.map(p => {
+        const on = p.id === s.plan;
+        return {
+          name: p.name, note: p.note, flagged: !!p.flagged,
+          price: yearly ? p.year : p.month,
+          period: yearly ? p.perMonth : "par mois",
+          bg: on ? "#0D0D0E" : "#FFFFFF",
+          fg: on ? "#F2F1EE" : "#0D0D0E",
+          muted: on ? "#B7B5B1" : "#5F5D59",
+          features: p.features.map(f => ({ label: f, color: on ? "#D8D6D1" : "#5F5D59" })),
+          pick: () => this.setState({ plan: p.id })
+        };
+      }),
+      ctaLabel: "Continuer avec " + sel.name + " — " + (yearly ? sel.year : sel.month),
+      ctaNote: yearly ? "Premier mois offert, puis facturé une fois par an." : "Facturé chaque mois, sans engagement.",
+      subscribe: () => this.open_("Abonnement " + sel.name, (yearly ? sel.year + " par an, " + sel.perMonth.replace("soit ", "") : sel.month + " par mois") + ". Le renouvellement se coupe depuis Mon compte, à tout moment.", sel.id === "atelier"),
+      used: used,
+      places: places,
+      fill: Math.min(100, Math.round(used / places * 100)) + "%",
+      spaceLeftLabel: left + " places libres",
+      buySpace: () => { this.setState(st => ({ extra: st.extra + 1 })); this.open_("Achat confirmé", "+30 places · 4,99 €. Ton dressing accepte maintenant " + (places + 30) + " pièces.", true); },
+      items: ITEMS.map(i => {
+        const on = s.open === i.id;
+        return {
+          name: i.name, price: i.price, desc: i.desc, tag: i.tag || false, tagBg: i.tagBg, tagFg: i.tagFg,
+          included: !!i.included, tint: i.tint, ink: i.ink, icon: i.icon, delivery: i.delivery, cta: i.cta,
+          contents: i.contents.map((c, n) => ({ n: n + 1, label: c })),
+          bg: on ? "#FFFFFF" : "#FBFAF8",
+          chev: on ? "rotate(180deg)" : "rotate(0deg)",
+          h: on ? "auto" : "0px",
+          toggle: () => this.setState(st => ({ open: st.open === i.id ? null : i.id })),
+          buy: () => this.open_("Achat confirmé", i.name + " · " + i.price + ". Tu le retrouves dans Mon compte, rubrique Achats.", true)
+        };
+      }),
+      buyBundle: () => this.open_("Les cinq packs", "14,99 € au lieu de 19,95 €. Occasion, Voyage, Audit, Couleurs et Défi sont débloqués, sans date limite.", true),
+      sheetTitle: s.sheet ? s.sheet.title : "",
+      sheetBody: s.sheet ? s.sheet.body : "",
+      sheetHasPromo: !!(s.sheet && s.sheet.promo),
+      sheetT: s.sheet ? "translateY(0)" : "translateY(110%)",
+      sheetPE: s.sheet ? "auto" : "none",
+      scrimO: s.sheet ? 1 : 0,
+      scrimA: s.sheet ? ".38" : "0",
+      closeSheet: () => this.setState({ sheet: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

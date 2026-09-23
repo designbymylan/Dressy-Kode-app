@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E}a:hover{color:#A88B61}
+</style>
+</helmet>
+<div style="max-width:1180px;margin:0 auto;padding:56px 28px 96px;display:flex;flex-direction:column;gap:64px">
+
+  <header style="display:flex;flex-direction:column;gap:14px">
+    <div style="font-family:'Gambarino',serif;font-weight:400;font-size:15px;letter-spacing:.2em;text-transform:uppercase">Dresskode</div>
+    <h1 style="margin:0;font-family:'Gambarino',serif;font-weight:400;font-size:38px;letter-spacing:-.02em;line-height:1.05">Design system</h1>
+    <p style="margin:0;max-width:560px;font-size:15px;line-height:1.45;color:#5F5D59;text-wrap:pretty">Noir, blanc, crème. Aucune bordure de carte, aucune couleur d'interface : la hiérarchie vient du remplissage, du poids et de l'ombre. La couleur n'arrive que par les vêtements.</p>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Couleurs — clair</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px">
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#EEEDEA;box-shadow:0 10px 30px rgba(0,0,0,.06)"></div><div style="font-size:11.5px"><b style="font-weight:500">desk</b> <span style="color:#5F5D59">#EEEDEA</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06)"></div><div style="font-size:11.5px"><b style="font-weight:500">ground</b> <span style="color:#5F5D59">#FFFFFF</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#F3F2EF;box-shadow:0 10px 30px rgba(0,0,0,.06)"></div><div style="font-size:11.5px"><b style="font-weight:500">tile</b> <span style="color:#5F5D59">#F3F2EF</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#E7E5E0"></div><div style="font-size:11.5px"><b style="font-weight:500">tile-2</b> <span style="color:#5F5D59">#E7E5E0</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#0D0D0E"></div><div style="font-size:11.5px"><b style="font-weight:500">ink</b> <span style="color:#5F5D59">#0D0D0E</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#5F5D59"></div><div style="font-size:11.5px"><b style="font-weight:500">muted</b> <span style="color:#5F5D59">#5F5D59</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#ECEAE6"></div><div style="font-size:11.5px"><b style="font-weight:500">line</b> <span style="color:#5F5D59">#ECEAE6</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#A88B61"></div><div style="font-size:11.5px"><b style="font-weight:500">hi</b> <span style="color:#5F5D59">#A88B61</span></div></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Couleurs — sombre</div>
+    <div style="background:#0A0A0B;border-radius:28px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px">
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#0A0A0B;box-shadow:inset 0 0 0 1px #262629"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">desk</b> <span style="color:#8E8C88">#0A0A0B</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#141416"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">ground</b> <span style="color:#8E8C88">#141416</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#1B1B1E"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">tile</b> <span style="color:#8E8C88">#1B1B1E</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#232327"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">tile-2</b> <span style="color:#8E8C88">#232327</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#F2F1EE"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">ink</b> <span style="color:#8E8C88">#F2F1EE</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#8E8C88"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">muted</b> <span style="color:#8E8C88">#8E8C88</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#262629"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">line</b> <span style="color:#8E8C88">#262629</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="height:72px;border-radius:20px;background:#C4A575"></div><div style="font-size:11.5px;color:#F2F1EE"><b style="font-weight:500">hi</b> <span style="color:#8E8C88">#C4A575</span></div></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Accents pâles — fonds de section</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+      <div style="background:#EDE3D8;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:150px">
+        <span style="align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.75);font-size:10.5px;font-weight:500;color:#7A6A5C;display:inline-flex;align-items:center">sable</span>
+        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:#3A322B">Tenue du jour</span>
+        <span style="font-size:12px;line-height:1.45;color:#6B5C4E;margin-top:auto">Texte sur sable : #3A322B et #6B5C4E.</span>
+      </div>
+      <div style="background:#DEDAF6;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:150px">
+        <span style="align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.75);font-size:10.5px;font-weight:500;color:#4B4488;display:inline-flex;align-items:center">lilas</span>
+        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:#241F52">Cercle et ajouts</span>
+        <span style="font-size:12px;line-height:1.45;color:#4B4488;margin-top:auto">Texte sur lilas : #241F52 et #4B4488.</span>
+      </div>
+      <div style="background:#F4EBC6;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:150px">
+        <span style="align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.75);font-size:10.5px;font-weight:500;color:#6B5B14;display:inline-flex;align-items:center">beurre</span>
+        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:#4A3F0B">Chiffres et photo</span>
+        <span style="font-size:12px;line-height:1.45;color:#6B5B14;margin-top:auto">Texte sur beurre : #4A3F0B et #6B5B14.</span>
+      </div>
+      <div style="background:#0D0D0E;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:150px">
+        <span style="align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.14);font-size:10.5px;font-weight:500;color:#F2F1EE;display:inline-flex;align-items:center">encre</span>
+        <span style="font-family:'Gambarino',serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:#F2F1EE">Action et Kode</span>
+        <span style="font-size:12px;line-height:1.45;color:#B7B5B1;margin-top:auto">Une seule zone noire par écran : le bouton principal ou Kode.</span>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:#5F5D59;max-width:640px">Les accents ne sont que des fonds de section, jamais des textes ni des icônes. Un écran en porte deux au maximum, le reste reste blanc et crème — les vêtements gardent toujours la couleur la plus forte de l'écran.</div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Typographie</div>
+    <div style="background:#FFFFFF;border-radius:28px;padding:32px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:20px">
+        <div style="font-family:'Gambarino',serif;font-weight:400;font-size:36px;letter-spacing:-.02em">Ton dressing, en vitrine.</div>
+        <div style="font-size:11.5px;color:#5F5D59">Titre XL · Gambarino Regular · 36 px</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:20px">
+        <div style="font-family:'Gambarino',serif;font-weight:400;font-size:23px;letter-spacing:-.02em">Cette semaine</div>
+        <div style="font-size:11.5px;color:#5F5D59">Titre · Gambarino Regular · 23 px</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:20px">
+        <div style="font-size:15px;line-height:1.45;max-width:420px">Tu pourrais ressortir le trench beige : il n'a pas servi depuis mars et il va bien avec le pantalon écru.</div>
+        <div style="font-size:11.5px;color:#5F5D59">Corps · Satoshi Regular · 15 px / 1,45</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:20px">
+        <div style="font-size:13px;color:#5F5D59">18 ports · 2,40 € par port</div>
+        <div style="font-size:11.5px;color:#5F5D59">Secondaire · Satoshi Medium · 13 px</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:20px">
+        <div style="font-size:11.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#5F5D59">Porté 3 fois ce mois-ci</div>
+        <div style="font-size:11.5px;color:#5F5D59">Micro · Satoshi Medium · 11,5 px</div>
+      </div>
+      <div style="height:1px;background:#ECEAE6"></div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px">
+        <div style="font-family:'Gambarino',serif;font-weight:400;font-size:20px;letter-spacing:.2em;text-transform:uppercase">Dresskode</div>
+        <div style="font-size:11.5px;color:#5F5D59">Marque · Gambarino · capitales · 0,2 em</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Bouton — états</div>
+    <div style="background:#FFFFFF;border-radius:28px;padding:32px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><div style="height:48px;padding:0 26px;border-radius:999px;background:#0D0D0E;color:#fff;font-size:15px;font-weight:500;display:flex;align-items:center">Je la porte</div><span style="font-size:11.5px;color:#5F5D59">repos</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><div style="height:48px;padding:0 26px;border-radius:999px;background:#242427;color:#fff;font-size:15px;font-weight:500;display:flex;align-items:center">Je la porte</div><span style="font-size:11.5px;color:#5F5D59">survol</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><div style="height:48px;padding:0 26px;border-radius:999px;background:#0D0D0E;color:#fff;font-size:15px;font-weight:500;display:flex;align-items:center;transform:scale(.96);opacity:.9">Je la porte</div><span style="font-size:11.5px;color:#5F5D59">pressé</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><div style="height:48px;padding:0 26px;border-radius:999px;background:#E7E5E0;color:#5F5D59;font-size:15px;font-weight:500;display:flex;align-items:center">Je la porte</div><span style="font-size:11.5px;color:#5F5D59">désactivé</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><div style="height:48px;padding:0 26px;border-radius:999px;background:#0D0D0E;color:#fff;font-size:15px;font-weight:500;display:flex;align-items:center;box-shadow:0 0 0 3px #FFFFFF,0 0 0 5px #A88B61">Je la porte</div><span style="font-size:11.5px;color:#5F5D59">focus clavier</span></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+        <button type="button" style="height:48px;padding:0 26px;border:none;border-radius:999px;background:#0D0D0E;color:#fff;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-hover="background:#242427" style-active="transform:scale(.96)">Principal, vivant</button>
+        <button type="button" style="height:48px;padding:0 26px;border:none;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-hover="background:#E7E5E0" style-active="transform:scale(.96)">Secondaire</button>
+        <button type="button" style="height:48px;padding:0 22px;border:none;border-radius:999px;background:transparent;color:#5F5D59;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-hover="color:#0D0D0E">Discret</button>
+        <div style="font-size:12.5px;color:#5F5D59;max-width:260px">Hauteur de cible minimale 44 px. Tout ce qui se clique est en rayon 999 px.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Chip, segment, feuille</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+      <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:16px">
+        <div style="font-size:13px;font-weight:500">Chips d'humeur</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="height:38px;padding:0 16px;border-radius:999px;background:#0D0D0E;color:#fff;font-size:13px;font-weight:500;display:inline-flex;align-items:center">Confortable</span>
+          <span style="height:38px;padding:0 16px;border-radius:999px;background:#F3F2EF;font-size:13px;font-weight:500;display:inline-flex;align-items:center">Soignée</span>
+          <span style="height:38px;padding:0 16px;border-radius:999px;background:#F3F2EF;font-size:13px;font-weight:500;display:inline-flex;align-items:center">Discrète</span>
+          <span style="height:38px;padding:0 16px;border-radius:999px;background:#F3F2EF;color:#C7C5C0;font-size:13px;font-weight:500;display:inline-flex;align-items:center">Sportive</span>
+        </div>
+        <div style="font-size:11.5px;color:#5F5D59">actif · repos · repos · désactivé</div>
+        <div style="font-size:13px;font-weight:500;margin-top:8px">Segment</div>
+        <div style="display:flex;background:#F3F2EF;border-radius:999px;padding:4px;gap:4px">
+          <div style="flex:1;height:38px;border-radius:999px;background:#FFFFFF;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">Portants</div>
+          <div style="flex:1;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#5F5D59">Grille</div>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;font-weight:500">Feuille de dialogue</div>
+        <div style="background:#F3F2EF;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:12px">
+          <div style="width:40px;height:4px;border-radius:999px;background:#D6D4CF;align-self:center"></div>
+          <div style="font-family:'Gambarino',serif;font-weight:400;font-size:21px;letter-spacing:-.02em">Achat confirmé</div>
+          <div style="font-size:13px;color:#5F5D59">Pack Occasion · 3,99 €. Ton premier mois d'Atelier passe à −50 %, l'achat est déduit.</div>
+          <div style="height:48px;border-radius:999px;background:#0D0D0E;color:#fff;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center">C'est noté</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Bibliothèque de vêtements — illustrations à plat</div>
+    <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px">
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M22 8 L26 6 Q32 11 38 6 L42 8 L55 16 L50 25 L45 21 V56 H19 V21 L14 25 L9 16 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M26 7 Q32 12 38 7" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">T-shirt</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M23 8 L32 15 L41 8 L54 15 L49 25 L45 22 V56 H19 V22 L15 25 L10 15 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M27 8 L32 15 L37 8" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M32 15 V56" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M19 48 H45" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Chemise</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M22 8 L26 6 Q32 11 38 6 L42 8 L56 17 L51 41 L44 38 V56 H20 V38 L13 41 L8 17 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 50 H44" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M51 41 L45 39" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M13 41 L19 39" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Maille</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M23 9 L32 17 L41 9 L52 13 L56 40 L48 42 V54 H16 V42 L8 40 L12 13 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M23 9 L26 12 L32 26 L38 12 L41 9" fill="none" stroke="#B4B2AD" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M32 26 V54" fill="none" stroke="#B4B2AD" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Blazer</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M24 8 L32 15 L40 8 L50 12 L54 38 L47 40 L49 60 H15 L17 40 L10 38 L14 12 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M17 34 H47" fill="none" stroke="#B4B2AD" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/><path d="M32 15 V60" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M24 8 L28 13 L32 15 L36 13 L40 8" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Trench</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M24 7 L32 13 L40 7 L52 14 L47 24 L43 21 L50 57 H14 L21 21 L17 24 L12 14 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 30 H42" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Robe</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M19 7 H45 L48 30 L44 58 H35 L32 32 L29 58 H20 L16 30 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M19 13 H45" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M32 14 V22" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Jean</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M21 10 H43 L52 44 H12 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M21 15 H43" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Jupe</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M9 43 H20 L29 36 L35 38 L40 44 H53 Q59 46 59 51 V54 H9 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 43 L29 36" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M9 50 H59" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Baskets</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M13 44 Q26 39 38 20 L45 24 L32 46 H45 V54 H13 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Escarpin</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 22 H47 L51 54 H13 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M25 22 V18 A7 7 0 0 1 39 18 V22" fill="none" stroke="#C9C7C2" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Sac</span></div>
+      <div style="background:#F3F2EF;border-radius:20px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="62" height="62" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 46 Q32 34 56 46 V52 H8 Z" fill="#E7E5E0" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M19 47 Q23 17 32 17 Q41 17 45 47" fill="none" stroke="#C9C7C2" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-size:10.5px;color:#5F5D59">Chapeau</span></div>
+    </div>
+    <div style="font-size:12.5px;color:#5F5D59;max-width:560px">Chaque vêtement est un tracé unique : le remplissage prend la couleur réelle du vêtement, le contour reste un gris 1,2 px. Aucune photo, aucun mannequin, aucune 3D.</div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Portant, cintre, vignette</div>
+    <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:28px">
+      <div style="position:relative;height:190px">
+        <div style="position:absolute;left:0;right:0;top:16px;height:5px;border-radius:999px;background:linear-gradient(180deg,#FFFFFF,#CFCDC8 40%,#9A9893)"></div>
+        <div style="position:absolute;inset:0;display:flex;gap:18px;align-items:flex-start;padding-top:8px">
+          <div style="width:96px;display:flex;flex-direction:column;align-items:center;transform:rotate(-4deg);transform-origin:50% 8px">
+            <svg width="44" height="22" viewBox="0 0 44 22" aria-hidden="true"><path d="M22 3a3 3 0 0 1 3 3c0 2-3 2-3 5M4 20l18-9 18 9" fill="none" stroke="#A9A7A2" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <div style="margin-top:-4px;width:92px;height:118px;border-radius:20px;background:#F3F2EF;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.06)"><svg width="66" height="66" viewBox="0 0 64 64" aria-hidden="true"><path d="M22 8 L26 6 Q32 11 38 6 L42 8 L55 16 L50 25 L45 21 V56 H19 V21 L14 25 L9 16 Z" fill="#D9DCE0" stroke="#BCC0C6" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+          </div>
+          <div style="width:112px;display:flex;flex-direction:column;align-items:center">
+            <svg width="46" height="22" viewBox="0 0 44 22" aria-hidden="true"><path d="M22 3a3 3 0 0 1 3 3c0 2-3 2-3 5M4 20l18-9 18 9" fill="none" stroke="#5F5D59" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <div style="margin-top:-4px;width:108px;height:138px;border-radius:24px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px rgba(0,0,0,.12)"><svg width="84" height="84" viewBox="0 0 64 64" aria-hidden="true"><path d="M23 9 L32 17 L41 9 L52 13 L56 40 L48 42 V54 H16 V42 L8 40 L12 13 Z" fill="#2B2E33" stroke="#1D2024" stroke-width="1.2" stroke-linejoin="round"/><path d="M23 9 L26 12 L32 26 L38 12 L41 9" fill="none" stroke="#6E7176" stroke-width="1.6" stroke-linejoin="round"/><path d="M32 26 V54" fill="none" stroke="#6E7176" stroke-width="1.6"/></svg></div>
+          </div>
+          <div style="width:96px;display:flex;flex-direction:column;align-items:center;transform:rotate(3deg);transform-origin:50% 8px">
+            <svg width="44" height="22" viewBox="0 0 44 22" aria-hidden="true"><path d="M22 3a3 3 0 0 1 3 3c0 2-3 2-3 5M4 20l18-9 18 9" fill="none" stroke="#A9A7A2" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <div style="margin-top:-4px;width:92px;height:118px;border-radius:20px;background:#F3F2EF;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.06)"><svg width="66" height="66" viewBox="0 0 64 64" aria-hidden="true"><path d="M24 7 L32 13 L40 7 L52 14 L47 24 L43 21 L50 57 H14 L21 21 L17 24 L12 14 Z" fill="#C9B9A6" stroke="#B3A392" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:#5F5D59;max-width:620px">Barre métallique, cintres suspendus, balancement −4° à +4° pendant le défilement. Le cintre central est plus grand, blanc et net ; les voisins reculent sur la tuile et perdent l'ombre portée.</div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Bulle Kode, barre d'onglets, mannequin</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+      <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:12px">
+        <div style="align-self:flex-end;max-width:80%;background:#0D0D0E;color:#fff;border-radius:22px 22px 6px 22px;padding:12px 16px;font-size:15px;line-height:1.4">J'ai un entretien vendredi.</div>
+        <div style="align-self:flex-start;max-width:85%;background:#F3F2EF;border-radius:22px 22px 22px 6px;padding:12px 16px;font-size:15px;line-height:1.4">Tu pourrais partir sur le blazer noir et le pantalon écru. C'est net sans être raide, et tu l'as déjà porté à l'aise.</div>
+        <div style="align-self:flex-start;display:flex;gap:5px;background:#F3F2EF;border-radius:999px;padding:12px 16px">
+          <span style="width:6px;height:6px;border-radius:999px;background:#5F5D59"></span>
+          <span style="width:6px;height:6px;border-radius:999px;background:#C4C2BE"></span>
+          <span style="width:6px;height:6px;border-radius:999px;background:#DEDCD8"></span>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:20px;align-items:center;justify-content:center">
+        <div style="width:100%;max-width:330px;height:62px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 10px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <div style="width:48px;height:48px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        </div>
+        <div style="font-size:11.5px;color:#5F5D59">Verre translucide, détachée du bas de 12 px, 5 onglets</div>
+        <div style="display:flex;gap:18px;align-items:flex-end">
+          <svg width="66" height="128" viewBox="0 0 66 128" aria-hidden="true"><circle cx="33" cy="15" r="9" fill="#E7E5E0"/><path d="M33 26c-8 0-13 5-14 12l-3 18 6 2 2-8v20c0 9-2 22-3 33h6l4-28 4 28h6c-1-11-3-24-3-33V50l2 8 6-2-3-18c-1-7-6-12-14-12Z" fill="#E7E5E0"/></svg>
+          <div style="font-size:12.5px;color:#5F5D59;max-width:150px">Mannequin : se déforme en direct selon les 4 mesures.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="font-family:'Satoshi',sans-serif;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5F5D59">Formes et mouvement</div>
+    <div style="background:#FFFFFF;border-radius:28px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.06);display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:24px;font-size:13px;line-height:1.5;color:#5F5D59">
+      <div><b style="color:#0D0D0E;font-weight:500">Rayons</b><br>Cliquable 999 px · cartes 20–28 px.</div>
+      <div><b style="color:#0D0D0E;font-weight:500">Ombre</b><br>0 10px 30px rgba(0,0,0,.06). Jamais de contour.</div>
+      <div><b style="color:#0D0D0E;font-weight:500">Grille</b><br>Marge 20 px · gouttière 12 px · pas vertical de 4 px.</div>
+      <div><b style="color:#0D0D0E;font-weight:500">Transitions</b><br>200–280 ms · cubic-bezier(.2,.8,.2,1) · tout se coupe avec prefers-reduced-motion.</div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

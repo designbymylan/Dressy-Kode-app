@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Gambarino';src:url('./fonts/Gambarino-Regular.woff2') format('woff2'),url('./fonts/Gambarino-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+body{margin:0;background:#EEEDEA;font-family:'Satoshi',sans-serif;color:#0D0D0E;-webkit-font-smoothing:antialiased}
+a{color:#0D0D0E;text-decoration:none}a:hover{color:#A88B61}
+[data-scroll]{scrollbar-width:none}[data-scroll]::-webkit-scrollbar{display:none}
+@keyframes kodepulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.75}}
+@keyframes kodedot{0%,60%,100%{opacity:.3}30%{opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="padding:48px 40px 80px;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:500 11px 'Satoshi',sans-serif;padding:3px 7px;background:#0D0D0E;color:#fff;border-radius:999px">7</span>
+      <span style="font-size:13px;font-weight:500">Kode — conversation</span>
+    </div>
+
+    <div style="width:390px;height:844px;border-radius:44px;background:#FFFFFF;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.14);display:flex;flex-direction:column">
+
+      <div style="height:52px;padding:0 28px 6px;display:flex;align-items:flex-end;justify-content:space-between;font-size:13px;font-weight:500">
+        <span>9:41</span>
+        <div style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border-radius:2px;background:#0D0D0E"></span><span style="width:20px;height:9px;border-radius:3px;background:#0D0D0E"></span></div>
+      </div>
+
+      <div style="padding:6px 20px 12px;display:flex;align-items:center;gap:12px">
+        <a href="Accueil.dc.html" aria-label="Retour" style="width:44px;height:44px;border-radius:999px;background:#F3F2EF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></a>
+        <div style="position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center">
+          <span style="position:absolute;inset:0;border-radius:999px;background:#0D0D0E;animation:kodepulse 2.6s cubic-bezier(.2,.8,.2,1) infinite"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" style="position:relative" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:1px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-family:'Gambarino',serif;font-weight:400;font-size:21px;letter-spacing:-.02em">Kode</span>
+            <span style="height:20px;padding:0 8px;border-radius:999px;background:#DEDAF6;font-size:10.5px;font-weight:500;letter-spacing:.04em;display:inline-flex;align-items:center;color:#4B4488">IA</span>
+          </div>
+          <span style="font-size:11.5px;color:#5F5D59">{{ quotaLabel }}</span>
+        </div>
+        <button type="button" onClick="{{ reset }}" aria-label="Nouvelle conversation" style="width:44px;height:44px;border:none;border-radius:999px;background:#F3F2EF;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#E7E5E0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D0D0E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 12a8 8 0 1 1 2.5 5.8"/><path d="M4 19v-6h6"/></svg></button>
+      </div>
+
+      <div data-scroll="" data-log="" style="flex:1;overflow-y:auto;padding:4px 20px 8px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ messages }}" as="msg" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column">
+
+            <sc-if value="{{ msg.isUser }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self:flex-end;max-width:82%;background:#0D0D0E;color:#F2F1EE;border-radius:22px 22px 6px 22px;padding:12px 16px;font-size:15px;line-height:1.45">{{ msg.text }}</div>
+            </sc-if>
+
+            <sc-if value="{{ msg.isKode }}" hint-placeholder-val="{{ true }}">
+              <div style="align-self:flex-start;max-width:86%;background:#F3F2EF;border-radius:22px 22px 22px 6px;padding:12px 16px;font-size:15px;line-height:1.45">{{ msg.text }}</div>
+            </sc-if>
+
+            <sc-if value="{{ msg.isTyping }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self:flex-start;display:flex;gap:5px;background:#F3F2EF;border-radius:999px;padding:14px 16px">
+                <span style="width:6px;height:6px;border-radius:999px;background:#5F5D59;animation:kodedot 1.2s linear infinite"></span>
+                <span style="width:6px;height:6px;border-radius:999px;background:#5F5D59;animation:kodedot 1.2s linear .2s infinite"></span>
+                <span style="width:6px;height:6px;border-radius:999px;background:#5F5D59;animation:kodedot 1.2s linear .4s infinite"></span>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ msg.isOutfit }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self:flex-start;width:100%;background:#FFFFFF;border-radius:26px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:12px">
+                <div style="background:#EDE3D8;border-radius:22px;height:186px;position:relative;overflow:hidden">
+                  <sc-for list="{{ msg.pieces }}" as="p" hint-placeholder-count="4">
+                    <div style="position:absolute;left:{{ p.x }};top:{{ p.y }};transform:rotate({{ p.r }})">
+                      <svg width="{{ p.size }}" height="{{ p.size }}" viewBox="0 0 64 64" aria-hidden="true"><sc-for list="{{ p.paths }}" as="q" hint-placeholder-count="1"><path d="{{ q.d }}" fill="{{ q.fill }}" stroke="{{ q.stroke }}" stroke-width="{{ q.w }}" stroke-linejoin="round" stroke-linecap="round"></path></sc-for></svg>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <span style="font-family:'Gambarino',serif;font-weight:400;font-size:19px;letter-spacing:-.02em">{{ msg.title }}</span>
+                  <span style="font-size:13px;line-height:1.45;color:#5F5D59">{{ msg.why }}</span>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button type="button" onClick="{{ msg.plan }}" style="flex:1;height:46px;border:none;border-radius:999px;background:{{ msg.planBg }};color:{{ msg.planFg }};font-family:'Satoshi',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.97)">{{ msg.planLabel }}</button>
+                  <button type="button" onClick="{{ msg.adjust }}" style="flex:1;height:46px;border:none;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-hover="background:#E7E5E0" style-active="transform:scale(.97)">Ajuster</button>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding:6px 20px 0;display:flex;gap:7px;overflow-x:auto" data-scroll="">
+        <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="3">
+          <button type="button" onClick="{{ sg.send }}" style="flex:none;height:38px;padding:0 15px;border:none;border-radius:999px;background:#F3F2EF;color:#0D0D0E;font-family:'Satoshi',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 240ms cubic-bezier(.2,.8,.2,1)" style-hover="background:#E7E5E0" style-active="transform:scale(.96)">{{ sg.label }}</button>
+        </sc-for>
+      </div>
+
+      <div style="padding:12px 20px 86px;display:flex;align-items:flex-end;gap:8px">
+        <div style="flex:1;background:#F3F2EF;border-radius:24px;padding:6px 6px 6px 16px;display:flex;align-items:flex-end;gap:8px">
+          <textarea data-input="" rows="1" placeholder="Écris à Kode…" onInput="{{ grow }}" style="flex:1;border:none;outline:none;resize:none;background:transparent;font-family:'Satoshi',sans-serif;font-size:15px;line-height:1.4;color:#0D0D0E;padding:11px 0;max-height:120px"></textarea>
+          <button type="button" onClick="{{ sendTyped }}" aria-label="Envoyer" style="width:44px;height:44px;border:none;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 240ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.94)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg></button>
+        </div>
+      </div>
+
+      <div style="position:absolute;left:20px;right:20px;bottom:12px;height:62px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-around;padding:0 12px">
+        <a href="Accueil.dc.html" aria-label="Accueil" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg></a>
+        <a href="Dressing Portants.dc.html" aria-label="Dressing" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+        <div style="width:48px;height:48px;border-radius:999px;background:#0D0D0E;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z"/></svg></div>
+        <a href="Calendrier.dc.html" aria-label="Calendrier" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></a>
+        <a href="Parametres.dc.html" aria-label="Mon compte" style="display:flex;width:44px;height:44px;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F5D59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:320px;display:flex;flex-direction:column;gap:12px;padding-top:34px">
+    <div style="font-size:13px;font-weight:500">Ce qui est vivant</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Appuie sur une suggestion ou écris : la bulle part à droite, Kode réfléchit trois points, puis répond — et sort une carte de tenue construite avec tes pièces quand la question porte sur quoi porter. « Prévoir pour demain » bascule en « Prévu pour demain ». Le champ grandit jusqu'à cinq lignes. Le quota descend à chaque question.
+    </div>
+    <div style="font-size:13px;font-weight:500;margin-top:8px">Règles tenues</div>
+    <div style="background:#FFFFFF;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:#5F5D59">
+      Kode ne propose que des pièces du dressing, ne cite aucune marque, et parle au conditionnel : « tu pourrais », jamais « tu dois ».
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <a href="Accueil.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Accueil</a>
+      <a href="Dressing Portants.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Dressing</a>
+      <a href="Fiche vetement.dc.html" style="height:40px;padding:0 16px;border-radius:999px;background:#FFFFFF;box-shadow:0 10px 30px rgba(0,0,0,.06);display:inline-flex;align-items:center;font-size:13px;font-weight:500">Fiche vêtement</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980}}">
+const G = {
+  tshirt: { out: "M22 8 L26 6 Q32 11 38 6 L42 8 L55 16 L50 25 L45 21 V56 H19 V21 L14 25 L9 16 Z", det: ["M26 7 Q32 12 38 7"] },
+  chemise: { out: "M23 8 L32 15 L41 8 L54 15 L49 25 L45 22 V56 H19 V22 L15 25 L10 15 Z", det: ["M27 8 L32 15 L37 8", "M32 15 V56", "M19 48 H45"] },
+  maille: { out: "M22 8 L26 6 Q32 11 38 6 L42 8 L56 17 L51 41 L44 38 V56 H20 V38 L13 41 L8 17 Z", det: ["M20 50 H44", "M51 41 L45 39", "M13 41 L19 39"] },
+  blazer: { out: "M23 9 L32 17 L41 9 L52 13 L56 40 L48 42 V54 H16 V42 L8 40 L12 13 Z", lapels: ["M23 9 L26 12 L32 26 L38 12 L41 9", "M32 26 V54"] },
+  trench: { out: "M24 8 L32 15 L40 8 L50 12 L54 38 L47 40 L49 60 H15 L17 40 L10 38 L14 12 Z", det: ["M32 15 V60", "M24 8 L28 13 L32 15 L36 13 L40 8"], belt: "M17 34 H47" },
+  robe: { out: "M24 7 L32 13 L40 7 L52 14 L47 24 L43 21 L50 57 H14 L21 21 L17 24 L12 14 Z", det: ["M22 30 H42"] },
+  jean: { out: "M19 7 H45 L48 30 L44 58 H35 L32 32 L29 58 H20 L16 30 Z", det: ["M19 13 H45", "M32 14 V22"] },
+  jupe: { out: "M21 10 H43 L52 44 H12 Z", det: ["M21 15 H43"] },
+  basket: { out: "M9 43 H20 L29 36 L35 38 L40 44 H53 Q59 46 59 51 V54 H9 Z", det: ["M20 43 L29 36", "M9 50 H59"] },
+  escarpin: { out: "M13 44 Q26 39 38 20 L45 24 L32 46 H45 V54 H13 Z", det: [] },
+  sac: { out: "M17 22 H47 L51 54 H13 Z", det: ["M25 22 V18 A7 7 0 0 1 39 18 V22"] }
+};
+function paths(shape, fill, stroke, lapel) {
+  const g = G[shape];
+  const out = [{ d: g.out, fill: fill, stroke: stroke, w: "1.2" }];
+  if (g.lapels) for (const d of g.lapels) out.push({ d: d, fill: "none", stroke: lapel || stroke, w: "1.6" });
+  if (g.belt) out.push({ d: g.belt, fill: "none", stroke: stroke, w: "3.4" });
+  for (const d of g.det || []) out.push({ d: d, fill: "none", stroke: stroke, w: "1.2" });
+  return out;
+}
+function piece(shape, fill, stroke, x, y, r, size, lapel) {
+  return { paths: paths(shape, fill, stroke, lapel), x: x + "px", y: y + "px", r: r + "deg", size: size };
+}
+const ENTRETIEN = {
+  title: "Net, sans être raide",
+  why: "Le blazer noir structure, le pantalon écru adoucit. Tu l'as déjà portée en juin et tu t'y sentais bien.",
+  pieces: [
+    piece("blazer", "#2B2E33", "#1D2024", 18, 12, -4, 112, "#6E7176"),
+    piece("jean", "#E9E2D6", "#D2CABC", 118, 34, 4, 104),
+    piece("escarpin", "#2B2E33", "#1D2024", 186, 104, 0, 78),
+    piece("sac", "#2B2E33", "#1D2024", 34, 112, 5, 66)
+  ]
+};
+const PLUIE = {
+  title: "Sec et simple",
+  why: "Trench beige sur maille olive : il pleut à midi, et ces deux-là ne craignent rien.",
+  pieces: [
+    piece("trench", "#C9B9A6", "#B3A392", 16, 8, -3, 118),
+    piece("maille", "#6E7048", "#585A38", 116, 30, 4, 100),
+    piece("basket", "#FFFFFF", "#D8D6D1", 184, 106, -2, 80),
+    piece("jean", "#5C7492", "#4A5F79", 36, 108, 6, 68)
+  ]
+};
+const SOIR = {
+  title: "Simple, un peu habillée",
+  why: "Robe noire et veste en jean : l'afterwork de jeudi est décontracté, ça évite de trop en faire.",
+  pieces: [
+    piece("robe", "#2B2E33", "#1D2024", 18, 10, -4, 114),
+    piece("blazer", "#7D94AD", "#6B7F96", 116, 32, 5, 102, "#BBCBDB"),
+    piece("basket", "#FFFFFF", "#D8D6D1", 186, 106, -2, 78),
+    piece("sac", "#7A3B44", "#612F37", 34, 112, 4, 66)
+  ]
+};
+const SCRIPT = [
+  { q: "Qu'est-ce que je mets vendredi ?", a: "Tu as un entretien à 10 h et 15°, couvert. Voilà ce que je ferais avec ce que tu as.", outfit: ENTRETIEN },
+  { q: "Il va pleuvoir demain", a: "Averses à partir de midi. Tu pourrais rester sur des pièces que la pluie n'abîme pas.", outfit: PLUIE },
+  { q: "Quelque chose pour l'afterwork", a: "Jeudi 19 h, ambiance détendue. Rien de neuf à acheter, tu as déjà ce qu'il faut.", outfit: SOIR },
+  { q: "Je n'ai rien à me mettre", a: "Tu as 128 pièces et 29 d'entre elles n'ont pas servi depuis six mois. Tu pourrais commencer par ressortir le trench beige — il va avec presque tous tes bas." }
+];
+const START = [
+  { kind: "kode", text: "Salut Sarah. Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà." }
+];
+class Component extends DCLogic {
+  state = { msgs: START.slice(), typing: false, quota: 12, used: [], planned: {} };
+  componentDidUpdate() {
+    const log = document.querySelector("[data-log]");
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+  ask(item) {
+    if (this.timer) return;
+    this.setState(s => ({
+      msgs: s.msgs.concat([{ kind: "user", text: item.q }]),
+      typing: true,
+      quota: Math.max(0, s.quota - 1),
+      used: s.used.concat([item.q])
+    }));
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      this.setState(s => {
+        const add = [{ kind: "kode", text: item.a }];
+        if (item.outfit) add.push({ kind: "outfit", outfit: item.outfit, id: item.q });
+        return { msgs: s.msgs.concat(add), typing: false };
+      });
+    }, 1100);
+  }
+  componentWillUnmount() { clearTimeout(this.timer); }
+  renderVals() {
+    const s = this.state;
+    const msgs = s.msgs.map(m => {
+      const base = { isUser: m.kind === "user", isKode: m.kind === "kode", isOutfit: m.kind === "outfit", isTyping: false, text: m.text || "" };
+      if (m.kind === "outfit") {
+        const planned = !!s.planned[m.id];
+        base.pieces = m.outfit.pieces;
+        base.title = m.outfit.title;
+        base.why = m.outfit.why;
+        base.planLabel = planned ? "Prévu pour demain" : "Prévoir pour demain";
+        base.planBg = planned ? "#F3F2EF" : "#0D0D0E";
+        base.planFg = planned ? "#5F5D59" : "#FFFFFF";
+        base.plan = () => this.setState(st => {
+          const p = Object.assign({}, st.planned);
+          p[m.id] = !p[m.id];
+          return { planned: p };
+        });
+        base.adjust = () => this.setState(st => ({ msgs: st.msgs.concat([{ kind: "kode", text: "Tu pourrais garder le bas et changer le haut : la chemise blanche ferait la même chose en plus doux." }]) }));
+      }
+      return base;
+    });
+    if (s.typing) msgs.push({ isUser: false, isKode: false, isOutfit: false, isTyping: true, text: "" });
+    return {
+      messages: msgs,
+      quotaLabel: s.quota + " questions restantes ce mois-ci",
+      suggestions: SCRIPT.filter(i => s.used.indexOf(i.q) < 0).map(i => ({ label: i.q, send: () => this.ask(i) })),
+      sendTyped: () => {
+        const el = document.querySelector("[data-input]");
+        const t = el && el.value.trim();
+        if (!t) { this.ask(SCRIPT.find(i => this.state.used.indexOf(i.q) < 0) || SCRIPT[0]); return; }
+        el.value = "";
+        el.style.height = "auto";
+        this.ask({ q: t, a: "Bonne question. Avec ce que tu as, je partirais sur quelque chose de simple — dis-moi l'heure et le lieu et j'affine." });
+      },
+      grow: (e) => {
+        const el = e.target;
+        el.style.height = "auto";
+        el.style.height = Math.min(120, el.scrollHeight) + "px";
+      },
+      reset: () => { clearTimeout(this.timer); this.timer = null; this.setState({ msgs: START.slice(), typing: false, used: [], planned: {} }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

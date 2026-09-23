@@ -1,0 +1,19 @@
+# Dépendances et builds
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Variables locales. Les clés d'API ne vivent jamais ici : elles sont dans
+# Supabase > Edge Functions > Secrets. Voir web/.env.local.example.
+.env
+.env*.local
+
+# Système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code : réglages propres à chaque poste
+.claude/settings.local.json
