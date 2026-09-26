@@ -32,6 +32,7 @@ const PATHS = {
   camera: 'M4 8h3l1.5-2h7L17 8h3v11H4ZM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z',
   image: 'M4 5h16v14H4ZM4 15l4.5-4.5L13 15l2.5-2.5L20 17M15.5 9h.01',
   send: 'M12 19V5M6 11l6-6 6 6',
+  mail: 'M4 6.5h16v11H4ZM4.5 7l7.5 6 7.5-6',
   trash: 'M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12',
   edit: 'M4 20h4L19 9l-4-4L4 16ZM13 7l4 4',
   bag: 'M5 8h14l-1 12H6ZM9 8V6.5a3 3 0 0 1 6 0V8',

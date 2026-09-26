@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import type { Piece, Weather } from '../data/wardrobe';
-import { wornLabel } from '../data/wardrobe';
+import { isNew, newLabel, wornLabel } from '../data/wardrobe';
 import { useTheme } from '../theme/ThemeProvider';
 import { Garment } from './Garment';
 import { Icon, type IconName } from './Icon';
@@ -104,9 +104,9 @@ export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; widt
       <View className="bg-raised items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.08), borderRadius: dense ? 16 : 22 }}>
         <Garment kind={piece.kind} tint={piece.tint} size={art} dark={scheme === 'dark'} label={piece.name} />
         {piece.wears === 0 && (
-          <View className="absolute bg-caution-soft" style={{ top: 8, left: 8, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <T v="small" tone="caution" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
-              Jamais
+          <View className={`absolute ${isNew(piece) ? 'bg-positive-soft' : 'bg-caution-soft'}`} style={{ top: 8, left: 8, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
+            <T v="small" tone={isNew(piece) ? 'positive' : 'caution'} style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+              {isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : 'Jamais'}
             </T>
           </View>
         )}

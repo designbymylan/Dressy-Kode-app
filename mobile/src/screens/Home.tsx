@@ -2,8 +2,10 @@ import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { EVENTS, TODAY_OUTFITS, WEATHER, DAYS_LETTER, dayDate, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
-import { MODULE_LABELS, sleeping, usageRate, useStore, type HomeModule } from '../state/store';
+import { WEATHER, WEATHER_WORD, DAYS_LETTER, dayDate, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
+import { MODULE_LABELS, eventsOf, sleeping, usageRate, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { missingForOutfit } from '../state/outfits';
+import { FirstRail } from '../ui/onboarding';
 import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -28,8 +30,9 @@ export function Home() {
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
   const byId = new Map(s.pieces.map((p) => [p.id, p]));
-  const outfit = TODAY_OUTFITS[s.outfitIndex];
-  const pieces = outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[];
+  const outfits = useTodayOutfits();
+  const outfit = outfits.length ? outfits[s.outfitIndex % outfits.length] : null;
+  const pieces = outfit ? (outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];
   const worn = !!s.wornToday;
   const w = WEATHER[0];
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
@@ -46,8 +49,12 @@ export function Home() {
       className="bg-paper"
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}
     >
-      <Masthead kicker="DRESSKODE" meta={`${capital(shortDate(0))} · ${w.t}°, ${w.label}`} />
+      <Masthead kicker="DRESSKODE" meta={`${capital(shortDate(0))} · ${s.profile.city ? `${s.profile.city}, ` : ''}${w.t}°, ${s.profile.city ? WEATHER_WORD[w.kind] : w.label}`} />
 
+      {!outfit ? (
+        <EmptyToday />
+      ) : (
+      <>
       <Animated.View key={outfit.id} entering={FadeIn.duration(320)} exiting={FadeOut.duration(120)} style={{ gap: 14 }}>
         <View style={{ gap: 6 }}>
           <T v="kicker" tone={worn ? 'positive' : 'ink2'} upper>
@@ -80,8 +87,10 @@ export function Home() {
       ) : (
         <View className="flex-row" style={{ gap: 8 }}>
           <Button testID="wear-today" label="Je la porte" grow onPress={() => a.wear(outfit.pieces, 'Notée dans ton journal')} />
-          <Button testID="another-outfit" label="Une autre" variant="secondary" icon="refresh" grow onPress={a.nextOutfit} />
+          <Button testID="another-outfit" label="Une autre" variant="secondary" icon="refresh" grow disabled={outfits.length < 2} onPress={a.nextOutfit} />
         </View>
+      )}
+      </>
       )}
 
       {s.modules.filter((m) => m.on).map((m) => (
@@ -99,6 +108,69 @@ export function Home() {
   );
 }
 
+/**
+ * L'accueil d'un dressing vide (ou presque) : on montre ce qui va arriver,
+ * pas un écran blanc. Le portant attend, la jauge dit combien il manque.
+ */
+function EmptyToday() {
+  const { s } = useStore();
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  const n = s.pieces.length;
+  const missing = missingForOutfit(s.pieces);
+  return (
+    <Animated.View entering={FadeIn.duration(320)} style={{ gap: 16 }} testID="home-empty">
+      <View style={{ gap: 6 }}>
+        <T v="kicker" tone="ink2" upper>
+          Ta première tenue
+        </T>
+        <T v="hero" accessibilityRole="header">
+          {n === 0 ? 'Ton dressing\n' : n === 1 ? 'C’est bien\n' : 'Presque\n'}
+          <T v="hero" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            {n === 0 ? `t’attend${s.profile.name ? `, ${s.profile.name}` : ''}.` : n === 1 ? 'parti.' : 'prête.'}
+          </T>
+        </T>
+      </View>
+      <View style={{ marginHorizontal: -space.gutter }}>
+        <FirstRail pieces={s.pieces.slice(0, 5)} slots={5} size={70} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
+      </View>
+      <View className="flex-row items-center" style={{ gap: 10 }}>
+        <View className="flex-row" style={{ gap: 5 }}>
+          {[0, 1, 2].map((k) => (
+            <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, n) ? c.ink : c.rule }} />
+          ))}
+        </View>
+        <T v="caption" tone="ink2" style={{ flex: 1 }}>
+          {n ? `${n} pièce${n > 1 ? 's' : ''} · il manque ${missing}` : 'Trois pièces suffisent : un haut, un bas, des chaussures.'}
+        </T>
+      </View>
+      <Button testID="home-add-first" label={n ? 'Ajouter la pièce qui manque' : 'Ajouter mes premières pièces'} icon="plus" onPress={() => nav.navigate('AddPiece')} />
+      <View className="flex-row" style={{ gap: 8 }}>
+        {[
+          { icon: 'camera' as const, t: 'Une photo', d: 'sur un cintre ou à plat' },
+          { icon: 'hanger' as const, t: 'Une illustration', d: 'rangée sur tes portants' },
+          { icon: 'kode' as const, t: 'Des tenues', d: 'selon la météo et ton style' },
+        ].map((x, k) => (
+          <View key={x.t} className="bg-raised" style={{ flex: 1, borderRadius: 18, padding: 12, gap: 6 }}>
+            <View className="flex-row items-center justify-between">
+              <Icon name={x.icon} size={20} color={k === 2 ? c.brass : c.ink} />
+              <T v="numeral" tone="brass" style={{ fontSize: 15 }}>
+                {String(k + 1).padStart(2, '0')}
+              </T>
+            </View>
+            <T v="caption" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+              {x.t}
+            </T>
+            <T v="small" tone="ink2">
+              {x.d}
+            </T>
+          </View>
+        ))}
+      </View>
+    </Animated.View>
+  );
+}
+
 function Module({ id, W }: { id: HomeModule; W: number }) {
   const { s } = useStore();
   const nav = useNavigation<Nav>();
@@ -112,8 +184,12 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
   );
 
   if (id === 'kode') {
-    const tomorrow = EVENTS.find((e) => e.day === 1);
-    const asks = [tomorrow ? `Pour ${lcFirst(tomorrow.title)}, demain` : 'Pour ce soir', 'Sans le jean, pour aujourd’hui', 'Qu’est-ce que je ne porte jamais ?'];
+    const tomorrow = eventsOf(s.profile).find((e) => e.day === 1);
+    const asks = [
+      tomorrow ? `Pour ${lcFirst(tomorrow.title)}, demain` : 'Une tenue pour demain',
+      s.profile.occasions.includes('Bureau') ? 'Une tenue de bureau' : 'Une tenue pour ce soir',
+      s.pieces.length >= 8 ? 'Qu’est-ce que je ne porte jamais ?' : 'Qu’est-ce qui va avec mon jean ?',
+    ];
     return (
       <View style={{ gap: 12 }}>
         {head()}
@@ -140,7 +216,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
           {Array.from({ length: 7 }, (_, i) => {
             const d = dayDate(i);
             const w = WEATHER[i];
-            const busy = EVENTS.some((e) => e.day === i) || !!s.planned[i];
+            const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i];
             return (
               <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={`${i === 0 ? 'Aujourd’hui' : shortDate(i)}, ${w.t} degrés${busy ? ', un événement' : ''}`} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }} className={i === 0 ? 'bg-pill' : ''}>
                 <T v="small" tone="ink2">
@@ -162,6 +238,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'oubliees') {
     const list = sleeping(s.pieces).slice(0, 5);
+    if (!list.length) return null;
     return (
       <View style={{ gap: 12 }}>
         {head('Tout voir', () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } }))}
@@ -189,6 +266,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'tendance') {
     const camel = s.pieces.filter((p) => ['Camel', 'Cognac', 'Camel et crème'].includes(p.color));
+    if (camel.length < 2) return null;
     return (
       <View style={{ gap: 12 }}>
         {head()}

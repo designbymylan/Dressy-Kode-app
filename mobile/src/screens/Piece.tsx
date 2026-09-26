@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { CATEGORIES, MONTHS_SHORT, costPerWear, dayDate, forms, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
+import { CATEGORIES, MONTHS_SHORT, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
@@ -70,7 +70,7 @@ export function PieceScreen() {
   const cpw = costPerWear(piece);
   const f = forms(piece);
   const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
-  const dormant = piece.lastWorn === null || piece.lastWorn > 60;
+  const dormant = !isNew(piece) && (piece.lastWorn === null || piece.lastWorn > 60);
   const goes = matches(piece, s.pieces).sort((x, z) => z.wears - x.wears).slice(0, 6);
   const { labels, values } = history(piece);
   const wornToday = piece.lastWorn === 0;
@@ -92,7 +92,7 @@ export function PieceScreen() {
             <T v="title" accessibilityRole="header">
               {piece.name}
             </T>
-            <T v="body" tone={piece.wears === 0 ? 'caution' : 'ink2'}>
+            <T v="body" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
               {wornLabel(piece)}
               {piece.lastWorn !== null && piece.lastWorn > 0 ? ` · dernière fois ${sinceLabel(piece)}` : ''}
             </T>

@@ -17,7 +17,12 @@ Direction de design validée : B « Éditorial » — voir `../design/refonte/02
 - **Verre** : `src/ui/Glass.tsx`, uniquement pour la couche de navigation.
 - **Animations** : Reanimated 4 (pas Moti, qui dépend de framer-motion 6 et suit mal Reanimated 4).
 - **Données** : démonstration en mémoire (`src/state/store.tsx`, `src/data/wardrobe.ts`).
+  Deux comptes : « nouveau » (créé par l'onboarding, dressing vide ou rempli pendant
+  l'onboarding) et « demo » (Alice, 37 pièces). Le profil est dans `src/state/profile.ts`,
+  les tenues composées pour n'importe quel dressing dans `src/state/outfits.ts`.
   Le branchement Supabase (tables `garments`, `outfits`, fonction `kode`) reste à faire.
+- **Photos** : `expo-image-picker`. L'analyse de silhouette et la reconnaissance des
+  pièces sont simulées dans l'aperçu ; les textes de permission sont dans `app.json`.
 
 ## Commandes
 

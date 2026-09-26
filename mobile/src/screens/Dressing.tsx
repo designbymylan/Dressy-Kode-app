@@ -3,7 +3,7 @@ import { FlatList, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { CATEGORIES, COLOR_FAMILIES, familyOf, wornLabel, type CategoryId, type Piece, type Season } from '../data/wardrobe';
+import { CATEGORIES, COLOR_FAMILIES, familyOf, isNew, newLabel, wornLabel, type CategoryId, type Piece, type Season } from '../data/wardrobe';
 import { pieceLimit, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
@@ -14,6 +14,7 @@ import { Chip, Segmented } from '../ui/controls';
 import { Masthead, ScrollEdge, SectionHead, useTabScroll } from '../ui/layout';
 import { EmptyState, PieceTile } from '../ui/bits';
 import { Garment, hangOf } from '../ui/Garment';
+import { FirstRail } from '../ui/onboarding';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -86,7 +87,7 @@ export function Dressing() {
 
   const header = (
     <View style={{ gap: 12, paddingHorizontal: space.gutter }}>
-      <Masthead kicker="LE DRESSING" meta={limit === null ? `${s.pieces.length} pièces` : `${s.pieces.length} pièces sur ${limit}`} />
+      <Masthead kicker="LE DRESSING" meta={`${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}${limit === null ? '' : ` sur ${limit}`}`} />
       {searching ? (
         <Animated.View entering={FadeIn.duration(180)} className="flex-row items-center" style={{ gap: 10 }}>
           <View className="flex-row items-center bg-sunk" style={{ flex: 1, height: 44, borderRadius: 22, paddingHorizontal: 14, gap: 8 }}>
@@ -256,12 +257,18 @@ export function Dressing() {
           columnWrapperStyle={{ gap, paddingHorizontal: space.gutter }}
           ListHeaderComponent={header}
           ListEmptyComponent={
+            s.pieces.length === 0 ? (
+              <View style={{ paddingHorizontal: space.gutter }}>
+                <EmptyWardrobe />
+              </View>
+            ) : (
             <EmptyState
               art={<Garment kind="pull" size={84} tint={c.sunk} />}
               title="Rien ne correspond"
               body={query ? `Aucune pièce ne contient « ${query} ». Tu pourrais essayer une couleur ou une matière.` : 'Tu pourrais retirer un filtre pour élargir.'}
               action={<Button testID="clear-filters" label="Tout afficher" variant="secondary" size="m" onPress={reset} />}
             />
+            )
           }
           renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} onPress={() => nav.navigate('Piece', { id: item.id })} />}
         />
@@ -276,8 +283,12 @@ export function Dressing() {
       <ScrollEdge y={edge} />
       <Animated.ScrollView testID="screen-dressing" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
         {header}
-        {byCat.length === 0 && (
-          <EmptyState title="Rien ne correspond" body="Tu pourrais retirer un filtre pour élargir." action={<Button label="Tout afficher" variant="secondary" size="m" onPress={reset} />} />
+        {s.pieces.length === 0 ? (
+          <View style={{ paddingHorizontal: space.gutter }}>
+            <EmptyWardrobe />
+          </View>
+        ) : (
+          byCat.length === 0 && <EmptyState title="Rien ne correspond" body="Tu pourrais retirer un filtre pour élargir." action={<Button label="Tout afficher" variant="secondary" size="m" onPress={reset} />} />
         )}
         {byCat.map(({ cat, pieces }, i) => (
           <View key={cat.id} style={{ gap: 4 }} accessibilityLabel={cat.title}>
@@ -298,6 +309,39 @@ export function Dressing() {
         ))}
       </Animated.ScrollView>
       {filterSheet}
+    </View>
+  );
+}
+
+/** Un dressing vide : le portant attend, et on dit par quoi commencer. */
+function EmptyWardrobe() {
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  return (
+    <View style={{ gap: 16 }} testID="dressing-empty">
+      <View style={{ marginHorizontal: -space.gutter }}>
+        <FirstRail pieces={[]} slots={5} size={70} />
+      </View>
+      <T v="section">Tes portants sont vides.</T>
+      <T v="body" tone="ink2">
+        Commence par ce que tu portes le plus : ton jean, un haut, tes baskets. Chaque photo devient une illustration rangée ici, par catégorie.
+      </T>
+      <Button testID="dressing-empty-add" label="Ajouter ma première pièce" icon="plus" onPress={() => nav.navigate('AddPiece')} />
+      <View style={{ gap: 0 }}>
+        {CATEGORIES.map((cat, i) => (
+          <View key={cat.id} className="flex-row items-center" style={{ minHeight: 46, gap: 12, borderBottomWidth: i === CATEGORIES.length - 1 ? 0 : 1, borderColor: c.rule }}>
+            <T v="numeral" tone="brass" style={{ fontSize: 16, width: 24 }}>
+              {String(i + 1).padStart(2, '0')}
+            </T>
+            <T v="body" style={{ flex: 1 }}>
+              {cat.title}
+            </T>
+            <T v="caption" tone="ink2">
+              vide
+            </T>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -346,8 +390,8 @@ function Hanging({ piece, index, swing, shelf, dark, rod, onPress }: { piece: Pi
       <T v="caption" style={{ fontFamily: 'HankenGrotesk_500Medium', textAlign: 'center' }} numberOfLines={1}>
         {piece.name}
       </T>
-      <T v="small" tone={piece.wears === 0 ? 'caution' : 'ink2'} numberOfLines={1}>
-        {wornLabel(piece)}
+      <T v="small" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'} numberOfLines={1}>
+        {isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : wornLabel(piece)}
       </T>
     </Tap>
   );

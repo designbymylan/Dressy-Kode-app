@@ -5,9 +5,11 @@
  * est le même, pour que l'interface ne change pas au branchement.
  */
 import { EVENTS, WEATHER, type Piece } from '../data/wardrobe';
+import { canCompose, missingForOutfit, suggestOutfits } from './outfits';
+import type { Profile } from './profile';
 
 export type KodeOutfit = { title: string; pieces: string[]; why: string };
-export type KodeLink = { label: string; route: 'Offers' | 'Event' | 'Shop' | 'Compose'; params?: Record<string, unknown> };
+export type KodeLink = { label: string; route: 'Offers' | 'Event' | 'Shop' | 'Compose' | 'AddPiece'; params?: Record<string, unknown> };
 export type KodeMessage = {
   id: string;
   from: 'me' | 'kode';
@@ -19,14 +21,62 @@ export type KodeMessage = {
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const has = (s: string, words: string[]) => words.some((w) => s.includes(w));
 
-export const KODE_STARTERS = [
-  'Pour le dîner chez Léa',
-  'Une tenue de bureau',
-  'Sans le jean, pour aujourd’hui',
-  'Qu’est-ce que je ne porte jamais ?',
-];
+/** Les questions prêtes à poser, tirées de l'agenda, du quotidien et du dressing. */
+export function kodeStarters(profile: Profile, pieces: Piece[]): string[] {
+  const list: string[] = [];
+  if (profile.agenda && EVENTS.some((e) => e.id === 'e2')) list.push('Pour le dîner chez Léa');
+  list.push('Une tenue pour demain');
+  if (profile.occasions.includes('Bureau') || profile.occasions.includes('Télétravail')) list.push('Une tenue de bureau');
+  if (profile.occasions.includes('Événements')) list.push('Pour un mariage cet automne');
+  if (profile.occasions.includes('Sorties')) list.push('Pour une soirée');
+  list.push(pieces.length >= 8 ? 'Qu’est-ce que je ne porte jamais ?' : 'Qu’est-ce qui me manque vraiment ?');
+  return list.slice(0, 4);
+}
 
-export function kodeReply(question: string, pieces: Piece[]): Omit<KodeMessage, 'id' | 'from'> {
+type Reply = Omit<KodeMessage, 'id' | 'from'>;
+
+/**
+ * Répond avec les pièces de l'utilisatrice. Tant qu'aucune tenue n'est
+ * possible, Kode le dit et propose d'ajouter ce qui manque ; si la réponse
+ * écrite pour la démo cite des pièces absentes, il compose avec les siennes.
+ */
+export function kodeReply(question: string, pieces: Piece[], profile: Profile): Reply {
+  const first = profile.name ? `${profile.name}, ` : '';
+  if (!canCompose(pieces)) {
+    const missing = missingForOutfit(pieces);
+    const knows = [profile.silhouette && profile.silhouette !== 'inconnue' ? 'ta silhouette' : '', profile.styles.length ? 'ton style' : ''].filter(Boolean).join(' et ');
+    return {
+      text: pieces.length
+        ? `${first}j’ai déjà ${pieces.length} pièce${pieces.length > 1 ? 's' : ''} à toi. Pour composer une vraie tenue, il me manque ${missing}. Ajoute-la et je te réponds avec ton dressing.`
+        : (() => {
+            const rest = `${knows ? `je connais déjà ${knows}. Pour` : 'pour'} te répondre avec tes vêtements à toi, ajoute trois pièces que tu portes souvent : ${missing}.`;
+            return first ? `${first}${rest}` : rest[0].toUpperCase() + rest.slice(1);
+          })(),
+      link: { label: 'Ajouter une pièce', route: 'AddPiece' },
+    };
+  }
+  const reply = curated(question, pieces);
+  if (reply.outfit && reply.outfit.pieces.length >= 3) return reply;
+  const mine = suggestOutfits(pieces)[0];
+  const w = WEATHER[0];
+  const q = norm(question);
+  const topic = has(q, ['diner', 'soir', 'soiree', 'lea', 'apero'])
+    ? 'Pour ce soir, avec tes pièces à toi'
+    : has(q, ['bureau', 'travail', 'reunion', 'client'])
+      ? 'Pour le bureau, avec tes pièces à toi'
+      : has(q, ['mariage', 'ceremonie'])
+        ? 'Pour un mariage, il te faudra sans doute une pièce habillée. En attendant, avec ce que tu as'
+        : has(q, ['demain'])
+          ? `Pour demain (${WEATHER[1].t}°, ${WEATHER[1].label}), avec tes pièces à toi`
+          : `Avec tes pièces à toi, pour ${w.t}° et des ${w.label}${profile.city ? ` à ${profile.city}` : ''}`;
+  return {
+    text: `${topic} :`,
+    outfit: mine ? { title: 'Composée avec ton dressing', pieces: mine.pieces, why: mine.why } : undefined,
+    link: pieces.length < 8 ? { label: 'Ajouter des pièces pour plus de choix', route: 'AddPiece' } : undefined,
+  };
+}
+
+function curated(question: string, pieces: Piece[]): Reply {
   const q = norm(question);
   const w = WEATHER[0];
   const byId = new Map(pieces.map((p) => [p.id, p]));

@@ -37,13 +37,13 @@ export function Me() {
       <Masthead kicker="MOI" meta={`${plan.name}${limit !== null ? ` · ${limit - s.pieces.length} places libres` : ''}`} />
 
       <View className="flex-row items-center" style={{ gap: 16 }}>
-        <Avatar name={s.name} size={64} />
+        <Avatar name={s.profile.name || '?'} size={64} />
         <View style={{ flex: 1 }}>
           <T v="title" accessibilityRole="header">
-            {s.name}
+            {s.profile.name}
           </T>
           <T v="caption" tone="ink2">
-            Dans Dresskode depuis septembre
+            {s.profile.email ?? 'Sans compte : tout reste sur ce téléphone'} · depuis {s.profile.since}
           </T>
         </View>
       </View>
@@ -51,7 +51,7 @@ export function Me() {
       <View className="flex-row" style={{ gap: 10 }}>
         {[
           { v: String(s.pieces.length), l: 'pièces' },
-          { v: `${usageRate(s.pieces)} %`, l: 'portées en 3 mois' },
+          s.pieces.some((p) => p.wears > 0) ? { v: `${usageRate(s.pieces)} %`, l: 'portées en 3 mois' } : { v: '—', l: 'portées : ça commence' },
           { v: String(worn30), l: 'sorties ce mois' },
         ].map((x) => (
           <Card key={x.l} style={{ flex: 1, gap: 2, padding: 14 }}>
@@ -83,13 +83,13 @@ export function Me() {
         <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
           Toi
         </T>
-        <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Précision de Kode : ${precision(s)} %`} onPress={() => nav.navigate('Silhouette')} />
+        <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Précision de Kode : ${precision(s.profile)} %`} onPress={() => nav.navigate('Silhouette')} />
         <Row testID="me-customize" icon="sliders" title="Personnaliser" detail={`Accueil, thème ${pref === 'auto' ? 'automatique' : pref === 'light' ? 'clair' : 'sombre'}, densité`} onPress={() => nav.navigate('Customize')} />
         <Row
           testID="me-loans"
           icon="share"
           title="Prêts et partages"
-          detail={loans.length ? `${loans.length} prêt${loans.length > 1 ? 's' : ''} en cours` : `Avec ${FRIENDS.slice(0, 3).map((f) => f.name).join(', ')}…`}
+          detail={loans.length ? `${loans.length} prêt${loans.length > 1 ? 's' : ''} en cours` : s.account === 'demo' ? `Avec ${FRIENDS.slice(0, 3).map((f) => f.name).join(', ')}…` : 'Montrer, prêter, donner à tes amies'}
           onPress={() => setSharesOpen(true)}
           last
         />

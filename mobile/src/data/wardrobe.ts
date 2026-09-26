@@ -80,6 +80,30 @@ export const PIECES: Piece[] = [
   p('a5', 'Ceinture cognac', 'ceinture', 'accessoires', 'Cognac', '#7E4F2C', 'Cuir', 'toute l’année', 21, 9, 700, 40),
 ];
 
+/** Ce que la reconnaissance trouve sur une photo (simulée dans l'aperçu). */
+export type Found = { kind: GarmentKind; tint: string; name: string; category: CategoryId; color: string; material: string; season: Season; backdrop: string };
+
+/** La galerie simulée du téléphone : douze photos de vêtements, chacune « reconnue ». */
+export const GALLERY: Found[] = [
+  { kind: 'tshirt', tint: '#F5F3EE', name: 'T-shirt blanc', category: 'hauts', color: 'Blanc', material: 'Coton', season: 'toute l’année', backdrop: '#CFC7BC' },
+  { kind: 'jean', tint: '#3E5A86', name: 'Jean brut', category: 'bas', color: 'Brut', material: 'Denim', season: 'toute l’année', backdrop: '#D8D2C8' },
+  { kind: 'cardigan', tint: '#B98B5E', name: 'Cardigan camel', category: 'hauts', color: 'Camel', material: 'Laine', season: 'mi-saison', backdrop: '#D9CFC2' },
+  { kind: 'baskets', tint: '#F5F3EE', name: 'Baskets blanches', category: 'chaussures', color: 'Blanc', material: 'Cuir', season: 'toute l’année', backdrop: '#BFC4C8' },
+  { kind: 'robe', tint: '#C9A13B', name: 'Robe moutarde', category: 'robes', color: 'Moutarde', material: 'Viscose', season: 'été', backdrop: '#DAD3C4' },
+  { kind: 'trench', tint: '#C49A6C', name: 'Trench camel', category: 'manteaux', color: 'Camel', material: 'Gabardine de coton', season: 'mi-saison', backdrop: '#CCC4B8' },
+  { kind: 'jupe', tint: '#2F3B52', name: 'Jupe plissée marine', category: 'bas', color: 'Marine', material: 'Crêpe', season: 'toute l’année', backdrop: '#C9CCD2' },
+  { kind: 'chemise', tint: '#E3BFB7', name: 'Chemise rose poudré', category: 'hauts', color: 'Rose poudré', material: 'Coton', season: 'été', backdrop: '#E6DDD8' },
+  { kind: 'pantalon', tint: '#7B7F4F', name: 'Pantalon olive', category: 'bas', color: 'Olive', material: 'Coton', season: 'mi-saison', backdrop: '#D2D2C6' },
+  { kind: 'bottines', tint: '#6E4A32', name: 'Bottines chocolat', category: 'chaussures', color: 'Chocolat', material: 'Daim', season: 'hiver', backdrop: '#D5CBC0' },
+  { kind: 'sac', tint: '#26231F', name: 'Sac noir', category: 'accessoires', color: 'Noir', material: 'Cuir', season: 'toute l’année', backdrop: '#CFCAC2' },
+  { kind: 'pull', tint: '#A7A29A', name: 'Pull gris chiné', category: 'hauts', color: 'Gris', material: 'Laine', season: 'hiver', backdrop: '#D3CEC6' },
+];
+
+/** Une photo reconnue devient une pièce du dressing. */
+export function pieceFrom(f: Found, id: string): Piece {
+  return { id, name: f.name, kind: f.kind, tint: f.tint, category: f.category, color: f.color, swatch: f.tint, material: f.material, season: f.season, wears: 0, lastWorn: null, addedDaysAgo: 0 };
+}
+
 export type Outfit = {
   id: string;
   lead: string;
@@ -108,6 +132,9 @@ export const TODAY_OUTFITS: Outfit[] = [
 ];
 
 export type Weather = { t: number; low: number; kind: 'soleil' | 'nuages' | 'pluie' | 'averses'; label: string };
+
+/** La météo en un mot, pour les lignes courtes. */
+export const WEATHER_WORD: Record<Weather['kind'], string> = { soleil: 'soleil', nuages: 'nuageux', pluie: 'pluie', averses: 'averses' };
 
 /** Météo simulée des 14 prochains jours (jour 0 = aujourd'hui). */
 export const WEATHER: Weather[] = [
@@ -244,7 +271,17 @@ export function forms(piece: Pick<Piece, 'kind'>) {
   };
 }
 
+/** Ajoutée il y a moins de deux semaines et pas encore portée : elle est nouvelle, pas oubliée. */
+export const isNew = (piece: Piece) => piece.wears === 0 && piece.addedDaysAgo < 14;
+
+export function newLabel(piece: Pick<Piece, 'kind'>): string {
+  const fem = FEMININE.has(piece.kind);
+  const pl = PLURAL.has(piece.kind);
+  return fem ? (pl ? 'nouvelles' : 'nouvelle') : pl ? 'nouveaux' : 'nouveau';
+}
+
 export function wornLabel(piece: Piece): string {
+  if (isNew(piece)) return `${newLabel(piece)} dans ton dressing`;
   if (piece.wears === 0) return `jamais porté${agree(piece)}`;
   return `porté${agree(piece)} ${piece.wears} fois`;
 }

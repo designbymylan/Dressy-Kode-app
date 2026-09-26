@@ -3,9 +3,10 @@ import { Keyboard, KeyboardAvoidingView, Platform, TextInput, View, type ScrollV
 import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { EVENTS, WEATHER, lcFirst, type Piece } from '../data/wardrobe';
-import { KODE_STARTERS, type KodeMessage } from '../state/kode';
-import { LIMITS, questionsLeft, useStore } from '../state/store';
+import { WEATHER, lcFirst, type Piece } from '../data/wardrobe';
+import { kodeStarters, type KodeMessage } from '../state/kode';
+import { LIMITS, eventsOf, questionsLeft, useStore } from '../state/store';
+import { canCompose } from '../state/outfits';
 import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -63,7 +64,10 @@ export function Kode() {
     if (a.askKode(v)) setText('');
   };
 
-  const tomorrow = EVENTS.find((e) => e.day === 1);
+  const tomorrow = eventsOf(s.profile).find((e) => e.day === 1);
+  const p = s.profile;
+  const starters = kodeStarters(p, s.pieces);
+  const ready = canCompose(s.pieces);
   const w = WEATHER[0];
 
   return (
@@ -80,7 +84,9 @@ export function Kode() {
             </T>
           </T>
           <T v="body" tone="ink2">
-            Kode compose à partir de tes {s.pieces.length} pièces, de la météo et de ton agenda. Il te dit toujours pourquoi.
+            {s.pieces.length
+              ? `Kode compose à partir de tes ${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}, de la météo et de ton agenda. Il te dit toujours pourquoi.`
+              : 'Kode compose avec tes pièces à toi, la météo et ton agenda. Il te dit toujours pourquoi.'}
           </T>
         </View>
 
@@ -93,7 +99,7 @@ export function Kode() {
               <View className="flex-row items-center" style={{ gap: 8 }}>
                 <Icon name="showers" size={18} color={c.ink2} />
                 <T v="body">
-                  Aujourd’hui, {w.t}° et {w.label}
+                  Aujourd’hui{p.city ? ` à ${p.city}` : ''}, {w.t}° et {w.label}
                 </T>
               </View>
               {tomorrow && (
@@ -104,11 +110,26 @@ export function Kode() {
                   </T>
                 </View>
               )}
-            </Card>
+              {(p.silhouette && p.silhouette !== 'inconnue') || p.styles.length ? (
+                <View className="flex-row items-center" style={{ gap: 8 }}>
+                  <Icon name="person" size={18} color={c.ink2} />
+                  <T v="body" style={{ flex: 1 }}>
+                    {[p.silhouette && p.silhouette !== 'inconnue' ? `Silhouette en ${p.silhouette}` : '', p.styles.length ? `style ${p.styles.join(', ').toLowerCase()}` : ''].filter(Boolean).join(', ')}
+                  </T>
+                </View>
+              ) : null}
+              <View className="flex-row items-center" style={{ gap: 8 }}>
+                <Icon name="hanger" size={18} color={ready ? c.ink2 : c.caution} />
+                <T v="body" tone={ready ? 'ink' : 'caution'} style={{ flex: 1 }}>
+                  {s.pieces.length ? `${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''} dans ton dressing${ready ? '' : ' : il en faut un peu plus'}` : 'Ton dressing est vide pour l’instant'}
+                </T>
+              </View>
+                        </Card>
+            {!ready && <Button testID="kode-add" label="Ajouter mes premières pièces" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
             <T v="kicker" tone="ink2" upper>
               Pour commencer
             </T>
-            {KODE_STARTERS.map((q, i) => (
+            {starters.map((q, i) => (
               <Tap key={q} testID={`starter-${i}`} onPress={() => send(q)} disabled={out} accessibilityLabel={q} scaleTo={0.99} style={{ minHeight: 52, borderBottomWidth: 1, borderColor: c.rule, gap: 12 }} className="flex-row items-center">
                 <T v="numeral" tone="brass" style={{ fontSize: 17 }}>
                   {String(i + 1).padStart(2, '0')}

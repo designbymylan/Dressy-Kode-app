@@ -12,7 +12,7 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Card } from '../ui/bits';
+import { Card, EmptyState } from '../ui/bits';
 import { OutfitBoard, Legend, boardHeight } from '../ui/outfit';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
@@ -177,6 +177,13 @@ export function Compose() {
       </Animated.ScrollView>
 
       <Sheet visible={!!slot} onClose={() => setPicking(null)} kicker="Emplacement" title={slot?.label ?? ''} testID="slot-sheet">
+        {options.length === 0 && (
+          <EmptyState
+            title="Rien ici pour l’instant"
+            body="Ajoute une pièce de cette catégorie : elle apparaîtra dans cet emplacement."
+            action={<Button testID="slot-add" label="Ajouter une pièce" size="m" icon="plus" onPress={() => { setPicking(null); nav.navigate('AddPiece'); }} />}
+          />
+        )}
         <View className="flex-row flex-wrap" style={{ gap: 10 }}>
           {options.map((p) => {
             const on = slot && slots[slot.id] === p.id;

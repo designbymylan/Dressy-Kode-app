@@ -132,7 +132,38 @@ se fond dans la suivante sur « Une autre ».
 - Écran 18 (« États et feuilles », depuis Moi) : chaque état vide, chargement et erreur
   a une phrase et une action — aucune impasse.
 
-## 9. Ce qui reste à valider sur un vrai iPhone
+## 9. Onboarding et premier espace
+
+Quatre chapitres, une question par écran, affichés en haut (Toi · Silhouette · Style ·
+Dressing) avec une barre qui avance à l'intérieur de chaque chapitre. Environ deux minutes.
+
+| # | Écran | Obligatoire | Pourquoi on le demande (écrit à l'écran) |
+|---|---|---|---|
+| 1 | Prénom | oui | Kode s'adresse à la personne. |
+| 2 | Rayon (femme, homme, les deux) | oui | Coupes et tailles, « pas pour te ranger dans une case ». |
+| 3 | Tranche d'âge | non | Adapter les conseils ; jamais affichée. |
+| 4 | Taille et poids (règle graduée) | non ; poids désactivé par défaut | Ajuster coupes et longueurs ; jamais affichés, partagés ni commentés. |
+| 5 | Silhouette : analyse par 2 photos, ou choix parmi 5, ou « je ne sais pas » | non | Consentement explicite, conseils de pose (tenue ajustée, pas besoin de se déshabiller), photos supprimées après l'analyse, résultat modifiable. |
+| 6 | Mesures (poitrine, taille, hanches) avec figure | non | Précision de Kode affichée en direct. |
+| 7 | Tailles habituelles (haut, bas, pointure selon le rayon) | non | Prêts entre amies, coupes. |
+| 8 | Styles (12 cartes illustrées, 1 à 3) | non | Limite annoncée, jamais bloquante. |
+| 9 | Couleurs aimées / évitées | non | Une touche aime, deux évite, trois oublie. |
+| 10 | Quotidien (bureau, études, sorties…) | non | La bonne tenue au bon moment. |
+| 11 | Ville et agenda | non | Météo du matin ; agenda relié seulement si on l'active. |
+| 12 | Premier portant : photos → pièces sur une tringle | non | Trois pièces suffisent pour une première tenue ; « Plus tard » toujours possible. |
+| 13 | Kode prépare l'espace (récapitulatif animé) | — | Montre ce qui a été compris, pas une attente vide. |
+| 14 | Compte (e-mail, lien magique) ou « sans compte pour l'instant » | non | Retrouver son dressing partout. |
+| 15 | Bienvenue : première tenue, ou portant vide qui attend | — | La valeur avant l'entrée. |
+
+« Passer » n'enregistre jamais une valeur par défaut : une étape passée reste vide.
+
+**Espace vide.** Aucun écran blanc : l'accueil montre un portant de cintres vides qui se
+balancent, une jauge vers la première tenue (« il manque un bas ou une robe ») et les trois
+étapes photo → illustration → tenues ; le dressing liste les six portants vides ; Kode dit
+ce qu'il sait déjà et ce qui lui manque ; l'agenda propose de relier le sien. Une pièce
+ajoutée depuis moins de deux semaines est « nouvelle », jamais « oubliée ».
+
+## 10. Ce qui reste à valider sur un vrai iPhone
 
 - Le rendu du Liquid Glass natif (iOS 26) : l'aperçu web montre le repli flou.
 - Le retour par glissement et les feuilles natives (la pile native n'est active que sur téléphone).

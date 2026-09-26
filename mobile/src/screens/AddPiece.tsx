@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { Image, Platform, TextInput, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { CATEGORIES, type CategoryId, type Piece, type Season } from '../data/wardrobe';
+import { CATEGORIES, GALLERY, type Found, type Piece, type Season } from '../data/wardrobe';
 import { pieceLimit, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
@@ -13,22 +14,10 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { StackHeader, useStackTop } from '../ui/layout';
 import { Card, Gauge, Skeleton } from '../ui/bits';
-import { Garment, type GarmentKind } from '../ui/Garment';
+import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import type { Nav } from '../navigation/types';
-
-type Found = { kind: GarmentKind; tint: string; name: string; category: CategoryId; color: string; material: string; season: Season; backdrop: string };
-
-/** La galerie simulée : ce que l'analyse « reconnaît » sur chaque photo. */
-const GALLERY: Found[] = [
-  { kind: 'cardigan', tint: '#B98B5E', name: 'Cardigan camel', category: 'hauts', color: 'Camel', material: 'Laine', season: 'mi-saison', backdrop: '#D9CFC2' },
-  { kind: 'jupe', tint: '#2F3B52', name: 'Jupe plissée marine', category: 'bas', color: 'Marine', material: 'Crêpe', season: 'toute l’année', backdrop: '#C9CCD2' },
-  { kind: 'chemise', tint: '#E3BFB7', name: 'Chemise rose poudré', category: 'hauts', color: 'Rose poudré', material: 'Coton', season: 'été', backdrop: '#E6DDD8' },
-  { kind: 'robe', tint: '#C9A13B', name: 'Robe moutarde', category: 'robes', color: 'Moutarde', material: 'Viscose', season: 'été', backdrop: '#DAD3C4' },
-  { kind: 'pantalon', tint: '#7B7F4F', name: 'Pantalon olive', category: 'bas', color: 'Olive', material: 'Coton', season: 'mi-saison', backdrop: '#D2D2C6' },
-  { kind: 'bottines', tint: '#6E4A32', name: 'Bottines chocolat', category: 'chaussures', color: 'Chocolat', material: 'Daim', season: 'hiver', backdrop: '#D5CBC0' },
-];
 
 const STEPS = ['Détourage de la pièce', 'Type de pièce', 'Couleur dominante', 'Matière probable', 'Illustration pour tes portants'];
 
@@ -43,6 +32,10 @@ export function AddPiece() {
   const [phase, setPhase] = useState<'source' | 'analyse' | 'result'>('source');
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Found | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
+  // La galerie simulée propose d'abord ce qui n'est pas déjà dans le dressing.
+  const names = new Set(s.pieces.map((p) => p.name));
+  const gallery = [...GALLERY.filter((g) => !names.has(g.name)), ...GALLERY.filter((g) => names.has(g.name))];
   const limit = pieceLimit(s);
   const full = limit !== null && s.pieces.length >= limit;
   const tile = (width - space.gutter * 2 - 20) / 3;
@@ -58,10 +51,25 @@ export function AddPiece() {
     };
   }, [phase]);
 
-  const pick = (f: Found) => {
+  const pick = (f: Found, uri: string | null = null) => {
     setFound(f);
     setDraft(f);
+    setPhoto(uri);
     setPhase('analyse');
+  };
+
+  /** Une vraie photo (appareil ou galerie). Dans l'aperçu, la reconnaissance est simulée. */
+  const fromDevice = async (camera: boolean) => {
+    try {
+      if (camera && Platform.OS !== 'web') {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) return a.toast('Autorise l’appareil photo dans Réglages');
+      }
+      const r = camera && Platform.OS !== 'web' ? await ImagePicker.launchCameraAsync({ quality: 0.6 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
+      if (!r.canceled && r.assets[0]) pick(gallery[0], r.assets[0].uri);
+    } catch {
+      // Annulé : on reste sur le choix de la source.
+    }
   };
 
   const add = () => {
@@ -131,7 +139,7 @@ export function AddPiece() {
                     { icon: 'camera' as const, label: 'Prendre une photo', note: 'Sur un cintre ou à plat' },
                     { icon: 'image' as const, label: 'Depuis la galerie', note: 'Jusqu’à 10 à la fois' },
                   ].map((o) => (
-                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => pick(GALLERY[o.icon === 'camera' ? 0 : 1])} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} className="bg-raised" style={{ borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
+                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} className="bg-raised" style={{ borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
                       <Icon name={o.icon} size={28} color={c.ink} />
                       <View style={{ gap: 2 }}>
                         <T v="bodyStrong">{o.label}</T>
@@ -146,7 +154,7 @@ export function AddPiece() {
                   Photos récentes
                 </T>
                 <View className="flex-row flex-wrap" style={{ gap: 10 }}>
-                  {GALLERY.map((g, i) => (
+                  {gallery.slice(0, 9).map((g, i) => (
                     <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ width: tile, height: tile * 1.2, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden' }} className="items-center justify-center">
                       <View style={{ transform: [{ rotate: `${((i % 3) - 1) * 4}deg` }], opacity: 0.92 }}>
                         <Garment kind={g.kind} tint={g.tint} size={tile * 0.7} />
@@ -165,7 +173,7 @@ export function AddPiece() {
         {phase === 'analyse' && found && (
           <Animated.View entering={FadeIn.duration(200)} style={{ gap: 20 }} accessibilityLiveRegion="polite">
             <T v="title">Kode regarde ta pièce…</T>
-            <Scan found={found} width={width - space.gutter * 2} />
+            <Scan found={found} photo={photo} width={width - space.gutter * 2} />
             <View style={{ gap: 10 }}>
               {STEPS.map((label, i) => (
                 <View key={label} className="flex-row items-center" style={{ gap: 10, minHeight: 26 }}>
@@ -194,6 +202,11 @@ export function AddPiece() {
               <T v="body" tone="ink2">
                 Vérifie la matière : c’est ce que Kode devine le moins bien sur une photo.
               </T>
+              {photo && Platform.OS === 'web' && (
+                <T v="small" tone="ink2">
+                  Aperçu : la reconnaissance de ta photo est simulée.
+                </T>
+              )}
             </View>
             <View style={{ gap: 8 }}>
               <T v="kicker" tone="ink2" upper>
@@ -250,7 +263,7 @@ export function AddPiece() {
 }
 
 /** La photo, avec une ligne de lecture qui la parcourt pendant l'analyse. */
-function Scan({ found, width }: { found: Found; width: number }) {
+function Scan({ found, photo, width }: { found: Found; photo: string | null; width: number }) {
   const { c } = useTheme();
   const y = useSharedValue(0);
   useEffect(() => {
@@ -260,7 +273,7 @@ function Scan({ found, width }: { found: Found; width: number }) {
   const line = useAnimatedStyle(() => ({ transform: [{ translateY: y.value * (h - 4) }] }));
   return (
     <View style={{ height: h, borderRadius: 28, backgroundColor: found.backdrop, overflow: 'hidden' }} className="items-center justify-center" accessibilityLabel="Analyse de la photo en cours">
-      <Garment kind={found.kind} tint={found.tint} size={150} />
+      {photo ? <Image source={{ uri: photo }} style={{ width, height: h }} resizeMode="cover" /> : <Garment kind={found.kind} tint={found.tint} size={150} />}
       <Animated.View style={[{ position: 'absolute', left: 0, top: 0, width, height: 3, backgroundColor: c.brass, opacity: 0.85 }, line]} />
     </View>
   );

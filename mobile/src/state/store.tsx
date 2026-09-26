@@ -5,13 +5,14 @@
  * ajouter une pièce consomme une place, une question consomme le quota.
  */
 import { createContext, useContext, useMemo, useReducer, useRef, type ReactNode } from 'react';
-import { PIECES, TODAY_OUTFITS, type Piece } from '../data/wardrobe';
+import { EVENTS, PIECES, type Piece } from '../data/wardrobe';
 import { kodeReply, type KodeMessage, type KodeOutfit } from './kode';
+import { todayOutfits } from './outfits';
+import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 
 export type PlanId = 'decouverte' | 'capsule' | 'atelier' | 'couture';
 export type Period = 'mois' | 'an';
-export type Silhouette = 'A' | 'V' | 'H' | 'X' | 'O' | 'inconnue';
-export type MeasureId = 'hauteur' | 'poitrine' | 'taille' | 'hanches' | 'pointure';
+export type { Silhouette, MeasureId, Profile } from './profile';
 export type HomeModule = 'kode' | 'semaine' | 'oubliees' | 'tendance' | 'bilan';
 export type Planned = { title: string; pieces: string[] };
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
@@ -35,11 +36,9 @@ export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> 
 
 type State = {
   onboarded: boolean;
-  name: string;
-  silhouette: Silhouette | null;
-  measures: Partial<Record<MeasureId, number>>;
-  styles: string[];
-  colors: string[];
+  /** « nouveau » : le compte créé à l'onboarding ; « demo » : le compte d'Alice. */
+  account: 'nouveau' | 'demo';
+  profile: Profile;
   pieces: Piece[];
   outfitIndex: number;
   wornToday: string[] | null;
@@ -58,24 +57,19 @@ type State = {
   undo: Piece[] | null;
 };
 
+/** Au premier lancement : aucun profil, aucune pièce, l'offre gratuite. */
 const initial: State = {
   onboarded: false,
-  name: 'Alice',
-  silhouette: 'X',
-  measures: { hauteur: 166, pointure: 38 },
-  styles: ['Minimal', 'Classique'],
-  colors: ['Camel', 'Marine', 'Blanc'],
-  pieces: PIECES,
+  account: 'nouveau',
+  profile: EMPTY_PROFILE,
+  pieces: [],
   outfitIndex: 0,
   wornToday: null,
-  planned: {
-    1: { title: 'Noir sur noir, mais doux', pieces: ['r1', 'm2', 'c5', 'a2'] },
-    4: { title: 'Net, sans raideur', pieces: ['m2', 'h5', 'b4', 'c2', 'a1'] },
-  },
+  planned: {},
   messages: [],
-  kodeUsed: 12,
+  kodeUsed: 0,
   kodeTyping: false,
-  plan: 'capsule',
+  plan: 'decouverte',
   period: 'mois',
   extraPlaces: 0,
   packs: [],
@@ -92,8 +86,25 @@ const initial: State = {
   undo: null,
 };
 
+/** Le compte d'Alice : 37 pièces, deux tenues prévues, l'offre Capsule entamée. */
+const demo: State = {
+  ...initial,
+  onboarded: true,
+  account: 'demo',
+  profile: DEMO_PROFILE,
+  pieces: PIECES,
+  planned: {
+    1: { title: 'Noir sur noir, mais doux', pieces: ['r1', 'm2', 'c5', 'a2'] },
+    4: { title: 'Net, sans raideur', pieces: ['m2', 'h5', 'b4', 'c2', 'a1'] },
+  },
+  kodeUsed: 12,
+  plan: 'capsule',
+};
+
 type Action =
-  | { t: 'onboard'; silhouette: Silhouette | null; measures: State['measures']; styles: string[]; colors: string[] }
+  | { t: 'onboard'; profile: Profile; pieces: Piece[] }
+  | { t: 'demo' }
+  | { t: 'profile'; patch: Partial<Profile> }
   | { t: 'restart' }
   | { t: 'wear'; ids: string[]; toast: string }
   | { t: 'undo' }
@@ -111,8 +122,6 @@ type Action =
   | { t: 'moveModule'; id: HomeModule; by: -1 | 1 }
   | { t: 'density'; value: State['density'] }
   | { t: 'share'; share: Share }
-  | { t: 'silhouette'; value: Silhouette | null }
-  | { t: 'measure'; id: MeasureId; value: number | undefined }
   | { t: 'toast'; text: string; undo?: boolean }
   | { t: 'hideToast' };
 
@@ -121,7 +130,11 @@ let toastId = 0;
 function reducer(s: State, a: Action): State {
   switch (a.t) {
     case 'onboard':
-      return { ...s, onboarded: true, silhouette: a.silhouette, measures: a.measures, styles: a.styles, colors: a.colors };
+      return { ...initial, onboarded: true, profile: a.profile, pieces: a.pieces };
+    case 'demo':
+      return { ...demo };
+    case 'profile':
+      return { ...s, profile: { ...s.profile, ...a.patch } };
     case 'restart':
       return { ...initial };
     case 'wear': {
@@ -137,7 +150,7 @@ function reducer(s: State, a: Action): State {
     case 'undo':
       return s.undo ? { ...s, pieces: s.undo, undo: null, wornToday: null, toast: null } : s;
     case 'nextOutfit':
-      return { ...s, outfitIndex: (s.outfitIndex + 1) % TODAY_OUTFITS.length, wornToday: null };
+      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces).length), wornToday: null };
     case 'addPiece':
       return { ...s, pieces: [a.piece, ...s.pieces], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
     case 'removePiece':
@@ -173,10 +186,6 @@ function reducer(s: State, a: Action): State {
       return { ...s, density: a.value };
     case 'share':
       return { ...s, shares: [a.share, ...s.shares] };
-    case 'silhouette':
-      return { ...s, silhouette: a.value };
-    case 'measure':
-      return { ...s, measures: { ...s.measures, [a.id]: a.value } };
     case 'toast':
       return { ...s, toast: { id: ++toastId, text: a.text, undo: a.undo } };
     case 'hideToast':
@@ -187,7 +196,9 @@ function reducer(s: State, a: Action): State {
 function useActions(dispatch: (a: Action) => void, getState: () => State) {
   return useMemo(
     () => ({
-      completeOnboarding: (d: Omit<Extract<Action, { t: 'onboard' }>, 't'>) => dispatch({ t: 'onboard', ...d }),
+      completeOnboarding: (profile: Profile, pieces: Piece[]) => dispatch({ t: 'onboard', profile, pieces }),
+      loginDemo: () => dispatch({ t: 'demo' }),
+      setProfile: (patch: Partial<Profile>) => dispatch({ t: 'profile', patch }),
       restart: () => dispatch({ t: 'restart' }),
       wear: (ids: string[], toast = 'Notée dans ton journal') => dispatch({ t: 'wear', ids, toast }),
       undo: () => dispatch({ t: 'undo' }),
@@ -201,7 +212,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         const quota = LIMITS[s.plan].questions;
         if (quota !== null && s.kodeUsed >= quota) return false;
         dispatch({ t: 'ask', message: { id: `m${Date.now()}`, from: 'me', text } });
-        const reply = kodeReply(text, s.pieces);
+        const reply = kodeReply(text, s.pieces, s.profile);
         // Le temps de « réfléchir » : assez pour lire l'état, jamais assez pour agacer.
         setTimeout(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...reply } }), 1100);
         return true;
@@ -213,8 +224,6 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       moveModule: (id: HomeModule, by: -1 | 1) => dispatch({ t: 'moveModule', id, by }),
       setDensity: (value: State['density']) => dispatch({ t: 'density', value }),
       share: (share: Share) => dispatch({ t: 'share', share }),
-      setSilhouette: (value: Silhouette | null) => dispatch({ t: 'silhouette', value }),
-      setMeasure: (id: MeasureId, value: number | undefined) => dispatch({ t: 'measure', id, value }),
       toast: (text: string) => dispatch({ t: 'toast', text }),
       hideToast: () => dispatch({ t: 'hideToast' }),
     }),
@@ -256,18 +265,19 @@ export const questionsLeft = (s: State) => {
 export const usageRate = (pieces: Piece[]) =>
   pieces.length ? Math.round((pieces.filter((p) => p.lastWorn !== null && p.lastWorn <= 90).length / pieces.length) * 100) : 0;
 
+/** Les pièces qui dorment : jamais portées ou pas depuis deux mois — mais pas celles qu'on vient d'ajouter. */
 export const sleeping = (pieces: Piece[]) =>
-  pieces.filter((p) => p.lastWorn === null || p.lastWorn > 60).sort((a, b) => (b.lastWorn ?? 9999) - (a.lastWorn ?? 9999));
+  pieces.filter((p) => p.addedDaysAgo >= 30 && (p.lastWorn === null || p.lastWorn > 60)).sort((a, b) => (b.lastWorn ?? 9999) - (a.lastWorn ?? 9999));
 
-/** Précision de Kode : ce que la silhouette et les mesures lui apprennent. */
-export function precision(s: Pick<State, 'silhouette' | 'measures' | 'styles' | 'colors'>) {
-  let score = 20;
-  if (s.silhouette && s.silhouette !== 'inconnue') score += 20;
-  const m = s.measures;
-  score += (m.hauteur ? 10 : 0) + (m.poitrine ? 12 : 0) + (m.taille ? 12 : 0) + (m.hanches ? 12 : 0) + (m.pointure ? 4 : 0);
-  score += s.styles.length ? 5 : 0;
-  score += s.colors.length ? 5 : 0;
-  return Math.min(100, score);
-}
+/** Les événements visibles : seulement si l'agenda est relié. */
+export const eventsOf = (profile: Profile) => (profile.agenda ? EVENTS : []);
+
+/** Les tenues du jour de ce dressing (écrites à la main pour la démo, composées sinon). */
+export const useTodayOutfits = () => {
+  const { s } = useStore();
+  return useMemo(() => todayOutfits(s.pieces), [s.pieces]);
+};
+
+export { precision } from './profile';
 
 export type { State, KodeOutfit };

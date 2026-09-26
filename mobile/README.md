@@ -2,7 +2,8 @@
 
 L'app Expo (iOS d'abord), direction de design **B « Éditorial »**. Les 18 écrans du brief,
 en clair et en sombre, avec des données de démonstration : tout est cliquable, rien
-n'est encore relié à Supabase.
+n'est encore relié à Supabase. « Commencer » crée un compte neuf (onboarding complet,
+dressing vide ou rempli en route) ; « J'ai déjà un compte » ouvre le compte de démonstration.
 
 ## L'essayer sur ton iPhone
 
@@ -29,7 +30,7 @@ Pour l'aperçu dans un navigateur : `npx expo start --web`.
 | # | Écran du brief | Fichier |
 |---|---|---|
 | 1 | Bienvenue | `Welcome.tsx` |
-| 2 | Onboarding (silhouette, mesures, styles) | `Onboarding.tsx` |
+| 2 | Onboarding : 4 chapitres, 15 écrans (profil, silhouette par photos, tailles, styles, couleurs, quotidien, premières pièces, compte) | `Onboarding.tsx` + `ui/onboarding.tsx` |
 | 3 | Accueil + modules réordonnables | `Home.tsx` |
 | 4–5 | Dressing — Portants et Grille | `Dressing.tsx` |
 | 6 | Fiche vêtement | `Piece.tsx` |

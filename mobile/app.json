@@ -28,7 +28,15 @@
       "output": "single"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Dresskode utilise tes photos pour dessiner tes vêtements et, si tu le demandes, estimer ta silhouette. Les photos de silhouette sont supprimées juste après l’analyse.",
+          "cameraPermission": "Dresskode utilise l’appareil photo pour ajouter tes vêtements et, si tu le demandes, estimer ta silhouette.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "backgroundColor": "#F1ECE3"
   }
