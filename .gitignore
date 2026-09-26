@@ -17,3 +17,6 @@ desktop.ini
 
 # Claude Code : réglages propres à chaque poste
 .claude/settings.local.json
+
+# Deno : le runtime des Edge Functions résout lui-même les versions épinglées dans deno.json.
+deno.lock
