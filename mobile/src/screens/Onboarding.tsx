@@ -30,6 +30,8 @@ import { Sheet } from '../ui/Sheet';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
 import { ChoiceCard, ColorChoice, FirstRail, Figure, MeasureFigure, PhotoSlot, Ruler, StyleCard, Trio, IS_WEB, type ColorState } from '../ui/onboarding';
 import { useScreen } from '../ui/screen';
+import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, validEmail } from '../ui/account';
+import { online } from '../state/remote';
 import type { Nav } from '../navigation/types';
 
 type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte' | 'bienvenue';
@@ -1024,45 +1026,91 @@ function Generation({ draft, pieces, next }: Ctx) {
   );
 }
 
+/**
+ * Le compte : e-mail et mot de passe. Si le projet demande de confirmer
+ * l'e-mail, l'espace reste sur le téléphone et part sur le compte à la
+ * première connexion (voir signIn dans state/store.tsx).
+ */
 function Compte({ draft, set, next }: Ctx) {
-  const { c } = useTheme();
+  const { s, a } = useStore();
   const [email, setEmail] = useState(draft.email ?? '');
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [login, setLogin] = useState(false);
+  const ready = validEmail(email) && (!online || password.length >= PASSWORD_MIN);
+  const legal = (
+    <T v="small" tone="ink2">
+      En continuant, tu acceptes les conditions d’utilisation et la politique de confidentialité de Dresskode. Tes photos de silhouette ne sont jamais conservées.
+    </T>
+  );
+
+  // Déjà connectée (compte ouvert depuis l'accueil) ou compte créé en attente de confirmation.
+  if (s.session || s.pendingEmail) {
+    const mail = s.session?.email ?? s.pendingEmail!;
+    return (
+      <Frame
+        lead={s.session ? 'Ton espace sera\n' : 'Compte créé,\n'}
+        em={s.session ? 'enregistré.' : 'à confirmer.'}
+        intro={
+          s.session
+            ? `Ton compte est ouvert avec ${mail}. Ton profil et tes pièces y partent dès que tu entres.`
+            : `On a envoyé un lien à ${mail}. Touche-le pour confirmer ton adresse, puis connecte-toi depuis Moi : ton espace partira sur ton compte à ce moment-là.`
+        }
+        footer={<Button testID="onb-account-continue" label="Continuer" onPress={() => { set({ email: mail }); next(); }} />}
+      >
+        <Why>{s.session ? 'Tu pourras tout modifier depuis Moi, sur n’importe quel appareil.' : 'En attendant, tout reste sur ce téléphone. Rien n’est perdu.'}</Why>
+      </Frame>
+    );
+  }
+
+  const create = async () => {
+    if (!ready || busy) return;
+    if (!online) {
+      // Aperçu sans serveur : l'e-mail est gardé, rien n'est envoyé.
+      set({ email: email.trim() });
+      return next();
+    }
+    setBusy(true);
+    setError(null);
+    const r = await a.signUp(email, password, draft.name);
+    setBusy(false);
+    if (!r.ok) return setError(r.message);
+    set({ email: email.trim().toLowerCase() });
+    // Avec confirmation demandée, l'écran se redessine avec le message « à confirmer ».
+    if (!r.confirm) next();
+  };
+
   return (
     <Frame
       lead={'Garde ton espace,\n'}
       em={`${draft.name}.`}
-      intro="Ton profil et tes pièces sont enregistrés sur ton compte : tu les retrouves sur tous tes appareils. Pas de mot de passe, un lien par e-mail."
+      intro={online
+        ? 'Ton profil et tes pièces sont enregistrés sur ton compte : tu les retrouves sur tous tes appareils.'
+        : 'Ton profil et tes pièces sont enregistrés sur ton compte : tu les retrouves sur tous tes appareils. Dans cet aperçu, rien n’est envoyé.'}
       footer={
         <>
-          <Button testID="onb-account" label="Créer mon compte" disabled={!valid} onPress={() => { set({ email: email.trim() }); next(); }} />
+          <Button testID="onb-account" label="Créer mon compte" disabled={!ready} loading={busy} onPress={create} />
           <Button testID="onb-no-account" label="Continuer sans compte pour l’instant" variant="plain" onPress={() => { set({ email: null }); next(); }} />
         </>
       }
     >
-      <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 27, paddingHorizontal: 18, gap: 10 }}>
-        <Icon name="mail" size={18} color={c.ink2} />
-        <TextInput
-          testID="onb-email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="ton@e-mail.fr"
-          placeholderTextColor={c.ink2}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          textContentType="emailAddress"
-          returnKeyType="done"
-          onSubmitEditing={() => valid && next()}
-          accessibilityLabel="Ton adresse e-mail"
-          style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'HankenGrotesk_500Medium', fontSize: 17 }}
-        />
-        {valid && <Icon name="check" size={18} color={c.positive} strokeWidth={2.2} />}
-      </View>
+      <EmailField testID="onb-email" value={email} onChange={setEmail} />
+      {online && <PasswordField testID="onb-password" value={password} onChange={setPassword} onSubmit={create} isNew />}
+      <FormError text={error} />
       <Why>Sans compte, tout reste sur ce téléphone ; tu pourras le créer plus tard depuis Moi.</Why>
-      <T v="small" tone="ink2">
-        En continuant, tu acceptes les conditions d’utilisation et la politique de confidentialité de Dresskode. Tes photos de silhouette ne sont jamais conservées.
-      </T>
+      {online && (
+        <T v="caption" tone="ink2" onPress={() => setLogin(true)} accessibilityRole="button" testID="onb-login" style={{ paddingVertical: 6 }}>
+          Tu as déjà un compte ? <T v="caption" style={{ fontFamily: 'HankenGrotesk_600SemiBold', textDecorationLine: 'underline' }}>Me connecter</T>
+        </T>
+      )}
+      {legal}
+      <AccountSheet
+        visible={login}
+        onClose={() => setLogin(false)}
+        // Compte déjà rempli : l'app s'ouvre d'elle-même ; compte vierge : on continue ici, session ouverte.
+        onDone={() => setLogin(false)}
+      />
     </Frame>
   );
 }

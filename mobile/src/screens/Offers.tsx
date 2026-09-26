@@ -191,7 +191,7 @@ export function Offers() {
               <T v="bodyStrong">{target.cents.mois === 0 ? '0 €' : `${price(target.cents[period])} TTC`}</T>
             </View>
             <T v="small" tone="ink2">
-              {target.cents.mois === 0 ? 'Tes pièces au-delà de 30 restent visibles, mais tu ne pourras plus en ajouter.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
+              {target.cents.mois === 0 ? 'Tes pièces au-delà de 30 restent visibles, mais tu ne pourras plus en ajouter.' : s.account === 'connecte' ? 'Paiement sécurisé par Stripe, dans ton navigateur. Résiliable à tout moment.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
             </T>
           </View>
         )}

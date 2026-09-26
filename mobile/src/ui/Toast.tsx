@@ -23,7 +23,8 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
   const toast = s.toast;
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(a.hideToast, 4000);
+    // Un message d'alerte reste un peu plus longtemps : il se lit, il ne se survole pas.
+    const t = setTimeout(a.hideToast, toast.warn ? 6500 : 4000);
     return () => clearTimeout(t);
   }, [toast, a]);
   if (!toast) return null;
@@ -38,8 +39,8 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
     >
       <Glass radius={24}>
         <View className="flex-row items-center" style={{ minHeight: 48, paddingLeft: 16, paddingRight: 6, gap: 10 }}>
-          <Icon name="check" size={18} color={c.positive} strokeWidth={2.2} />
-          <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={2}>
+          <Icon name={toast.warn ? 'alert' : 'check'} size={18} color={toast.warn ? c.caution : c.positive} strokeWidth={2.2} />
+          <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={3}>
             {toast.text}
           </T>
           {toast.undo && (

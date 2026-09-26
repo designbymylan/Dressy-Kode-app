@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useStore } from '../state/store';
 import { TabBar } from '../ui/TabBar';
@@ -46,6 +47,8 @@ function Tabs() {
  */
 export function RootNavigator() {
   const { s } = useStore();
+  // Le temps de relire la session : un fond uni plutôt qu'un éclair de l'accueil.
+  if (s.booting) return <View className="bg-paper" style={{ flex: 1 }} testID="booting" />;
   return (
     <Stack.Navigator screenOptions={cardOptions}>
       {!s.onboarded ? (

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { TextInput, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -9,8 +9,7 @@ import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Button } from '../ui/Button';
 import { Masthead } from '../ui/layout';
-import { Sheet } from '../ui/Sheet';
-import { Icon } from '../ui/Icon';
+import { AccountSheet } from '../ui/account';
 import { Garment, type GarmentKind } from '../ui/Garment';
 import { useScreen } from '../ui/screen';
 import type { Nav } from '../navigation/types';
@@ -27,7 +26,6 @@ export function Welcome() {
   const { a } = useStore();
   const nav = useNavigation<Nav>();
   const [login, setLogin] = useState(false);
-  const [email, setEmail] = useState('alice@exemple.fr');
   const insets = useSafeAreaInsets();
   const { c, scheme } = useTheme();
   const { width } = useScreen();
@@ -78,38 +76,16 @@ export function Welcome() {
         </Animated.View>
       </View>
 
-      <Sheet
+      <AccountSheet
         visible={login}
         onClose={() => setLogin(false)}
-        kicker="Connexion"
-        title="Content de te revoir"
-        testID="login-sheet"
-        footer={<Button testID="login-send" label="Recevoir mon lien de connexion" disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())} onPress={() => { setLogin(false); a.loginDemo(); }} />}
-      >
-        <View style={{ gap: 12 }}>
-          <T v="body" tone="ink2">
-            Pas de mot de passe : on t’envoie un lien, tu le touches, tu retrouves ton dressing.
-          </T>
-          <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 26, paddingHorizontal: 16, gap: 10 }}>
-            <Icon name="mail" size={18} color={c.ink2} />
-            <TextInput
-              testID="login-email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              accessibilityLabel="Ton adresse e-mail"
-              placeholder="ton@e-mail.fr"
-              placeholderTextColor={c.ink2}
-              style={{ flex: 1, height: 52, color: c.ink, fontFamily: 'HankenGrotesk_500Medium', fontSize: 17 }}
-            />
-          </View>
-          <T v="small" tone="ink2">
-            Aperçu : ouvre le compte de démonstration d’Alice (37 pièces).
-          </T>
-        </View>
-      </Sheet>
+        onDone={(next) => {
+          setLogin(false);
+          // Compte vierge (questionnaire jamais rempli) : on le remplit maintenant.
+          if (next !== 'app') nav.navigate('Onboarding');
+        }}
+        onDemo={a.loginDemo}
+      />
     </View>
   );
 }

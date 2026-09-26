@@ -103,10 +103,14 @@ export function Customize() {
           <Toggle testID="solid-glass" value={solidGlass} onChange={setSolidGlass} label="Verre plus opaque" />
         </View>
 
-        <Button testID="replay-welcome" label="Revoir l’accueil de bienvenue" variant="secondary" icon="refresh" onPress={() => { a.restart(); }} />
-        <T v="small" tone="ink2" style={{ textAlign: 'center', marginTop: -16 }}>
-          Remet l’aperçu à zéro, comme au premier lancement.
-        </T>
+        {s.account !== 'connecte' && (
+          <>
+            <Button testID="replay-welcome" label="Revoir l’accueil de bienvenue" variant="secondary" icon="refresh" onPress={() => { a.restart(); }} />
+            <T v="small" tone="ink2" style={{ textAlign: 'center', marginTop: -16 }}>
+              Remet l’aperçu à zéro, comme au premier lancement.
+            </T>
+          </>
+        )}
       </Animated.ScrollView>
     </View>
   );

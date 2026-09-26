@@ -28,7 +28,11 @@ const admin = createClient(SUPABASE_URL, envKey('SUPABASE_SERVICE_ROLE_KEY', 'SU
 
 function stripe(): Stripe {
   const key = secret('STRIPE_SECRET_KEY');
-  if (!key) throw new BillingError('Le paiement n’est pas encore ouvert : STRIPE_SECRET_KEY manque dans les secrets Supabase.', 503);
+  if (!key) {
+    // Le détail va dans les journaux ; la personne lit un message qu'elle peut comprendre.
+    console.error('STRIPE_SECRET_KEY absent des secrets Supabase');
+    throw new BillingError('Le paiement n’est pas encore ouvert. Réessaie un peu plus tard.', 503);
+  }
   return new Stripe(key, { apiVersion: '2026-08-26.dahlia', httpClient: Stripe.createFetchHttpClient() });
 }
 
@@ -113,7 +117,8 @@ async function handle(token: string, input: Record<string, unknown>): Promise<{ 
   const key = lookupKey(input.plan, input.period);
   const { data: prices } = await s.prices.list({ lookup_keys: [key], active: true, limit: 1 });
   if (!prices.length) {
-    throw new BillingError('Cette offre n’est pas encore en vente : le catalogue Stripe reste à créer (tools/stripe-setup.mjs).', 503);
+    console.error(`prix ${key} introuvable chez Stripe : lancer tools/stripe-setup.mjs`);
+    throw new BillingError('Cette offre n’est pas encore en vente. Réessaie un peu plus tard.', 503);
   }
 
   const session = await s.checkout.sessions.create({

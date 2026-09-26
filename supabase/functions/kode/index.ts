@@ -169,7 +169,10 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string) 
 
 async function askClaude(system: string, context: string, turns: Turn[]) {
   const apiKey = anthropicKey();
-  if (!apiKey) throw new KodeError('Kode n’est pas encore branché : la clé ANTHROPIC_API_KEY manque dans les secrets Supabase.', 503);
+  if (!apiKey) {
+    console.error('ANTHROPIC_API_KEY absent des secrets Supabase');
+    throw new KodeError('Kode n’est pas encore disponible. Réessaie un peu plus tard.', 503);
+  }
 
   const client = new Anthropic({ apiKey, timeout: 60_000, maxRetries: 1 });
   try {

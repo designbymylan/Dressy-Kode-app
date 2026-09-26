@@ -13,6 +13,8 @@ import { Avatar, Card, EmptyState, Row } from '../ui/bits';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { PLANS } from './Offers';
+import { AccountSheet } from '../ui/account';
+import { online } from '../state/remote';
 import type { Nav } from '../navigation/types';
 
 export function Me() {
@@ -27,6 +29,9 @@ export function Me() {
   const left = questionsLeft(s);
   const worn30 = s.pieces.filter((p) => p.lastWorn !== null && p.lastWorn <= 30).length;
   const loans = s.shares.filter((x) => x.mode === 'preter');
+  const [account, setAccount] = useState(false);
+  const who =
+    s.account === 'connecte' ? s.profile.email : s.pendingEmail ? `${s.pendingEmail} · e-mail à confirmer` : s.account === 'demo' ? s.profile.email : 'Sans compte : tout reste sur ce téléphone';
   const [sharesOpen, setSharesOpen] = useState(false);
   const MODE = { montrer: 'Partage avec', preter: 'Prêt à', donner: 'Don proposé à' } as const;
 
@@ -43,7 +48,7 @@ export function Me() {
             {s.profile.name}
           </T>
           <T v="caption" tone="ink2">
-            {s.profile.email ?? 'Sans compte : tout reste sur ce téléphone'} · depuis {s.profile.since}
+            {who} · depuis {s.profile.since}
           </T>
         </View>
       </View>
@@ -79,6 +84,17 @@ export function Me() {
         <Row testID="me-shop" icon="bag" title="La boutique" detail="Packs à l’unité, places en plus" onPress={() => nav.navigate('Shop')} last />
       </View>
 
+      {online && s.account === 'nouveau' && (
+        <Row
+          testID="me-account"
+          icon="lock"
+          title={s.pendingEmail ? 'J’ai confirmé mon e-mail : me connecter' : 'Créer mon compte ou me connecter'}
+          detail="Pour retrouver ton espace sur tous tes appareils"
+          onPress={() => setAccount(true)}
+          last
+        />
+      )}
+
       <View>
         <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
           Toi
@@ -100,9 +116,11 @@ export function Me() {
           Aperçu design
         </T>
         <Row testID="me-states" icon="eye" title="Feuilles, états vides et chargements" detail="Pour la revue du design" onPress={() => nav.navigate('States')} />
-        <Row icon="help" title="Aide" detail="Questions fréquentes et contact" onPress={() => a.toast('L’aide arrive bientôt')} />
-        <Row testID="me-logout" icon="logout" title="Se déconnecter" onPress={a.restart} last />
+        <Row icon="help" title="Aide" detail="Questions fréquentes et contact" onPress={() => a.toast('L’aide arrive bientôt')} last={s.account === 'nouveau'} />
+        {s.account === 'connecte' && <Row testID="me-logout" icon="logout" title="Se déconnecter" detail={s.profile.email ?? undefined} onPress={a.logout} last />}
+        {s.account === 'demo' && <Row testID="me-logout" icon="logout" title="Quitter la démonstration" onPress={a.restart} last />}
       </View>
+      <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => setAccount(false)} initial={s.pendingEmail ? 'login' : 'signup'} />
       <Sheet visible={sharesOpen} onClose={() => setSharesOpen(false)} title="Prêts et partages" testID="shares-sheet">
         {s.shares.length === 0 ? (
           <EmptyState
