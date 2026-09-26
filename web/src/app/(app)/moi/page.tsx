@@ -4,8 +4,11 @@ import { getViewer } from '@/lib/space';
 import { createClient } from '@/lib/supabase/server';
 import { signOut } from '@/app/actions';
 import { ThemeChoice } from '@/components/ThemeChoice';
-import { Screen, Title, Card, buttonQuiet } from '@/components/ui';
+import { PortalButton } from '@/components/PortalButton';
+import { Screen, Title, Card, buttonPrimary, buttonQuiet } from '@/components/ui';
 import { labelsFor, colourHex } from '@/lib/onboarding';
+import { loadSubscription, subscriptionLine } from '@/lib/billing';
+import { FREE_PLAN, PLANS, planName } from '@/lib/plans';
 
 function Line({ label, values }: { label: string; values: string[] }) {
   if (!values.length) return null;
@@ -19,16 +22,24 @@ function Line({ label, values }: { label: string; values: string[] }) {
   );
 }
 
-export default async function Moi() {
+export default async function Moi({
+  searchParams,
+}: {
+  searchParams: Promise<{ abonnement?: string }>;
+}) {
+  const { abonnement } = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect('/bienvenue');
 
   const supabase = await createClient();
-  const { data: sp } = await supabase
-    .from('style_profile')
-    .select('*')
-    .eq('space_id', viewer.spaceId)
-    .maybeSingle();
+  const [{ data: sp }, subscription, { count: customers }] = await Promise.all([
+    supabase.from('style_profile').select('*').eq('space_id', viewer.spaceId).maybeSingle(),
+    loadSubscription(supabase, viewer.spaceId),
+    supabase.from('billing_customers').select('space_id', { count: 'exact', head: true }).eq('space_id', viewer.spaceId),
+  ]);
+  const features = subscription
+    ? PLANS.find((p) => p.id === subscription.plan)!.features.filter((f) => !f.soon).map((f) => f.label)
+    : FREE_PLAN.features;
 
   const colours: string[] = sp?.colours ?? [];
 
@@ -37,6 +48,35 @@ export default async function Moi() {
       <Title sub={viewer.email ?? undefined}>
         {viewer.displayName ? `Salut, ${viewer.displayName}` : 'Mon compte'}
       </Title>
+
+      {abonnement === 'merci' ? (
+        <Card style={{ background: 'var(--accent-tint)', boxShadow: 'none' }}>
+          <p role="status" style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--accent-ink)' }}>
+            {subscription
+              ? `Merci ! ${planName(subscription.plan)} est active.`
+              : 'Merci ! Stripe confirme ton paiement : ton offre s’active dans quelques secondes. Recharge la page si elle ne s’affiche pas.'}
+          </p>
+        </Card>
+      ) : null}
+
+      <Card>
+        <h2 style={{ fontSize: 19 }}>Mon offre : {planName(subscription?.plan)}</h2>
+        <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>
+          {features.join(' · ')}
+          {subscription ? <><br />{subscriptionLine(subscription)}</> : null}
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {subscription ? (
+            <PortalButton />
+          ) : (
+            <Link href="/offres" style={{ ...buttonPrimary, alignSelf: 'flex-start' }}>
+              Voir les offres
+            </Link>
+          )}
+          {/* Une ancienne abonnée garde l'accès à ses factures. */}
+          {!subscription && customers ? <PortalButton /> : null}
+        </div>
+      </Card>
 
       <Card>
         <h2 style={{ fontSize: 19 }}>Apparence</h2>

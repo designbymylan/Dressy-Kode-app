@@ -7,12 +7,14 @@ import { createClient } from '@/lib/supabase/server';
 import { getViewer, type Theme } from '@/lib/space';
 import { parisDay } from '@/lib/dates';
 import { loadMessages, loadUsage, type KodeMessage, type KodeUsage } from '@/lib/kode';
+import { isPeriod, isPlan } from '@/lib/plans';
 import {
   GENDERS, GOALS, STYLES, ITEMS, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, type Answers,
 } from '@/lib/onboarding';
 
-export type FormResult = { error: string } | undefined;
+// code : ce que l'écran peut proposer en plus du message (« pieces » → voir les offres).
+export type FormResult = { error: string; code?: string } | undefined;
 
 const AUTH_ERRORS: Record<string, string> = {
   invalid_credentials: 'Adresse e-mail ou mot de passe incorrect.',
@@ -108,7 +110,11 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
     source: 'photo',
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    return error.hint === 'pieces'
+      ? { error: error.message, code: 'pieces' }
+      : { error: "La pièce n'a pas pu être ajoutée. Réessaie." };
+  }
 
   revalidatePath('/dressing');
   redirect('/dressing');
@@ -159,8 +165,10 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
   );
 
   if (error) {
-    // Les messages du trigger (quota, photo hors espace) sont écrits pour être lus.
-    return { error: error.hint === 'quota' || error.hint === 'photos' ? error.message : "La demande n'est pas partie. Réessaie." };
+    // Les messages des triggers (quota, photo hors espace, dressing plein) sont écrits pour être lus.
+    return ['quota', 'photos', 'pieces'].includes(error.hint)
+      ? { error: error.message, code: error.hint }
+      : { error: "La demande n'est pas partie. Réessaie." };
   }
 
   revalidatePath('/dressing');
@@ -292,6 +300,46 @@ export async function wearToday(outfitId: string): Promise<FormResult> {
 
   revalidatePath('/accueil');
   return undefined;
+}
+
+/**
+ * Demande une page Stripe à l'Edge Function `billing`. Rien n'est accordé
+ * ici : l'offre ne s'active qu'une fois le paiement confirmé par le webhook.
+ */
+async function billingPage(body: Record<string, string>): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.functions.invoke<{ url: string }>('billing', { body });
+  if (error || !data?.url) {
+    const detail = error instanceof FunctionsHttpError
+      ? await (error.context as Response).json().catch(() => null)
+      : null;
+    return { error: detail?.error ?? "Le paiement n'a pas pu s'ouvrir. Réessaie dans un instant." };
+  }
+  return { url: data.url };
+}
+
+/** « Continuer avec Atelier » : ouvre le paiement Stripe (ou le portail si déjà abonné). */
+export async function startCheckout(_prev: FormResult, formData: FormData): Promise<FormResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const plan = formData.get('plan');
+  const period = formData.get('period');
+  if (!isPlan(plan) || !isPeriod(period)) return { error: 'Choisis une offre.' };
+
+  const res = await billingPage({ action: 'checkout', plan, period });
+  if ('error' in res) return res;
+  redirect(res.url);
+}
+
+/** « Gérer mon abonnement » : changer d'offre, de carte, résilier, factures. */
+export async function openPortal(_prev: FormResult, _formData: FormData): Promise<FormResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const res = await billingPage({ action: 'portal' });
+  if ('error' in res) return res;
+  redirect(res.url);
 }
 
 /**

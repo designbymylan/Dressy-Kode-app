@@ -11,9 +11,10 @@ avec ce qu'on possède déjà.
 | `web/` | L'application (Next.js App Router, React 19, `@supabase/ssr`). |
 | `supabase/functions/dressy-agent/` | L'agent central : photo → ChatGPT → Nano Banana → Claude → dressing. |
 | `supabase/functions/kode/` | Kode, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
+| `supabase/functions/billing/`, `stripe-webhook/` | Les abonnements : ouverture du paiement Stripe, et le webhook qui active l'offre. |
 | `supabase/migrations/` | Le schéma SQL complet, dans l'ordre où il a été appliqué au projet Supabase. |
 | `design/` | Les maquettes Claude Design (`_projet/*.dc.html`), spécification visuelle de référence. |
-| `tools/` | Petits outils : extraction du bundle de design, serveur des maquettes, tests du calendrier. |
+| `tools/` | Petits outils : extraction du bundle de design, serveur des maquettes, tests du calendrier, mise en place de Stripe. |
 
 ## Lancer l'application
 
@@ -58,9 +59,8 @@ une réponse courte et, quand la question s'y prête, une tenue.
 - La tenue est enregistrée (`outfits`, source `kode`) : « Prévoir pour
   demain » la pose dans `planned_days`, et l'accueil l'affiche le jour venu
   avec « Je la porte », qui note un port par pièce (`wears`).
-- Quota : 20 questions par mois et par espace (offre gratuite de
-  `Offres.dc.html`), compté en base par `kode_ask()`. Une question sans
-  réponse (erreur, refus) est retirée et ne compte pas.
+- Quota selon l'offre (voir Paiements), compté en base par `kode_ask()`.
+  Une question sans réponse (erreur, refus) est retirée et ne compte pas.
 - Modèle : `claude-opus-5` par défaut, avec repli automatique en cas de refus.
   Pour réduire le coût par question, le secret facultatif `KODE_MODEL` accepte
   par exemple `claude-sonnet-5`.
@@ -72,10 +72,49 @@ supabase db push                 # applique 20260926120000_kode.sql
 supabase functions deploy kode   # utilise ANTHROPIC_API_KEY, déjà en secret
 ```
 
+## Paiements (Stripe)
+
+Les offres de `Offres.dc.html`, vendues en abonnement mensuel ou annuel
+(le premier mois de l'annuel offert, une fois par espace) :
+
+| Offre | Mensuel | Annuel | Pièces | Kode |
+|---|---|---|---|---|
+| Découverte (sans abonnement) | — | — | 30 | 5 questions / mois |
+| Capsule | 6,99 € | 59,99 € | 60 | 20 questions / mois |
+| Atelier | 12,99 € | 109,99 € | 200 | sans limite |
+| Couture | 24,99 € | 219,99 € | sans limite | sans limite |
+
+Les montants vivent dans `web/src/lib/plans.ts`, les limites dans
+`plan_limits()` (migration `abonnements`) : la base refuse la pièce ou la
+question de trop, quel que soit l'écran. Une offre ne s'active **que** par
+le webhook, une fois le paiement confirmé par Stripe ; le navigateur ne peut
+rien s'accorder. Le changement d'offre, la carte, les factures et la
+résiliation passent par le portail client de Stripe.
+
+Mise en service, en mode test d'abord :
+
+```bash
+# 1. produits, prix, portail client et webhook dans le compte Stripe
+STRIPE_SECRET_KEY=sk_test_… APP_URL=https://ton-domaine node tools/stripe-setup.mjs
+
+# 2. les clés côté Supabase (le script affiche la commande exacte)
+supabase secrets set STRIPE_SECRET_KEY=sk_test_… STRIPE_WEBHOOK_SECRET=whsec_… APP_URL=https://ton-domaine
+
+# 3. la base et les fonctions
+supabase db push
+supabase functions deploy billing
+supabase functions deploy stripe-webhook --no-verify-jwt   # Stripe signe, il n'a pas de jeton
+```
+
+Paiement d'essai : carte `4242 4242 4242 4242`, date future, CVC quelconque.
+Vérification sans frais : `GET /functions/v1/billing` dit si la clé est
+test ou live et si le secret du webhook est posé. Pour passer en live :
+relancer le script avec la clé live et `--live`, puis remplacer les secrets.
+
 ## Tests
 
 Sans réseau ni clé : détourage et décisions de l'agent, dressing et
-historique de Kode.
+historique de Kode, lecture des abonnements Stripe et accord des catalogues.
 
 ```bash
 cd web && npm test

@@ -30,8 +30,8 @@ revoke insert, update, delete, truncate, references, trigger on public.kode_mess
 
 -- ---------------------------------------------------------------- quota
 
--- 20 questions par mois : l'offre gratuite de design/_projet/Offres.dc.html.
--- Un seul endroit à changer le jour où Stripe distingue les offres.
+-- 20 questions par mois en attendant les offres : la migration abonnements
+-- remplace cette limite unique par celle de chaque offre (plan_limits).
 create or replace function public.kode_monthly_limit()
 returns int
 language sql

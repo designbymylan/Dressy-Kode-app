@@ -23,7 +23,8 @@ export type KodeMessage = {
   outfit: OutfitView | null;
 };
 
-export type KodeUsage = { used: number; quota: number };
+/** quota null : questions illimitées (offres Atelier et Couture). */
+export type KodeUsage = { used: number; quota: number | null };
 
 // Ordre de pose dans la carte : les grandes pièces d'abord, les petites devant.
 const SLOT_ORDER = ['veste', 'robe', 'haut', 'bas', 'chaussures', 'sac', 'accessoire'];
@@ -105,5 +106,5 @@ export async function loadMessages(supabase: Db, spaceId: string, ids?: string[]
 export async function loadUsage(supabase: Db, spaceId: string): Promise<KodeUsage> {
   const { data } = await supabase.rpc('kode_usage', { target: spaceId });
   const row = (Array.isArray(data) ? data[0] : data) as KodeUsage | null;
-  return { used: row?.used ?? 0, quota: row?.quota ?? 20 };
+  return { used: row?.used ?? 0, quota: row ? row.quota : 0 };
 }

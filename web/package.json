@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:agent": "node ../supabase/functions/dressy-agent/agent.test.ts",
     "test:kode": "node ../supabase/functions/kode/kode.test.ts",
-    "test": "npm run test:agent && npm run test:kode"
+    "test": "npm run test:agent && npm run test:kode && npm run test:billing",
+    "test:billing": "node ../supabase/functions/_shared/billing.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

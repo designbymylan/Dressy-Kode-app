@@ -2,10 +2,25 @@
 
 import { useActionState, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useFormStatus } from 'react-dom';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { addGarment, requestAiGarments, type FormResult } from '@/app/actions';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import { Field, ErrorNote, inputStyle, buttonPrimary, buttonQuiet } from '@/components/ui';
+
+/** Le message d'erreur, et le chemin vers les offres quand le dressing est plein. */
+function Problem({ error, code }: { error: string; code?: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <ErrorNote>{error}</ErrorNote>
+      {code === 'pieces' ? (
+        <Link href="/offres" style={{ fontSize: 13, fontWeight: 500, textDecoration: 'underline' }}>
+          Voir les offres
+        </Link>
+      ) : null}
+    </div>
+  );
+}
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -21,7 +36,7 @@ export function ManualForm({ categories }: { categories: { id: string; label: st
 
   return (
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
+      {state?.error ? <Problem error={state.error} code={state.code} /> : null}
 
       <Field label="La pièce">
         <input name="name" type="text" required placeholder="Blazer noir" style={inputStyle} />
@@ -85,6 +100,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
   const [items, setItems] = useState<Picked[]>([]);
   const [hint, setHint] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState<string | null>(null);
   const busy = progress !== null;
 
@@ -97,6 +113,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = ''; // permet de rechoisir la même photo après l'avoir retirée
     setError(null);
+    setCode(undefined);
 
     const room = MAX_PHOTOS - items.length;
     if (files.length > room) setError(`${MAX_PHOTOS} photos au plus à la fois : les suivantes n'ont pas été ajoutées.`);
@@ -125,6 +142,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
     e.preventDefault();
     if (!items.length || busy) return;
     setError(null);
+    setCode(undefined);
 
     const supabase = createBrowserClient();
     const paths: string[] = [];
@@ -141,7 +159,10 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
 
       setProgress('Kode prend le relais…');
       const res = await requestAiGarments({ paths, hint });
-      if (res?.error) throw new Error(res.error);
+      if (res?.error) {
+        setCode(res.code);
+        throw new Error(res.error);
+      }
 
       items.forEach((i) => URL.revokeObjectURL(i.preview));
       router.push(`/dressing?demande=${paths.length}`);
@@ -157,7 +178,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
 
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {error ? <ErrorNote>{error}</ErrorNote> : null}
+      {error ? <Problem error={error} code={code} /> : null}
 
       {n ? (
         <ul

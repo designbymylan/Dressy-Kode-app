@@ -47,7 +47,8 @@ export function KodeChat({
   const input = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
 
-  const left = Math.max(0, usage.quota - usage.used);
+  const unlimited = usage.quota === null;
+  const left = unlimited ? Infinity : Math.max(0, usage.quota! - usage.used);
   const tooFew = pieces < 2;
   const closed = tooFew || left === 0;
 
@@ -83,7 +84,7 @@ export function KodeChat({
       setMessages((m) => m.filter((x) => x.id !== temp.id));
       setText(q);
       setError(res.error);
-      if (res.code === 'quota') setUsage((u) => ({ ...u, used: u.quota }));
+      if (res.code === 'quota') setUsage((u) => ({ ...u, used: u.quota ?? u.used }));
     } else {
       setMessages((m) => [...m.filter((x) => x.id !== temp.id), ...res.messages]);
       setUsage(res.usage);
@@ -163,7 +164,9 @@ export function KodeChat({
             </span>
           </span>
           <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>
-            {left} question{left > 1 ? 's' : ''} restante{left > 1 ? 's' : ''} ce mois-ci
+            {unlimited
+              ? 'Questions illimitées'
+              : `${left} question${left > 1 ? 's' : ''} restante${left > 1 ? 's' : ''} ce mois-ci`}
           </span>
         </div>
         <button type="button" onClick={reset} disabled={busy} aria-label="Nouvelle conversation" style={round}>
@@ -267,9 +270,14 @@ export function KodeChat({
               </Link>
             </div>
           ) : left === 0 ? (
-            <p style={{ fontSize: 13.5, lineHeight: 1.45, background: 'var(--ground)', borderRadius: 22, padding: 16 }}>
-              Tes {usage.quota} questions du mois sont utilisées. Elles reviennent le 1er du mois.
-            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 22, padding: 16 }}>
+              <p style={{ fontSize: 13.5, lineHeight: 1.45 }}>
+                Tes {usage.quota} questions du mois sont utilisées. Elles reviennent le 1er du mois.
+              </p>
+              <Link href="/offres" style={{ ...buttonPrimary, minHeight: 46, fontSize: 14 }}>
+                Kode sans limite
+              </Link>
+            </div>
           ) : (
             <>
               {suggestions.length && !busy ? (
