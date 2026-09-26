@@ -37,6 +37,8 @@
   --accent-ink: #241f52;
   --accent-strong: #6b63b8;
   --danger: #8a3e28;
+  --stage: #ede3d8; /* fond des cartes de tenue, repris de la maquette Kode */
+  --stage-line: rgba(0, 0, 0, 0.28);
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.05);
   --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.05);
   --nav-glass: rgba(255, 255, 255, 0.72);
@@ -57,6 +59,8 @@
   --accent-ink: #d9d4f5;
   --accent-strong: #8b83d8;
   --danger: #d98a6c;
+  --stage: #2b2622;
+  --stage-line: rgba(255, 255, 255, 0.34);
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
   --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.3);
   --nav-glass: rgba(31, 31, 35, 0.82);
@@ -78,6 +82,8 @@
     --accent-ink: #d9d4f5;
     --accent-strong: #8b83d8;
     --danger: #d98a6c;
+    --stage: #2b2622;
+    --stage-line: rgba(255, 255, 255, 0.34);
     --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
     --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.3);
     --nav-glass: rgba(31, 31, 35, 0.82);
@@ -146,6 +152,15 @@ select {
 [data-file-pick]:focus-within {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
+}
+
+/* Le champ de Kode n'a pas de bord : c'est le cadre entier qui prend le focus. */
+[data-composer] textarea:focus-visible {
+  outline: none;
+}
+[data-composer]:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* Pastille des pièces en préparation. */

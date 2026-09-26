@@ -30,9 +30,33 @@ export const SHAPES = {
     out: 'M22 9 L32 16 L42 9 L54 14 L52 40 L46 41 V56 H18 V41 L12 40 L10 14 Z',
     det: ['M32 16 V56', 'M16 34 H48'],
   },
+  // Les suivantes viennent de design/_projet/Kode.dc.html.
+  tshirt: {
+    out: 'M22 8 L26 6 Q32 11 38 6 L42 8 L55 16 L50 25 L45 21 V56 H19 V21 L14 25 L9 16 Z',
+    det: ['M26 7 Q32 12 38 7'],
+  },
+  basket: {
+    out: 'M9 43 H20 L29 36 L35 38 L40 44 H53 Q59 46 59 51 V54 H9 Z',
+    det: ['M20 43 L29 36', 'M9 50 H59'],
+  },
+  sac: {
+    out: 'M17 22 H47 L51 54 H13 Z',
+    det: ['M25 22 V18 A7 7 0 0 1 39 18 V22'],
+  },
 } as const;
 
 export type ShapeName = keyof typeof SHAPES;
+
+/** La silhouette qui représente une pièce sans photo, d'après sa catégorie. */
+export const SHAPE_BY_CATEGORY: Record<string, ShapeName> = {
+  hauts: 'tshirt',
+  bas: 'jean',
+  robes: 'robe',
+  vestes: 'blazer',
+  chaussures: 'basket',
+  sacs: 'sac',
+  accessoires: 'sac',
+};
 
 export function Garment({
   shape,

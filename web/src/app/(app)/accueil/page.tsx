@@ -2,32 +2,45 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
+import { parisDay, parisDateLabel } from '@/lib/dates';
+import { outfitViews, OUTFIT_SELECT, type OutfitRow } from '@/lib/kode';
+import { OutfitCard } from '@/components/OutfitCard';
+import { WearButton } from '@/components/WearButton';
 import { Screen, Title, Card, buttonPrimary } from '@/components/ui';
-
-const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
 export default async function Accueil() {
   const viewer = await getViewer();
   if (!viewer) redirect('/bienvenue');
   const supabase = await createClient();
 
-  const { count } = await supabase
-    .from('garments')
-    .select('id', { count: 'exact', head: true });
+  const [{ count }, { data: today }] = await Promise.all([
+    supabase.from('garments').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('planned_days')
+      .select(`worn, outfits(${OUTFIT_SELECT})`)
+      .eq('space_id', viewer.spaceId)
+      .eq('day', parisDay(0))
+      .maybeSingle(),
+  ]);
 
   const n = count ?? 0;
-  const today = new Date();
-  const dateLabel = `${JOURS[today.getDay()]} ${today.getDate()} ${MOIS[today.getMonth()]}`;
+  const planned = (today?.outfits ?? null) as unknown as OutfitRow | null;
+  const outfit = planned ? (await outfitViews(supabase, [{ outfit: planned }])).get(planned.id) ?? null : null;
 
   return (
     <Screen>
-      <Title sub={dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}>
+      <Title sub={parisDateLabel()}>
         {viewer.displayName ? `Salut, ${viewer.displayName}` : 'Salut'}
       </Title>
 
-      {n === 0 ? (
+      {outfit ? (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 style={{ fontSize: 21 }}>Tenue du jour</h2>
+          <OutfitCard outfit={outfit}>
+            <WearButton outfitId={outfit.id} worn={Boolean(today?.worn)} />
+          </OutfitCard>
+        </section>
+      ) : n === 0 ? (
         <Card>
           <h2 style={{ fontSize: 21 }}>On commence par tes vêtements</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--muted)' }}>
@@ -46,7 +59,7 @@ export default async function Accueil() {
             {n} pièce{n > 1 ? 's' : ''} dans ton dressing.{' '}
             {n < 3
               ? 'Encore une ou deux et Kode pourra proposer une tenue complète.'
-              : 'Demande à Kode de composer ta tenue.'}
+              : "Rien n'est prévu pour aujourd'hui : demande à Kode de composer ta tenue."}
           </p>
           <Link href={n < 3 ? '/dressing/ajouter' : '/kode'} style={{ ...buttonPrimary, alignSelf: 'flex-start' }}>
             {n < 3 ? 'Ajouter une pièce' : 'Demander à Kode'}

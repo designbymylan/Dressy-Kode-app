@@ -2,8 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer, type Theme } from '@/lib/space';
+import { parisDay } from '@/lib/dates';
+import { loadMessages, loadUsage, type KodeMessage, type KodeUsage } from '@/lib/kode';
 import {
   GENDERS, GOALS, STYLES, ITEMS, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, type Answers,
@@ -184,6 +187,110 @@ export async function dismissAiJob(jobId: string): Promise<FormResult> {
   if (job.source_paths?.length) await supabase.storage.from('uploads').remove(job.source_paths);
 
   revalidatePath('/dressing');
+  return undefined;
+}
+
+export type KodeResult =
+  | { error: string; code: string | null }
+  | { messages: KodeMessage[]; usage: KodeUsage };
+
+/**
+ * Pose une question à Kode. L'Edge Function `kode` compte le quota, fait
+ * répondre Claude et enregistre les deux bulles ; on les relit ensuite par
+ * la RLS, avec les vignettes signées, pour les afficher telles quelles.
+ */
+export async function askKode(question: string): Promise<KodeResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.', code: null };
+
+  const q = String(question ?? '').trim().slice(0, 600);
+  if (!q) return { error: 'Écris ta question à Kode.', code: null };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.functions.invoke<{ question_id: string; reply_id: string }>('kode', {
+    body: { question: q },
+  });
+
+  if (error || !data) {
+    // Les messages de la fonction sont écrits pour être lus (quota, dressing trop petit…).
+    const body = error instanceof FunctionsHttpError
+      ? await (error.context as Response).json().catch(() => null)
+      : null;
+    return {
+      error: body?.error ?? "Kode n'a pas pu répondre. Réessaie dans un instant.",
+      code: body?.code ?? null,
+    };
+  }
+
+  const [messages, usage] = await Promise.all([
+    loadMessages(supabase, viewer.spaceId, [data.question_id, data.reply_id]),
+    loadUsage(supabase, viewer.spaceId),
+  ]);
+  return { messages, usage };
+}
+
+/** « Nouvelle conversation » : la précédente est archivée, pas effacée. */
+export async function resetKode(): Promise<FormResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('kode_reset');
+  if (error) return { error: "La conversation n'a pas pu être remise à zéro." };
+  revalidatePath('/kode');
+  return undefined;
+}
+
+/**
+ * Prévoit une tenue pour demain, ou la retire si c'était déjà elle. Une
+ * autre tenue déjà prévue pour demain est remplacée : un jour, une tenue.
+ */
+export async function planTomorrow(outfitId: string): Promise<{ error: string } | { planned: boolean }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const supabase = await createClient();
+  const day = parisDay(1);
+  const { data: current } = await supabase
+    .from('planned_days')
+    .select('outfit_id')
+    .eq('space_id', viewer.spaceId)
+    .eq('day', day)
+    .maybeSingle();
+
+  const { error } = current?.outfit_id === outfitId
+    ? await supabase.from('planned_days').delete().eq('space_id', viewer.spaceId).eq('day', day)
+    : await supabase.from('planned_days').upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: false });
+  if (error) return { error: "Le calendrier n'a pas pu être mis à jour." };
+
+  revalidatePath('/accueil');
+  return { planned: current?.outfit_id !== outfitId };
+}
+
+/**
+ * « Je la porte » : un port par pièce pour aujourd'hui (ce qui alimente le
+ * nombre de ports et le coût par port), et la journée marquée portée.
+ */
+export async function wearToday(outfitId: string): Promise<FormResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const supabase = await createClient();
+  const day = parisDay(0);
+  const { data: items } = await supabase.from('outfit_items').select('garment_id').eq('outfit_id', outfitId);
+  if (!items?.length) return { error: 'Cette tenue est introuvable.' };
+
+  const wears = await supabase
+    .from('wears')
+    .upsert(items.map((i) => ({ garment_id: i.garment_id, worn_on: day })), {
+      onConflict: 'garment_id,worn_on',
+      ignoreDuplicates: true,
+    });
+  if (wears.error) return { error: "Le port n'a pas pu être noté." };
+
+  const plan = await supabase
+    .from('planned_days')
+    .upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: true });
+  if (plan.error) return { error: "Le calendrier n'a pas pu être mis à jour." };
+
+  revalidatePath('/accueil');
   return undefined;
 }
 

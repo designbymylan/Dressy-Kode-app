@@ -3,23 +3,9 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
 import { ACTIVE_STATUSES, type JobRow } from '@/lib/jobs';
+import { signAll } from '@/lib/storage';
 import { JobList } from '@/components/JobList';
 import { Screen, Title, Card, buttonPrimary } from '@/components/ui';
-
-const HOUR = 3600;
-
-/** URL signées en un seul aller-retour : les deux buckets sont privés. */
-async function signAll(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  bucket: string,
-  paths: string[],
-): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  if (!paths.length) return out;
-  const { data } = await supabase.storage.from(bucket).createSignedUrls(paths, HOUR);
-  for (const s of data ?? []) if (s.path && s.signedUrl) out.set(s.path, s.signedUrl);
-  return out;
-}
 
 export default async function Dressing({
   searchParams,

@@ -1,15 +1,33 @@
-import { Screen, Title, Card } from '@/components/ui';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { getViewer } from '@/lib/space';
+import { parisDay } from '@/lib/dates';
+import { loadMessages, loadUsage } from '@/lib/kode';
+import { KodeChat } from '@/components/KodeChat';
 
-export default function Kode() {
+// La réponse de Kode prend souvent 10 à 30 s : la valeur par défaut de
+// certains hébergeurs (10 s) couperait l'action serveur avant la fin.
+export const maxDuration = 60;
+
+export default async function Kode() {
+  const viewer = await getViewer();
+  if (!viewer) redirect('/bienvenue');
+  const supabase = await createClient();
+
+  const [messages, usage, { count }, { data: tomorrow }] = await Promise.all([
+    loadMessages(supabase, viewer.spaceId),
+    loadUsage(supabase, viewer.spaceId),
+    supabase.from('garments').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('planned_days').select('outfit_id').eq('space_id', viewer.spaceId).eq('day', parisDay(1)).maybeSingle(),
+  ]);
+
   return (
-    <Screen>
-      <Title sub="Ton styliste, avec ce que tu possèdes déjà.">Kode</Title>
-      <Card>
-        <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--muted)' }}>
-          La conversation n&apos;est pas encore branchée. La maquette de référence est
-          <code style={{ fontSize: 13 }}> design/_projet/Kode.dc.html</code>.
-        </p>
-      </Card>
-    </Screen>
+    <KodeChat
+      name={viewer.displayName}
+      initial={messages}
+      usage={usage}
+      plannedTomorrow={tomorrow?.outfit_id ?? null}
+      pieces={count ?? 0}
+    />
   );
 }
