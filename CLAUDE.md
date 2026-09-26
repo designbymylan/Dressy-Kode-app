@@ -41,13 +41,18 @@ Ordre de priorité, du plus fort au plus faible :
 
 ### Règles visuelles
 
-- Direction : épurée, premium, « vitrine de magasin ». Beaucoup de vide, la
-  couleur vient des vêtements, pas de l'interface.
+- Direction : épurée, premium, « vitrine de magasin ». Beaucoup de vide ;
+  l'interface reste neutre, la couleur vient des vêtements. Seules
+  exceptions : les trois couleurs par sujet du Design System (**sable** pour
+  la Tenue du jour, **lilas** pour le Cercle et les ajouts, **beurre** pour
+  les Chiffres et la photo), réservées à leur sujet.
 - Polices : **Satoshi** pour le texte et l'interface (base 15 px, interligne
   1,45), **Gambarino** pour les titres `h1–h3`.
 - Couleurs : **uniquement via les variables CSS** (`var(--ink)`,
   `var(--muted)`, `var(--tile)`…), jamais de code hexadécimal dans un
-  composant. Chaque écran doit marcher en clair **et** en sombre.
+  composant, sauf pour une couleur qui ne doit pas suivre le thème (pastille
+  de couleur d'un vêtement, aperçu de thème, `themeColor`). Chaque écran doit
+  marcher en clair **et** en sombre.
 - Laiton : `--hi` pour les aplats et le décor seulement ; pour du texte ou
   une icône, `--hi-ink`.
 - Formes : tout ce qui se clique a un rayon de 999 px ; cartes et vignettes
@@ -69,11 +74,15 @@ Ordre de priorité, du plus fort au plus faible :
   (Lucide, Iconify…), pas de kit d'interface.** Les icônes sont des SVG en
   ligne, trait fin, couleur héritée des variables.
 
-## Skills de design installés : des conseillers, pas des chefs
+## Skills de design
 
-Les skills de `.claude/skills/` donnent des principes généraux. **En cas de
-conflit avec ce fichier ou les maquettes, ce fichier et les maquettes
-gagnent.** Ne reprends jamais leurs choix techniques ou visuels (Tailwind,
+**`dressy-design` est le skill maison** : la méthode pour passer d'une
+maquette à un écran codé et vérifié. Utilise-le pour tout travail
+d'interface, avant les autres (`/dressy-design <écran ou demande>`).
+
+Les autres skills de `.claude/skills/` sont des conseillers, pas des chefs :
+ils donnent des principes généraux. **En cas de conflit avec ce fichier ou
+les maquettes, ce fichier et les maquettes gagnent.** Ne reprends jamais leurs choix techniques ou visuels (Tailwind,
 Lucide, Recharts, dégradés, effet de verre ailleurs que sur la barre
 d'onglets) ni leurs palettes.
 
