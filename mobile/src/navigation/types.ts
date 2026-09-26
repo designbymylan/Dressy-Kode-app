@@ -1,0 +1,36 @@
+import type { NavigatorScreenParams, NavigationProp, RouteProp } from '@react-navigation/native';
+import type { CategoryId } from '../data/wardrobe';
+
+export type TabParams = {
+  Home: undefined;
+  Dressing: { category?: CategoryId; view?: 'portants' | 'grille'; search?: boolean } | undefined;
+  Kode: { ask?: string; nonce?: number } | undefined;
+  Agenda: { day?: number } | undefined;
+  Me: undefined;
+};
+
+export type RootParams = {
+  Welcome: undefined;
+  Onboarding: undefined;
+  Tabs: NavigatorScreenParams<TabParams> | undefined;
+  Piece: { id: string };
+  AddPiece: undefined;
+  Compose: { day?: number; with?: string; pieces?: string[] } | undefined;
+  Event: { id: string };
+  Silhouette: undefined;
+  Customize: undefined;
+  Share: { id: string };
+  Offers: undefined;
+  Shop: { pack?: string } | undefined;
+  States: undefined;
+};
+
+export type Nav = NavigationProp<RootParams & TabParams>;
+export type Route<K extends keyof RootParams | keyof TabParams> = RouteProp<RootParams & TabParams, K>;
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace ReactNavigation {
+    interface RootParamList extends RootParams {}
+  }
+}

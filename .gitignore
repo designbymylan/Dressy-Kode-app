@@ -20,3 +20,6 @@ desktop.ini
 
 # Deno : le runtime des Edge Functions résout lui-même les versions épinglées dans deno.json.
 deno.lock
+
+# Python
+__pycache__/

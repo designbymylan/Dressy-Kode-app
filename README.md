@@ -8,12 +8,13 @@ avec ce qu'on possède déjà.
 
 | Dossier | Contenu |
 |---|---|
-| `web/` | L'application (Next.js App Router, React 19, `@supabase/ssr`). |
+| `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, données de démonstration. Voir `mobile/README.md`. |
+| `web/` | L'application web (Next.js App Router, React 19, `@supabase/ssr`), branchée sur Supabase. |
 | `supabase/functions/dressy-agent/` | L'agent central : photo → ChatGPT → Nano Banana → Claude → dressing. |
 | `supabase/functions/kode/` | Kode, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
 | `supabase/functions/billing/`, `stripe-webhook/` | Les abonnements : ouverture du paiement Stripe, et le webhook qui active l'offre. |
 | `supabase/migrations/` | Le schéma SQL complet, dans l'ordre où il a été appliqué au projet Supabase. |
-| `design/` | Les maquettes Claude Design (`_projet/*.dc.html`), spécification visuelle de référence. |
+| `design/` | Les maquettes Claude Design (`_projet/*.dc.html`) et la refonte : recherche, design system, vérification du contraste (`refonte/`). |
 | `tools/` | Petits outils : extraction du bundle de design, serveur des maquettes, tests du calendrier, mise en place de Stripe. |
 
 ## Lancer l'application
