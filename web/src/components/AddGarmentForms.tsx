@@ -1,53 +1,122 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useActionState, useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type FormEvent } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { addGarment, requestAiGarments, type FormResult } from '@/app/actions';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
-import { Field, ErrorNote, inputStyle, buttonPrimary, buttonQuiet } from '@/components/ui';
+import { CATEGORIES } from '@/lib/wardrobe';
+import { COLOURS } from '@/lib/onboarding';
+import { Field, ErrorNote, Icon, ICON } from '@/components/ui';
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} style={{ ...buttonPrimary, opacity: pending ? 0.6 : 1 }}>
+    <button type="submit" disabled={pending} className="btn btn-primary btn-block">
       {pending ? 'Un instant…' : label}
     </button>
   );
 }
 
-export function ManualForm({ categories }: { categories: { id: string; label: string }[] }) {
+/* ---------------------------------------------------------------- saisie */
+
+export function ManualForm() {
   const [state, action] = useActionState<FormResult, FormData>(addGarment, undefined);
+  const [category, setCategory] = useState<string>('');
+  const [kind, setKind] = useState<string>('');
+  const [colour, setColour] = useState<string>('');
+  const meta = CATEGORIES.find((c) => c.id === category);
 
   return (
-    <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
+      <input type="hidden" name="category_id" value={category} />
+      <input type="hidden" name="kind" value={kind} />
+      <input type="hidden" name="colour" value={colour} />
 
       <Field label="La pièce">
-        <input name="name" type="text" required placeholder="Blazer noir" style={inputStyle} />
+        <input name="name" type="text" required placeholder="Collier doré, blazer noir…" className="input" />
       </Field>
 
-      <Field label="Catégorie">
-        <select name="category_id" required defaultValue="" style={inputStyle}>
-          <option value="" disabled>Choisir…</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
+      <div className="field">
+        <span id="cat-label">Catégorie</span>
+        <div role="radiogroup" aria-labelledby="cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={category === c.id}
+              className="chip"
+              onClick={() => { setCategory(c.id); setKind(''); }}
+            >
+              <Icon d={c.icon} size={16} width={1.6} />
+              {c.label}
+            </button>
           ))}
-        </select>
-      </Field>
+        </div>
+      </div>
+
+      {meta ? (
+        <div className="field pop" key={meta.id}>
+          <span id="kind-label">Type</span>
+          <div role="radiogroup" aria-labelledby="kind-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {meta.kinds.map((k, i) => (
+              <button
+                key={k.id}
+                type="button"
+                role="radio"
+                aria-checked={kind === k.id}
+                className="chip pop"
+                style={{ '--i': i } as CSSProperties}
+                onClick={() => setKind(kind === k.id ? '' : k.id)}
+              >
+                {k.icon ? <Icon d={k.icon} size={16} width={1.6} /> : null}
+                {k.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="field">
+        <span id="colour-label">Couleur principale</span>
+        <div role="radiogroup" aria-labelledby="colour-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {COLOURS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={colour === c.id}
+              aria-label={c.label}
+              title={c.label}
+              onClick={() => setColour(colour === c.id ? '' : c.id)}
+              style={{
+                width: 34, height: 34, borderRadius: 999, background: c.hex, cursor: 'pointer',
+                border: '1px solid rgba(0,0,0,.08)',
+                outline: colour === c.id ? '2px solid var(--ink)' : '2px solid transparent', outlineOffset: 3,
+                transform: colour === c.id ? 'scale(1.08)' : 'none',
+                transition: 'transform 300ms cubic-bezier(.34,1.56,.64,1), outline-color 200ms',
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
       <Field label="Matière (facultatif)">
-        <input name="material" type="text" placeholder="Laine mélangée" style={inputStyle} />
+        <input name="material" type="text" placeholder="Laine, argent 925…" className="input" />
       </Field>
 
       <Field label="Prix payé (facultatif)">
-        <input name="price" type="text" inputMode="decimal" placeholder="49,90" style={inputStyle} />
+        <input name="price" type="text" inputMode="decimal" placeholder="49,90" className="input" />
       </Field>
 
-      <Submit label="Ajouter au dressing" />
+      <Submit label="Ranger dans mon dressing" />
     </form>
   );
 }
+
+/* ---------------------------------------------------------------- photos */
 
 const MAX_PHOTOS = 10;
 const MAX_SIDE = 1600;
@@ -57,7 +126,7 @@ type Picked = { id: string; blob: Blob; preview: string };
 /**
  * Réduit la photo dans le navigateur avant l'envoi : une photo de téléphone
  * fait souvent 4 à 12 Mo, et chaque modèle de la chaîne la relit. 1600 px
- * suffisent largement pour décrire et comparer un vêtement.
+ * suffisent largement pour décrire et comparer un vêtement ou un bijou.
  */
 async function shrink(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file); // applique l'orientation EXIF
@@ -86,6 +155,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
   const [hint, setHint] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
   const busy = progress !== null;
 
   // Les aperçus sont des URL d'objets : on les libère en quittant l'écran.
@@ -93,11 +163,8 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
   itemsRef.current = items;
   useEffect(() => () => itemsRef.current.forEach((i) => URL.revokeObjectURL(i.preview)), []);
 
-  async function pick(e: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = ''; // permet de rechoisir la même photo après l'avoir retirée
+  async function addFiles(files: File[]) {
     setError(null);
-
     const room = MAX_PHOTOS - items.length;
     if (files.length > room) setError(`${MAX_PHOTOS} photos au plus à la fois : les suivantes n'ont pas été ajoutées.`);
 
@@ -111,6 +178,12 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       }
     }
     setItems((prev) => [...prev, ...added]);
+  }
+
+  async function pick(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ''; // permet de rechoisir la même photo après l'avoir retirée
+    await addFiles(files);
   }
 
   function remove(id: string) {
@@ -160,13 +233,15 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       {error ? <ErrorNote>{error}</ErrorNote> : null}
 
       {n ? (
-        <ul
-          aria-label="Photos choisies"
-          style={{ listStyle: 'none', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}
-        >
+        <ul aria-label="Photos choisies" style={{ listStyle: 'none', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {items.map((item, i) => (
-            <li key={item.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 16, overflow: 'hidden', background: 'var(--tile)' }}>
+            <li
+              key={item.id}
+              className="pop"
+              style={{ '--i': i, position: 'relative', aspectRatio: '1', borderRadius: 20, overflow: 'hidden', background: 'var(--tile)', boxShadow: 'var(--shadow-glass)' } as CSSProperties}
+            >
               <img src={item.preview} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {busy ? <span className="shimmer" style={{ position: 'absolute', inset: 0 }} aria-hidden="true" /> : null}
               {/* Zone de 44 px pour le doigt, pastille de 28 px pour l'œil. */}
               <button
                 type="button"
@@ -179,15 +254,8 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <span
-                  style={{
-                    width: 28, height: 28, borderRadius: 999, background: 'var(--ink)', color: 'var(--ground)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
-                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                <span style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--glass-strong)', color: 'var(--ink)', display: 'grid', placeItems: 'center', backdropFilter: 'blur(10px)' }}>
+                  <Icon d={ICON.close} size={13} width={2.2} />
                 </span>
               </button>
             </li>
@@ -196,11 +264,15 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       ) : null}
 
       {n < MAX_PHOTOS ? (
-        <label data-file-pick style={{ ...buttonQuiet, position: 'relative', alignSelf: 'flex-start', opacity: busy ? 0.6 : 1 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 8h3l2-3h6l2 3h3v11H4Z" />
-            <circle cx="12" cy="13" r="3.5" />
-          </svg>
+        <label
+          data-file-pick
+          className="btn btn-glass"
+          onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => { e.preventDefault(); setOver(false); void addFiles(Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'))); }}
+          style={{ position: 'relative', alignSelf: 'center', opacity: busy ? 0.6 : 1, transform: over ? 'scale(1.05)' : undefined }}
+        >
+          <Icon d={ICON.camera} size={18} width={1.6} />
           {n ? 'Ajouter des photos' : 'Choisir des photos'}
           <input type="file" accept="image/*" multiple onChange={pick} disabled={busy} />
         </label>
@@ -212,23 +284,18 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
           value={hint}
           onChange={(e) => setHint(e.target.value)}
           maxLength={280}
-          placeholder="Le pull, pas le jean"
+          placeholder="Le collier, pas le pull"
           disabled={busy}
-          style={inputStyle}
+          className="input"
         />
       </Field>
 
-      <p style={{ fontSize: 12.5, lineHeight: 1.45, color: 'var(--muted)' }}>
-        Une photo, une pièce. ChatGPT la décrit, Nano Banana la redessine seule et
-        sans fond, puis Claude vérifie qu&apos;elle ressemble à la tienne à 95 % —
-        jusqu&apos;à trois essais avant de ranger la meilleure dans ton dressing.
+      <p className="small muted center" style={{ paddingInline: 6 }}>
+        Claude décrit la pièce, Nano Banana la redessine seule et sans fond, puis Claude vérifie
+        qu&apos;elle ressemble à la tienne à 95 %, jusqu&apos;à trois essais.
       </p>
 
-      <button
-        type="submit"
-        disabled={!n || busy}
-        style={{ ...buttonPrimary, opacity: !n || busy ? 0.6 : 1 }}
-      >
+      <button type="submit" disabled={!n || busy} className="btn btn-primary btn-block">
         {progress ?? (n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kode` : 'Choisis au moins une photo')}
       </button>
     </form>

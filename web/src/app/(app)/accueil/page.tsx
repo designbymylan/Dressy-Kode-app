@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
-import { Screen, Title, Card, buttonPrimary } from '@/components/ui';
+import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -24,33 +24,40 @@ export default async function Accueil() {
   return (
     <Screen>
       <Title sub={dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}>
-        {viewer.displayName ? `Salut, ${viewer.displayName}` : 'Salut'}
+        {viewer.displayName ? <>Salut, <em className="accent">{viewer.displayName}</em></> : 'Salut'}
       </Title>
 
       {n === 0 ? (
-        <Card>
-          <h2 style={{ fontSize: 21 }}>On commence par tes vêtements</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--muted)' }}>
-            Ton espace est prêt et il est vide — rien n&apos;y est ajouté sans toi.
+        <Card center i={1}>
+          <h2 style={{ fontSize: 22 }}>On commence par <em className="accent">tes vêtements</em></h2>
+          <p className="lead small">
+            Ton espace est prêt et il est vide : rien n&apos;y est ajouté sans toi.
             Dès que deux ou trois pièces y seront, Kode pourra composer une tenue
             avec ce que tu as déjà.
           </p>
-          <Link href="/dressing/ajouter" style={{ ...buttonPrimary, alignSelf: 'flex-start' }}>
+          <Link href="/dressing/ajouter" className="btn btn-primary btn-block">
             Ajouter ma première pièce
           </Link>
         </Card>
       ) : (
-        <Card>
-          <h2 style={{ fontSize: 21 }}>Tenue du jour</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--muted)' }}>
+        <Card center i={1}>
+          <h2 style={{ fontSize: 22 }}>Tenue du <em className="accent">jour</em></h2>
+          <p className="lead small">
             {n} pièce{n > 1 ? 's' : ''} dans ton dressing.{' '}
-            {n < 3
-              ? 'Encore une ou deux et Kode pourra proposer une tenue complète.'
-              : 'Demande à Kode de composer ta tenue.'}
+            {n < 2
+              ? 'Encore une ou deux et tu pourras composer une tenue complète.'
+              : 'Compose ta tenue en quelques gestes, ou demande à Kode.'}
           </p>
-          <Link href={n < 3 ? '/dressing/ajouter' : '/kode'} style={{ ...buttonPrimary, alignSelf: 'flex-start' }}>
-            {n < 3 ? 'Ajouter une pièce' : 'Demander à Kode'}
-          </Link>
+          {n < 2 ? (
+            <Link href="/dressing/ajouter" className="btn btn-primary btn-block">Ajouter une pièce</Link>
+          ) : (
+            <>
+              <Link href="/tenues/nouvelle" className="btn btn-primary btn-block">
+                <Icon d={ICON.sparkle} size={18} /> Composer ma tenue
+              </Link>
+              <Link href="/kode" className="btn btn-glass btn-block">Demander à Kode</Link>
+            </>
+          )}
         </Card>
       )}
     </Screen>

@@ -3,19 +3,35 @@
  * toucher à la mécanique de l'agent.
  */
 
-export const CATEGORIES = ['hauts', 'bas', 'robes', 'vestes', 'chaussures', 'sacs', 'accessoires'] as const;
+export const CATEGORIES = ['hauts', 'bas', 'robes', 'vestes', 'chaussures', 'sacs', 'bijoux', 'accessoires'] as const;
 
 // Même liste que COLOURS dans web/src/lib/onboarding.ts : les couleurs d'une
 // pièce et celles du profil doivent pouvoir se comparer.
 export const COLOUR_IDS = [
   'noir', 'anthracite', 'gris', 'blanc', 'creme', 'beige', 'camel', 'marron', 'bordeaux', 'rouge',
   'orange', 'moutarde', 'jaune', 'olive', 'vert', 'marine', 'bleu', 'ciel', 'violet', 'rose',
+  'dore', 'argente',
 ] as const;
 
-// ---------------------------------------------------------------- ChatGPT
+// Types de pièce par catégorie : mêmes identifiants que web/src/lib/wardrobe.ts
+// (colonne garments.kind, minuscules sans séparateur).
+export const KINDS: Record<(typeof CATEGORIES)[number], readonly string[]> = {
+  hauts: ['tshirt', 'chemise', 'blouse', 'pull', 'sweat', 'debardeur', 'top'],
+  bas: ['jean', 'pantalon', 'jupe', 'short', 'legging'],
+  robes: ['robe', 'combinaison'],
+  vestes: ['veste', 'blazer', 'manteau', 'trench', 'doudoune', 'gilet'],
+  chaussures: ['baskets', 'bottines', 'bottes', 'escarpins', 'sandales', 'mocassins', 'ballerines'],
+  sacs: ['sacamain', 'bandouliere', 'pochette', 'cabas', 'sacados'],
+  bijoux: ['collier', 'boucles', 'bracelet', 'bague', 'montre', 'broche'],
+  accessoires: ['ceinture', 'bandeau', 'pince', 'foulard', 'echarpe', 'chapeau', 'casquette', 'bonnet', 'lunettes', 'gants'],
+};
+const ALL_KINDS = [...new Set(Object.values(KINDS).flat())];
+const KINDS_TEXT = Object.entries(KINDS).map(([c, ks]) => `${c} → ${ks.join(', ')}`).join(' ; ');
+
+// ---------------------------------------------------------------- Claude, description
 
 export const DESCRIBE_SYSTEM = `Tu es l'assistant de description de Dressy, une garde-robe numérique.
-On te donne une ou plusieurs photos d'UN vêtement qui appartient à la personne, prises chez elle : éclairage, fond, plis et cadrage quelconques.
+On te donne une ou plusieurs photos d'UN vêtement, d'UN bijou ou d'UN accessoire qui appartient à la personne, prises chez elle : éclairage, fond, plis et cadrage quelconques.
 
 Ta mission : décrire ce vêtement le plus précisément possible, puis écrire la consigne qui permettra à un générateur d'images de le reproduire À L'IDENTIQUE, seul, sans aucun fond.
 
@@ -23,29 +39,39 @@ Si plusieurs vêtements apparaissent, ne traite que la pièce principale, ou cel
 
 Champs attendus :
 - name : 2 à 4 mots en français, sans marque (ex. « Trench sable », « Pull côtelé crème »).
-- category : la plus proche parmi ${CATEGORIES.join(', ')}.
+- category : la plus proche parmi ${CATEGORIES.join(', ')}. Les bijoux (collier, bague, boucles d'oreilles, bracelet, montre, broche) vont dans « bijoux » ; ceinture, bandeau, pince, foulard, écharpe, chapeau, casquette, bonnet, lunettes et gants dans « accessoires ».
+- kind : le type précis, parmi ceux de la catégorie choisie : ${KINDS_TEXT}.
 - colors : 1 à 3 identifiants parmi ${COLOUR_IDS.join(', ')} — la couleur dominante en premier.
 - material : la matière apparente en français (« maille côtelée », « denim brut »), ou une chaîne vide si on ne peut pas le dire.
 - description : en français, précise et factuelle : type et coupe, longueur, encolure ou col, manches, fermeture (nombre de boutons, zip), poches, coutures visibles, motifs et leur placement, texture, finitions, détails distinctifs.
 - prompt : en ANGLAIS, la consigne complète pour le générateur d'images. Elle doit :
   • demander de reproduire exactement le vêtement des photos de référence : même coupe, mêmes proportions, teintes exactes décrites précisément (ex. "warm camel brown"), mêmes motifs au même endroit, même texture, chaque détail visible (nombre de boutons, surpiqûres, poches) ;
-  • demander une photo produit e-commerce photoréaliste : pièce posée parfaitement à plat, vue de face, symétrique, défroissée, entière et centrée avec une petite marge. Pour des chaussures : la paire, vue de trois quarts. Pour un sac : posé debout, vu de face ;
+  • demander une photo produit e-commerce photoréaliste : pièce posée parfaitement à plat, vue de face, symétrique, défroissée, entière et centrée avec une petite marge. Pour des chaussures : la paire, vue de trois quarts. Pour un sac : posé debout, vu de face. Pour un bijou : posé à plat, vu de dessus, net jusque dans le détail (maillons, fermoir, pierres, gravures), métal et reflets fidèles ; des boucles d'oreilles : la paire côte à côte. Pour un accessoire (ceinture, bandeau, foulard, lunettes, chapeau…) : posé à plat, vu de face, entier ;
   • exiger la pièce seule : ni personne, ni mannequin, ni cintre, ni main, ni accessoire, ni texte, ni filigrane ;
   • exiger AUCUN arrière-plan : la pièce est isolée sur un fond parfaitement uni, sans ombre, reflet, dégradé, texture ni sol.
-  N'indique pas de couleur de fond dans le prompt : elle est ajoutée ensuite automatiquement.`;
+  N'indique pas de couleur de fond dans le prompt : elle est ajoutée ensuite automatiquement.
+
+Réponds uniquement avec l'outil piece.`;
 
 export const DESCRIBE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['name', 'category', 'colors', 'material', 'description', 'prompt'],
+  required: ['name', 'category', 'kind', 'colors', 'material', 'description', 'prompt'],
   properties: {
     name: { type: 'string' },
     category: { type: 'string', enum: [...CATEGORIES] },
+    kind: { type: 'string', enum: ALL_KINDS },
     colors: { type: 'array', items: { type: 'string', enum: [...COLOUR_IDS] } },
     material: { type: 'string' },
     description: { type: 'string' },
     prompt: { type: 'string' },
   },
+} as const;
+
+export const DESCRIBE_TOOL = {
+  name: 'piece',
+  description: 'Rend la fiche du vêtement et la consigne du générateur d\'images.',
+  input_schema: DESCRIBE_SCHEMA,
 } as const;
 
 export type Previous = { attempt: number; score: number | null; ecarts: string[]; prompt: string | null };
@@ -84,7 +110,7 @@ export function describeUserText(input: {
  * se confondrait avec le tissu et le détourage mangerait le bord de la
  * pièce ; on passe alors sur un gris moyen, franchement différent.
  */
-const LIGHT = new Set(['blanc', 'creme', 'beige', 'ciel']);
+const LIGHT = new Set(['blanc', 'creme', 'beige', 'ciel', 'argente']);
 
 export function backdropFor(colors: readonly string[]): string {
   return LIGHT.has(colors[0]) ? '#808080' : '#FFFFFF';

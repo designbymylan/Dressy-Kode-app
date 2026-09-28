@@ -17,3 +17,6 @@ desktop.ini
 
 # Claude Code : réglages propres à chaque poste
 .claude/settings.local.json
+
+# Journaux locaux
+*.log

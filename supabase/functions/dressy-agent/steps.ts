@@ -4,7 +4,7 @@
  */
 import { Buffer } from 'node:buffer';
 import {
-  CATEGORIES, COLOUR_IDS, DESCRIBE_SCHEMA, DESCRIBE_SYSTEM, describeUserText,
+  CATEGORIES, COLOUR_IDS, KINDS, DESCRIBE_TOOL, DESCRIBE_SYSTEM, describeUserText,
   JUDGE_SYSTEM, VERDICT_TOOL, PICK_SYSTEM, PICK_TOOL, type Previous,
 } from './prompts.ts';
 import { normaliseVerdict, type Verdict } from './decide.ts';
@@ -16,13 +16,17 @@ export type Usage = Record<string, unknown> | null;
 /** Erreur dont le message peut être montré tel quel dans le dressing. */
 export class AgentError extends Error {}
 
+const CLAUDE = Deno.env.get('CLAUDE_MODEL') ?? 'claude-sonnet-5';
+
 export const MODELS = {
-  openai: Deno.env.get('OPENAI_MODEL') ?? 'gpt-5.4-mini',
+  // Claude décrit la photo et écrit la consigne ; il peut tourner sur un autre
+  // modèle que le contrôle qualité (CLAUDE_DESCRIBE_MODEL), sinon le même.
+  describe: Deno.env.get('CLAUDE_DESCRIBE_MODEL') ?? CLAUDE,
   gemini: Deno.env.get('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
-  claude: Deno.env.get('CLAUDE_MODEL') ?? 'claude-sonnet-5',
+  claude: CLAUDE,
 };
 
-export const KEYS = ['OPENAI_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
+export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
 
 /** La clé telle que collée, sans les espaces ni guillemets qu'un copier-coller ajoute souvent. */
 function readKey(name: (typeof KEYS)[number]): string | undefined {
@@ -39,7 +43,7 @@ function secret(name: (typeof KEYS)[number]): string {
 
 /**
  * À quoi ressemble une clé, sans en montrer un seul caractère : sert à repérer
- * une clé collée sous le mauvais nom (une clé Anthropic dans OPENAI_API_KEY…).
+ * une clé collée sous le mauvais nom (une clé Google dans ANTHROPIC_API_KEY…).
  */
 function keyShape(name: (typeof KEYS)[number]) {
   const raw = Deno.env.get(name) ?? '';
@@ -59,82 +63,6 @@ async function apiError(who: string, key: string, res: Response): Promise<AgentE
     return new AgentError(`${who} limite les appels ou le crédit est épuisé (429). ${text}`);
   }
   return new AgentError(`${who} a répondu ${res.status} : ${text}`);
-}
-
-// ---------------------------------------------------------------- ChatGPT
-
-export type Described = {
-  name: string;
-  category: (typeof CATEGORIES)[number];
-  colors: string[];
-  material: string;
-  description: string;
-  prompt: string;
-  usage: Usage;
-};
-
-export async function describe(input: {
-  sources: Img[];
-  hint: string;
-  gender: string | null;
-  previous: Previous | null;
-}): Promise<Described> {
-  const key = secret('OPENAI_API_KEY');
-
-  const res = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-    signal: AbortSignal.timeout(60_000),
-    body: JSON.stringify({
-      model: MODELS.openai,
-      instructions: DESCRIBE_SYSTEM,
-      input: [{
-        role: 'user',
-        content: [
-          { type: 'input_text', text: describeUserText(input) },
-          ...input.sources.map((s) => ({
-            type: 'input_image',
-            image_url: `data:${s.mime};base64,${b64(s.bytes)}`,
-            detail: 'high',
-          })),
-        ],
-      }],
-      text: { format: { type: 'json_schema', name: 'piece', strict: true, schema: DESCRIBE_SCHEMA } },
-    }),
-  });
-  if (!res.ok) throw await apiError('ChatGPT', 'OPENAI_API_KEY', res);
-
-  const body = await res.json();
-  const parsed = JSON.parse(outputText(body));
-
-  const category = CATEGORIES.includes(parsed.category) ? parsed.category : 'accessoires';
-  const colors = (Array.isArray(parsed.colors) ? parsed.colors : [])
-    .filter((c: string) => (COLOUR_IDS as readonly string[]).includes(c))
-    .slice(0, 3);
-  const prompt = String(parsed.prompt ?? '').trim();
-  if (!prompt) throw new AgentError("ChatGPT n'a pas renvoyé de consigne exploitable.");
-
-  return {
-    name: String(parsed.name ?? '').trim().slice(0, 60) || 'Pièce sans nom',
-    category,
-    colors,
-    material: String(parsed.material ?? '').trim().slice(0, 80),
-    description: String(parsed.description ?? '').trim(),
-    prompt,
-    usage: body.usage ?? null,
-  };
-}
-
-function outputText(body: { output_text?: string; output?: unknown[] }): string {
-  if (typeof body.output_text === 'string' && body.output_text) return body.output_text;
-  for (const item of (body.output ?? []) as { type: string; content?: { type: string; text?: string; refusal?: string }[] }[]) {
-    if (item.type !== 'message') continue;
-    for (const c of item.content ?? []) {
-      if (c.type === 'output_text' && c.text) return c.text;
-      if (c.type === 'refusal') throw new AgentError(`ChatGPT a refusé de décrire la photo : ${c.refusal}`);
-    }
-  }
-  throw new AgentError("ChatGPT n'a renvoyé aucune description.");
 }
 
 // ---------------------------------------------------------------- Nano Banana
@@ -201,7 +129,12 @@ const imageBlock = (img: Img): ClaudeBlock => ({
   source: { type: 'base64', media_type: img.mime, data: b64(img.bytes) },
 });
 
-async function askClaude(system: string, tool: { name: string }, content: ClaudeBlock[]) {
+async function askClaude(
+  system: string,
+  tool: { name: string },
+  content: ClaudeBlock[],
+  opts: { model?: string; maxTokens?: number; missing?: string } = {},
+) {
   const key = secret('ANTHROPIC_API_KEY');
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -212,8 +145,8 @@ async function askClaude(system: string, tool: { name: string }, content: Claude
     },
     signal: AbortSignal.timeout(60_000),
     body: JSON.stringify({
-      model: MODELS.claude,
-      max_tokens: 1500,
+      model: opts.model ?? MODELS.claude,
+      max_tokens: opts.maxTokens ?? 1500,
       system,
       tools: [tool],
       tool_choice: { type: 'tool', name: tool.name },
@@ -223,9 +156,61 @@ async function askClaude(system: string, tool: { name: string }, content: Claude
   if (!res.ok) throw await apiError('Claude', 'ANTHROPIC_API_KEY', res);
 
   const body = await res.json();
+  if (body.stop_reason === 'max_tokens') throw new AgentError('La réponse de Claude a été coupée (max_tokens) : relance la pièce.');
   const use = (body.content ?? []).find((b: { type: string }) => b.type === 'tool_use');
-  if (!use) throw new AgentError("Claude n'a pas rendu de verdict.");
+  if (!use) throw new AgentError(opts.missing ?? "Claude n'a pas rendu de verdict.");
   return { input: use.input as unknown, usage: (body.usage ?? null) as Usage };
+}
+
+// Claude décrit la photo et écrit la consigne de Nano Banana (étape tenue
+// autrefois par ChatGPT). La réponse passe par un outil forcé dont le schéma
+// est celui de la fiche : même contrat qu'avant pour le reste de l'agent.
+
+export type Described = {
+  name: string;
+  category: (typeof CATEGORIES)[number];
+  /** Type précis (collier, bandeau, jean…), ou null s'il ne va pas avec la catégorie. */
+  kind: string | null;
+  colors: string[];
+  material: string;
+  description: string;
+  prompt: string;
+  usage: Usage;
+};
+
+export async function describe(input: {
+  sources: Img[];
+  hint: string;
+  gender: string | null;
+  previous: Previous | null;
+}): Promise<Described> {
+  const { input: raw, usage } = await askClaude(DESCRIBE_SYSTEM, DESCRIBE_TOOL, [
+    ...input.sources.map(imageBlock),
+    { type: 'text', text: describeUserText(input) },
+  ], { model: MODELS.describe, maxTokens: 3000, missing: "Claude n'a renvoyé aucune description." });
+
+  const parsed = (raw ?? {}) as Record<string, unknown>;
+  const category = (CATEGORIES as readonly string[]).includes(String(parsed.category))
+    ? parsed.category as Described['category']
+    : 'accessoires';
+  const kind = KINDS[category].includes(String(parsed.kind)) ? String(parsed.kind) : null;
+  const colors = (Array.isArray(parsed.colors) ? parsed.colors : [])
+    .map(String)
+    .filter((c) => (COLOUR_IDS as readonly string[]).includes(c))
+    .slice(0, 3);
+  const prompt = String(parsed.prompt ?? '').trim();
+  if (!prompt) throw new AgentError("Claude n'a pas renvoyé de consigne exploitable.");
+
+  return {
+    name: String(parsed.name ?? '').trim().slice(0, 60) || 'Pièce sans nom',
+    category,
+    kind,
+    colors,
+    material: String(parsed.material ?? '').trim().slice(0, 80),
+    description: String(parsed.description ?? '').trim(),
+    prompt,
+    usage,
+  };
 }
 
 export async function judge(input: {
@@ -292,15 +277,17 @@ export async function checkSetup() {
   const timeout = () => AbortSignal.timeout(15_000);
   const anthropic = (k: string) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' });
 
-  const [openai, gemini, claude] = await Promise.all([
-    probe(
-      'OPENAI_API_KEY', MODELS.openai,
-      (k) => fetch(`https://api.openai.com/v1/models/${MODELS.openai}`, { headers: { authorization: `Bearer ${k}` }, signal: timeout() }),
-      async (k) => {
-        const b = await (await fetch('https://api.openai.com/v1/models', { headers: { authorization: `Bearer ${k}` }, signal: timeout() })).json();
-        return (b.data ?? []).map((m: { id: string }) => m.id).filter((id: string) => /^gpt-[4-9]/.test(id)).sort();
-      },
-    ),
+  const claudeModels = async (k: string) => {
+    const b = await (await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: anthropic(k), signal: timeout() })).json();
+    return (b.data ?? []).map((m: { id: string }) => m.id).sort();
+  };
+  const claudeProbe = (model: string) => probe(
+    'ANTHROPIC_API_KEY', model,
+    (k) => fetch(`https://api.anthropic.com/v1/models/${model}`, { headers: anthropic(k), signal: timeout() }),
+    claudeModels,
+  );
+
+  const [gemini, claude, description] = await Promise.all([
     probe(
       'GEMINI_API_KEY', MODELS.gemini,
       (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
@@ -309,18 +296,14 @@ export async function checkSetup() {
         return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).filter((id: string) => id.includes('image')).sort();
       },
     ),
-    probe(
-      'ANTHROPIC_API_KEY', MODELS.claude,
-      (k) => fetch(`https://api.anthropic.com/v1/models/${MODELS.claude}`, { headers: anthropic(k), signal: timeout() }),
-      async (k) => {
-        const b = await (await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: anthropic(k), signal: timeout() })).json();
-        return (b.data ?? []).map((m: { id: string }) => m.id).sort();
-      },
-    ),
+    claudeProbe(MODELS.claude),
+    MODELS.describe === MODELS.claude ? null : claudeProbe(MODELS.describe),
   ]);
 
-  const pret = [openai, gemini, claude].every((p) => p.cle === 'valide' && p.modele_trouve === true);
-  return { pret, openai, gemini, claude };
+  // « description » n'apparaît que si la description tourne sur un autre modèle Claude.
+  const probes = [gemini, claude, description].filter((p): p is Probe => p !== null);
+  const pret = probes.every((p) => p.cle === 'valide' && p.modele_trouve === true);
+  return { pret, gemini, claude, ...(description ? { description } : {}) };
 }
 
 /** Renvoie l'index (0, 1, 2…) de l'image que Claude garde parmi `options`. */

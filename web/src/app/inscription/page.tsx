@@ -5,11 +5,11 @@ export default function Inscription() {
   return (
     <AuthShell
       active="inscription"
-      title="Ton dressing, en vitrine."
-      lead="Photographie ce que tu possèdes déjà. Dressy compose tes tenues selon ton style, la météo et ton agenda. Porte mieux, achète moins."
+      title={<>Ton dressing, <em className="accent">en vitrine.</em></>}
+      lead="Photographie ce que tu possèdes déjà, bijoux et accessoires compris. Kode compose tes tenues selon ton style, la météo et ton agenda."
     >
       <AuthForm mode="signup" />
-      <p style={{ fontSize: 12, lineHeight: 1.45, color: 'var(--muted)' }}>
+      <p className="small muted center">
         Ton espace est privé. Personne d&apos;autre ne voit ta garde-robe.
       </p>
     </AuthShell>

@@ -28,7 +28,7 @@ export function jobLabel(j: Pick<JobRow, 'status' | 'attempts'>): string {
       if (j.attempts >= MAX_ATTEMPTS) return 'Claude va choisir la meilleure image';
       return j.attempts > 0 ? `Nouvel essai en attente — ${essai}` : 'En file';
     case 'prompting':
-      return j.attempts > 0 ? `ChatGPT corrige la consigne — ${essai}` : 'ChatGPT décrit la pièce';
+      return j.attempts > 0 ? `Claude corrige la consigne — ${essai}` : 'Claude décrit la pièce';
     case 'generating':
       return `Nano Banana la dessine — ${essai}`;
     case 'verifying':

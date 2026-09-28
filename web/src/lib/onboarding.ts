@@ -80,6 +80,7 @@ export const ITEMS: Option[] = [
   { id: 'chaussures', label: 'Chaussures' },
   { id: 'sacs', label: 'Sacs' },
   { id: 'accessoires', label: 'Accessoires' },
+  { id: 'bijoux', label: 'Bijoux' },
 ];
 
 export const COLOURS: { id: string; label: string; hex: string }[] = [
@@ -103,6 +104,9 @@ export const COLOURS: { id: string; label: string; hex: string }[] = [
   { id: 'ciel', label: 'Ciel', hex: '#A8C8E0' },
   { id: 'violet', label: 'Violet', hex: '#6B4E8C' },
   { id: 'rose', label: 'Rose', hex: '#D9959F' },
+  // Métaux : surtout pour les bijoux, mais aussi les boucles et les chaînes.
+  { id: 'dore', label: 'Doré', hex: '#C9A55C' },
+  { id: 'argente', label: 'Argenté', hex: '#BFC3C9' },
 ];
 
 export const AVOID: Option[] = [

@@ -4,7 +4,7 @@
  * Réveillé par la base (trigger sur ai_jobs, filet pg_cron), il prend la
  * pièce la plus ancienne en file et fait UN pas :
  *
- *   ChatGPT décrit la photo et écrit la consigne
+ *   Claude décrit la photo et écrit la consigne
  *   → Nano Banana redessine la pièce, seule, sur fond uni
  *   → Claude compare à la photo et note sur 100
  *   → validée (≥ 95) : détourage, vignette, rangement dans le dressing
@@ -31,6 +31,7 @@ declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void };
 type Analysis = {
   name: string;
   category: string;
+  kind?: string | null;
   colors: string[];
   material: string;
   description: string;
@@ -147,15 +148,15 @@ async function attempt(job: Job, n: number, previous: Candidate | null, started:
     gender: profile?.gender ?? null,
     previous: previous && { attempt: previous.attempt, score: previous.score, ecarts: previous.ecarts, prompt: previous.prompt },
   });
-  log(`ChatGPT → ${d.name} (${d.category}, ${d.colors.join('/') || 'couleur ?'})`);
+  log(`Claude (description) → ${d.name} (${d.category}, ${d.colors.join('/') || 'couleur ?'})`);
 
   const prompt = `${d.prompt.trim()}\n\n${backdropClause(d.colors)}`;
   const analysis: Analysis = {
-    name: d.name, category: d.category, colors: d.colors, material: d.material, description: d.description,
+    name: d.name, category: d.category, kind: d.kind, colors: d.colors, material: d.material, description: d.description,
   };
   await setJob(job, {
     status: 'generating', analysis, refined_prompt: prompt,
-    prompt_model: MODELS.openai, image_model: MODELS.gemini,
+    prompt_model: MODELS.describe, image_model: MODELS.gemini,
   });
 
   const img = await generate(prompt, sources);
@@ -168,7 +169,7 @@ async function attempt(job: Job, n: number, previous: Candidate | null, started:
   const { data: row, error } = await db.from('ai_images').insert({
     job_id: job.id, space_id: job.space_id, storage_path: path, attempt: n,
     prompt, mime: img.mime, bytes: img.bytes.length,
-    critique: { usage: { openai: d.usage, gemini: img.usage } },
+    critique: { usage: { claude_description: d.usage, gemini: img.usage } },
   }).select('id, attempt, storage_path, mime, prompt, score, validated, chosen, critique').single();
   if (error) throw new Error(`enregistrement de l'essai : ${error.message}`);
 
@@ -268,6 +269,7 @@ async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string
     const { data: garment, error } = await db.from('garments').insert({
       space_id: job.space_id,
       category_id: a.category,
+      kind: a.kind ?? null,
       name: a.name,
       colors: a.colors,
       material: a.material || null,
