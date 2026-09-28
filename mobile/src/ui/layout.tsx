@@ -15,10 +15,10 @@ export function Rule({ strong, style }: { strong?: boolean; style?: object }) {
   return <View style={[{ height: 1 }, style]} className={strong ? 'bg-rule-strong' : 'bg-rule'} />;
 }
 
-/** L'ours d'une page : petites capitales à gauche, contexte à droite, un filet. */
+/** L'ours d'une page : le mot de la page en capitales espacées à gauche, le contexte à droite. */
 export function Masthead({ kicker, meta, right }: { kicker: string; meta?: string; right?: ReactNode }) {
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10, paddingBottom: 2 }}>
       <View className="flex-row items-center justify-between" style={{ minHeight: 20, gap: 12 }}>
         <T v="masthead" accessibilityRole="header">
           {kicker}
@@ -31,7 +31,6 @@ export function Masthead({ kicker, meta, right }: { kicker: string; meta?: strin
           right
         )}
       </View>
-      <Rule />
     </View>
   );
 }
@@ -41,7 +40,7 @@ export function SectionHead({ n, title, action, onAction, testID }: { n?: string
   return (
     <View className="flex-row items-baseline" style={{ gap: 10 }}>
       {n && (
-        <T v="numeral" tone="brass" style={{ fontSize: 20 }} accessibilityElementsHidden importantForAccessibility="no">
+        <T v="numeral" tone="ink2" style={{ fontSize: 20 }} accessibilityElementsHidden importantForAccessibility="no">
           {n}
         </T>
       )}

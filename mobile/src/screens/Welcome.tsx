@@ -12,6 +12,7 @@ import { Masthead } from '../ui/layout';
 import { AccountSheet } from '../ui/account';
 import { Garment, type GarmentKind } from '../ui/Garment';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 const RAIL: { kind: GarmentKind; tint?: string }[] = [
@@ -33,6 +34,7 @@ export function Welcome() {
 
   return (
     <View className="bg-paper" style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }} testID="screen-welcome">
+      <Ambient />
       <View style={{ paddingHorizontal: space.gutter }}>
         <Masthead kicker="DRESSKODE" meta="Ta garde-robe, mieux portée" />
       </View>
@@ -54,7 +56,7 @@ export function Welcome() {
         <Animated.View entering={FadeInDown.delay(500).duration(500)} style={{ gap: 14 }}>
           <T v="hero" style={{ fontSize: 54, lineHeight: 52 }} accessibilityRole="header">
             Porte mieux,{'\n'}achète{' '}
-            <T v="hero" style={{ fontSize: 54, lineHeight: 52, fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="hero" style={{ fontSize: 54, lineHeight: 52, fontFamily: 'Accent' }}>
               moins.
             </T>
           </T>

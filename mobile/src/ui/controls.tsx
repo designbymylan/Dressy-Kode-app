@@ -5,11 +5,11 @@ import { Tap } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { motion } from '../theme/tokens';
+import { material, motion } from '../theme/tokens';
 
-/** Puce de filtre ou de choix : pleine quand elle est active, contour sinon. */
+/** Puce de filtre ou de choix (globals.css : `.chip`) : verre clair, encre pleine quand elle est active. */
 export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: string; on?: boolean; onPress: () => void; icon?: IconName; count?: number; testID?: string; dot?: string }) {
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   return (
     <Tap
       testID={testID}
@@ -19,8 +19,13 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
       accessibilityState={{ checked: !!on }}
       accessibilityLabel={count !== undefined ? `${label}, ${count}` : label}
       hitSlop={4}
-      style={{ height: 36, borderRadius: 18 }}
-      className={`flex-row items-center px-4 ${on ? 'bg-primary-bg' : 'border border-rule-strong'}`}
+      style={[
+        { height: 40, borderRadius: 20, borderWidth: 1 },
+        on
+          ? { backgroundColor: c['primary-bg'], borderColor: 'transparent', ...material.press[scheme] }
+          : { backgroundColor: c['glass-strong'], borderColor: c['glass-border'] },
+      ]}
+      className="flex-row items-center px-4"
     >
       {icon && (
         <View style={{ marginRight: 6 }}>
@@ -28,7 +33,7 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
         </View>
       )}
       {dot && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: dot, marginRight: 7, borderWidth: 1, borderColor: on ? c['primary-fg'] : c.rule }} />}
-      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={{ fontFamily: 'Sans500', fontSize: 13.5 }}>
         {label}
       </T>
       {count !== undefined && (
@@ -40,63 +45,55 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
   );
 }
 
-/** Onglets soulignés, façon sommaire de magazine (Portants / Grille). */
+/**
+ * Segment de verre à curseur encre (globals.css : `.segment`), pour basculer
+ * entre deux vues (Portants / Grille). Le curseur glisse d'une option à l'autre.
+ */
 export function Segmented<V extends string>({ options, value, onChange, label }: { options: { value: V; label: string }[]; value: V; onChange: (v: V) => void; label: string }) {
-  return (
-    <View accessibilityRole="tablist" accessibilityLabel={label} className="flex-row" style={{ gap: 20 }}>
-      {options.map((o) => {
-        const on = o.value === value;
-        return (
-          <Tap
-            key={o.value}
-            testID={`seg-${o.value}`}
-            onPress={() => onChange(o.value)}
-            feedback="select"
-            scaleTo={1}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
-            accessibilityLabel={o.label}
-            style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'center' }}
-          >
-            <View style={{ paddingBottom: 4, borderBottomWidth: 1.5 }} className={on ? 'border-ink' : 'border-transparent'}>
-              <T v="bodyStrong" tone={on ? 'ink' : 'ink2'} style={{ fontSize: 14.5, fontFamily: on ? 'HankenGrotesk_600SemiBold' : 'HankenGrotesk_500Medium' }}>
-                {o.label}
-              </T>
-            </View>
-          </Tap>
-        );
-      })}
-    </View>
-  );
+  return <SegmentTrack options={options} value={value} onChange={onChange} label={label} role="tablist" idPrefix="seg" compact />;
 }
 
-/** Sélecteur en capsule pour les réglages (Auto / Clair / Sombre). */
-export function SegmentedPill<V extends string>({ options, value, onChange, label }: { options: { value: V; label: string; icon?: IconName }[]; value: V; onChange: (v: V) => void; label: string }) {
-  const { c } = useTheme();
+function SegmentTrack<V extends string>({ options, value, onChange, label, role, idPrefix, compact }: { options: { value: V; label: string; icon?: IconName }[]; value: V; onChange: (v: V) => void; label: string; role: 'tablist' | 'radiogroup'; idPrefix: string; compact?: boolean }) {
+  const { c, scheme } = useTheme();
+  const index = Math.max(0, options.findIndex((o) => o.value === value));
+  const w = useSharedValue(0);
+  const x = useSharedValue(index);
+  useEffect(() => {
+    x.value = withSpring(index, motion.spring);
+  }, [index, x]);
+  const thumb = useAnimatedStyle(() => ({ width: w.value, transform: [{ translateX: x.value * w.value }] }));
+  const h = compact ? 38 : 42;
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} className="flex-row bg-sunk" style={{ borderRadius: 22, padding: 3, gap: 3 }}>
+    <View
+      accessibilityRole={role}
+      accessibilityLabel={label}
+      onLayout={(e) => (w.value = (e.nativeEvent.layout.width - 8) / options.length)}
+      className="flex-row"
+      style={[{ padding: 4, borderRadius: 999, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'] }, compact && { alignSelf: 'flex-start' }]}
+    >
+      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 4, bottom: 4, left: 4, borderRadius: 999, backgroundColor: c['primary-bg'] }, material.press[scheme], thumb]} />
       {options.map((o) => {
         const on = o.value === value;
         return (
           <Tap
             key={o.value}
-            testID={`pill-${o.value}`}
+            testID={`${idPrefix}-${o.value}`}
             onPress={() => onChange(o.value)}
             feedback="select"
-            scaleTo={1}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
+            scaleTo={0.97}
+            accessibilityRole={role === 'tablist' ? 'tab' : 'radio'}
+            accessibilityState={role === 'tablist' ? { selected: on } : { checked: on }}
             accessibilityLabel={o.label}
             outerStyle={{ flexGrow: 1, flexBasis: 0 }}
-            style={[{ height: 38, borderRadius: 19 }, on && { backgroundColor: c.raised, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }]}
+            style={{ height: h, borderRadius: 999, paddingHorizontal: compact ? 16 : 10 }}
             className="flex-row items-center justify-center"
           >
             {o.icon && (
               <View style={{ marginRight: 6 }}>
-                <Icon name={o.icon} size={16} color={on ? c.ink : c.ink2} />
+                <Icon name={o.icon} size={16} color={on ? c['primary-fg'] : c.ink2} />
               </View>
             )}
-            <T v="caption" tone={on ? 'ink' : 'ink2'} style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+            <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={{ fontFamily: on ? 'Sans600' : 'Sans500', fontSize: 14 }}>
               {o.label}
             </T>
           </Tap>
@@ -104,6 +101,11 @@ export function SegmentedPill<V extends string>({ options, value, onChange, labe
       })}
     </View>
   );
+}
+
+/** Sélecteur en capsule pour les réglages (Auto / Clair / Sombre) : le même segment de verre, pleine largeur. */
+export function SegmentedPill<V extends string>({ options, value, onChange, label }: { options: { value: V; label: string; icon?: IconName }[]; value: V; onChange: (v: V) => void; label: string }) {
+  return <SegmentTrack options={options} value={value} onChange={onChange} label={label} role="radiogroup" idPrefix="pill" />;
 }
 
 /** Interrupteur maison : contour à 3:1 quand il est éteint (WCAG 1.4.11). */
@@ -124,9 +126,9 @@ export function Toggle({ value, onChange, label, testID }: { value: boolean; onC
       accessibilityState={{ checked: value }}
       accessibilityLabel={label}
       hitSlop={8}
-      style={{ width: 51, height: 31, borderRadius: 16, borderWidth: 1.5, borderColor: value ? c['primary-bg'] : c.control, backgroundColor: value ? c['primary-bg'] : 'transparent', justifyContent: 'center', paddingHorizontal: 2 }}
+      style={{ width: 51, height: 31, borderRadius: 16, borderWidth: 1.5, borderColor: value ? c['primary-bg'] : c.control, backgroundColor: value ? c['primary-bg'] : c['glass-strong'], justifyContent: 'center', paddingHorizontal: 2 }}
     >
-      <Animated.View style={[{ width: 24, height: 24, borderRadius: 12, backgroundColor: value ? c['primary-fg'] : c.control }, knob]} />
+      <Animated.View style={[{ width: 24, height: 24, borderRadius: 12, backgroundColor: value ? c['primary-fg'] : c.control, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }, knob]} />
     </Tap>
   );
 }
@@ -141,7 +143,7 @@ export function Stepper({ value, onChange, min, max, step = 1, unit, label }: { 
       feedback="select"
       accessibilityLabel={`${dir > 0 ? 'Augmenter' : 'Diminuer'} ${label}`}
       disabled={dir < 0 ? value <= min : value >= max}
-      style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c['rule-strong'], opacity: (dir < 0 ? value <= min : value >= max) ? 0.4 : 1 }}
+      style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'], opacity: (dir < 0 ? value <= min : value >= max) ? 0.4 : 1 }}
       className="items-center justify-center"
     >
       <Icon name={dir > 0 ? 'plus' : 'minus'} size={18} color={c.ink} strokeWidth={1.9} />

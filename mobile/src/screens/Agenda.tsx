@@ -17,6 +17,7 @@ import { Badge, Card, WeatherIcon } from '../ui/bits';
 import { OutfitBoard, Legend } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
@@ -53,8 +54,9 @@ export function Agenda() {
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
+      <Ambient />
     <ScrollEdge y={edge} />
-    <Animated.ScrollView testID="screen-agenda" onScroll={onScroll} scrollEventThrottle={16} className="bg-paper" contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}>
+    <Animated.ScrollView testID="screen-agenda" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}>
       <View style={{ paddingHorizontal: space.gutter, gap: 12 }}>
         <Masthead kicker="L’AGENDA" meta={cap(range)} />
         <T v="title" accessibilityRole="header">

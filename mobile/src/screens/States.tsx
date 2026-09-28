@@ -14,6 +14,7 @@ import { Card, EmptyState, Skeleton } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 /**
@@ -46,6 +47,7 @@ export function States() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-states">
+      <Ambient />
       <StackHeader title="États et feuilles" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 22 }}>
         <View style={{ gap: 8 }}>
@@ -54,7 +56,7 @@ export function States() {
           </T>
           <T v="title" accessibilityRole="header">
             Feuilles, vides{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               et chargements.
             </T>
           </T>

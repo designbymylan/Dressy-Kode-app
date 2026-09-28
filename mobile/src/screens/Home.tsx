@@ -18,6 +18,7 @@ import { Card, WeatherIcon } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
@@ -41,12 +42,12 @@ export function Home() {
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
+      <Ambient />
     <ScrollEdge y={edge} />
     <Animated.ScrollView
       testID="screen-home"
       onScroll={onScroll}
       scrollEventThrottle={16}
-      className="bg-paper"
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}
     >
       <Masthead kicker="DRESSKODE" meta={`${capital(shortDate(0))} · ${s.profile.city ? `${s.profile.city}, ` : ''}${w.t}°, ${s.profile.city ? WEATHER_WORD[w.kind] : w.label}`} />
@@ -62,7 +63,7 @@ export function Home() {
           </T>
           <T v="hero" accessibilityRole="header">
             {outfit.lead}
-            <T v="hero" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="hero" style={{ fontFamily: 'Accent' }}>
               {outfit.em}
             </T>
           </T>
@@ -126,7 +127,7 @@ function EmptyToday() {
         </T>
         <T v="hero" accessibilityRole="header">
           {n === 0 ? 'Ton dressing\n' : n === 1 ? 'C’est bien\n' : 'Presque\n'}
-          <T v="hero" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+          <T v="hero" style={{ fontFamily: 'Accent' }}>
             {n === 0 ? `t’attend${s.profile.name ? `, ${s.profile.name}` : ''}.` : n === 1 ? 'parti.' : 'prête.'}
           </T>
         </T>
@@ -158,7 +159,7 @@ function EmptyToday() {
                 {String(k + 1).padStart(2, '0')}
               </T>
             </View>
-            <T v="caption" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+            <T v="caption" style={{ fontFamily: 'Sans600' }}>
               {x.t}
             </T>
             <T v="small" tone="ink2">
@@ -251,7 +252,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
               <View className="bg-raised items-center justify-center" style={{ height: 140, borderRadius: 20 }}>
                 <Garment kind={p.kind} tint={p.tint} size={78} dark={scheme === 'dark'} label={p.name} />
               </View>
-              <T v="caption" style={{ marginTop: 6, fontFamily: 'HankenGrotesk_600SemiBold' }} numberOfLines={1}>
+              <T v="caption" style={{ marginTop: 6, fontFamily: 'Sans600' }} numberOfLines={1}>
                 {p.name}
               </T>
               <T v="small" tone="caution">

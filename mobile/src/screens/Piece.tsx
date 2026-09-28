@@ -15,6 +15,7 @@ import { Bars, Card, EmptyState, Row } from '../ui/bits';
 import { Garment, hangOf } from '../ui/Garment';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 /** Ce qui va avec une pièce : une règle simple et lisible, pas une boîte noire. */
@@ -60,6 +61,7 @@ export function PieceScreen() {
   if (!piece) {
     return (
       <View className="bg-paper" style={{ flex: 1, paddingTop: top }}>
+      <Ambient />
         <StackHeader title="Pièce" />
         <EmptyState title="Cette pièce n’est plus là" body="Elle a été retirée du dressing." action={<Button label="Retour au dressing" variant="secondary" onPress={() => nav.goBack()} />} />
       </View>
@@ -77,6 +79,7 @@ export function PieceScreen() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-piece">
+      <Ambient />
       <StackHeader title={piece.name} y={y} right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
         <View className="bg-stage items-center justify-end" style={{ height: top + 300, paddingBottom: 18 }}>

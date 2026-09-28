@@ -32,6 +32,7 @@ import { ChoiceCard, ColorChoice, FirstRail, Figure, MeasureFigure, PhotoSlot, R
 import { useScreen } from '../ui/screen';
 import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, validEmail } from '../ui/account';
 import { online } from '../state/remote';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte' | 'bienvenue';
@@ -112,6 +113,7 @@ export function Onboarding() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-onboarding">
+      <Ambient />
       <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 10 }}>
         {!full && (
           <Header
@@ -151,7 +153,7 @@ function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: numb
       </View>
       <View className="flex-row justify-center" style={{ gap: 18 }}>
         {CHAPTERS.map((c, k) => (
-          <T key={c.label} v="small" tone={k === chapter ? 'ink' : 'ink2'} style={{ fontFamily: k === chapter ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_500Medium', letterSpacing: 0.4 }} upper>
+          <T key={c.label} v="small" tone={k === chapter ? 'ink' : 'ink2'} style={{ fontFamily: k === chapter ? 'Sans700' : 'Sans500', letterSpacing: 0.4 }} upper>
             {c.label}
           </T>
         ))}
@@ -181,7 +183,7 @@ function Frame({ kicker, lead, em, intro, children, footer }: { kicker?: string;
           )}
           <T v="title" accessibilityRole="header">
             {lead}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               {em}
             </T>
           </T>
@@ -237,7 +239,7 @@ function Prenom({ draft, set, next }: Ctx) {
         maxLength={30}
         onSubmitEditing={() => ok && next()}
         accessibilityLabel="Ton prénom"
-        style={{ fontFamily: 'InstrumentSerif_400Regular', fontSize: 34, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
+        style={{ fontFamily: 'Sans500', fontSize: 34, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
       />
       <Why>Kode t’appellera comme ça. Rien n’est public.</Why>
     </Frame>
@@ -290,7 +292,7 @@ function AgeStep({ draft, set, next }: Ctx) {
               className="flex-row items-center justify-between"
               style={{ minHeight: 58, borderBottomWidth: 1, borderColor: c.rule }}
             >
-              <T v="bodyL" style={on ? { fontFamily: 'HankenGrotesk_600SemiBold' } : undefined}>
+              <T v="bodyL" style={on ? { fontFamily: 'Sans600' } : undefined}>
                 {age}
               </T>
               <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 7 : 1.5, borderColor: on ? c.ink : c.control }} />
@@ -460,7 +462,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
               <T v="caption" tone="ink2">
                 Kode va privilégier les coupes qui marquent la taille, et les longueurs qui gardent l’équilibre épaules-hanches.
               </T>
-              <T v="small" tone="positive" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+              <T v="small" tone="positive" style={{ fontFamily: 'Sans600' }}>
                 Confiance : bonne
               </T>
             </View>
@@ -576,7 +578,7 @@ function Mesures({ draft, set, next }: Ctx) {
                 accessibilityLabel={`${r.label} : ${v ? `${v} centimètres` : 'à ajouter'}`}
                 style={{ minHeight: 60, justifyContent: 'center', borderBottomWidth: 1, borderColor: c.rule }}
               >
-                <T v="caption" tone={on ? 'brass' : 'ink2'} style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+                <T v="caption" tone={on ? 'brass' : 'ink2'} style={{ fontFamily: 'Sans600' }}>
                   {r.label}
                 </T>
                 <T v="cardTitle" style={{ fontSize: 22 }}>
@@ -602,7 +604,7 @@ function Mesures({ draft, set, next }: Ctx) {
       )}
       <Card className="flex-row items-center" style={{ gap: 14 }}>
         <Ring value={score} size={56} stroke={5}>
-          <T v="small" style={{ fontFamily: 'HankenGrotesk_700Bold' }}>
+          <T v="small" style={{ fontFamily: 'Sans700' }}>
             {score} %
           </T>
         </Ring>
@@ -718,7 +720,7 @@ function Couleurs({ draft, set, next, W }: Ctx) {
           <Card style={{ gap: 4 }}>
             {draft.love.length > 0 && (
               <T v="caption">
-                <T v="caption" style={{ fontFamily: 'HankenGrotesk_700Bold' }}>
+                <T v="caption" style={{ fontFamily: 'Sans700' }}>
                   Tu aimes :{' '}
                 </T>
                 {draft.love.join(', ')}
@@ -726,7 +728,7 @@ function Couleurs({ draft, set, next, W }: Ctx) {
             )}
             {draft.avoid.length > 0 && (
               <T v="caption">
-                <T v="caption" style={{ fontFamily: 'HankenGrotesk_700Bold' }}>
+                <T v="caption" style={{ fontFamily: 'Sans700' }}>
                   Tu évites :{' '}
                 </T>
                 {draft.avoid.join(', ')}
@@ -794,7 +796,7 @@ function Ville({ draft, set, next }: Ctx) {
           autoComplete="postal-address-locality"
           textContentType="addressCity"
           accessibilityLabel="Ta ville"
-          style={{ flex: 1, height: 52, color: c.ink, fontFamily: 'HankenGrotesk_500Medium', fontSize: 17 }}
+          style={{ flex: 1, height: 52, color: c.ink, fontFamily: 'Sans500', fontSize: 17 }}
         />
       </View>
       {!draft.city && (
@@ -903,7 +905,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
             <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, pieces.length) ? (ok ? c.positive : c.ink) : c.rule }} />
           ))}
         </View>
-        <T v="caption" tone={ok ? 'positive' : 'ink2'} style={{ flex: 1, fontFamily: 'HankenGrotesk_600SemiBold' }}>
+        <T v="caption" tone={ok ? 'positive' : 'ink2'} style={{ flex: 1, fontFamily: 'Sans600' }}>
           {ok ? `${pieces.length} pièces : Kode peut composer.` : pieces.length ? `${pieces.length} pièce${pieces.length > 1 ? 's' : ''} · il manque ${missing}` : '3 pièces suffisent pour une première tenue'}
         </T>
       </View>
@@ -926,7 +928,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
                 <Image source={{ uri: x.uri }} style={{ width: tile, height: tile, opacity: 0.7 }} />
               </Animated.View>
               <View className="absolute items-center justify-center" style={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                <T v="small" style={{ fontFamily: 'HankenGrotesk_700Bold' }}>
+                <T v="small" style={{ fontFamily: 'Sans700' }}>
                   Analyse…
                 </T>
               </View>
@@ -1007,7 +1009,7 @@ function Generation({ draft, pieces, next }: Ctx) {
         </Ring>
         <T v="title" style={{ textAlign: 'center' }}>
           Kode prépare{'\n'}
-          <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+          <T v="title" style={{ fontFamily: 'Accent' }}>
             ton espace…
           </T>
         </T>
@@ -1101,7 +1103,7 @@ function Compte({ draft, set, next }: Ctx) {
       <Why>Sans compte, tout reste sur ce téléphone ; tu pourras le créer plus tard depuis Moi.</Why>
       {online && (
         <T v="caption" tone="ink2" onPress={() => setLogin(true)} accessibilityRole="button" testID="onb-login" style={{ paddingVertical: 6 }}>
-          Tu as déjà un compte ? <T v="caption" style={{ fontFamily: 'HankenGrotesk_600SemiBold', textDecorationLine: 'underline' }}>Me connecter</T>
+          Tu as déjà un compte ? <T v="caption" style={{ fontFamily: 'Sans600', textDecorationLine: 'underline' }}>Me connecter</T>
         </T>
       )}
       {legal}
@@ -1137,7 +1139,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
         <Animated.View entering={FadeInDown.duration(400)}>
           <T v="hero" accessibilityRole="header">
             Bienvenue,{'\n'}
-            <T v="hero" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="hero" style={{ fontFamily: 'Accent' }}>
               {draft.name}.
             </T>
           </T>
@@ -1166,7 +1168,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
           <Card style={{ gap: 12 }}>
             <View className="flex-row items-center" style={{ gap: 14 }}>
               <Ring value={score} size={52} stroke={5}>
-                <T v="small" style={{ fontFamily: 'HankenGrotesk_700Bold' }}>
+                <T v="small" style={{ fontFamily: 'Sans700' }}>
                   {score} %
                 </T>
               </Ring>
@@ -1181,7 +1183,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {chips.map((x) => (
                   <View key={x} className="bg-pill" style={{ borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5 }}>
-                    <T v="small" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+                    <T v="small" style={{ fontFamily: 'Sans600' }}>
                       {x}
                     </T>
                   </View>

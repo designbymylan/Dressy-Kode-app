@@ -15,6 +15,7 @@ import { OutfitBoard, Legend } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 export const PACK_OCCASION = {
@@ -57,6 +58,7 @@ export function EventScreen() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-event">
+      <Ambient />
       <StackHeader title={e.title} y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>

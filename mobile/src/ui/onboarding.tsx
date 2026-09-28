@@ -9,6 +9,7 @@ import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import type { Piece } from '../data/wardrobe';
 import type { MeasureId, Silhouette } from '../state/profile';
 import { useTheme } from '../theme/ThemeProvider';
+import { glassSurface } from './Glass';
 import { motion } from '../theme/tokens';
 import { Garment, hangOf, type GarmentKind } from './Garment';
 import { Icon } from './Icon';
@@ -101,7 +102,7 @@ export function Ruler({ value, onChange, min, max, unit, label, width, testID }:
               const v = Math.ceil(min / 10) * 10 + k * 10;
               if (v > max) return null;
               return (
-                <SvgText key={v} x={(v - min) * TICK} y={46} fill={c.ink2} fontSize={12} fontFamily="HankenGrotesk_500Medium" textAnchor="middle">
+                <SvgText key={v} x={(v - min) * TICK} y={46} fill={c.ink2} fontSize={12} fontFamily="Sans500" textAnchor="middle">
                   {v}
                 </SvgText>
               );
@@ -215,7 +216,7 @@ export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, s
             </View>
             <View className="flex-row items-center bg-pill" style={{ borderRadius: 14, paddingHorizontal: 10, height: 28, gap: 4 }}>
               <Icon name="plus" size={14} color={c.ink} strokeWidth={2} />
-              <T v="small" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+              <T v="small" style={{ fontFamily: 'Sans600' }}>
                 Ajouter
               </T>
             </View>
@@ -223,7 +224,7 @@ export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, s
         )}
         {scanning && <ScanLine height={h} />}
       </View>
-      <T v="caption" style={{ textAlign: 'center', fontFamily: 'HankenGrotesk_600SemiBold' }}>
+      <T v="caption" style={{ textAlign: 'center', fontFamily: 'Sans600' }}>
         {label}
       </T>
     </Tap>
@@ -264,7 +265,7 @@ export function MeasureFigure({ active, done, height = 190 }: { active: MeasureI
         );
       })}
       {(Object.keys(LINES) as MeasureId[]).map((id) => (
-        <SvgText key={`t${id}`} x={54} y={LINES[id].y + 3} fill={active === id ? c.brass : c.ink2} fontSize={7.5} fontFamily="HankenGrotesk_600SemiBold">
+        <SvgText key={`t${id}`} x={54} y={LINES[id].y + 3} fill={active === id ? c.brass : c.ink2} fontSize={7.5} fontFamily="Sans600">
           {LINES[id].label}
         </SvgText>
       ))}
@@ -278,8 +279,8 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
   const { c, scheme } = useTheme();
   const g = width * 0.36;
   return (
-    <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={{ width, borderRadius: 22, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, overflow: 'hidden' }} scaleTo={0.97}>
-      <View className="bg-raised flex-row items-end justify-center" style={{ height: width * 0.62, paddingBottom: 6 }}>
+    <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={[{ width, borderRadius: 22, overflow: 'hidden' }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]} scaleTo={0.97}>
+      <View className="flex-row items-end justify-center" style={{ height: width * 0.62, paddingBottom: 6, backgroundColor: c.stage }}>
         {kinds.map(([k, t], i) => (
           <View key={i} style={{ marginLeft: i ? -g * 0.34 : 0, transform: [{ rotate: `${(i - 1) * 5}deg` }, { translateY: i === 1 ? -6 : 0 }] }}>
             <Garment kind={k} tint={t} size={g} dark={scheme === 'dark'} />
@@ -287,7 +288,7 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
         ))}
         {on && (
           <View className="absolute bg-primary-bg items-center justify-center" style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: 12 }}>
-            <T v="small" tone="primary-fg" style={{ fontFamily: 'HankenGrotesk_700Bold' }}>
+            <T v="small" tone="primary-fg" style={{ fontFamily: 'Sans700' }}>
               {order}
             </T>
           </View>
@@ -327,7 +328,7 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
           {state === 'evite' && <Icon name="close" size={18} color={c.ink} strokeWidth={2.2} />}
         </View>
       </View>
-      <T v="small" tone={state ? 'ink' : 'ink2'} numberOfLines={1} style={state ? { fontFamily: 'HankenGrotesk_600SemiBold' } : undefined}>
+      <T v="small" tone={state ? 'ink' : 'ink2'} numberOfLines={1} style={state ? { fontFamily: 'Sans600' } : undefined}>
         {name}
       </T>
     </Tap>
@@ -337,13 +338,13 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
 /* ——— Carte de choix large (rayon, mode d'analyse) ——— */
 
 export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; badge?: string; testID?: string }) {
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   return (
-    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 24, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}>
-      {art && <View className="bg-sunk items-center justify-center" style={{ width: 76, height: 76, borderRadius: 18, overflow: 'hidden' }}>{art}</View>}
+    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={[{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 28 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
+      {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 20, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
       <View style={{ flex: 1, gap: 3 }}>
         {badge && (
-          <T v="small" tone="brass" style={{ fontFamily: 'HankenGrotesk_700Bold', letterSpacing: 0.6 }} upper>
+          <T v="small" tone="brass" style={{ fontFamily: 'Sans700', letterSpacing: 0.6 }} upper>
             {badge}
           </T>
         )}

@@ -18,6 +18,7 @@ import { FirstRail } from '../ui/onboarding';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 type Usage = 'jamais' | 'oubliees' | null;
@@ -101,7 +102,7 @@ export function Dressing() {
               placeholderTextColor={c.ink2}
               returnKeyType="search"
               accessibilityLabel="Rechercher dans le dressing"
-              style={{ flex: 1, color: c.ink, fontFamily: 'HankenGrotesk_400Regular', fontSize: 16, height: 44 }}
+              style={{ flex: 1, color: c.ink, fontFamily: 'Sans400', fontSize: 16, height: 44 }}
             />
           </View>
           <T
@@ -148,7 +149,7 @@ export function Dressing() {
         />
         <Tap testID="open-filters" onPress={openFilters} accessibilityLabel={active ? `Filtres, ${active} actifs` : 'Filtres'} scaleTo={1} style={{ minHeight: 44, gap: 6 }} className="flex-row items-center">
           <Icon name="filter" size={18} color={c.ink} />
-          <T v="bodyStrong" style={{ fontSize: 14.5, fontFamily: 'HankenGrotesk_500Medium' }}>
+          <T v="bodyStrong" style={{ fontSize: 14.5, fontFamily: 'Sans500' }}>
             Filtres{active ? ` · ${active}` : ''}
           </T>
         </Tap>
@@ -244,6 +245,7 @@ export function Dressing() {
     const tileW = (width - space.gutter * 2 - gap * (cols - 1)) / cols;
     return (
       <View className="bg-paper" style={{ flex: 1 }} testID="screen-dressing-grid">
+      <Ambient />
         <ScrollEdge y={edge} />
         <Animated.FlatList
           key={cols}
@@ -280,6 +282,7 @@ export function Dressing() {
   const byCat = CATEGORIES.map((cat) => ({ cat, pieces: list.filter((p) => p.category === cat.id) })).filter((x) => x.pieces.length);
   return (
     <View className="bg-paper" style={{ flex: 1 }}>
+      <Ambient />
       <ScrollEdge y={edge} />
       <Animated.ScrollView testID="screen-dressing" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
         {header}
@@ -387,7 +390,7 @@ function Hanging({ piece, index, swing, shelf, dark, rod, onPress }: { piece: Pi
       <Animated.View style={[{ height: shelf ? 110 : 118, justifyContent: shelf ? 'flex-end' : 'flex-start', transformOrigin: 'top' }, !shelf && style]}>
         <Garment kind={piece.kind} tint={piece.tint} size={shelf ? 84 : ITEM} hanger={hangs && !shelf} hangerColor={rod} dark={dark} label={piece.name} />
       </Animated.View>
-      <T v="caption" style={{ fontFamily: 'HankenGrotesk_500Medium', textAlign: 'center' }} numberOfLines={1}>
+      <T v="caption" style={{ fontFamily: 'Sans500', textAlign: 'center' }} numberOfLines={1}>
         {piece.name}
       </T>
       <T v="small" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'} numberOfLines={1}>

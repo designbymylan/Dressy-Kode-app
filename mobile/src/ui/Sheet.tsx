@@ -101,7 +101,8 @@ function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<Sh
         accessibilityViewIsModal
         style={[
           { maxHeight: '88%', backgroundColor: c.raised, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, paddingBottom: Math.max(insets.bottom, 16) },
-          scheme === 'dark' ? { borderTopWidth: StyleSheet.hairlineWidth, borderColor: c['glass-border'] } : { shadowColor: '#1C1A17', shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: -6 } },
+          { borderTopWidth: 1, borderColor: c['glass-border'] },
+          scheme === 'light' && { shadowColor: '#282C46', shadowOpacity: 0.2, shadowRadius: 30, shadowOffset: { width: 0, height: -8 } },
           panel,
         ]}
       >

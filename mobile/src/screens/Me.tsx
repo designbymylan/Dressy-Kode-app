@@ -9,12 +9,13 @@ import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Masthead, ScrollEdge, useTabScroll } from '../ui/layout';
-import { Avatar, Card, EmptyState, Row } from '../ui/bits';
+import { Avatar, Card, EmptyState, Group, Row } from '../ui/bits';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { PLANS } from './Offers';
 import { AccountSheet } from '../ui/account';
 import { online } from '../state/remote';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 export function Me() {
@@ -37,8 +38,9 @@ export function Me() {
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
+      <Ambient />
     <ScrollEdge y={edge} />
-    <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} className="bg-paper" contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
+    <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
       <Masthead kicker="MOI" meta={`${plan.name}${limit !== null ? ` · ${limit - s.pieces.length} places libres` : ''}`} />
 
       <View className="flex-row items-center" style={{ gap: 16 }}>
@@ -71,9 +73,10 @@ export function Me() {
       </View>
 
       <View>
-        <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+        <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
           Ton offre
         </T>
+        <Group>
         <Row
           testID="me-offer"
           icon="layers"
@@ -82,9 +85,11 @@ export function Me() {
           onPress={() => nav.navigate('Offers')}
         />
         <Row testID="me-shop" icon="bag" title="La boutique" detail="Packs à l’unité, places en plus" onPress={() => nav.navigate('Shop')} last />
+        </Group>
       </View>
 
       {online && s.account === 'nouveau' && (
+        <Group>
         <Row
           testID="me-account"
           icon="lock"
@@ -93,12 +98,14 @@ export function Me() {
           onPress={() => setAccount(true)}
           last
         />
+        </Group>
       )}
 
       <View>
-        <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+        <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
           Toi
         </T>
+        <Group>
         <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Précision de Kode : ${precision(s.profile)} %`} onPress={() => nav.navigate('Silhouette')} />
         <Row testID="me-customize" icon="sliders" title="Personnaliser" detail={`Accueil, thème ${pref === 'auto' ? 'automatique' : pref === 'light' ? 'clair' : 'sombre'}, densité`} onPress={() => nav.navigate('Customize')} />
         <Row
@@ -109,16 +116,19 @@ export function Me() {
           onPress={() => setSharesOpen(true)}
           last
         />
+        </Group>
       </View>
 
       <View>
-        <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+        <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
           Aperçu design
         </T>
+        <Group>
         <Row testID="me-states" icon="eye" title="Feuilles, états vides et chargements" detail="Pour la revue du design" onPress={() => nav.navigate('States')} />
         <Row icon="help" title="Aide" detail="Questions fréquentes et contact" onPress={() => a.toast('L’aide arrive bientôt')} last={s.account === 'nouveau'} />
         {s.account === 'connecte' && <Row testID="me-logout" icon="logout" title="Se déconnecter" detail={s.profile.email ?? undefined} onPress={a.logout} last />}
         {s.account === 'demo' && <Row testID="me-logout" icon="logout" title="Quitter la démonstration" onPress={a.restart} last />}
+        </Group>
       </View>
       <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => setAccount(false)} initial={s.pendingEmail ? 'login' : 'signup'} />
       <Sheet visible={sharesOpen} onClose={() => setSharesOpen(false)} title="Prêts et partages" testID="shares-sheet">

@@ -7,11 +7,10 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme, NavigationContainer, type NavigationState } from '@react-navigation/native';
-import { HankenGrotesk_400Regular } from '@expo-google-fonts/hanken-grotesk/400Regular';
-import { HankenGrotesk_500Medium } from '@expo-google-fonts/hanken-grotesk/500Medium';
-import { HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk/600SemiBold';
-import { HankenGrotesk_700Bold } from '@expo-google-fonts/hanken-grotesk/700Bold';
-import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif/400Regular';
+import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
+import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
+import { DMSans_600SemiBold } from '@expo-google-fonts/dm-sans/600SemiBold';
+import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
 import { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif/400Regular_Italic';
 import { StoreProvider } from './src/state/store';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
@@ -21,13 +20,16 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { PhoneFrame } from './src/web/PhoneFrame';
 
 export default function App() {
+  // Les polices sont chargées sous leur rôle (Sans400…, Accent) : changer de
+  // famille ne touche que ces lignes. La direction « vitrine de verre » est
+  // dessinée en Satoshi ; DM Sans, libre et très proche, la remplace tant que
+  // les fichiers Satoshi ne sont pas dans assets/fonts (voir mobile/README.md).
   const [loaded] = useFonts({
-    HankenGrotesk_400Regular,
-    HankenGrotesk_500Medium,
-    HankenGrotesk_600SemiBold,
-    HankenGrotesk_700Bold,
-    InstrumentSerif_400Regular,
-    InstrumentSerif_400Regular_Italic,
+    Sans400: DMSans_400Regular,
+    Sans500: DMSans_500Medium,
+    Sans600: DMSans_600SemiBold,
+    Sans700: DMSans_700Bold,
+    Accent: InstrumentSerif_400Regular_Italic,
   });
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

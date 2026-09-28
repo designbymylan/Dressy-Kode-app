@@ -18,6 +18,7 @@ import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 type SlotId = 'veste' | 'haut' | 'bas' | 'chaussures' | 'sac';
@@ -96,6 +97,7 @@ export function Compose() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-compose">
+      <Ambient />
       <StackHeader title="Composer une tenue" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 6 }}>
@@ -104,7 +106,7 @@ export function Compose() {
           </T>
           <T v="title" accessibilityRole="header">
             Compose,{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               Kode ajuste.
             </T>
           </T>

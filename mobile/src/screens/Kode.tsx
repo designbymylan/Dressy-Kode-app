@@ -17,6 +17,7 @@ import { Card } from '../ui/bits';
 import { OutfitBoard, Legend } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 export function Kode() {
@@ -72,6 +73,7 @@ export function Kode() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-kode">
+      <Ambient />
       <View style={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, gap: 12 }}>
         <Masthead kicker="KODE" meta={quota === null ? 'Sans limite' : `${left} question${left === 1 ? '' : 's'} sur ${quota} ce mois-ci`} />
       </View>
@@ -79,7 +81,7 @@ export function Kode() {
         <View style={{ gap: 8 }}>
           <T v="title" accessibilityRole="header">
             Ton styliste,{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               avec ce que tu as.
             </T>
           </T>
@@ -171,7 +173,7 @@ export function Kode() {
             blurOnSubmit
             returnKeyType="send"
             accessibilityLabel="Ta question à Kode"
-            style={{ flex: 1, color: c.ink, fontFamily: 'HankenGrotesk_400Regular', fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
+            style={{ flex: 1, color: c.ink, fontFamily: 'Sans400', fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
           />
           <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} onPress={() => send(text)} />
         </View>

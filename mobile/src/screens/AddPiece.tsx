@@ -17,6 +17,7 @@ import { Card, Gauge, Skeleton } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 const STEPS = ['Détourage de la pièce', 'Type de pièce', 'Couleur dominante', 'Matière probable', 'Illustration pour tes portants'];
@@ -94,6 +95,7 @@ export function AddPiece() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-add">
+      <Ambient />
       <StackHeader title="Ajouter une pièce" close />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {phase === 'source' && (
@@ -218,7 +220,7 @@ export function AddPiece() {
                 onChangeText={(name) => setDraft({ ...draft, name })}
                 accessibilityLabel="Nom de la pièce"
                 className="bg-sunk"
-                style={{ height: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, fontFamily: 'HankenGrotesk_500Medium', fontSize: 16 }}
+                style={{ height: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, fontFamily: 'Sans500', fontSize: 16 }}
               />
             </View>
             <View style={{ gap: 8 }}>

@@ -9,6 +9,7 @@ import { T } from '../ui/T';
 import { IconButton, Button } from '../ui/Button';
 import { SegmentedPill, Toggle } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 export function Customize() {
@@ -21,6 +22,7 @@ export function Customize() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-customize">
+      <Ambient />
       <StackHeader title="Personnaliser" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 26 }}>
         <View style={{ gap: 8 }}>
@@ -29,7 +31,7 @@ export function Customize() {
           </T>
           <T v="title" accessibilityRole="header">
             Ton app,{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               à ta façon.
             </T>
           </T>

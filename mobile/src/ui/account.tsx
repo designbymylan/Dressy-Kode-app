@@ -37,7 +37,7 @@ export function EmailField({ value, onChange, onSubmit, testID }: FieldProps) {
         returnKeyType="next"
         onSubmitEditing={onSubmit}
         accessibilityLabel="Ton adresse e-mail"
-        style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'HankenGrotesk_500Medium', fontSize: 17 }}
+        style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'Sans500', fontSize: 17 }}
       />
       {validEmail(value) && <Icon name="check" size={18} color={c.positive} strokeWidth={2.2} />}
     </View>
@@ -64,7 +64,7 @@ export function PasswordField({ value, onChange, onSubmit, testID, isNew }: Fiel
         returnKeyType="done"
         onSubmitEditing={onSubmit}
         accessibilityLabel={isNew ? 'Choisis un mot de passe' : 'Ton mot de passe'}
-        style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'HankenGrotesk_500Medium', fontSize: 17 }}
+        style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'Sans500', fontSize: 17 }}
       />
       <Tap
         onPress={() => setShown((v) => !v)}

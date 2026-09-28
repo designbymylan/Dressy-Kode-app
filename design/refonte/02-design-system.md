@@ -1,5 +1,13 @@
 # Dresskode — design system (direction B « Éditorial »)
 
+> **Mise à jour du 28/09 : l'apparence a changé, pas la disposition.** Couleurs, matières,
+> typographie et composants suivent désormais la direction « vitrine de verre » du travail
+> du portable (`web/src/app/globals.css`) : fond perle et halos pastel, cartes de verre,
+> boutons pilule encre, titres en grotesque serré avec un mot en italique serif. Les
+> valeurs font foi dans `mobile/src/theme/` (palette, typo, ombres) et restent vérifiées AA
+> par `contraste.py`. Ce qui suit sur la mise en page, les parcours et les principes 3 à 5
+> reste valable ; les sections sur le papier et le serif décrivent l'ancienne apparence.
+
 Direction validée : **B, construite sur les règles de A** (le verre ne sert qu'à naviguer).
 Code : `mobile/src/theme/` (jetons), `mobile/src/ui/` (composants). Vérification AA :
 `python3 design/refonte/contraste.py` lit directement `mobile/src/theme/palette.json`,

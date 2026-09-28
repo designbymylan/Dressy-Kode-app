@@ -12,10 +12,11 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip, Stepper } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Card, Ring, Row } from '../ui/bits';
+import { Card, Group, Ring, Row } from '../ui/bits';
 import { Sheet } from '../ui/Sheet';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
 import { ColorChoice, MeasureFigure, Ruler } from '../ui/onboarding';
+import { Ambient } from '../ui/Ambient';
 import { useScreen } from '../ui/screen';
 
 type Edit = 'taille' | 'poids' | 'silhouette' | MeasureId | 'haut' | 'bas' | 'pointure' | 'styles' | 'couleurs' | null;
@@ -51,6 +52,7 @@ export function SilhouetteScreen() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-silhouette">
+      <Ambient />
       <StackHeader title="Ma silhouette" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 22 }}>
         <View style={{ gap: 8 }}>
@@ -59,7 +61,7 @@ export function SilhouetteScreen() {
           </T>
           <T v="title" accessibilityRole="header">
             Ce qui aide Kode{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               à viser juste.
             </T>
           </T>
@@ -83,9 +85,10 @@ export function SilhouetteScreen() {
         </Card>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
             Ton corps
           </T>
+          <Group>
           <Row testID="sil-taille" title="Taille" detail={p.height ? `${p.height} cm` : 'Ajouter · +10 %'} onPress={() => open('taille', p.height ?? 165)} />
           <Row testID="sil-poids" title="Poids" detail={p.weight ? `${p.weight} kg · visible par toi seulement` : 'Facultatif · +5 %'} onPress={() => open('poids', p.weight ?? 60)} />
           <Row
@@ -95,32 +98,39 @@ export function SilhouetteScreen() {
             onPress={() => open('silhouette')}
             last
           />
+          </Group>
         </View>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
             Tes mesures
           </T>
+          <Group>
           {MEASURES.map((x, i) => (
             <Row key={x.id} testID={`measure-${x.id}`} title={x.label} detail={p.measures[x.id] ? `${p.measures[x.id]} cm` : 'Ajouter · +8 %'} onPress={() => open(x.id, p.measures[x.id] ?? x.start)} last={i === MEASURES.length - 1} />
           ))}
+          </Group>
         </View>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
             Tes tailles
           </T>
+          <Group>
           <Row testID="sil-haut" title="Hauts" detail={p.sizes.haut ?? 'Ajouter'} onPress={() => open('haut')} />
           <Row testID="sil-bas" title="Bas" detail={p.sizes.bas ?? 'Ajouter'} onPress={() => open('bas')} />
           <Row testID="sil-pointure" title="Pointure" detail={p.sizes.pointure ?? 'Ajouter'} onPress={() => open('pointure')} last />
+          </Group>
         </View>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 2 }}>
+          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
             Ton style
           </T>
+          <Group>
           <Row testID="sil-styles" title="Styles" detail={p.styles.length ? p.styles.join(', ') : 'Ajouter'} onPress={() => open('styles')} />
           <Row testID="sil-couleurs" title="Couleurs" detail={[p.love.length ? `Aime : ${p.love.join(', ')}` : '', p.avoid.length ? `Évite : ${p.avoid.join(', ')}` : ''].filter(Boolean).join(' · ') || 'Ajouter'} onPress={() => open('couleurs')} last />
+          </Group>
         </View>
       </Animated.ScrollView>
 

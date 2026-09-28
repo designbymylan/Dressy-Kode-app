@@ -15,6 +15,7 @@ import { StackHeader, useStackTop } from '../ui/layout';
 import { Avatar, Card } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 type Mode = ShareT['mode'];
@@ -44,6 +45,7 @@ export function ShareScreen() {
   if (sent && name) {
     return (
       <View className="bg-paper items-center justify-center" style={{ flex: 1, padding: space.gutter, gap: 14 }} testID="share-sent">
+      <Ambient />
         <Animated.View entering={ZoomIn.springify().damping(14)} className="bg-positive-soft items-center justify-center" style={{ width: 84, height: 84, borderRadius: 42 }}>
           <Icon name="check" size={40} color={c.positive} strokeWidth={2.2} />
         </Animated.View>
@@ -62,6 +64,7 @@ export function ShareScreen() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-share">
+      <Ambient />
       <StackHeader title="Partager" close />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <T v="title" accessibilityRole="header">
@@ -133,7 +136,7 @@ export function ShareScreen() {
             multiline
             accessibilityLabel="Ton message"
             className="bg-sunk"
-            style={{ minHeight: 88, borderRadius: 20, padding: 16, paddingTop: 14, color: c.ink, fontFamily: 'HankenGrotesk_400Regular', fontSize: 16, lineHeight: 22, textAlignVertical: 'top' }}
+            style={{ minHeight: 88, borderRadius: 20, padding: 16, paddingTop: 14, color: c.ink, fontFamily: 'Sans400', fontSize: 16, lineHeight: 22, textAlignVertical: 'top' }}
           />
         </View>
 

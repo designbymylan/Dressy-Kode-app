@@ -13,6 +13,7 @@ import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Badge, Card, Gauge } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
 
 /** Le contenu des packs vient de la maquette d'origine (Offres) : quatre lignes concrètes, un délai, un prix. */
@@ -46,6 +47,7 @@ export function Shop() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-shop">
+      <Ambient />
       <StackHeader title="La boutique" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
@@ -54,7 +56,7 @@ export function Shop() {
           </T>
           <T v="title" accessibilityRole="header">
             À l’unité,{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               quand tu en as besoin.
             </T>
           </T>

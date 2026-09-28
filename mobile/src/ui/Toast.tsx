@@ -35,9 +35,9 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
       exiting={FadeOutDown.duration(160)}
       pointerEvents="box-none"
       accessibilityLiveRegion="polite"
-      style={{ position: 'absolute', left: 16, right: 16, bottom: aboveTabs ? (insets.bottom > 0 ? material.tabBottom : 12) + material.tabHeight + 10 : Math.max(insets.bottom, 12) + 8 }}
+      style={{ position: 'absolute', left: 16, right: 16, bottom: aboveTabs ? (insets.bottom > 0 ? insets.bottom - 8 : 0) + material.tabBottom + material.tabHeight + 10 : Math.max(insets.bottom, 12) + 8 }}
     >
-      <Glass radius={24}>
+      <Glass radius={999} strong>
         <View className="flex-row items-center" style={{ minHeight: 48, paddingLeft: 16, paddingRight: 6, gap: 10 }}>
           <Icon name={toast.warn ? 'alert' : 'check'} size={18} color={toast.warn ? c.caution : c.positive} strokeWidth={2.2} />
           <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={3}>
@@ -45,7 +45,7 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
           </T>
           {toast.undo && (
             <Tap testID="toast-undo" onPress={a.undo} accessibilityLabel="Annuler" style={{ height: 40, paddingHorizontal: 14, borderRadius: 20 }} className="items-center justify-center bg-pill">
-              <T v="caption" style={{ fontFamily: 'HankenGrotesk_600SemiBold' }}>
+              <T v="caption" style={{ fontFamily: 'Sans600' }}>
                 Annuler
               </T>
             </Tap>

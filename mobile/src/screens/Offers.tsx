@@ -15,6 +15,7 @@ import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Badge, Card, Gauge } from '../ui/bits';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
 /** Mêmes montants que web/src/lib/plans.ts (source unique côté serveur). */
@@ -44,6 +45,7 @@ export function Offers() {
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-offers">
+      <Ambient />
       <StackHeader title="Les offres" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
@@ -52,7 +54,7 @@ export function Offers() {
           </T>
           <T v="title" accessibilityRole="header">
             Porte mieux,{'\n'}
-            <T v="title" style={{ fontFamily: 'InstrumentSerif_400Regular_Italic' }}>
+            <T v="title" style={{ fontFamily: 'Accent' }}>
               paie juste.
             </T>
           </T>
