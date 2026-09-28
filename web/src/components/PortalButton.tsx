@@ -3,12 +3,12 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { openPortal, type FormResult } from '@/app/actions';
-import { ErrorNote, buttonQuiet } from '@/components/ui';
+import { ErrorNote } from '@/components/ui';
 
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} style={{ ...buttonQuiet, alignSelf: 'flex-start', opacity: pending ? 0.6 : 1 }}>
+    <button type="submit" disabled={pending} className="btn btn-glass btn-block">
       {pending ? 'Ouverture…' : 'Gérer mon abonnement'}
     </button>
   );

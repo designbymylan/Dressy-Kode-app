@@ -14,7 +14,7 @@ export type Garment = {
   last_worn_on: string | null;
 };
 
-export type Slot = 'haut' | 'bas' | 'robe' | 'veste' | 'chaussures' | 'sac' | 'accessoire';
+export type Slot = 'haut' | 'bas' | 'robe' | 'veste' | 'chaussures' | 'sac' | 'accessoire' | 'bijou';
 
 // Les catégories de la base (table categories) vers les emplacements d'une
 // tenue (contrainte outfit_items.slot).
@@ -26,6 +26,7 @@ export const SLOT_BY_CATEGORY: Record<string, Slot> = {
   chaussures: 'chaussures',
   sacs: 'sac',
   accessoires: 'accessoire',
+  bijoux: 'bijou',
 };
 
 export const MIN_PIECES = 2;

@@ -17,12 +17,7 @@ const SPOTS = [
 
 export function OutfitCard({ outfit, children }: { outfit: OutfitView; children?: ReactNode }) {
   return (
-    <article
-      style={{
-        width: '100%', background: 'var(--ground)', borderRadius: 26, padding: 16,
-        boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 12,
-      }}
-    >
+    <article className="glass" style={{ width: '100%', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div
         role="img"
         aria-label={`Tenue : ${outfit.pieces.map((p) => p.name).join(', ')}`}

@@ -11,18 +11,25 @@ const TABS = [
   { href: '/moi', label: 'Mon compte', d: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8M4 20c0-4 4-6 8-6s8 2 8 6' },
 ];
 
+/**
+ * Barre d'onglets flottante en verre : Kode au centre en pastille noire,
+ * l'onglet actif marqué par son icône pleine encre et un point dessous.
+ */
 export function TabBar() {
   const pathname = usePathname();
+  // L'atelier de tenue a sa propre barre d'action : la navigation s'efface.
+  if (pathname.startsWith('/tenues/nouvelle')) return null;
 
   return (
     <nav
       aria-label="Navigation principale"
       style={{
-        position: 'fixed', left: 20, right: 20, bottom: 12, maxWidth: 350, margin: '0 auto',
-        height: 62, borderRadius: 999, background: 'var(--nav-glass)',
-        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-        boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-around', padding: '0 12px', zIndex: 10,
+        position: 'fixed', left: 20, right: 20, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+        maxWidth: 350, margin: '0 auto', height: 66, borderRadius: 999, zIndex: 20,
+        background: 'var(--nav-glass)', border: '1px solid var(--glass-edge)',
+        backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+        boxShadow: 'var(--shadow-float)', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-around', padding: '0 12px',
       }}
     >
       {TABS.map((tab) => {
@@ -33,21 +40,29 @@ export function TabBar() {
             href={tab.href}
             aria-label={tab.label}
             aria-current={active ? 'page' : undefined}
+            className="btn"
             style={{
-              display: 'flex', width: tab.pill ? 56 : 44, height: tab.pill ? 56 : 44,
-              alignItems: 'center', justifyContent: 'center',
-              borderRadius: 999,
+              position: 'relative', padding: 0, minHeight: 0,
+              width: tab.pill ? 56 : 44, height: tab.pill ? 56 : 44, borderRadius: 999,
               background: tab.pill ? 'var(--ink)' : 'transparent',
-              boxShadow: tab.pill ? '0 10px 24px rgba(13,13,14,.35)' : undefined,
+              boxShadow: tab.pill ? 'var(--shadow-press)' : 'none',
+              color: tab.pill ? 'var(--on-ink)' : active ? 'var(--ink)' : 'var(--muted)',
             }}
           >
             <svg
-              width="22" height="22" viewBox="0 0 24 24" fill="none"
-              stroke={tab.pill ? 'var(--ground)' : active ? 'var(--ink)' : 'var(--muted)'}
+              width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+              style={{ transform: active ? 'scale(1.08)' : 'none', transition: 'transform 400ms cubic-bezier(.34,1.56,.64,1)' }}
             >
               <path d={tab.d} />
             </svg>
+            {active && !tab.pill ? (
+              <span
+                aria-hidden="true"
+                className="pop"
+                style={{ position: 'absolute', bottom: 3, width: 4, height: 4, borderRadius: 99, background: 'var(--ink)' }}
+              />
+            ) : null}
           </Link>
         );
       })}

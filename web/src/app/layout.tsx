@@ -10,9 +10,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EEEDEA' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0A0B' },
+    { media: '(prefers-color-scheme: light)', color: '#EEF0F4' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B0C10' },
   ],
 };
 
@@ -28,8 +29,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap"
           rel="stylesheet"
         />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&display=swap"
+          rel="stylesheet"
+        />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Les halos pastel de la direction « App design » : un seul calque fixe, derrière tout. */}
+        <div className="ambient" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

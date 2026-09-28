@@ -8,9 +8,9 @@ avec ce qu'on possède déjà.
 
 | Dossier | Contenu |
 |---|---|
-| `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, données de démonstration. Voir `mobile/README.md`. |
+| `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, branchée sur Supabase (mode démonstration sans réseau). Voir `mobile/README.md`. |
 | `web/` | L'application web (Next.js App Router, React 19, `@supabase/ssr`), branchée sur Supabase. |
-| `supabase/functions/dressy-agent/` | L'agent central : photo → ChatGPT → Nano Banana → Claude → dressing. |
+| `supabase/functions/dressy-agent/` | L'agent central : photo → Claude → Nano Banana → Claude → dressing. |
 | `supabase/functions/kode/` | Kode, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
 | `supabase/functions/billing/`, `stripe-webhook/` | Les abonnements : ouverture du paiement Stripe, et le webhook qui active l'offre. |
 | `supabase/migrations/` | Le schéma SQL complet, dans l'ordre où il a été appliqué au projet Supabase. |
@@ -35,15 +35,17 @@ de production est la référence pour vérifier.
 Chaque photo ajoutée devient une ligne `ai_jobs`. Un trigger réveille l'Edge
 Function `dressy-agent`, qui :
 
-1. demande à **ChatGPT** de décrire la pièce et d'écrire la consigne d'image ;
+1. demande à **Claude** de décrire la pièce et d'écrire la consigne d'image ;
 2. fait redessiner la pièce par **Nano Banana 2** à partir de la photo ;
 3. fait noter la fidélité par **Claude** — validée à 95/100 ;
 4. sinon recommence (3 essais au plus, avec la critique de Claude), puis fait
    choisir la meilleure image à Claude ;
 5. détoure l'image retenue et la range dans le dressing.
 
-Les clés `OPENAI_API_KEY`, `GEMINI_API_KEY` et `ANTHROPIC_API_KEY` se règlent
-dans Supabase > Edge Functions > Secrets, jamais dans le code. Vérification
+Les clés `GEMINI_API_KEY` et `ANTHROPIC_API_KEY` se règlent dans
+Supabase > Edge Functions > Secrets, jamais dans le code. `CLAUDE_MODEL` règle
+le modèle Claude ; `CLAUDE_DESCRIBE_MODEL`, facultatif, fait tourner la
+description sur un autre modèle que le contrôle qualité. Vérification
 gratuite de la configuration : `GET /functions/v1/dressy-agent?verifier`.
 
 ## Kode, le styliste
@@ -69,7 +71,7 @@ une réponse courte et, quand la question s'y prête, une tenue.
 Déploiement (vérification JWT **activée**, contrairement à `dressy-agent`) :
 
 ```bash
-supabase db push                 # applique 20260926120000_kode.sql
+supabase db push                 # applique 20260926200326_kode.sql
 supabase functions deploy kode   # utilise ANTHROPIC_API_KEY, déjà en secret
 ```
 

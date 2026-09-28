@@ -23,3 +23,6 @@ deno.lock
 
 # Python
 __pycache__/
+
+# Journaux locaux
+*.log

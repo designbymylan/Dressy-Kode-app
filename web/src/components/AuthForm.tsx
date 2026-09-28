@@ -3,12 +3,12 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { signIn, signUp, type FormResult } from '@/app/actions';
-import { Field, ErrorNote, inputStyle, buttonPrimary } from '@/components/ui';
+import { Field, ErrorNote } from '@/components/ui';
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} style={{ ...buttonPrimary, opacity: pending ? 0.6 : 1 }}>
+    <button type="submit" disabled={pending} className="btn btn-primary btn-block">
       {pending ? 'Un instant…' : label}
     </button>
   );
@@ -29,7 +29,7 @@ export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
         <Field label="Ton prénom">
           <input
             name="display_name" type="text" autoComplete="given-name"
-            placeholder="Sarah" style={inputStyle}
+            placeholder="Sarah" className="input"
           />
         </Field>
       ) : null}
@@ -37,7 +37,7 @@ export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
       <Field label="Adresse e-mail">
         <input
           name="email" type="email" required autoComplete="email"
-          placeholder="sarah@exemple.fr" style={inputStyle}
+          placeholder="sarah@exemple.fr" className="input"
         />
       </Field>
 
@@ -47,7 +47,7 @@ export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
           autoComplete={isSignUp ? 'new-password' : 'current-password'}
           minLength={isSignUp ? 8 : undefined}
           placeholder={isSignUp ? 'Au moins 8 caractères' : ''}
-          style={inputStyle}
+          className="input"
         />
       </Field>
 

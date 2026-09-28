@@ -12,6 +12,7 @@ import {
   GENDERS, GOALS, STYLES, ITEMS, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, type Answers,
 } from '@/lib/onboarding';
+import { categoryMeta, isKnownKind, slotFor } from '@/lib/wardrobe';
 
 // code : ce que l'écran peut proposer en plus du message (« pieces » → voir les offres).
 export type FormResult = { error: string; code?: string } | undefined;
@@ -89,11 +90,15 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
 
   const name = String(formData.get('name') ?? '').trim();
   const categoryId = String(formData.get('category_id') ?? '');
+  const kindRaw = String(formData.get('kind') ?? '');
+  const colour = String(formData.get('colour') ?? '');
   const material = String(formData.get('material') ?? '').trim();
   const priceRaw = String(formData.get('price') ?? '').trim().replace(',', '.');
 
   if (!name) return { error: 'Donne un nom à la pièce.' };
-  if (!categoryId) return { error: 'Choisis une catégorie.' };
+  if (!categoryMeta(categoryId)) return { error: 'Choisis une catégorie.' };
+  const kind = kindRaw && isKnownKind(categoryId, kindRaw) ? kindRaw : null;
+  const colors = COLOURS.some((c) => c.id === colour) ? [colour] : [];
 
   const price = priceRaw ? Math.round(Number(priceRaw) * 100) : null;
   if (price !== null && (!Number.isFinite(price) || price < 0)) {
@@ -104,6 +109,8 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
   const { error } = await supabase.from('garments').insert({
     space_id: viewer.spaceId,
     category_id: categoryId,
+    kind,
+    colors,
     name,
     material: material || null,
     purchase_price_cents: price,
@@ -392,4 +399,58 @@ export async function saveStyleProfile(answers: Answers): Promise<FormResult> {
 
   revalidatePath('/', 'layout');
   redirect('/accueil');
+}
+
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+/**
+ * Enregistre une tenue composée dans l'atelier. L'emplacement de chaque pièce
+ * se déduit de sa catégorie, relue en base : le navigateur ne choisit que
+ * les pièces, et seulement parmi celles que la RLS lui laisse voir.
+ */
+export async function createOutfit(input: { garmentIds: string[]; name?: string }): Promise<{ error: string } | { id: string }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const ids = [...new Set((Array.isArray(input?.garmentIds) ? input.garmentIds : []).map(String))].slice(0, 16);
+  if (ids.length < 2) return { error: 'Une tenue, c’est au moins deux pièces.' };
+
+  const supabase = await createClient();
+  const { data: garments, error: readError } = await supabase
+    .from('garments')
+    .select('id, category_id')
+    .in('id', ids);
+  if (readError) return { error: readError.message };
+  if (!garments || garments.length !== ids.length) return { error: 'Une des pièces n’est plus dans ton dressing.' };
+
+  const byId = new Map(garments.map((g) => [g.id, g.category_id as string]));
+  const today = new Date();
+  const name = String(input?.name ?? '').trim().slice(0, 60) || `Tenue du ${today.getDate()} ${MOIS[today.getMonth()]}`;
+
+  const { data: outfit, error } = await supabase
+    .from('outfits')
+    .insert({ space_id: viewer.spaceId, name, source: 'user' })
+    .select('id')
+    .single();
+  if (error || !outfit) return { error: error?.message ?? 'La tenue n’a pas pu être créée.' };
+
+  const { error: itemsError } = await supabase.from('outfit_items').insert(
+    ids.map((id, position) => ({ outfit_id: outfit.id, garment_id: id, slot: slotFor(byId.get(id)!), position })),
+  );
+  if (itemsError) {
+    await supabase.from('outfits').delete().eq('id', outfit.id);
+    return { error: itemsError.message };
+  }
+
+  revalidatePath('/tenues');
+  return { id: outfit.id };
+}
+
+export async function deleteOutfit(formData: FormData): Promise<void> {
+  const id = String(formData.get('id') ?? '');
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from('outfits').delete().eq('id', id);
+  revalidatePath('/tenues');
 }

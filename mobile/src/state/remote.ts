@@ -55,7 +55,7 @@ const AGE_IDS = ['15-17', '18-24', '25-34', '35-44', '45+'];
 const SHAPES: Record<Exclude<Silhouette, 'inconnue'>, string> = { A: 'triangle', V: 'triangle_inverse', H: 'rectangle', X: 'sablier', O: 'ronde' };
 const SHAPE_OF = Object.fromEntries(Object.entries(SHAPES).map(([k, v]) => [v, k])) as Record<string, Silhouette>;
 
-const CATEGORY_OF: Record<string, CategoryId> = { vestes: 'manteaux', hauts: 'hauts', bas: 'bas', robes: 'robes', chaussures: 'chaussures', sacs: 'accessoires', accessoires: 'accessoires' };
+const CATEGORY_OF: Record<string, CategoryId> = { vestes: 'manteaux', hauts: 'hauts', bas: 'bas', robes: 'robes', chaussures: 'chaussures', sacs: 'accessoires', accessoires: 'accessoires', bijoux: 'accessoires' };
 const categoryId = (p: Pick<Piece, 'category' | 'kind'>) =>
   p.category === 'manteaux' ? 'vestes' : p.category === 'accessoires' ? (p.kind === 'sac' ? 'sacs' : 'accessoires') : p.category;
 
