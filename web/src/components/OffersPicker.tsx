@@ -12,7 +12,7 @@ function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} style={{ ...buttonPrimary, width: '100%', opacity: pending ? 0.6 : 1 }}>
-      {pending ? 'Ouverture du paiement…' : label}
+      {pending ? <><span className="spinner" aria-hidden="true" />Ouverture du paiement</> : label}
     </button>
   );
 }
@@ -158,7 +158,7 @@ export function OffersPicker({
             <form action={checkoutAction}>
               <input type="hidden" name="plan" value={plan} />
               <input type="hidden" name="period" value={period} />
-              <Submit label={`Continuer avec ${selected.name} — ${euros(selected.cents[period])}`} />
+              <Submit label={`Continuer avec ${selected.name}, ${euros(selected.cents[period])}`} />
             </form>
           )}
           <p style={{ fontSize: 11.5, textAlign: 'center', color: 'var(--muted)' }}>

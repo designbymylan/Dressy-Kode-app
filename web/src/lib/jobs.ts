@@ -1,10 +1,12 @@
 /** Les pièces que l'agent central prépare, telles que le dressing les affiche. */
 
-export const MAX_ATTEMPTS = 3; // même valeur que supabase/functions/dressy-agent/decide.ts
+export const MAX_ATTEMPTS = 2; // même valeur que supabase/functions/dressy-agent/decide.ts
 
 export const ACTIVE_STATUSES = [
   'queued', 'prompting', 'generating', 'verifying', 'selecting', 'cutout', 'uploading',
 ] as const;
+
+export const JOB_SELECT = 'id, status, attempts, error, retries, user_input, source_paths, target, parent_id, analysis';
 
 export type JobRow = {
   id: string;
@@ -14,34 +16,54 @@ export type JobRow = {
   retries: number;
   user_input: string;
   source_paths: string[];
+  /** La fiche de la pièce, une fois repérée sur la photo. */
+  target: { name: string } | null;
+  /** La tâche de la photo d'où la pièce a été repérée. */
+  parent_id: string | null;
+  analysis: { name?: string; inventory?: { pieces: { name: string }[]; skipped?: number } } | null;
 };
 
+export function jobTitle(j: Pick<JobRow, 'target' | 'analysis'>): string {
+  return j.target?.name ?? j.analysis?.name ?? 'Ta photo';
+}
+
 /**
- * `attempts` compte les essais déjà jugés par Claude : pendant l'essai n,
- * il vaut n − 1.
+ * Ce que Kode dit pendant qu'il travaille, étape par étape. Les phrases
+ * tournent à l'écran ; aucune ne nomme un modèle ni un service.
  */
-export function jobLabel(j: Pick<JobRow, 'status' | 'attempts'>): string {
-  const n = Math.min(j.attempts + 1, MAX_ATTEMPTS);
-  const essai = `essai ${n}/${MAX_ATTEMPTS}`;
+export function jobPhrases(j: Pick<JobRow, 'status' | 'attempts' | 'target'>): string[] {
   switch (j.status) {
     case 'queued':
-      if (j.attempts >= MAX_ATTEMPTS) return 'Claude va choisir la meilleure image';
-      return j.attempts > 0 ? `Nouvel essai en attente — ${essai}` : 'En file';
+      if (j.attempts >= MAX_ATTEMPTS) return ['Kode choisit le meilleur rendu'];
+      if (!j.target) return ['Kode regarde ta photo', 'Kode s’installe'];
+      return j.attempts > 0 ? ['Kode prépare un nouvel essai'] : ['Kode sort ses crayons'];
     case 'prompting':
-      return j.attempts > 0 ? `Claude corrige la consigne — ${essai}` : 'Claude décrit la pièce';
+      return j.target
+        ? ['Kode affine son dessin', 'Kode corrige les détails']
+        : ['Kode repère chaque pièce', 'Kode regarde les couleurs', 'Kode note chaque détail'];
     case 'generating':
-      return `Nano Banana la dessine — ${essai}`;
+      return ['Kode dessine ta pièce', 'Kode soigne les couleurs', 'Kode ajuste la coupe', 'Kode peaufine les détails'];
     case 'verifying':
-      return `Claude vérifie la ressemblance — ${essai}`;
+      return ['Kode compare avec ta photo', 'Kode vérifie chaque détail'];
     case 'selecting':
-      return 'Claude choisit la meilleure image';
+      return ['Kode choisit le meilleur rendu'];
     case 'cutout':
-      return 'Détourage';
+      return ['Kode enlève le fond', 'Kode détoure ta pièce'];
     case 'uploading':
-      return 'Rangement dans le dressing';
-    case 'failed':
-      return 'Échec';
+      return ['Kode la range sur ton portant'];
     default:
-      return j.status;
+      return ['Kode travaille'];
   }
+}
+
+/** Sous la photo d'origine : combien de pièces Kode y a trouvées. */
+export function jobNote(j: Pick<JobRow, 'analysis' | 'parent_id'>): string | null {
+  const inv = j.analysis?.inventory;
+  if (j.parent_id || !inv) return null;
+  const n = inv.pieces.length;
+  const found = n > 1 ? `Kode a repéré ${n} pièces sur cette photo : ${inv.pieces.map((p) => p.name.toLowerCase()).join(', ')}.` : null;
+  const skipped = inv.skipped
+    ? `${inv.skipped} autre${inv.skipped > 1 ? 's' : ''} n’${inv.skipped > 1 ? 'ont' : 'a'} pas pu être ajoutée${inv.skipped > 1 ? 's' : ''} : ton dressing est plein.`
+    : null;
+  return [found, skipped].filter(Boolean).join(' ') || null;
 }

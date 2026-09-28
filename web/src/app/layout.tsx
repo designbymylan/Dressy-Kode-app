@@ -3,7 +3,7 @@ import { getTheme } from '@/lib/space';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Dressy — ton dressing, en vitrine',
+  title: 'Dresskode, ton dressing en vitrine',
   description: 'Ta garde-robe numérique et ton styliste IA. Porte mieux, achète moins.',
 };
 

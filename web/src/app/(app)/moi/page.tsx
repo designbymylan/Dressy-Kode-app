@@ -81,7 +81,7 @@ export default async function Moi({
       </Card>
 
       <Card i={3}>
-        <h2 className="section-title">Ce que Dressy sait de toi</h2>
+        <h2 className="section-title">Ce que Kode sait de toi</h2>
         <dl style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <Line label="Ton style" values={labelsFor('styles', sp?.styles ?? [])} />
           {colours.length ? (
@@ -103,6 +103,9 @@ export default async function Moi({
             </div>
           ) : null}
           <Line label="Ce que tu portes" values={labelsFor('favourite_items', sp?.favourite_items ?? [])} />
+          <Line label="Tes bijoux" values={labelsFor('jewelry', sp?.jewelry ?? [])} />
+          <Line label="Tes accessoires" values={labelsFor('accessories', sp?.accessories ?? [])} />
+          <Line label="Tu aimerais porter" values={[...labelsFor('jewelry', sp?.jewelry_wish ?? []), ...labelsFor('accessories', sp?.accessories_wish ?? [])]} />
           <Line label="Pour" values={labelsFor('occasions', sp?.occasions ?? [])} />
           <Line label="Tu évites" values={labelsFor('avoid', sp?.avoid ?? [])} />
           <Line

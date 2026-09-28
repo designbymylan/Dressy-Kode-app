@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
-import { ACTIVE_STATUSES, type JobRow } from '@/lib/jobs';
+import { ACTIVE_STATUSES, JOB_SELECT, type JobRow } from '@/lib/jobs';
 import { loadPieces, signAll } from '@/lib/garments';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { JobList } from '@/components/JobList';
@@ -24,12 +24,12 @@ export default async function Dressing({
     loadPieces(supabase),
     supabase
       .from('ai_jobs')
-      .select('id, status, attempts, error, retries, user_input, source_paths')
+      .select(JOB_SELECT)
       .in('status', [...ACTIVE_STATUSES, 'failed'])
       .order('created_at'),
   ]);
 
-  const jobs = (jobRows ?? []) as JobRow[];
+  const jobs = (jobRows ?? []) as unknown as JobRow[];
   const working = jobs.some((j) => j.status !== 'failed');
   const sources = await signAll(supabase, 'uploads', jobs.map((j) => j.source_paths[0]).filter(Boolean));
 
@@ -46,8 +46,9 @@ export default async function Dressing({
       {sent && working ? (
         <Card strong i={1}>
           <p role="status" className="small center">
-            {sent > 1 ? `${sent} photos confiées à Kode.` : 'Photo confiée à Kode.'} Tu peux quitter
-            cet écran : les pièces arriveront dans ton dressing une fois vérifiées.
+            {sent > 1 ? `${sent} photos confiées à Kode.` : 'Photo confiée à Kode.'} Il repère chaque pièce
+            et les dessine en même temps. Tu peux quitter cet écran : elles arriveront dans ton dressing,
+            détourées, une fois vérifiées.
           </p>
         </Card>
       ) : null}

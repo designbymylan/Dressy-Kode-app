@@ -1,26 +1,27 @@
-import { AuthForm } from '@/components/AuthForm';
+import Link from 'next/link';
+import { AuthForm, OAuthButtons } from '@/components/AuthForm';
 import { AuthShell } from '@/components/AuthShell';
+
+const NOTES: Record<string, string> = {
+  expire: 'Ce lien a expiré ou a déjà servi. Connecte-toi, ou demande un nouveau lien.',
+};
 
 export default async function Connexion({
   searchParams,
 }: {
-  searchParams: Promise<{ verifier?: string }>;
+  searchParams: Promise<{ lien?: string }>;
 }) {
-  const { verifier } = await searchParams;
+  const { lien } = await searchParams;
 
   return (
     <AuthShell
-      active="connexion"
-      title={<>Content de te <em className="accent">revoir.</em></>}
-      lead="Retrouve ton dressing, tes tenues et ce que Dressy a appris de toi."
+      title={<>Content de te <em className="accent">revoir</em></>}
+      lead="Connecte-toi à ton espace Dresskode."
+      footer={<>Nouveau ici ? <Link href="/inscription">Créer un compte</Link></>}
     >
-      {verifier ? (
-        <p className="note pop">
-          Ton compte est créé. Ouvre l&apos;e-mail de confirmation qu&apos;on vient de
-          t&apos;envoyer, puis reviens te connecter ici.
-        </p>
-      ) : null}
-
+      {lien && NOTES[lien] ? <p className="note pop" role="status">{NOTES[lien]}</p> : null}
+      <OAuthButtons />
+      <div className="auth-or" aria-hidden="true">ou</div>
       <AuthForm mode="signin" />
     </AuthShell>
   );

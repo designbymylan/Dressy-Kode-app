@@ -1,5 +1,5 @@
 /* ============================================================
-   Dressy — système visuel « vitrine de verre ».
+   Dressy, système visuel « vitrine de verre ».
 
    Direction : dossier « App design » (28/09/2026). Fond perle traversé de
    halos pastel qui dérivent lentement, surfaces en verre dépoli, boutons
@@ -561,3 +561,239 @@ img { display: block; }
 .board > span:nth-child(even) { transform: rotate(3deg); }
 .board img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(20, 24, 40, 0.16)); }
 .outfit-card:hover .board > span { transform: rotate(0) scale(1.04); }
+
+/* ============================================================
+   Relief lumineux des icônes
+   Une pastille bombée, sans 3D : dégradé pastel des halos, reflet
+   brillant en haut, ombre intérieure en bas et ombre portée teintée.
+   data-tone choisit la teinte (0 à 5), --gs la taille.
+   ============================================================ */
+
+.gloss {
+  --g1: #fff0e8;
+  --g2: #ffc9b0;
+  --g-shade: rgba(160, 80, 50, 0.28);
+  position: relative;
+  flex: none;
+  width: var(--gs, 44px);
+  height: var(--gs, 44px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #1d1f27;
+  background:
+    radial-gradient(120% 95% at 30% 16%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(155deg, var(--g1) 0%, var(--g2) 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 9px -3px var(--g-shade),
+    0 8px 16px -8px var(--g-shade),
+    0 1px 2px rgba(20, 24, 40, 0.08);
+  transition: transform 380ms var(--ease-spring), box-shadow 300ms var(--ease);
+}
+.gloss::after {
+  /* le reflet : une demi-lune claire posée sur le haut de la pastille */
+  content: '';
+  position: absolute;
+  left: 20%;
+  top: 7%;
+  width: 60%;
+  height: 36%;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.gloss svg { position: relative; z-index: 1; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.75)); }
+.gloss[data-tone='1'] { --g1: #f3f0ff; --g2: #cfc7ff; --g-shade: rgba(90, 76, 190, 0.26); }
+.gloss[data-tone='2'] { --g1: #eef7ff; --g2: #bcdcff; --g-shade: rgba(40, 110, 180, 0.24); }
+.gloss[data-tone='3'] { --g1: #fff0f5; --g2: #ffc6db; --g-shade: rgba(180, 60, 110, 0.24); }
+.gloss[data-tone='4'] { --g1: #edfbf3; --g2: #bfe9d2; --g-shade: rgba(40, 130, 90, 0.24); }
+.gloss[data-tone='5'] { --g1: #fffbe9; --g2: #ffe7a3; --g-shade: rgba(170, 130, 30, 0.26); }
+[aria-checked='true'] > .gloss,
+[aria-pressed='true'] > .gloss,
+.gloss[data-on='true'] {
+  transform: scale(1.08) rotate(-4deg);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 9px -3px var(--g-shade),
+    0 12px 22px -8px var(--g-shade),
+    0 0 0 2px var(--ink);
+}
+
+:root[data-theme='dark'] .gloss { color: #f4f4f6; --g1: #5a3a31; --g2: #2f1d18; --g-shade: rgba(0, 0, 0, 0.55); }
+:root[data-theme='dark'] .gloss::after { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)); }
+:root[data-theme='dark'] .gloss svg { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6)); }
+:root[data-theme='dark'] .gloss[data-tone='1'] { --g1: #3f3a78; --g2: #221f45; }
+:root[data-theme='dark'] .gloss[data-tone='2'] { --g1: #24496d; --g2: #132a40; }
+:root[data-theme='dark'] .gloss[data-tone='3'] { --g1: #6a2d4a; --g2: #3a1829; }
+:root[data-theme='dark'] .gloss[data-tone='4'] { --g1: #22553d; --g2: #123023; }
+:root[data-theme='dark'] .gloss[data-tone='5'] { --g1: #6a5520; --g2: #3a2e10; }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='auto'] .gloss { color: #f4f4f6; --g1: #5a3a31; --g2: #2f1d18; --g-shade: rgba(0, 0, 0, 0.55); }
+  :root[data-theme='auto'] .gloss::after { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)); }
+  :root[data-theme='auto'] .gloss svg { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6)); }
+  :root[data-theme='auto'] .gloss[data-tone='1'] { --g1: #3f3a78; --g2: #221f45; }
+  :root[data-theme='auto'] .gloss[data-tone='2'] { --g1: #24496d; --g2: #132a40; }
+  :root[data-theme='auto'] .gloss[data-tone='3'] { --g1: #6a2d4a; --g2: #3a1829; }
+  :root[data-theme='auto'] .gloss[data-tone='4'] { --g1: #22553d; --g2: #123023; }
+  :root[data-theme='auto'] .gloss[data-tone='5'] { --g1: #6a5520; --g2: #3a2e10; }
+}
+
+/* ============================================================
+   Chargement : Kode réfléchit
+   ============================================================ */
+
+/* L'orbe de Kode : un anneau des couleurs des halos qui tourne, un cœur
+   de verre qui respire. */
+.kode-orb {
+  position: relative;
+  flex: none;
+  width: var(--orb, 28px);
+  height: var(--orb, 28px);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #ffb89c, #b9adff, #9fd0ff, #ffabc9, #ffb89c);
+  box-shadow: 0 0 0 1px var(--glass-edge), 0 6px 18px -6px rgba(107, 99, 184, 0.6);
+  animation: orb-spin 2.8s linear infinite;
+}
+.kode-orb::before {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: var(--glass-strong);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  animation: orb-breathe 1.6s ease-in-out infinite;
+}
+.kode-orb::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  top: 8%;
+  width: 40%;
+  height: 26%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  filter: blur(1px);
+}
+@keyframes orb-spin { to { transform: rotate(1turn); } }
+@keyframes orb-breathe { 50% { transform: scale(0.7); } }
+
+.kode-thinking {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+}
+.kode-phrase { display: inline-block; animation: phrase-in 460ms var(--ease) both; }
+@keyframes phrase-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.dots { display: inline-flex; gap: 3px; margin-left: 3px; vertical-align: middle; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot 1.2s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: 0.15s; }
+.dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Petit anneau pour un bouton qui attend une réponse. */
+.spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: orb-spin 0.7s linear infinite;
+}
+
+/* Bloc qui attend son contenu : du verre, traversé d'un reflet. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--r-tile);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.6) 50%, transparent 80%);
+  background-size: 220% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+:root[data-theme='dark'] .skeleton::after { background-image: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.07) 50%, transparent 80%); }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='auto'] .skeleton::after { background-image: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.07) 50%, transparent 80%); }
+}
+
+/* ============================================================
+   Connexion et inscription
+   ============================================================ */
+
+.auth {
+  max-width: 400px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: calc(env(safe-area-inset-top, 0px) + 40px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+}
+.auth-head { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.auth-title { font-size: 32px; }
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.auth .field > span { font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: 0; padding-left: 4px; }
+.field-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px; }
+.field-head > label, .field-head > span { font-size: 14px; font-weight: 500; }
+.field-link { font-size: 13.5px; color: var(--muted); min-height: 32px; display: inline-flex; align-items: center; }
+.field-link:hover { color: var(--ink); text-decoration: underline; }
+.auth-switch { text-align: center; font-size: 14px; color: var(--muted); }
+.auth-switch a { color: var(--ink); font-weight: 600; }
+.auth-switch a:hover { text-decoration: underline; }
+.btn-oauth { font-weight: 500; gap: 12px; }
+.btn-oauth svg { flex: none; }
+.password { position: relative; }
+.password .input { padding-right: 56px; }
+.password > button {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.password > button:hover { color: var(--ink); }
+
+/* Questionnaire : chaque question glisse depuis le côté où l'on va. */
+.step-in { animation: step-in 460ms var(--ease) both; }
+.step-back { animation: step-back 460ms var(--ease) both; }
+@keyframes step-in {
+  from { opacity: 0; transform: translate3d(28px, 0, 0); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes step-back {
+  from { opacity: 0; transform: translate3d(-28px, 0, 0); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}

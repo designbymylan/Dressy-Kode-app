@@ -56,7 +56,7 @@ export function HeroFan({ scale = 1 }: { scale?: number }) {
 export function Wordmark() {
   return (
     <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.3em', textTransform: 'uppercase', color: 'var(--ink)', paddingLeft: '.3em' }}>
-      Dressy
+      Dresskode
     </span>
   );
 }

@@ -81,7 +81,7 @@ export function Garment({
 }
 
 /**
- * Collage de vêtements posés à plat, légèrement basculés — l'image de
+ * Collage de vêtements posés à plat, légèrement basculés, l'image de
  * marque du brief : « la vitrine d'un magasin de vêtements ».
  */
 export function FlatLay() {

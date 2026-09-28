@@ -1,56 +1,45 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { FlatLay } from '@/components/garments';
 import { Wordmark } from '@/components/HeroFan';
-import { Segment } from '@/components/Segment';
+import { GlossIcon } from '@/components/Gloss';
+import { ICON } from '@/components/ui';
 
 export { Wordmark };
 
-/** Cadre des écrans de connexion et d'inscription. */
+/**
+ * Cadre des écrans de compte (connexion, inscription, mot de passe), sur le
+ * modèle choisi : la marque, un titre, une phrase, le formulaire, puis le
+ * lien vers l'autre écran. Une seule colonne, centrée, rien d'autre.
+ */
 export function AuthShell({
-  active,
   title,
   lead,
   children,
+  footer,
 }: {
-  active: 'inscription' | 'connexion';
   title: ReactNode;
-  lead: string;
+  lead: ReactNode;
   children: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
-    <main
-      className="page"
-      style={{
-        maxWidth: 390, margin: '0 auto', minHeight: '100dvh',
-        padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px calc(env(safe-area-inset-bottom, 0px) + 40px)',
-        display: 'flex', flexDirection: 'column', gap: 18,
-      }}
-    >
-      <div className="rise" style={{ display: 'flex', justifyContent: 'center', paddingBlock: 6 }}>
+    <main className="auth page">
+      <div className="auth-head rise">
+        <GlossIcon d={ICON.hanger} tone={1} size={60} stroke={1.5} />
         <Wordmark />
       </div>
 
-      <FlatLay />
-
-      <header className="rise" style={{ '--i': 7, display: 'flex', flexDirection: 'column', gap: 8 } as CSSProperties}>
-        <h1 className="hero-title" style={{ fontSize: 33 }}>{title}</h1>
+      <header className="auth-head rise" style={{ '--i': 1 } as CSSProperties}>
+        <h1 className="auth-title">{title}</h1>
         <p className="lead">{lead}</p>
       </header>
 
-      <div className="rise" style={{ '--i': 8 } as CSSProperties}>
-        <Segment
-          label="Connexion ou inscription"
-          value={active}
-          options={[
-            { value: 'inscription', label: 'Créer un espace', href: '/inscription' },
-            { value: 'connexion', label: 'Me connecter', href: '/connexion' },
-          ]}
-        />
+      <div className="rise" style={{ '--i': 2, display: 'flex', flexDirection: 'column', gap: 16 } as CSSProperties}>
+        {children}
       </div>
 
-      <section className="glass card rise" style={{ '--i': 9, gap: 16 } as CSSProperties}>
-        {children}
-      </section>
+      {footer ? (
+        <p className="auth-switch rise" style={{ '--i': 3 } as CSSProperties}>{footer}</p>
+      ) : null}
     </main>
   );
 }

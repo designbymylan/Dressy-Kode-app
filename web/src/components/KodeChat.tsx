@@ -6,6 +6,8 @@ import { askKode, planTomorrow, resetKode } from '@/app/actions';
 import type { KodeMessage, KodeUsage } from '@/lib/kode';
 import { OutfitCard } from '@/components/OutfitCard';
 import { ErrorNote, buttonPrimary } from '@/components/ui';
+import { KodeThinking } from '@/components/KodeThinking';
+import { THINKING } from '@/lib/thinking';
 
 const SUGGESTIONS = [
   "Qu'est-ce que je mets demain ?",
@@ -231,21 +233,12 @@ export function KodeChat({
         )}
 
         {busy ? (
-          <span
-            aria-label="Kode écrit"
-            style={{
-              alignSelf: 'flex-start', display: 'flex', gap: 5, background: 'var(--tile)',
-              borderRadius: 999, padding: '14px 16px',
-            }}
+          <div
+            className="pop"
+            style={{ alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px', padding: '10px 16px 10px 12px' }}
           >
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                data-pulse
-                style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--muted)', animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
-          </span>
+            <KodeThinking phrases={THINKING.chat} size={24} every={1800} />
+          </div>
         ) : null}
         {/* Marge = hauteur du champ fixe : la dernière bulle s'arrête au-dessus. */}
         <div ref={end} style={{ scrollMarginBottom: 240 }} />

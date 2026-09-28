@@ -28,7 +28,7 @@ export default function Bienvenue() {
         </h1>
 
         <p className="lead rise" style={{ '--i': 8 } as CSSProperties}>
-          Tu as déjà tout ce qu&apos;il faut dans ton armoire. Dressy t&apos;aide à le voir,
+          Tu as déjà tout ce qu&apos;il faut dans ton armoire. Dresskode t&apos;aide à le voir,
           et à t&apos;habiller sans y penser une heure.
         </p>
       </div>

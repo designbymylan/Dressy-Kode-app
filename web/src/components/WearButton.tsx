@@ -26,7 +26,7 @@ export function WearButton({ outfitId, worn }: { outfitId: string; worn: boolean
         }
         className="btn btn-primary btn-block"
       >
-        {pending ? 'Un instant…' : 'Je la porte'}
+        {pending ? <><span className="spinner" aria-hidden="true" />C’est noté</> : 'Je la porte'}
       </button>
       {error ? <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)' }}>{error}</p> : null}
     </div>

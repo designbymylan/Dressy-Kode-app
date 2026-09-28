@@ -26,13 +26,23 @@ export default async function Demarrage({
     .eq('space_id', viewer.spaceId)
     .maybeSingle();
 
+  // À l'inscription par e-mail, le profil reçoit la partie avant « @ » en
+  // guise de nom : ce n'est pas un prénom, le champ reste vide.
+  const localPart = viewer.email?.split('@')[0] ?? null;
+  const known = viewer.displayName && viewer.displayName !== localPart ? viewer.displayName : null;
+
   const initial: Answers = {
     ...EMPTY_ANSWERS,
-    display_name: viewer.displayName ?? '',
+    display_name: known ?? viewer.givenName ?? '',
     gender: data?.gender ?? null,
     goals: data?.goals ?? [],
     styles: data?.styles ?? [],
     favourite_items: data?.favourite_items ?? [],
+    jewelry: data?.jewelry ?? [],
+    jewelry_wish: data?.jewelry_wish ?? [],
+    metals: data?.metals ?? [],
+    accessories: data?.accessories ?? [],
+    accessories_wish: data?.accessories_wish ?? [],
     colours: data?.colours ?? [],
     avoid: data?.avoid ?? [],
     occasions: data?.occasions ?? [],

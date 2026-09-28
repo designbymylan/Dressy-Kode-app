@@ -9,7 +9,7 @@ function Submit() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn btn-glass btn-block">
-      {pending ? 'Ouverture…' : 'Gérer mon abonnement'}
+      {pending ? <><span className="spinner" aria-hidden="true" />Ouverture</> : 'Gérer mon abonnement'}
     </button>
   );
 }

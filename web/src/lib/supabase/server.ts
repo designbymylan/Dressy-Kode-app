@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 /**
  * Client Supabase côté serveur, lié aux cookies de la requête.
- * À créer par requête — ne jamais le mettre en variable de module, sinon
+ * À créer par requête, ne jamais le mettre en variable de module, sinon
  * une session fuirait d'un visiteur à l'autre.
  */
 export async function createClient() {
