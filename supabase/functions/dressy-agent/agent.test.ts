@@ -4,9 +4,9 @@
  * Ne teste que les modules sans dépendance (détourage, décisions, fond) :
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
-import { cutoutBackground, alphaRatio, cropToContent, downscale, type Raster } from './cutout.ts';
+import { cutoutBackground, alphaRatio, cropToContent, contentBox, downscale, type Raster } from './cutout.ts';
 import { planRun, normaliseVerdict, isValidated, bestByScore, MAX_RUNS, type Candidate } from './decide.ts';
-import { backdropFor, cleanTarget } from './prompts.ts';
+import { backdropFor, cleanTarget, cleanBox } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -58,6 +58,9 @@ const framed = cropToContent(cut);
 check('recadrage sur la pièce + marge', [framed.width, framed.height], [70, 90]);
 check('recadrage garde la pièce opaque', alphaAt(framed, 35, 45), 255);
 check('recadrage garde une marge transparente', alphaAt(framed, 1, 1), 0);
+
+// Le cadre gardé pour le « détourage révélé » : même découpe que le recadrage.
+check('cadre de découpe : position et taille', contentBox(cut), { x: 25, y: 15, w: 70, h: 90 });
 
 const small = downscale(framed, 45);
 check('vignette : grand côté ramené à 45', Math.max(small.width, small.height), 45);
@@ -133,6 +136,10 @@ const fiche = cleanTarget({
 check('fiche : type incohérent avec la catégorie → null', fiche?.kind, null);
 check('fiche : couleurs filtrées, dédoublonnées, 3 au plus', fiche?.colors, ['bleu', 'blanc', 'noir']);
 check('fiche : catégorie inconnue → accessoires', cleanTarget({ category: 'lingerie', prompt: 'x' })?.category, 'accessoires');
+check('cadre en millièmes → fractions', cleanBox({ x: 250, y: 100, w: 500, h: 400 }), [0.25, 0.1, 0.5, 0.4]);
+check('cadre qui déborde → ramené dans la photo', cleanBox({ x: 800, y: 900, w: 500, h: 400 }), [0.8, 0.9, 0.2, 0.1]);
+check('cadre minuscule ou illisible → ignoré', [cleanBox({ x: 10, y: 10, w: 5, h: 300 }), cleanBox({ x: 'a' })], [null, null]);
+check('fiche : cadre repris', cleanTarget({ name: 'Veste', category: 'vestes', prompt: 'x', box: { x: 100, y: 200, w: 300, h: 400 } })?.box, [0.1, 0.2, 0.3, 0.4]);
 check('fiche sans consigne → écartée', cleanTarget({ name: 'Pull', category: 'hauts', prompt: '  ' }), null);
 
 // ---------------------------------------------------------------- verdict

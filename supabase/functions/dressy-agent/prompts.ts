@@ -72,6 +72,7 @@ Champs de chaque pièce :
 - colors : 1 à 3 identifiants parmi ${COLOUR_IDS.join(', ')}, la couleur dominante en premier ; toutes les couleurs qui occupent une vraie surface de la pièce doivent y être.
 - material : la matière apparente en français (« maille côtelée », « denim brut »), ou une chaîne vide.
 - where : en français, où se trouve la pièce sur la photo, pour la distinguer des autres (« portée sur les épaules, par-dessus la chemise », « au poignet gauche », « posée à droite du sac »).
+- box : le cadre de la pièce sur la PREMIÈRE photo, en millièmes de sa largeur et de sa hauteur : x et y pour le coin haut gauche, w et h pour la largeur et la hauteur (0 à 1000). Englobe toute la partie visible de la pièce, sans la couper ; approximatif, il sert à la montrer à la personne.
 - description : en français, précise et factuelle : type et coupe, longueur, encolure ou col, manches, fermeture (nombre de boutons, zip), poches, coutures visibles, motifs et leur placement, texture, finitions, détails distinctifs.
 - prompt : en ANGLAIS, la consigne complète du générateur. Il reçoit la même photo, avec toutes les pièces : la consigne doit donc
   • commencer par désigner la pièce à reproduire et elle seule, avec son emplacement sur la photo, et demander d'ignorer la personne et toutes les autres pièces ;
@@ -86,7 +87,7 @@ Si aucune pièce ne peut être repérée, rends une liste vide et explique pourq
 const PIECE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['name', 'category', 'kind', 'colors', 'material', 'where', 'description', 'prompt'],
+  required: ['name', 'category', 'kind', 'colors', 'material', 'where', 'box', 'description', 'prompt'],
   properties: {
     name: { type: 'string' },
     category: { type: 'string', enum: [...CATEGORIES] },
@@ -94,6 +95,12 @@ const PIECE_SCHEMA = {
     colors: { type: 'array', items: { type: 'string', enum: [...COLOUR_IDS] } },
     material: { type: 'string' },
     where: { type: 'string' },
+    box: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['x', 'y', 'w', 'h'],
+      properties: { x: { type: 'integer' }, y: { type: 'integer' }, w: { type: 'integer' }, h: { type: 'integer' } },
+    },
     description: { type: 'string' },
     prompt: { type: 'string' },
   },
@@ -129,6 +136,8 @@ export type Target = {
   colors: string[];
   material: string;
   where: string;
+  /** Cadre de la pièce sur la première photo, en fractions (0 à 1) : [x, y, largeur, hauteur]. */
+  box?: [number, number, number, number] | null;
   description: string;
   prompt: string;
 };
@@ -164,6 +173,22 @@ export function refineUserText(target: Target, previous: Previous): string {
   return lines.join('\n');
 }
 
+/**
+ * Le cadre rendu en millièmes, ramené en fractions de la photo et remis
+ * d'aplomb : dans l'image, jamais minuscule. Illisible, il est ignoré.
+ */
+export function cleanBox(raw: unknown): [number, number, number, number] | null {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const n = ['x', 'y', 'w', 'h'].map((k) => Number(o[k]));
+  if (n.some((v) => !Number.isFinite(v))) return null;
+  const f = (v: number) => Math.min(1, Math.max(0, v / 1000));
+  const x = f(n[0]), y = f(n[1]);
+  const w = Math.min(f(n[2]), 1 - x), h = Math.min(f(n[3]), 1 - y);
+  if (w < 0.02 || h < 0.02) return null;
+  const r = (v: number) => Math.round(v * 1000) / 1000;
+  return [r(x), r(y), r(w), r(h)];
+}
+
 const keepColours = (v: unknown) => (Array.isArray(v) ? v : [])
   .map(String)
   .filter((c) => (COLOUR_IDS as readonly string[]).includes(c))
@@ -184,6 +209,7 @@ export function cleanTarget(raw: unknown): Target | null {
     colors: keepColours(o.colors),
     material: String(o.material ?? '').trim().slice(0, 80),
     where: String(o.where ?? '').trim().slice(0, 160),
+    box: cleanBox(o.box),
     description: String(o.description ?? '').trim().slice(0, 2000),
     prompt: prompt.slice(0, 6000),
   };

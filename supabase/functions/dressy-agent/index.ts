@@ -25,7 +25,7 @@ import { createClient } from '@supabase/supabase-js';
 import { planRun, isValidated, bestByScore, type Candidate } from './decide.ts';
 import { backdropClause, isolationClause, type Target } from './prompts.ts';
 import { inventory, refine, generate, judge, pickBest, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img, type Usage } from './steps.ts';
-import { cutoutBackground, alphaRatio, cropToContent, downscale } from './cutout.ts';
+import { cutoutBackground, alphaRatio, contentBox, crop, downscale } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void };
@@ -307,7 +307,8 @@ async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string
   const t0 = Date.now();
   const cut = cutoutBackground(decode(source.bytes, source.mime));
   const ratio = alphaRatio(cut);
-  const framed = cropToContent(cut);
+  const box = contentBox(cut) ?? { x: 0, y: 0, w: cut.width, h: cut.height };
+  const framed = crop(cut, box);
   const [full, thumb] = [encodePng(framed), encodePng(downscale(framed, 320))];
   log(`détourage : ${(ratio * 100).toFixed(1)} % transparent, ${framed.width}×${framed.height}, ${Date.now() - t0} ms`);
 
@@ -348,7 +349,10 @@ async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string
     height: framed.height,
   }).eq('id', c.id);
 
-  await setJob(job, { status: 'done', garment_id: garmentId, error: null });
+  // Pour le « détourage révélé » : l'image générée, avec son fond, et
+  // l'endroit où la pièce y a été découpée. L'écran les superpose.
+  const reveal = { raw: c.storage_path, size: [cut.width, cut.height], box: [box.x, box.y, box.w, box.h] };
+  await setJob(job, { status: 'done', garment_id: garmentId, error: null, analysis: { ...(job.analysis ?? {}), reveal } });
   log(`rangée dans le dressing : ${t.name}`);
 }
 

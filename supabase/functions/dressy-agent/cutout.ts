@@ -187,12 +187,14 @@ export function alphaRatio(r: Raster): number {
   return clear / (r.width * r.height);
 }
 
+export type Box = { x: number; y: number; w: number; h: number };
+
 /**
- * Recadre sur la pièce, avec une petite marge. Les générateurs laissent des
- * marges très variables : sans ce recadrage, une écharpe et un manteau
- * n'occuperaient pas du tout la même place dans les vignettes du dressing.
+ * Le cadre de la pièce dans l'image, avec une petite marge : là où l'on
+ * recadre. Gardé avec la pièce pour que l'écran puisse superposer exactement
+ * l'image générée (avec son fond) et la pièce détourée.
  */
-export function cropToContent(r: Raster, padRatio = 0.06): Raster {
+export function contentBox(r: Raster, padRatio = 0.06): Box | null {
   const { width: w, height: h, data } = r;
   let minX = w, minY = h, maxX = -1, maxY = -1;
 
@@ -205,19 +207,31 @@ export function cropToContent(r: Raster, padRatio = 0.06): Raster {
       if (y > maxY) maxY = y;
     }
   }
-  if (maxX < 0) return r;
+  if (maxX < 0) return null;
 
   const pad = Math.round(Math.max(maxX - minX + 1, maxY - minY + 1) * padRatio);
   const x0 = Math.max(0, minX - pad), y0 = Math.max(0, minY - pad);
   const x1 = Math.min(w - 1, maxX + pad), y1 = Math.min(h - 1, maxY + pad);
-  const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+  return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
 
-  const out = new Uint8Array(cw * ch * 4);
-  for (let y = 0; y < ch; y++) {
-    const from = ((y0 + y) * w + x0) * 4;
-    out.set(data.subarray(from, from + cw * 4), y * cw * 4);
+export function crop(r: Raster, b: Box): Raster {
+  const out = new Uint8Array(b.w * b.h * 4);
+  for (let y = 0; y < b.h; y++) {
+    const from = ((b.y + y) * r.width + b.x) * 4;
+    out.set(r.data.subarray(from, from + b.w * 4), y * b.w * 4);
   }
-  return { width: cw, height: ch, data: out };
+  return { width: b.w, height: b.h, data: out };
+}
+
+/**
+ * Recadre sur la pièce, avec une petite marge. Les générateurs laissent des
+ * marges très variables : sans ce recadrage, une écharpe et un manteau
+ * n'occuperaient pas du tout la même place dans les vignettes du dressing.
+ */
+export function cropToContent(r: Raster, padRatio = 0.06): Raster {
+  const b = contentBox(r, padRatio);
+  return b ? crop(r, b) : r;
 }
 
 /**

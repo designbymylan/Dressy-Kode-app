@@ -797,3 +797,161 @@ img { display: block; }
   from { opacity: 0; transform: translate3d(-28px, 0, 0); filter: blur(4px); }
   to { opacity: 1; transform: none; filter: none; }
 }
+
+/* ============================================================
+   Scan de repérage : la photo confiée, les pièces qui s'y encadrent
+   ============================================================ */
+
+.scan {
+  position: relative;
+  margin: 0 auto;
+  width: min(100%, calc(360px * var(--ar, 0.75)));
+  aspect-ratio: var(--ar, 0.75);
+  border-radius: var(--r-tile);
+  overflow: hidden;
+  background: var(--tile);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--shadow-glass);
+  transition: opacity 300ms var(--ease);
+}
+.scan > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Un voile léger : les cadres blancs se lisent sur une photo claire comme sombre. */
+.scan-veil { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(14, 15, 19, 0.04), rgba(14, 15, 19, 0.2)); }
+.scan[data-scanning] .scan-veil { background: rgba(14, 15, 19, 0.22); }
+.scan-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 34%;
+  top: -34%;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.28) 80%, rgba(255, 255, 255, 0.95));
+  box-shadow: 0 2px 16px 2px rgba(255, 255, 255, 0.55);
+  animation: scan-beam 2.2s var(--ease) infinite;
+}
+@keyframes scan-beam { to { top: 100%; } }
+
+.scan-box {
+  position: absolute;
+  border: 2px dashed #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(14, 15, 19, 0.28), inset 0 0 0 1px rgba(14, 15, 19, 0.22);
+  animation: scan-trace 700ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 280ms + 120ms);
+  transition: border-color 400ms var(--ease), background-color 400ms var(--ease);
+}
+/* Le cadre se trace depuis son coin haut gauche. */
+@keyframes scan-trace {
+  from { clip-path: inset(0 100% 100% 0 round 14px); opacity: 0.3; }
+  to { clip-path: inset(0 0 0 0 round 14px); opacity: 1; }
+}
+.scan-box[data-state='done'] { border-style: solid; background: rgba(255, 255, 255, 0.08); }
+.scan-box[data-state='failed'] { border-color: #f0907a; }
+.scan-box[data-state='working'] { animation: scan-trace 700ms var(--ease) both, scan-breathe 2.4s 1.2s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 280ms + 120ms), calc(var(--i, 0) * 280ms + 900ms); }
+@keyframes scan-breathe { 50% { border-color: rgba(255, 255, 255, 0.55); } }
+
+.scan-label {
+  position: absolute;
+  translate: 0 -50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100% - 16px);
+  height: 24px;
+  padding: 0 9px 0 7px;
+  border-radius: 999px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 6px 14px -6px rgba(14, 15, 19, 0.45);
+  animation: pop 460ms var(--ease-spring) both;
+  animation-delay: calc(var(--i, 0) * 280ms + 620ms);
+}
+.scan-label[data-state='done'] { color: var(--ok); }
+.scan-label[data-state='failed'] { color: var(--danger); }
+.scan-label svg, .scan-label .kode-orb { flex: none; }
+
+/* ============================================================
+   Détourage révélé : le fond du dessin s'efface sous une ligne de lumière
+   ============================================================ */
+
+.job-visual {
+  position: relative;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--tile);
+  border: 1px solid var(--glass-edge);
+  display: grid;
+  place-items: center;
+  transition: width 460ms var(--ease-spring), height 460ms var(--ease-spring);
+}
+.job-visual[data-big] { width: 136px; height: 136px; }
+.job-cut { width: 100%; height: 100%; object-fit: contain; padding: 6px; filter: drop-shadow(0 6px 8px rgba(20, 24, 40, 0.18)); }
+
+.reveal { position: relative; display: grid; place-items: center; }
+.reveal-frame { position: relative; }
+/* Le damier de transparence : sous la ligne de lumière, on voit que le fond
+   a vraiment disparu, même quand le dessin était sur fond blanc. */
+.reveal-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--ink) 10%, transparent) 0 25%, transparent 0 50%) 0 0 / 12px 12px;
+  opacity: 0;
+}
+.reveal.play .reveal-frame::before { animation: reveal-checker 2.9s 0.35s ease both; }
+@keyframes reveal-checker { 0%, 72% { opacity: 1; } 100% { opacity: 0; } }
+.reveal-cut { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.reveal-raw { position: absolute; inset: 0; overflow: hidden; clip-path: inset(0 0 0 0); }
+.reveal-raw > span { position: absolute; background-size: 100% 100%; background-repeat: no-repeat; }
+.reveal-beam {
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: 0;
+  height: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 14px 4px rgba(255, 255, 255, 0.85);
+  opacity: 0;
+}
+.reveal-tag {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--glass-strong);
+  color: var(--ok);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+}
+.reveal.play .reveal-raw { animation: reveal-wipe 1.5s 0.35s var(--ease) forwards; }
+.reveal.play .reveal-beam { animation: reveal-beam 1.5s 0.35s var(--ease) forwards; }
+.reveal.play .reveal-cut { animation: reveal-lift 700ms 1.75s var(--ease-spring) forwards; }
+.reveal.play .reveal-tag { animation: pop 460ms 1.95s var(--ease-spring) both; }
+@keyframes reveal-wipe { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(100% 0 0 0); } }
+@keyframes reveal-beam { 0% { top: 0; opacity: 1; } 92% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+@keyframes reveal-lift {
+  from { transform: none; filter: none; }
+  to { transform: translateY(-3px) scale(1.04); filter: drop-shadow(0 10px 12px rgba(20, 24, 40, 0.28)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-beam { display: none; }
+  .reveal.play .reveal-tag { opacity: 1; }
+}

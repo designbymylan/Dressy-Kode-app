@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
-import { ACTIVE_STATUSES, JOB_SELECT, type JobRow } from '@/lib/jobs';
+import { ACTIVE_STATUSES, JOB_SELECT, jobsFilter, type JobRow } from '@/lib/jobs';
 import { loadPieces, signAll } from '@/lib/garments';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { JobList } from '@/components/JobList';
@@ -25,13 +25,23 @@ export default async function Dressing({
     supabase
       .from('ai_jobs')
       .select(JOB_SELECT)
-      .in('status', [...ACTIVE_STATUSES, 'failed'])
+      // En cours, en échec, ou rangées depuis peu : la photo garde ses pièces cochées.
+      .or(jobsFilter())
       .order('created_at'),
   ]);
 
   const jobs = (jobRows ?? []) as unknown as JobRow[];
-  const working = jobs.some((j) => j.status !== 'failed');
-  const sources = await signAll(supabase, 'uploads', jobs.map((j) => j.source_paths[0]).filter(Boolean));
+  const active = new Set<string>(ACTIVE_STATUSES);
+  const working = jobs.some((j) => active.has(j.status));
+  const sources = await signAll(supabase, 'uploads', [...new Set(jobs.map((j) => j.source_paths[0]).filter(Boolean))]);
+
+  // Les pièces déjà rangées montrent leur version détourée.
+  const doneIds = jobs.filter((j) => j.status === 'done' && j.garment_id).map((j) => j.garment_id!);
+  const { data: doneGarments } = doneIds.length
+    ? await supabase.from('garments').select('id, thumb_path, image_path').in('id', doneIds)
+    : { data: [] as { id: string; thumb_path: string | null; image_path: string | null }[] };
+  const thumbOf = new Map((doneGarments ?? []).map((g) => [g.id, g.thumb_path ?? g.image_path]));
+  const cutouts = await signAll(supabase, 'garments', [...thumbOf.values()].filter(Boolean) as string[]);
 
   // Un portant par catégorie, bijoux et accessoires compris.
   const rails = CATEGORIES.map((c) => ({ ...c, pieces: items.filter((g) => g.category_id === c.id) }));
@@ -55,11 +65,15 @@ export default async function Dressing({
 
       {jobs.length ? (
         <Card i={1}>
-          <h2 className="section-title">En préparation</h2>
+          <h2 className="section-title">{working ? 'Kode s’occupe de tes photos' : 'Tout juste rangé'}</h2>
           {/* La clé change quand une pièce part, arrive ou est relancée : la liste repart de l'état serveur. */}
           <JobList
             key={jobs.map((j) => `${j.id}:${j.status}`).join('|')}
-            initial={jobs.map((j) => ({ ...j, photo: sources.get(j.source_paths[0]) ?? null }))}
+            initial={jobs.map((j) => ({
+              ...j,
+              photo: sources.get(j.source_paths[0]) ?? null,
+              cutout: j.garment_id ? cutouts.get(thumbOf.get(j.garment_id) ?? '') ?? null : null,
+            }))}
           />
         </Card>
       ) : null}
