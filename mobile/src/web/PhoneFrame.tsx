@@ -30,12 +30,12 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
   const chrome = 56;
   const scale = Math.min(1, (win.height - chrome - 24) / (H + BEZEL * 2), (win.width - 24) / (W + BEZEL * 2));
   const dark = scheme === 'dark';
-  const page = dark ? '#0B0A09' : '#E4DED3';
-  const ink = dark ? '#F1ECE3' : '#1C1A17';
-  const muted = dark ? '#ABA398' : '#5E574C';
+  const page = dark ? '#07080B' : '#E4E7EE';
+  const ink = dark ? '#F4F4F6' : '#0E0F13';
+  const muted = dark ? '#A3A6B1' : '#5D606B';
 
   const pill = (label: string, on: boolean, onPress: () => void, id: string) => (
-    <Pressable key={id} testID={id} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center', backgroundColor: on ? ink : 'transparent', borderWidth: 1, borderColor: on ? ink : dark ? 'rgba(241,236,227,0.3)' : 'rgba(28,26,23,0.3)' }}>
+    <Pressable key={id} testID={id} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center', backgroundColor: on ? ink : 'transparent', borderWidth: 1, borderColor: on ? ink : dark ? 'rgba(244,244,246,0.3)' : 'rgba(14,15,19,0.3)' }}>
       <Text style={{ fontFamily: 'Sans600', fontSize: 13, color: on ? page : ink }}>{label}</Text>
     </Pressable>
   );
