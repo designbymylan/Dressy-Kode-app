@@ -34,6 +34,7 @@ d'autre à changer. L'italique des titres reste Instrument Serif.
 2. Sur ton ordinateur, dans ce dossier :
    ```bash
    npm install
+   cp .env.example .env   # branche l'app sur Supabase (sinon : démonstration)
    npx expo start
    ```
 3. Scanne le QR code affiché avec l'appareil photo de l'iPhone (même réseau Wi-Fi).
