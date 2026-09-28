@@ -61,7 +61,7 @@ export function Welcome() {
             </T>
           </T>
           <T v="bodyL" tone="ink2">
-            Ton dressing en illustrations, et Kode, un styliste qui compose avec ce que tu as déjà — selon la météo et ton agenda.
+            Ton dressing en illustrations, et Kode, un styliste qui compose avec ce que tu as déjà, selon la météo et ton agenda.
           </T>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(700).duration(500)} style={{ gap: 6, marginTop: 8 }}>

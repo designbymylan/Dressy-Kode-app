@@ -8,7 +8,7 @@ import { motion, radius, space } from '../theme/tokens';
 import { T } from './T';
 import { IconButton } from './Button';
 
-/* ——— Portail : ce qui doit passer au-dessus de tout (feuilles, messages) ——— */
+/* ---- Portail : ce qui doit passer au-dessus de tout (feuilles, messages) ---- */
 
 type PortalApi = { mount: (id: string, node: ReactNode) => void; unmount: (id: string) => void };
 const PortalContext = createContext<PortalApi | null>(null);
@@ -49,7 +49,7 @@ export function Portal({ children }: { children: ReactNode }) {
   return null;
 }
 
-/* ——— Feuille ——— */
+/* ---- Feuille ---- */
 
 type SheetProps = {
   visible: boolean;

@@ -127,7 +127,7 @@ export function AddPiece() {
               <Card className="bg-caution-soft" style={{ gap: 10 }} testID="add-full">
                 <T v="cardTitle">Ton dressing est plein.</T>
                 <T v="body" tone="ink2">
-                  Tu pourrais ajouter 30 places pour 4,99 €, une seule fois — ou passer à Atelier, jusqu’à 200 pièces.
+                  Tu pourrais ajouter 30 places pour 4,99 €, une seule fois, ou passer à Atelier, jusqu’à 200 pièces.
                 </T>
                 <View className="flex-row" style={{ gap: 8 }}>
                   <Button label="+30 places · 4,99 €" size="m" grow onPress={a.buyPlaces} />

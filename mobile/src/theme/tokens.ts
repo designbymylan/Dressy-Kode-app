@@ -1,5 +1,5 @@
 /**
- * Jetons du design system Dresskode — « vitrine de verre ».
+ * Jetons du design system Dresskode, « vitrine de verre ».
  * La direction vient du travail du portable (web/src/app/globals.css, planches
  * « App design » du 28/09) : fond perle traversé de halos pastel, surfaces en
  * verre dépoli, boutons pilule (encre pleine pour l'action, verre pour le

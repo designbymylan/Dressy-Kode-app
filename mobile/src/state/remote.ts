@@ -39,7 +39,7 @@ function db() {
   return supabase;
 }
 
-/* ——— Traductions ——— */
+/* ---- Traductions ---- */
 
 /** « Chic parisien » → « chic_parisien » : les identifiants que la base garde. */
 export const slug = (label: string) =>
@@ -148,7 +148,7 @@ function toMessage(m: MessageRow): KodeMessage {
   };
 }
 
-/* ——— Compte ——— */
+/* ---- Compte ---- */
 
 /** Les messages d'erreur d'Auth, dits simplement. */
 function authMessage(error: { code?: string; message: string; status?: number }): string {
@@ -301,7 +301,7 @@ export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 
   return { plan: best?.plan ?? 'decouverte', period: best?.period ?? 'mois', kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0 };
 }
 
-/* ——— Écritures ——— */
+/* ---- Écritures ---- */
 
 function check(r: { error: { message: string } | null }, what: string) {
   if (r.error) throw new Error(`${what} : ${r.error.message}`);
@@ -383,7 +383,7 @@ export async function unplan(session: Session, day: number) {
   check(await db().from('planned_days').delete().eq('space_id', session.spaceId).eq('day', isoDay(day)), 'agenda');
 }
 
-/* ——— Kode et paiement : les Edge Functions ——— */
+/* ---- Kode et paiement : les Edge Functions ---- */
 
 /** Le message d'erreur qu'une fonction renvoie (elles écrivent pour la personne), ou un message par défaut. */
 async function functionError(error: unknown, fallback: string): Promise<{ message: string; code: string | null }> {

@@ -54,7 +54,7 @@ export function Glass({ style, radius, children, shadow = true, strong }: Props)
 
 /**
  * Surface de verre pour le contenu (cartes, vignettes, groupes de lignes) :
- * blanc translucide sur les halos, filet clair, ombre douce, sans flou — il
+ * blanc translucide sur les halos, filet clair, ombre douce, sans flou, il
  * n'y a que l'ambiance dessous, et un flou par carte coûterait cher en
  * défilement.
  */

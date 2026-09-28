@@ -1,4 +1,4 @@
-# Dressy — consignes pour Claude
+# Dressy, consignes pour Claude
 
 Dressy (appelée **Dresskode** dans l'app et le brief v0.2) : garde-robe
 numérique et styliste IA, **Kode**. Projet entièrement en français :
@@ -8,15 +8,26 @@ interface, textes, commentaires, documentation.
 
 Deux applications, un seul projet Supabase :
 
-- **`mobile/` — l'app iPhone (Expo SDK 57, React Native, NativeWind,
+- **`mobile/` : l'app iPhone (Expo SDK 57, React Native, NativeWind,
   Reanimated). C'est le produit principal.** 18 écrans en clair et en sombre,
   branchés sur Supabase quand `mobile/.env` existe (voir `.env.example`),
   en démonstration sans réseau sinon. Travailler sur l'app native est
   autorisé et attendu : écrans, composants, état, branchement Supabase.
-- **`web/` — l'app web Next.js pensée pour mobile** (App Router, React 19,
+- **`web/` : l'app web Next.js pensée pour mobile** (App Router, React 19,
   TypeScript, `@supabase/ssr`) : compte, dressing, tenues, Kode, paiement.
 - `supabase/` : migrations, Edge Functions (`dressy-agent`, `kode`,
   `billing`, `stripe-webhook`).
+
+Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur :
+
+- **Une photo, toutes ses pièces.** Opus 5 (`claude-opus-5`) repère chaque
+  pièce visible (vêtements, chaussures, sacs, bijoux, accessoires) et écrit
+  une consigne par pièce pour Nano Banana. Si la personne précise ce qu'elle
+  veut (« seulement la veste et le jean »), seules ces pièces sont repérées.
+- Les pièces se dessinent **en parallèle** (une tâche `ai_jobs` fille par
+  pièce) : la vitesse compte autant que la ressemblance.
+- Chaque pièce arrive dans le dressing **sans fond** (PNG transparent,
+  détouré par `cutout.ts`), jamais avec le fond de la photo ou du générateur.
 
 Ce qui ne bouge pas sans décision explicite de l'utilisateur :
 
@@ -127,9 +138,25 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   n'envoie vers aucune page de paiement de ta propre initiative. N'y envoie
   jamais de photo d'utilisateur réel.
 
+## Écriture (interface, code, docs, réponses)
+
+- **Jamais de tiret cadratin (le grand tiret, U+2014)**, nulle part : ni dans l'interface, ni dans
+  les commentaires, ni dans la documentation, ni dans les réponses à
+  l'utilisateur. Une virgule, deux-points, des parenthèses ou un point
+  médian (·) font l'affaire.
+
 ## Textes de l'interface
 
 - Tutoiement, phrases courtes, aucun jargon technique.
+- **Aucun nom de modèle ni de fournisseur d'IA à l'écran** (Claude, Opus,
+  Sonnet, Gemini, Nano Banana, Anthropic, Google IA…) : c'est Kode qui
+  travaille. Pendant une attente, une animation et des phrases de Kode
+  (« Kode repère chaque pièce », « Kode dessine ta pièce »,
+  `web/src/components/KodeThinking.tsx`). Les messages d'erreur montrés
+  suivent la même règle ; le détail technique part dans les journaux.
+- Chaque attente a son animation : `loading.tsx` des routes (squelettes en
+  verre), anneau `.spinner` dans un bouton qui attend, `KodeThinking` quand
+  Kode travaille.
 - Mode conseil : « tu pourrais », jamais « tu dois ».
 - Prix à la française : `12,99 €`.
 - Aucune marque de vêtement, enseigne ou logo réel.

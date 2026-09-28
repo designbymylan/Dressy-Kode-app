@@ -16,7 +16,7 @@ export type Profile = {
   age: string | null;
   /** cm */
   height: number | null;
-  /** kg — facultatif, jamais affiché ailleurs que dans « Ma silhouette ». */
+  /** kg, facultatif, jamais affiché ailleurs que dans « Ma silhouette ». */
   weight: number | null;
   silhouette: Silhouette | null;
   silhouetteSource: 'photos' | 'choix' | null;

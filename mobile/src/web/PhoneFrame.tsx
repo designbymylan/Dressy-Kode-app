@@ -14,7 +14,7 @@ const BEZEL = 12;
 /**
  * Aperçu web seulement : l'app dans un cadre de téléphone (390 × 844, les
  * marges de sécurité d'un iPhone), avec deux réglages hors de l'écran pour
- * la revue — le thème et la remise à zéro. Rien de ceci n'existe sur le
+ * la revue, le thème et la remise à zéro. Rien de ceci n'existe sur le
  * téléphone.
  */
 export function PhoneFrame({ children }: { children: ReactNode }) {

@@ -1,4 +1,4 @@
-# Dresskode — design system (direction B « Éditorial »)
+# Dresskode, design system (direction B « Éditorial »)
 
 > **Mise à jour du 28/09 : l'apparence a changé, pas la disposition.** Couleurs, matières,
 > typographie et composants suivent désormais la direction « vitrine de verre » du travail
@@ -19,7 +19,7 @@ pour que le code et la vérification ne puissent pas diverger.
    numérotées comme une légende. C'est ce qui distingue Dresskode des concurrents
    (grilles de photos produit, interfaces chargées).
 2. **Le contenu est sur le papier, la navigation est en verre.** Apple l'écrit
-   noir sur blanc : « Don't use Liquid Glass in the content layer » ([HIG — Materials](https://developer.apple.com/design/human-interface-guidelines/materials)).
+   noir sur blanc : « Don't use Liquid Glass in the content layer » ([HIG, Materials](https://developer.apple.com/design/human-interface-guidelines/materials)).
    Barre d'onglets, boutons flottants, bandeau d'en-tête au défilement : verre.
    Cartes, tenues, listes : papier.
 3. **Une action principale par écran**, en encre pleine. Le reste en contour ou en discret.
@@ -41,8 +41,8 @@ noire qui passe dessous).
 | `raised` | `#F9F6F0` | `#1C1A18` | Cartes et feuilles. En sombre, une surface « élevée » est plus claire que le fond (HIG, Dark Mode). |
 | `sunk` | `#E8E1D5` | `#221F1C` | Champs de saisie, squelettes de chargement. |
 | `stage` | `#E6DED1` | `#1A1816` | La « scène » où pose une pièce (fiche, ajout). |
-| `ink` | `#1C1A17` | `#F1ECE3` | Texte courant — 14,8:1 / 16:1. |
-| `ink2` | `#5E574C` | `#ABA398` | Texte secondaire — 6,1:1 / 7,6:1. |
+| `ink` | `#1C1A17` | `#F1ECE3` | Texte courant, 14,8:1 / 16:1. |
+| `ink2` | `#5E574C` | `#ABA398` | Texte secondaire, 6,1:1 / 7,6:1. |
 | `brass` | `#7A5A2F` | `#CBAA76` | L'accent laiton, **rare** : numéros de légende, petites capitales, jauge de précision. Lisible en texte (5,4:1 / 8,6:1). |
 | `rod` | `#9C7A48` | `#A88A5C` | Tringles et cintres (graphique, 3,4:1 / 5,8:1). |
 | `rule` / `rule-strong` | encre à 14 % / 30 % | papier à 13 % / 32 % | Filets éditoriaux, contours de boutons secondaires (décoratifs : le libellé identifie le bouton). |
@@ -91,7 +91,7 @@ pour ne pas casser la page, le texte courant va jusqu'à ×2.
 
 - Verre uniquement sur : barre d'onglets, boutons retour/partage flottants, bandeau
   d'en-tête au défilement (« effet de bord » d'iOS 26), messages de confirmation.
-- iOS 26 : vrai Liquid Glass (`expo-glass-effect`), **teinté** — la variante qu'Apple a
+- iOS 26 : vrai Liquid Glass (`expo-glass-effect`), **teinté**, la variante qu'Apple a
   ajoutée en 26.1 après les plaintes de lisibilité ([MacRumors](https://www.macrumors.com/how-to/ios-26-1-reduce-liquid-glass-effects/)).
   Ailleurs (iOS < 26, Android, web) : flou `expo-blur` + teinte à 80/86 %.
 - Réglage **« Verre plus opaque »** dans Personnaliser : tout le verre devient plein
@@ -138,7 +138,7 @@ se fond dans la suivante sur « Une autre ».
   coché, désactivé) sont annoncés.
 - Taille de texte dynamique, animations réduites, verre plus opaque : pris en charge.
 - Écran 18 (« États et feuilles », depuis Moi) : chaque état vide, chargement et erreur
-  a une phrase et une action — aucune impasse.
+  a une phrase et une action, aucune impasse.
 
 ## 9. Onboarding et premier espace
 
@@ -159,9 +159,9 @@ Dressing) avec une barre qui avance à l'intérieur de chaque chapitre. Environ 
 | 10 | Quotidien (bureau, études, sorties…) | non | La bonne tenue au bon moment. |
 | 11 | Ville et agenda | non | Météo du matin ; agenda relié seulement si on l'active. |
 | 12 | Premier portant : photos → pièces sur une tringle | non | Trois pièces suffisent pour une première tenue ; « Plus tard » toujours possible. |
-| 13 | Kode prépare l'espace (récapitulatif animé) | — | Montre ce qui a été compris, pas une attente vide. |
+| 13 | Kode prépare l'espace (récapitulatif animé) | · | Montre ce qui a été compris, pas une attente vide. |
 | 14 | Compte (e-mail, lien magique) ou « sans compte pour l'instant » | non | Retrouver son dressing partout. |
-| 15 | Bienvenue : première tenue, ou portant vide qui attend | — | La valeur avant l'entrée. |
+| 15 | Bienvenue : première tenue, ou portant vide qui attend | · | La valeur avant l'entrée. |
 
 « Passer » n'enregistre jamais une valeur par défaut : une étape passée reste vide.
 

@@ -1,11 +1,11 @@
-# Refonte Dresskode — étape 1 : recherche, étape 2 : directions
+# Refonte Dresskode, étape 1 : recherche, étape 2 : directions
 
 Cible : femmes de 18 à 34 ans, en France, urbaines, habituées de Vinted. Elles
 veulent gagner du temps le matin et redécouvrir ce qu'elles ont. Elles fuient
 la lenteur, l'IA incohérente, la pub et les onboardings longs.
 
 Les planches des trois directions (Accueil et Dressing en vue Portants, clair
-et sombre) sont sur le canevas « Dresskode — directions ». Les contrastes sont
+et sombre) sont sur le canevas « Dresskode, directions ». Les contrastes sont
 vérifiés par `design/refonte/contraste.py`.
 
 ## Ce que j'ai pu consulter, et ce que je n'ai pas pu consulter
@@ -28,7 +28,7 @@ vérifiés par `design/refonte/contraste.py`.
 ## Douze enseignements, appliqués à Dresskode
 
 ### 1. Le verre sert à naviguer, pas à porter le contenu
-Source : [HIG — Materials](https://developer.apple.com/design/human-interface-guidelines/materials).
+Source : [HIG, Materials](https://developer.apple.com/design/human-interface-guidelines/materials).
 
 - **Ce qu'Apple écrit** : « Liquid Glass forms a distinct functional layer for
   controls and navigation elements… » et « Don't use Liquid Glass in the
@@ -43,7 +43,7 @@ Source : [HIG — Materials](https://developer.apple.com/design/human-interface-
   volontairement, et le paie en contraste (voir plus bas).
 
 ### 2. La couleur sur le verre, avec parcimonie
-Source : [HIG — Color, Liquid Glass color](https://developer.apple.com/design/human-interface-guidelines/color).
+Source : [HIG, Color, Liquid Glass color](https://developer.apple.com/design/human-interface-guidelines/color).
 
 - **Ce qu'Apple recommande** : colorer le fond d'une seule action principale
   plutôt que ses libellés. Pour une app dont le contenu est coloré, préférer
@@ -65,7 +65,7 @@ Source : [WWDC25, « Get to know the new design system »](https://developer.app
   sous la tenue du jour.
 
 ### 4. La barre d'onglets d'iOS 26
-Sources : [HIG — Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars),
+Sources : [HIG, Tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars),
 [Apple Newsroom, juin 2025](https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/).
 
 - **Ce que ça dit** : la barre flotte au-dessus du contenu et se réduit quand
@@ -85,8 +85,8 @@ Sources : [Engadget](https://www.engadget.com/mobile/smartphones/how-to-adjust-t
   clair, 86 % en sombre). La transparence forte ne va qu'aux zones sans texte.
 
 ### 6. Accessibilité : les chiffres à tenir
-Sources : [HIG — Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility),
-[HIG — Dark Mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode).
+Sources : [HIG, Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility),
+[HIG, Dark Mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode).
 
 - **Les seuils** : 4,5:1 pour le texte courant, 3:1 pour le grand texte, et
   « strive for 7:1 » pour les petits textes sur couleurs personnalisées.
@@ -145,7 +145,7 @@ Sources : [« Liquid Glass in React: the look, the CSS and the bill »](https://
   de dock à grossissement.
 
 ### 11. L'onboarding : court, facultatif, en faisant
-Source : [HIG — Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding).
+Source : [HIG, Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding).
 
 - **Ce qu'Apple recommande** : « fast, fun, and optional », apprendre par
   l'action, repousser les réglages non essentiels. Il ne faut proposer un
@@ -187,7 +187,7 @@ direction retenue.
 
 ## Les trois directions
 
-| | A — Lin et verre | B — Éditorial | C — Penderie lumineuse |
+| | A : Lin et verre | B : Éditorial | C : Penderie lumineuse |
 |---|---|---|---|
 | Idée | L'app Apple native la plus nette possible | Un lookbook quotidien, papier et serif | Une penderie éclairée, matière et profondeur |
 | Typographie | Police système (SF Pro sur iOS) | Instrument Serif + Hanken Grotesk (OFL) | Archivo étendu + Hanken Grotesk (OFL) |

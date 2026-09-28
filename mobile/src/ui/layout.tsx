@@ -56,7 +56,7 @@ export function SectionHead({ n, title, action, onAction, testID }: { n?: string
   );
 }
 
-/* ——— Barre d'onglets qui se replie au défilement (iOS 26) ——— */
+/* ---- Barre d'onglets qui se replie au défilement (iOS 26) ---- */
 
 const TabChrome = createContext<SharedValue<number> | null>(null);
 
@@ -103,7 +103,7 @@ export function ScrollEdge({ y }: { y: SharedValue<number> }) {
   );
 }
 
-/* ——— En-tête des écrans empilés ——— */
+/* ---- En-tête des écrans empilés ---- */
 
 export function useHeaderScroll() {
   const y = useSharedValue(0);

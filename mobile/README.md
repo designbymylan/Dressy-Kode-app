@@ -1,4 +1,4 @@
-# Dresskode — application mobile
+# Dresskode, application mobile
 
 L'app Expo (iOS d'abord). **La disposition** (écrans, sections, parcours) est celle de la
 refonte, direction B ; **l'apparence** suit la direction « vitrine de verre » du travail
@@ -57,7 +57,7 @@ relance avec `npx expo start --clear` : les variables sont figées dans le cache
 | 1 | Bienvenue | `Welcome.tsx` |
 | 2 | Onboarding : 4 chapitres, 15 écrans (profil, silhouette par photos, tailles, styles, couleurs, quotidien, premières pièces, compte) | `Onboarding.tsx` + `ui/onboarding.tsx` |
 | 3 | Accueil + modules réordonnables | `Home.tsx` |
-| 4–5 | Dressing — Portants et Grille | `Dressing.tsx` |
+| 4–5 | Dressing, Portants et Grille | `Dressing.tsx` |
 | 6 | Fiche vêtement | `Piece.tsx` |
 | 7 | Kode | `Kode.tsx` |
 | 8 | Ajouter un vêtement | `AddPiece.tsx` |

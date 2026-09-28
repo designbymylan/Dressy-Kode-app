@@ -6,7 +6,7 @@ Contraste WCAG 2.x de Dresskode, verre compris.
             pour que le code et la vérification ne puissent pas diverger.
 
 Le verre n'a pas de couleur fixe : il laisse passer ce qu'il y a dessous.
-On calcule donc le pire cas — la teinte du verre mélangée (alpha) au fond
+On calcule donc le pire cas, la teinte du verre mélangée (alpha) au fond
 le plus clair et au plus sombre qui puissent défiler sous lui (un vêtement
 blanc, une robe noire). Le flou moyenne le fond ; un grand aplat uniforme
 reste le cas le plus défavorable. Une couleur rgba (filet, pastille) est
@@ -57,7 +57,7 @@ def glass(label, fg, tint, alpha, need, extra=()):
 N, L = 4.5, 3.0  # texte courant ; grand texte (≥ 24 px, ou ≥ 18,5 px gras), icônes et contours utiles
 
 DIRECTIONS = {
-    'A — Lin et verre · clair': [
+    'A : Lin et verre · clair': [
         solid('texte / fond lin', '#1A1814', '#F3F0EA', N),
         solid('texte secondaire / fond lin', '#5B564D', '#F3F0EA', N),
         solid('texte secondaire / carte', '#5B564D', '#FFFFFF', N),
@@ -68,7 +68,7 @@ DIRECTIONS = {
         glass('onglet actif', '#1A1814', '#FBF9F5', 0.80, N),
         glass('onglet inactif', '#4A463F', '#FBF9F5', 0.80, N),
     ],
-    'A — Lin et verre · sombre': [
+    'A : Lin et verre · sombre': [
         solid('texte / fond', '#F2EEE6', '#0F0E0C', N),
         solid('texte secondaire / fond', '#A8A197', '#0F0E0C', N),
         solid('texte secondaire / carte', '#A8A197', '#1B1A17', N),
@@ -78,7 +78,7 @@ DIRECTIONS = {
         glass('onglet actif', '#F2EEE6', '#1C1A17', 0.86, N),
         glass('onglet inactif', '#C4BDB2', '#1C1A17', 0.86, N),
     ],
-    'B — Éditorial · clair': [
+    'B : Éditorial · clair': [
         solid('texte / papier', '#1C1A17', '#F1ECE3', N),
         solid('texte secondaire / papier', '#5E574C', '#F1ECE3', N),
         solid('numéros laiton / papier', '#7A5A2F', '#F1ECE3', N),
@@ -87,7 +87,7 @@ DIRECTIONS = {
         glass('onglet actif', '#1C1A17', '#F6F2EA', 0.80, N),
         glass('onglet inactif', '#4E483F', '#F6F2EA', 0.80, N),
     ],
-    'B — Éditorial · sombre': [
+    'B : Éditorial · sombre': [
         solid('texte / encre', '#F1ECE3', '#121110', N),
         solid('texte secondaire / encre', '#ABA398', '#121110', N),
         solid('numéros laiton / encre', '#CBAA76', '#121110', N),
@@ -95,7 +95,7 @@ DIRECTIONS = {
         glass('onglet actif', '#F1ECE3', '#1A1816', 0.86, N),
         glass('onglet inactif', '#C4BCB0', '#1A1816', 0.86, N),
     ],
-    'C — Penderie lumineuse · clair': [
+    'C : Penderie lumineuse · clair': [
         solid('texte / haut du halo', '#16151A', '#F6ECE2', N),
         solid('texte secondaire / bas du halo', '#4F4B55', '#E8EBF0', N),
         glass('texte sur carte de verre', '#16151A', '#FFFFFF', 0.78, N, extra=('#F6ECE2', '#E8EBF0')),
@@ -104,7 +104,7 @@ DIRECTIONS = {
         glass('onglet actif', '#16151A', '#FFFFFF', 0.74, N),
         glass('onglet inactif', '#46424C', '#FFFFFF', 0.74, N),
     ],
-    'C — Penderie lumineuse · sombre': [
+    'C : Penderie lumineuse · sombre': [
         solid('texte / fond', '#F4F1EC', '#0B0C10', N),
         solid('texte secondaire / fond', '#A9A6AE', '#0B0C10', N),
         glass('texte sur carte de verre', '#F4F1EC', '#24232A', 0.86, N, extra=('#0B0C10',)),
@@ -115,7 +115,7 @@ DIRECTIONS = {
     ],
 }
 
-# ——— Étape 3 : les jetons de l'app ———
+# ---- Étape 3 : les jetons de l'app ----
 
 PALETTE = pathlib.Path(__file__).resolve().parents[2] / 'mobile/src/theme/palette.json'
 
@@ -158,13 +158,13 @@ def app_checks(theme, t):
     for fg, bg, need, use in APP_PAIRS:
         back = resolve(bg)
         front = resolve(fg, back)
-        checks.append((f'{fg} / {bg} — {use}', ratio(front, back), need))
+        checks.append((f'{fg} / {bg}, {use}', ratio(front, back), need))
     tint, alpha = parse(t['glass'])
     for fg, use in APP_GLASS:
         worst = min(ratio(rgb(t[fg]), over(tint, alpha, rgb(b))) for b in BACKDROPS.values())
-        checks.append((f'{fg} / verre {int(alpha * 100)} % — {use} (pire fond)', worst, N))
+        checks.append((f'{fg} / verre {int(alpha * 100)} %, {use} (pire fond)', worst, N))
         # « Verre plus opaque » (Réduire la transparence) : surface pleine.
-        checks.append((f'{fg} / verre opaque — {use}', ratio(rgb(t[fg]), rgb(t['raised'])), N))
+        checks.append((f'{fg} / verre opaque, {use}', ratio(rgb(t[fg]), rgb(t['raised'])), N))
     return checks
 
 if __name__ == '__main__':
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     sections = dict(DIRECTIONS)
     palette = json.loads(PALETTE.read_text())
     for theme in ('light', 'dark'):
-        sections[f'App — vitrine de verre · {"clair" if theme == "light" else "sombre"}'] = app_checks(theme, palette[theme])
+        sections[f'App : vitrine de verre · {"clair" if theme == "light" else "sombre"}'] = app_checks(theme, palette[theme])
     count = 0
     for name, checks in sections.items():
         print(f'\n{name}')

@@ -16,7 +16,7 @@ export function WeatherIcon({ w, size = 18, color }: { w: Weather; size?: number
   return <Icon name={name} size={size} color={color} />;
 }
 
-/** État vide : une illustration, une phrase, une action — jamais une impasse. */
+/** État vide : une illustration, une phrase, une action, jamais une impasse. */
 export function EmptyState({ art, title, body, action }: { art?: ReactNode; title: string; body: string; action?: ReactNode }) {
   return (
     <View className="items-center" style={{ paddingVertical: 28, paddingHorizontal: 12, gap: 10 }}>

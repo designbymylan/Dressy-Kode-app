@@ -112,7 +112,7 @@ export function Shop() {
               Occasion, Voyage, Audit, Couleurs et Défi, débloqués sans date limite.
             </T>
             <Tap testID="bundle-buy" onPress={() => setBundle(true)} accessibilityLabel="Prendre les cinq pour 14,99 €" style={{ height: 50, borderRadius: 25, backgroundColor: c.paper }} className="items-center justify-center">
-              <T v="button">Prendre les cinq — 14,99 €</T>
+              <T v="button">Prendre les cinq · 14,99 €</T>
             </Tap>
           </Card>
         )}
@@ -131,7 +131,7 @@ export function Shop() {
             <View style={{ gap: 6 }}>
               <Button
                 testID="pack-sheet-buy"
-                label={owns(pack.id) ? 'Ouvrir' : `${pack.cta} — ${pack.price}`}
+                label={owns(pack.id) ? 'Ouvrir' : `${pack.cta} · ${pack.price}`}
                 icon={owns(pack.id) ? undefined : 'lock'}
                 onPress={() => {
                   if (!owns(pack.id)) a.buyPack(pack.id);

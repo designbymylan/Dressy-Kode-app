@@ -112,7 +112,7 @@ export function PieceScreen() {
                 {piece.lastWorn === null ? `Jamais porté${f.e}, pour l’instant.` : `${f.il} ${f.v('dort', 'dorment')} depuis ${sinceLabel(piece).replace('il y a ', '')}.`}
               </T>
               <T v="body" tone="ink2">
-                {`Tu pourrais ${f.le} remettre en jeu demain — ou ${f.le} proposer à une amie qui ${f.le} portera.`}
+                {`Tu pourrais ${f.le} remettre en jeu demain, ou ${f.le} proposer à une amie qui ${f.le} portera.`}
               </T>
               <View className="flex-row" style={{ gap: 8 }}>
                 <Button testID="dormant-plan" label="Prévoir demain" size="m" grow onPress={() => nav.navigate('Compose', { with: piece.id, day: 1 })} />
@@ -132,7 +132,7 @@ export function PieceScreen() {
                   ['Couleur', piece.color],
                   ['Matière', piece.material],
                   ['Saison', piece.season[0].toUpperCase() + piece.season.slice(1)],
-                  ['Prix', piece.price ? `${piece.price} €` : '—'],
+                  ['Prix', piece.price ? `${piece.price} €` : 'Non indiqué'],
                   ['Dans ton dressing', `depuis ${Math.max(1, Math.round(piece.addedDaysAgo / 30))} mois`],
                 ].map(([k, v], i, arr) => (
                   <View key={k} className="flex-row items-center justify-between" style={{ minHeight: 46, borderBottomWidth: i === arr.length - 1 ? 0 : 1, borderColor: c.rule, gap: 12 }}>
@@ -158,8 +158,8 @@ export function PieceScreen() {
             <View className="flex-row" style={{ gap: 10 }}>
               {[
                 { v: String(piece.wears), l: piece.wears > 1 ? 'ports' : 'port' },
-                { v: cpw ?? '—', l: 'par port' },
-                { v: piece.lastWorn === null ? '—' : piece.lastWorn === 0 ? 'Auj.' : `${piece.lastWorn} j`, l: 'depuis le dernier' },
+                { v: cpw ?? 'À venir', l: 'par port' },
+                { v: piece.lastWorn === null ? 'Jamais' : piece.lastWorn === 0 ? 'Auj.' : `${piece.lastWorn} j`, l: 'depuis le dernier' },
               ].map((x) => (
                 <View key={x.l} style={{ flex: 1, gap: 2 }}>
                   <T v="cardTitle" style={{ fontSize: 26, lineHeight: 30 }} numberOfLines={1} adjustsFontSizeToFit>

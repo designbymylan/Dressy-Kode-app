@@ -18,7 +18,7 @@ import { Tap, haptic } from './Tap';
 import { IconButton } from './Button';
 import { isLight } from './controls';
 
-/* ——— Règle graduée (taille, poids) ——— */
+/* ---- Règle graduée (taille, poids) ---- */
 
 const TICK = 10;
 
@@ -115,7 +115,7 @@ export function Ruler({ value, onChange, min, max, unit, label, width, testID }:
   );
 }
 
-/* ——— Le premier portant ——— */
+/* ---- Le premier portant ---- */
 
 /** Un cintre vide qui attend une pièce : contour pointillé, léger balancement. */
 function EmptyHanger({ size, i }: { size: number; i: number }) {
@@ -181,7 +181,7 @@ export function FirstRail({ pieces, slots = 5, size = 76, onPiece }: { pieces: P
   );
 }
 
-/* ——— Photos pour l'analyse de silhouette ——— */
+/* ---- Photos pour l'analyse de silhouette ---- */
 
 /** Une silhouette de personne, pour guider la pose et illustrer les photos d'exemple. */
 export function Figure({ pose = 'face', color, fill, width = 60 }: { pose?: 'face' | 'profil'; color: string; fill: string; width?: number }) {
@@ -241,7 +241,7 @@ function ScanLine({ height }: { height: number }) {
   return <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: c.brass }, style]} />;
 }
 
-/* ——— Figure de mesures ——— */
+/* ---- Figure de mesures ---- */
 
 const LINES: Record<MeasureId, { y: number; label: string }> = {
   poitrine: { y: 44, label: 'Poitrine' },
@@ -273,7 +273,7 @@ export function MeasureFigure({ active, done, height = 190 }: { active: MeasureI
   );
 }
 
-/* ——— Cartes de style ——— */
+/* ---- Cartes de style ---- */
 
 export function StyleCard({ name, note, kinds, on, order, width, onPress }: { name: string; note: string; kinds: [GarmentKind, string?][]; on: boolean; order: number; width: number; onPress: () => void }) {
   const { c, scheme } = useTheme();
@@ -304,7 +304,7 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
   );
 }
 
-/* ——— Couleurs : aimée, évitée ——— */
+/* ---- Couleurs : aimée, évitée ---- */
 
 export type ColorState = 'aime' | 'evite' | null;
 
@@ -335,7 +335,7 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
   );
 }
 
-/* ——— Carte de choix large (rayon, mode d'analyse) ——— */
+/* ---- Carte de choix large (rayon, mode d'analyse) ---- */
 
 export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; badge?: string; testID?: string }) {
   const { c, scheme } = useTheme();

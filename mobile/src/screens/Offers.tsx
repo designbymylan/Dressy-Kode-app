@@ -168,7 +168,7 @@ export function Offers() {
         footer={
           <Button
             testID="plan-pay"
-            label={target?.cents.mois === 0 ? 'Confirmer' : period === 'an' && s.plan === 'decouverte' ? 'Commencer le mois offert' : `S’abonner — ${target ? price(target.cents[period]) : ''}`}
+            label={target?.cents.mois === 0 ? 'Confirmer' : period === 'an' && s.plan === 'decouverte' ? 'Commencer le mois offert' : `S’abonner · ${target ? price(target.cents[period]) : ''}`}
             icon={target?.cents.mois === 0 ? undefined : 'lock'}
             onPress={() => {
               if (target) a.setPlan(target.id, period);

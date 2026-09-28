@@ -120,7 +120,7 @@ function curated(question: string, pieces: Piece[]): Reply {
       .sort((a, b) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999))
       .slice(0, 4);
     return {
-      text: `${sleeping.length} pièces dorment depuis plus de trois mois : ${sleeping.map((p) => p.name.toLowerCase()).join(', ')}. Tu pourrais en remettre une en jeu cette semaine — voilà comment :`,
+      text: `${sleeping.length} pièces dorment depuis plus de trois mois : ${sleeping.map((p) => p.name.toLowerCase()).join(', ')}. Tu pourrais en remettre une en jeu cette semaine, voilà comment :`,
       outfit: {
         title: 'Réveiller le blazer lin',
         pieces: exists(['m3', 'h6', 'b2', 'c1', 'a1']),

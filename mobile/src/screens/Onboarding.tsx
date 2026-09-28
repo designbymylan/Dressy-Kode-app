@@ -131,7 +131,7 @@ export function Onboarding() {
   );
 }
 
-/* ——— Cadre commun ——— */
+/* ---- Cadre commun ---- */
 
 function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: number; onBack: () => void; onSkip?: () => void }) {
   return (
@@ -213,7 +213,7 @@ function Why({ children, icon = 'lock' }: { children: ReactNode; icon?: IconName
   );
 }
 
-/* ——— 1. Toi ——— */
+/* ---- 1. Toi ---- */
 
 function Prenom({ draft, set, next }: Ctx) {
   const { c } = useTheme();
@@ -248,7 +248,7 @@ function Prenom({ draft, set, next }: Ctx) {
 
 function RayonStep({ draft, set, next }: Ctx) {
   return (
-    <Frame lead={'Tu t’habilles\nplutôt…'} em="" intro="Pour les coupes et les tailles — pas pour te ranger dans une case.">
+    <Frame lead={'Tu t’habilles\nplutôt…'} em="" intro="Pour les coupes et les tailles, pas pour te ranger dans une case.">
       <View style={{ gap: 10 }}>
         {RAYONS.map((r) => (
           <ChoiceCard
@@ -305,7 +305,7 @@ function AgeStep({ draft, set, next }: Ctx) {
   );
 }
 
-/* ——— 2. Silhouette ——— */
+/* ---- 2. Silhouette ---- */
 
 function Corps({ draft, set, next, W }: Ctx) {
   const homme = draft.rayon === 'homme';
@@ -651,7 +651,7 @@ function Tailles({ draft, set, next }: Ctx) {
   );
 }
 
-/* ——— 3. Style ——— */
+/* ---- 3. Style ---- */
 
 function Styles({ draft, set, next, W }: Ctx) {
   const [warn, setWarn] = useState(false);
@@ -836,7 +836,7 @@ function Ville({ draft, set, next }: Ctx) {
   );
 }
 
-/* ——— 4. Dressing ——— */
+/* ---- 4. Dressing ---- */
 
 function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
   const { c } = useTheme();
@@ -1160,7 +1160,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
             </View>
             <T v="cardTitle">Ton dressing t’attend.</T>
             <T v="body" tone="ink2">
-              Dès trois pièces ajoutées, Kode compose ta première tenue — avec la météo {draft.city ? `de ${draft.city}` : 'du jour'} et ton style.
+              Dès trois pièces ajoutées, Kode compose ta première tenue, avec la météo {draft.city ? `de ${draft.city}` : 'du jour'} et ton style.
             </T>
           </Animated.View>
         )}

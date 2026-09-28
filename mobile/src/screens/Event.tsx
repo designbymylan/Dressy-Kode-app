@@ -72,7 +72,7 @@ export function EventScreen() {
         <View style={{ gap: 0 }}>
           {[
             { icon: 'clock' as const, text: `${e.time}${e.occasion ? ` · ${e.occasion.details}` : ''}` },
-            { icon: 'pin' as const, text: e.place ?? '—' },
+            { icon: 'pin' as const, text: e.place ?? 'Lieu à préciser' },
             { icon: 'tag' as const, text: `Code : ${e.occasion?.dressCode ?? 'libre'}` },
           ].map((r) => (
             <View key={r.icon} className="flex-row items-center" style={{ minHeight: 46, gap: 12, borderBottomWidth: 1, borderColor: c.rule }}>
@@ -141,7 +141,7 @@ export function EventScreen() {
                 Pour aller plus loin
               </T>
             </View>
-            <T v="cardTitle">Pack Occasion — {PACK_OCCASION.price}, une fois</T>
+            <T v="cardTitle">Pack Occasion · {PACK_OCCASION.price}, une fois</T>
             {PACK_OCCASION.contents.map((x, i) => (
               <View key={x} className="flex-row" style={{ gap: 10 }}>
                 <T v="numeral" tone="brass" style={{ fontSize: 16, width: 22 }}>
@@ -155,7 +155,7 @@ export function EventScreen() {
             <T v="caption" tone="ink2">
               Prêt en 2 minutes, valable 30 jours.
             </T>
-            <Button testID="pack-buy" label={`Préparer mon occasion — ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />
+            <Button testID="pack-buy" label={`Préparer mon occasion · ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />
             <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
               Déjà inclus dans Atelier et Couture.
             </T>

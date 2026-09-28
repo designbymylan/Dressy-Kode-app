@@ -58,7 +58,7 @@ export function Me() {
       <View className="flex-row" style={{ gap: 10 }}>
         {[
           { v: String(s.pieces.length), l: 'pièces' },
-          s.pieces.some((p) => p.wears > 0) ? { v: `${usageRate(s.pieces)} %`, l: 'portées en 3 mois' } : { v: '—', l: 'portées : ça commence' },
+          s.pieces.some((p) => p.wears > 0) ? { v: `${usageRate(s.pieces)} %`, l: 'portées en 3 mois' } : { v: 'À venir', l: 'portées : ça commence' },
           { v: String(worn30), l: 'sorties ce mois' },
         ].map((x) => (
           <Card key={x.l} style={{ flex: 1, gap: 2, padding: 14 }}>

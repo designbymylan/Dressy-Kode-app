@@ -261,7 +261,7 @@ function reducer(s: State, a: Action): State {
   }
 }
 
-/* ——— Ce qui est gardé sur le téléphone ——— */
+/* ---- Ce qui est gardé sur le téléphone ---- */
 
 const SAVED = 'dresskode:etat:v1';
 const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'planned', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares'] as const;
@@ -278,7 +278,7 @@ async function readSaved(): Promise<Partial<State> | null> {
 
 const forget = () => AsyncStorage.removeItem(SAVED).catch(() => undefined);
 
-/* ——— Actions ——— */
+/* ---- Actions ---- */
 
 const OFFLINE = 'Ce changement n’a pas pu être enregistré. Vérifie ta connexion.';
 const NETWORK = 'Pas de connexion. Réessaie quand tu as du réseau.';
@@ -541,7 +541,7 @@ export function useStore() {
   return v;
 }
 
-/* ——— Valeurs dérivées : un seul endroit pour les calculer ——— */
+/* ---- Valeurs dérivées : un seul endroit pour les calculer ---- */
 
 export const pieceLimit = (s: State) => {
   const base = LIMITS[s.plan].pieces;
@@ -557,7 +557,7 @@ export const questionsLeft = (s: State) => {
 export const usageRate = (pieces: Piece[]) =>
   pieces.length ? Math.round((pieces.filter((p) => p.lastWorn !== null && p.lastWorn <= 90).length / pieces.length) * 100) : 0;
 
-/** Les pièces qui dorment : jamais portées ou pas depuis deux mois — mais pas celles qu'on vient d'ajouter. */
+/** Les pièces qui dorment : jamais portées ou pas depuis deux mois, mais pas celles qu'on vient d'ajouter. */
 export const sleeping = (pieces: Piece[]) =>
   pieces.filter((p) => p.addedDaysAgo >= 30 && (p.lastWorn === null || p.lastWorn > 60)).sort((a, b) => (b.lastWorn ?? 9999) - (a.lastWorn ?? 9999));
 
