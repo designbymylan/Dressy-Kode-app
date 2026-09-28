@@ -14,6 +14,8 @@ export type Piece = {
   name: string;
   kind: GarmentKind;
   tint?: string;
+  /** La vignette détourée que Kode a dessinée d'après une photo (URL signée) ; sinon l'illustration de `kind`. */
+  image?: string;
   category: CategoryId;
   color: string;
   swatch: string;

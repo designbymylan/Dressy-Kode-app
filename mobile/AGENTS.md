@@ -16,13 +16,20 @@ Direction de design validée : B « Éditorial », voir `../design/refonte/02-de
   `../design/refonte/contraste.py`, qui doit rester vert (`python3 ../design/refonte/contraste.py`).
 - **Verre** : `src/ui/Glass.tsx`, uniquement pour la couche de navigation.
 - **Animations** : Reanimated 4 (pas Moti, qui dépend de framer-motion 6 et suit mal Reanimated 4).
-- **Données** : démonstration en mémoire (`src/state/store.tsx`, `src/data/wardrobe.ts`).
-  Deux comptes : « nouveau » (créé par l'onboarding, dressing vide ou rempli pendant
-  l'onboarding) et « demo » (Alice, 37 pièces). Le profil est dans `src/state/profile.ts`,
+- **Données** : l'état vit dans `src/state/store.tsx` ; connecté, chaque action passe
+  aussi par Supabase (`src/state/remote.ts`). Sans compte ou en démonstration (Alice,
+  37 pièces), tout reste sur le téléphone. Le profil est dans `src/state/profile.ts`,
   les tenues composées pour n'importe quel dressing dans `src/state/outfits.ts`.
-  Le branchement Supabase (tables `garments`, `outfits`, fonction `kode`) reste à faire.
-- **Photos** : `expo-image-picker`. L'analyse de silhouette et la reconnaissance des
-  pièces sont simulées dans l'aperçu ; les textes de permission sont dans `app.json`.
+- **Photos** : `expo-image-picker`. Compte connecté : les photos partent dans le bucket
+  `uploads`, une tâche `ai_jobs` par photo réveille l'agent `dressy-agent`, et l'écran
+  d'ajout suit Kode (`src/state/jobs.ts`, scan de repérage et détourage révélé dans
+  `src/ui/scan.tsx`) ; les pièces rangées gardent leur vignette détourée (`Piece.image`).
+  Sans compte, la reconnaissance est simulée, comme l'analyse de silhouette. Les textes
+  de permission sont dans `app.json`.
+- **Mouvement** : les moments forts (scan, détourage, cintre qui tombe, tenue qui
+  s'assemble, « Je la porte », vignette qui s'ouvre, onglets liquides, fil du
+  questionnaire, orbe de Kode par étape, météo dans les halos de l'accueil) sont tous
+  coupés par « Réduire les animations » (`useReducedMotion`).
 
 ## Commandes
 

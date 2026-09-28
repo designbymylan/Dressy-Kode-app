@@ -41,6 +41,8 @@ export function KodeChat({
   pieces: number;
 }) {
   const [messages, setMessages] = useState(initial);
+  // Les réponses déjà là à l'ouverture se relisent ; seules les nouvelles tenues s'assemblent.
+  const [known] = useState(() => new Set(initial.map((m) => m.id)));
   const [usage, setUsage] = useState(initialUsage);
   const [planned, setPlanned] = useState(plannedTomorrow);
   const [text, setText] = useState('');
@@ -201,7 +203,7 @@ export function KodeChat({
                 {m.body}
               </p>
               {m.outfit ? (
-                <OutfitCard outfit={m.outfit}>
+                <OutfitCard outfit={m.outfit} assemble={!known.has(m.id)}>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       type="button"

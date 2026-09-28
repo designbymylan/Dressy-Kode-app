@@ -2,6 +2,8 @@ import { useEffect, useId } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import type { Weather } from '../data/wardrobe';
+import type { ColorName } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreen } from './screen';
 
@@ -19,15 +21,38 @@ const HALOS = [
   { key: 'halo-4', x: 0.78, y: 1.02, duration: 29000, delay: 4000 },
 ] as const;
 
-export function Ambient() {
+/**
+ * La météo dans les halos (accueil) : chauds et vifs au soleil, plus froids
+ * et lents sous la pluie, presque blancs sous un ciel couvert. On sent le
+ * temps qu'il fait avant de le lire.
+ */
+const WEATHER_HALOS: Record<Weather['kind'], { tone: 'sun' | 'rain' | 'cloud'; pace: number }> = {
+  soleil: { tone: 'sun', pace: 0.75 },
+  averses: { tone: 'rain', pace: 1.4 },
+  pluie: { tone: 'rain', pace: 1.4 },
+  nuages: { tone: 'cloud', pace: 1.6 },
+};
+
+export function Ambient({ weather }: { weather?: Weather['kind'] }) {
   const { c, scheme } = useTheme();
   const { width, height } = useScreen();
   const size = Math.max(width, height) * 0.8;
   const opacity = scheme === 'dark' ? 0.55 : 0.85;
+  const w = weather ? WEATHER_HALOS[weather] : null;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {HALOS.map((h, i) => (
-        <Halo key={h.key} color={c[h.key]} size={size} left={h.x * width - size / 2} top={h.y * height - size / 2} opacity={opacity} duration={h.duration} delay={h.delay} flip={i % 2 === 1} />
+        <Halo
+          key={h.key}
+          color={c[(w ? `halo-${w.tone}-${i + 1}` : h.key) as ColorName]}
+          size={size}
+          left={h.x * width - size / 2}
+          top={h.y * height - size / 2}
+          opacity={opacity}
+          duration={h.duration * (w?.pace ?? 1)}
+          delay={h.delay}
+          flip={i % 2 === 1}
+        />
       ))}
     </View>
   );

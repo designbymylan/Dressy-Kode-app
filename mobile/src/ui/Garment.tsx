@@ -5,7 +5,8 @@
  * remplace la couleur de base et en dérive les ombres, pour décliner une
  * même coupe dans une autre couleur.
  */
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
+import { Image, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 type Role =
@@ -219,6 +220,8 @@ type Props = {
   hangerColor?: string;
   dark?: boolean;
   label?: string;
+  /** La vignette détourée dessinée par Kode : elle remplace l'illustration, le cintre reste. */
+  image?: string;
 };
 
 type Drawn = { d: string; fill: string; stroke: string; sw: number };
@@ -251,27 +254,62 @@ function build(kind: GarmentKind, tint: string | undefined, hanger: boolean, hc:
   };
   // En sombre, une pièce foncée disparaîtrait sur le fond : un liseré clair la détoure (HIG, Dark Mode).
   const rim = dark ? 'rgba(255,255,255,0.26)' : 'none';
-  const out: Drawn[] = [];
   const mode = hanger ? k.hang : 'none';
-  if (mode === 'hook') {
-    out.push({ d: 'M60 17 L60 9 Q60 3 65 3 Q70 3 70 8', fill: 'none', stroke: hc, sw: 2.4 });
-    out.push({ d: 'M60 17 L30 28 M60 17 L90 28', fill: 'none', stroke: hc, sw: 3 });
-  }
-  if (mode === 'clip') {
-    out.push({ d: 'M60 10 L60 5 Q60 0 65 0 Q70 0 70 5', fill: 'none', stroke: hc, sw: 2.4 });
-    out.push({ d: 'M34 10 L86 10', fill: 'none', stroke: hc, sw: 3 });
-  }
+  const out: Drawn[] = hangerOf(mode, hc);
   for (const [role, d, body] of k.paths) {
     const s = strokes[role];
     if (s) out.push({ d, fill: 'none', stroke: s[0], sw: s[1] });
     else out.push({ d, fill: pal[role], stroke: body ? rim : 'none', sw: 1 });
   }
-  if (mode === 'clip') out.push({ d: 'M36 8 L41 8 L41 18 L36 18 Z M79 8 L84 8 L84 18 L79 18 Z', fill: hc, stroke: 'none', sw: 0 });
+  if (mode === 'clip') out.push(CLIP_JAWS(hc));
   return out;
 }
 
-function GarmentBase({ kind, size = 120, tint, hanger = false, hangerColor = '#9C7A48', dark = false, label }: Props) {
+const CLIP_JAWS = (hc: string): Drawn => ({ d: 'M36 8 L41 8 L41 18 L36 18 Z M79 8 L84 8 L84 18 L79 18 Z', fill: hc, stroke: 'none', sw: 0 });
+
+/** Le cintre seul : crochet et épaules, ou pince pour les bas. */
+function hangerOf(mode: Kind['hang'], hc: string): Drawn[] {
+  if (mode === 'hook') {
+    return [
+      { d: 'M60 17 L60 9 Q60 3 65 3 Q70 3 70 8', fill: 'none', stroke: hc, sw: 2.4 },
+      { d: 'M60 17 L30 28 M60 17 L90 28', fill: 'none', stroke: hc, sw: 3 },
+    ];
+  }
+  if (mode === 'clip') {
+    return [
+      { d: 'M60 10 L60 5 Q60 0 65 0 Q70 0 70 5', fill: 'none', stroke: hc, sw: 2.4 },
+      { d: 'M34 10 L86 10', fill: 'none', stroke: hc, sw: 3 },
+    ];
+  }
+  return [];
+}
+
+function GarmentBase({ kind, size = 120, tint, hanger = false, hangerColor = '#9C7A48', dark = false, label, image }: Props) {
   const paths = useMemo(() => build(kind, tint, hanger, hangerColor, dark), [kind, tint, hanger, hangerColor, dark]);
+  // Vignette expirée ou hors connexion : l'illustration prend le relais, sans trou.
+  const [broken, setBroken] = useState<string | null>(null);
+  if (image && broken !== image) {
+    const mode = hanger ? KINDS[kind].hang : 'none';
+    const h = Math.round(size * 1.25);
+    const drawn = mode === 'clip' ? [...hangerOf(mode, hangerColor), CLIP_JAWS(hangerColor)] : hangerOf(mode, hangerColor);
+    return (
+      <View style={{ width: size, height: h }} accessible accessibilityRole="image" accessibilityLabel={label ?? KINDS[kind].label}>
+        <Image
+          source={{ uri: image }}
+          onError={() => setBroken(image)}
+          resizeMode="contain"
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: mode === 'hook' ? h * 0.19 : mode === 'clip' ? h * 0.1 : 0 }}
+        />
+        {drawn.length > 0 && (
+          <Svg width={size} height={h} viewBox="0 0 120 150" style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+            {drawn.map((p, i) => (
+              <Path key={i} d={p.d} fill={p.fill} stroke={p.stroke} strokeWidth={p.sw} strokeLinecap="round" strokeLinejoin="round" />
+            ))}
+          </Svg>
+        )}
+      </View>
+    );
+  }
   return (
     <Svg
       width={size}

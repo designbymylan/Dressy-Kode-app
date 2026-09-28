@@ -11,6 +11,7 @@ import { COLOR_CHOICES, type CategoryId, type Piece, type Season } from '../data
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
 import type { KodeLink, KodeMessage } from './kode';
+import { JOB_SELECT, type JobRow, type Reveal } from './jobs';
 
 export type PlanId = 'decouverte' | 'capsule' | 'atelier' | 'couture';
 export type Period = 'mois' | 'an';
@@ -94,20 +95,56 @@ const since = (createdAt: string) => (daysSince(createdAt) === 0 ? 'aujourd’hu
 type GarmentRow = {
   id: string; name: string; category_id: string; kind: string | null; tint: string | null; season: string | null;
   colors: string[] | null; material: string | null; purchase_price_cents: number | null; created_at: string;
+  thumb_path: string | null; image_path: string | null;
 };
 type StatRow = { garment_id: string; wear_count: number | null; last_worn_on: string | null };
 
-function toPiece(g: GarmentRow, st: StatRow | undefined): Piece {
+const GARMENT_SELECT = 'id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at, thumb_path, image_path';
+
+/**
+ * Les couleurs que Kode note sur une photo (supabase/functions/dressy-agent/prompts.ts,
+ * COLOUR_RGB) : leur libellé, et la teinte qui habille l'illustration de
+ * secours quand la vignette détourée n'est pas encore chargée.
+ */
+const KODE_COLOURS: Record<string, [string, string]> = {
+  noir: ['Noir', '#0D0D0E'], anthracite: ['Anthracite', '#3F3F44'], gris: ['Gris', '#8C8C90'], blanc: ['Blanc', '#F7F5F0'],
+  creme: ['Crème', '#F0E9DC'], beige: ['Beige', '#D9C9AE'], camel: ['Camel', '#B0833F'], marron: ['Marron', '#5C4327'],
+  bordeaux: ['Bordeaux', '#6B1F2E'], rouge: ['Rouge', '#B22B27'], orange: ['Orange', '#D2601A'], moutarde: ['Moutarde', '#C9992B'],
+  jaune: ['Jaune', '#E8C33A'], olive: ['Olive', '#5A6340'], vert: ['Vert', '#2F6B48'], marine: ['Marine', '#26334D'],
+  bleu: ['Bleu', '#4A76A8'], ciel: ['Ciel', '#A8C8E0'], violet: ['Violet', '#6B4E8C'], rose: ['Rose', '#D9959F'],
+  dore: ['Doré', '#C9A55C'], argente: ['Argenté', '#BFC3C9'],
+};
+
+/** Une vignette détourée reste lisible une semaine ; l'app la redemande à chaque lancement. */
+const IMAGE_TTL = 7 * 24 * 3600;
+
+/** Les types de pièce du site et de Kode sans illustration à eux : la plus proche. */
+const KIND_ALIAS: Record<string, GarmentKind> = {
+  blouse: 'chemise', sweat: 'pull', top: 'debardeur', legging: 'pantalon', combinaison: 'robe', manteau: 'trench',
+  doudoune: 'veste', gilet: 'cardigan', bottes: 'bottines', sandales: 'escarpins', ballerines: 'mocassins',
+  sacamain: 'sac', bandouliere: 'sac', pochette: 'sac', cabas: 'sac', sacados: 'sac', echarpe: 'foulard', bandeau: 'foulard',
+};
+
+/** L'illustration d'une pièce venue de la base : son type, un proche, ou celui de sa catégorie. */
+export function garmentKindOf(categoryId: string | undefined, kind: string | null | undefined): GarmentKind {
+  if (kind && (GARMENT_KINDS as string[]).includes(kind)) return kind as GarmentKind;
+  if (kind && KIND_ALIAS[kind]) return KIND_ALIAS[kind];
+  return DEFAULT_KIND[CATEGORY_OF[categoryId ?? ''] ?? 'accessoires'];
+}
+
+function toPiece(g: GarmentRow, st: StatRow | undefined, image?: string): Piece {
   const category = CATEGORY_OF[g.category_id] ?? 'accessoires';
-  const kind = (GARMENT_KINDS as string[]).includes(g.kind ?? '') ? (g.kind as GarmentKind) : DEFAULT_KIND[category];
-  const tint = g.tint && HEX.test(g.tint) ? g.tint : undefined;
+  const kind = garmentKindOf(g.category_id, g.kind);
+  const kodeColour = KODE_COLOURS[g.colors?.[0] ?? ''];
+  const tint = g.tint && HEX.test(g.tint) ? g.tint : kodeColour?.[1];
   return {
     id: g.id,
     name: g.name,
     kind,
     tint,
+    image,
     category,
-    color: g.colors?.[0] ?? '',
+    color: kodeColour?.[0] ?? g.colors?.[0] ?? '',
     swatch: tint ?? '#A7A29A',
     material: g.material ?? '',
     season: SEASON_OF[g.season ?? ''] ?? 'toute l’année',
@@ -146,6 +183,30 @@ function toMessage(m: MessageRow): KodeMessage {
       ? { title: m.meta?.titre || m.outfits?.name || 'Proposée par Kode', pieces, why: m.meta?.pourquoi ?? '' }
       : undefined,
   };
+}
+
+/** Les pièces, avec l'URL signée de leur vignette détourée quand Kode l'a dessinée. */
+async function withImages(rows: GarmentRow[], stats: StatRow[]): Promise<Piece[]> {
+  const byGarment = new Map(stats.map((st) => [st.garment_id, st]));
+  const paths = rows.map((g) => g.thumb_path ?? g.image_path).filter((p): p is string => !!p);
+  const signed = new Map<string, string>();
+  if (paths.length) {
+    // Un seul aller-retour pour tout le dressing ; sans réseau, les illustrations prennent le relais.
+    const { data } = await db().storage.from('garments').createSignedUrls(paths, IMAGE_TTL);
+    for (const x of data ?? []) if (x.path && x.signedUrl) signed.set(x.path, x.signedUrl);
+  }
+  return rows.map((g) => toPiece(g, byGarment.get(g.id), signed.get(g.thumb_path ?? g.image_path ?? '')));
+}
+
+/** Les pièces seules, relues après l'arrivée de celles que Kode a dessinées. */
+export async function loadPieces(spaceId: string): Promise<Piece[]> {
+  const sb = db();
+  const [garments, stats] = await Promise.all([
+    sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').order('created_at', { ascending: false }),
+    sb.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),
+  ]);
+  if (garments.error) throw new Error(`pièces : ${garments.error.message}`);
+  return withImages((garments.data ?? []) as GarmentRow[], (stats.data ?? []) as StatRow[]);
 }
 
 /* ---- Compte ---- */
@@ -213,11 +274,7 @@ export async function loadAccount(): Promise<Account | null> {
     sb.from('style_profile').select('gender, styles, colours, avoid_colours, occasions').eq('space_id', spaceId).single(),
     sb.from('silhouettes').select('shape, shape_source, height_cm, weight_kg, measurements, usual_sizes').eq('space_id', spaceId).single(),
     sb.from('settings').select('city, agenda_linked').eq('space_id', spaceId).single(),
-    sb.from('garments')
-      .select('id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at')
-      .eq('space_id', spaceId)
-      .neq('status', 'archived')
-      .order('created_at', { ascending: false }),
+    sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').order('created_at', { ascending: false }),
     sb.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),
     sb.from('subscriptions').select('plan, period, status').eq('space_id', spaceId).in('status', ['active', 'trialing', 'past_due']),
     sb.rpc('kode_usage', { target: spaceId }),
@@ -237,8 +294,7 @@ export async function loadAccount(): Promise<Account | null> {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
 
-  const byGarment = new Map(((stats.data ?? []) as StatRow[]).map((st) => [st.garment_id, st]));
-  const pieces = ((garments.data ?? []) as GarmentRow[]).map((g) => toPiece(g, byGarment.get(g.id)));
+  const pieces = await withImages((garments.data ?? []) as GarmentRow[], (stats.data ?? []) as StatRow[]);
 
   const p = profile.data!;
   const st = style.data!;
@@ -419,4 +475,101 @@ export async function billing(plan: PlanId, period: Period): Promise<Result<{ ur
   const { data, error } = await db().functions.invoke<{ url: string }>('billing', { body });
   if (error || !data?.url) return { ok: false, ...(await functionError(error, 'Le paiement n’a pas pu s’ouvrir. Réessaie dans un instant.')) };
   return { ok: true, url: data.url };
+}
+
+/* ---- Photos confiées à Kode (Edge Function dressy-agent) ---- */
+
+/** Même limite que le bucket `uploads`. */
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const PHOTO_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+export type Photo = { uri: string; mime?: string | null };
+
+/**
+ * Envoie les photos dans l'espace, puis confie chacune à Kode : une tâche
+ * `ai_jobs` par photo. L'insertion réveille l'agent, qui repère les pièces et
+ * les dessine en parallèle. Si quoi que ce soit échoue, rien n'est confié et
+ * les photos déjà envoyées repartent.
+ */
+export async function sendPhotos(session: Session, photos: Photo[], hint: string): Promise<Result<{ jobs: JobRow[]; paths: string[] }>> {
+  const sb = db();
+  const stamp = Date.now().toString(36);
+  const items = photos.map((ph, i) => {
+    const mime = ph.mime && PHOTO_TYPES[ph.mime] ? ph.mime : 'image/jpeg';
+    return { ...ph, mime, path: `${session.spaceId}/${stamp}-${i}-${Math.random().toString(36).slice(2, 8)}.${PHOTO_TYPES[mime]}` };
+  });
+  const paths = items.map((x) => x.path);
+  try {
+    const bodies = await Promise.all(items.map(async (x) => (await fetch(x.uri)).arrayBuffer()));
+    if (bodies.some((b) => b.byteLength > MAX_PHOTO_BYTES)) {
+      return { ok: false, message: 'Une photo est trop lourde (5 Mo au plus). Essaie-en une autre, ou reprends-la de plus loin.' };
+    }
+    // Toutes en même temps : l'attente ne s'allonge pas avec leur nombre.
+    const sent = await Promise.all(items.map((x, i) => sb.storage.from('uploads').upload(x.path, bodies[i], { contentType: x.mime })));
+    if (sent.some((r) => r.error)) throw new Error('envoi');
+
+    const { data, error } = await sb
+      .from('ai_jobs')
+      .insert(paths.map((p) => ({ space_id: session.spaceId, requested_by: session.userId, source_paths: [p], user_input: hint.trim().slice(0, 280) })))
+      .select(JOB_SELECT);
+    if (error) {
+      await sb.storage.from('uploads').remove(paths);
+      // Les messages des déclencheurs (quota du jour, dressing plein) sont écrits pour être lus.
+      return { ok: false, message: ['quota', 'photos', 'pieces'].includes(error.hint ?? '') ? error.message : 'La demande n’est pas partie. Réessaie.' };
+    }
+    return { ok: true, jobs: (data ?? []) as unknown as JobRow[], paths };
+  } catch {
+    await sb.storage.from('uploads').remove(paths).catch(() => undefined);
+    return { ok: false, message: 'Une photo n’a pas pu être envoyée. Vérifie ta connexion et réessaie.' };
+  }
+}
+
+/** L'état des tâches de ces photos : la photo elle-même et chaque pièce repérée. */
+export async function readJobs(paths: string[]): Promise<JobRow[]> {
+  if (!paths.length) return [];
+  const { data, error } = await db().from('ai_jobs').select(JOB_SELECT).overlaps('source_paths', paths).order('created_at');
+  if (error) throw new Error(`tâches : ${error.message}`);
+  return (data ?? []) as unknown as JobRow[];
+}
+
+/** Les images du détourage révélé : le dessin avec son fond, la pièce détourée. */
+export async function revealsFor(jobs: JobRow[]): Promise<Record<string, Reveal>> {
+  const sb = db();
+  const ready = jobs.filter((j) => j.analysis?.reveal && j.garment_id);
+  if (!ready.length) return {};
+  const { data: garments } = await sb.from('garments').select('id, image_path').in('id', ready.map((j) => j.garment_id!));
+  const imageOf = new Map(((garments ?? []) as { id: string; image_path: string | null }[]).map((g) => [g.id, g.image_path]));
+  const [raws, cuts] = await Promise.all([
+    sb.storage.from('ai-generated').createSignedUrls(ready.map((j) => j.analysis!.reveal!.raw), 900),
+    sb.storage.from('garments').createSignedUrls(ready.map((j) => imageOf.get(j.garment_id!) ?? ''), 900),
+  ]);
+  const out: Record<string, Reveal> = {};
+  ready.forEach((j, i) => {
+    const raw = raws.data?.[i]?.signedUrl;
+    const cut = cuts.data?.[i]?.signedUrl;
+    const r = j.analysis!.reveal!;
+    if (raw && cut) out[j.id] = { raw, cut, size: r.size, box: r.box };
+  });
+  return out;
+}
+
+/** Relance une pièce en échec (deux fois au plus, contrôlé par la base). */
+export async function retryJob(id: string): Promise<Result> {
+  const { error } = await db().rpc('retry_ai_job', { target: id });
+  return error ? { ok: false, message: error.message } : { ok: true };
+}
+
+/** Retire une pièce en échec ; sa photo ne part que si plus aucune pièce ne s'en sert. */
+export async function dismissJob(id: string): Promise<Result> {
+  const sb = db();
+  const { data: job } = await sb.from('ai_jobs').select('source_paths, status').eq('id', id).maybeSingle();
+  if (!job) return { ok: true };
+  const { error } = await sb.from('ai_jobs').delete().eq('id', id);
+  if (error) return { ok: false, message: 'Cette pièce n’a pas pu être retirée. Réessaie.' };
+  const paths = (job.source_paths ?? []) as string[];
+  if (paths.length) {
+    const { count } = await sb.from('ai_jobs').select('id', { count: 'exact', head: true }).overlaps('source_paths', paths).neq('status', 'done');
+    if (!count) await sb.storage.from('uploads').remove(paths);
+  }
+  return { ok: true };
 }

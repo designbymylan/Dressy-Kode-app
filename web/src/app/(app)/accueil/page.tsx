@@ -32,6 +32,11 @@ export default async function Accueil() {
   const n = count ?? 0;
   const row = (planned?.outfits ?? null) as unknown as OutfitRow | null;
   const outfit = row ? (await outfitViews(supabase, [{ outfit: row }])).get(row.id) ?? null : null;
+  // Les ports déjà notés pour ces pièces : le compteur de « Je la porte » part de là.
+  const { data: stats } = outfit
+    ? await supabase.from('garment_stats').select('wear_count').in('garment_id', outfit.pieces.map((p) => p.id))
+    : { data: [] as { wear_count: number | null }[] };
+  const ports = (stats ?? []).reduce((n, st) => n + (st.wear_count ?? 0), 0);
   const today = new Date();
   const dateLabel = `${JOURS[today.getDay()]} ${today.getDate()} ${MOIS[today.getMonth()]}`;
 
@@ -44,8 +49,14 @@ export default async function Accueil() {
       {outfit ? (
         <section className="rise" style={{ '--i': 1, display: 'flex', flexDirection: 'column', gap: 12 } as CSSProperties}>
           <h2 className="section-title">Tenue du <em className="accent">jour</em></h2>
-          <OutfitCard outfit={outfit}>
-            <WearButton outfitId={outfit.id} worn={Boolean(planned?.worn)} />
+          <OutfitCard outfit={outfit} assemble>
+            <WearButton
+              outfitId={outfit.id}
+              worn={Boolean(planned?.worn)}
+              colours={outfit.pieces.map((p) => p.colour).filter((x): x is string => Boolean(x))}
+              ports={ports}
+              count={outfit.pieces.length}
+            />
           </OutfitCard>
         </section>
       ) : n === 0 ? (

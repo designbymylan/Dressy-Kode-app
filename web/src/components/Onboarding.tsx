@@ -17,6 +17,8 @@ const STEPS = [
 ] as const;
 type Step = (typeof STEPS)[number];
 const TOTAL = STEPS.length;
+/** Fins de chapitre (toi et ton style, ton dressing, tes couleurs, ton rythme) : un nœud s'y forme une fois franchies. */
+const KNOTS = [3, 6, 8, 11];
 
 const PENCIL = 'M4 20h4L19 9l-4-4L4 16ZM13.5 6.5l4 4';
 
@@ -449,20 +451,25 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
     >
       {!done ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Le fil de progression : un point de couture qui avance, un nœud à chaque chapitre franchi. */}
           <div
             role="progressbar"
             aria-valuenow={step + 1}
             aria-valuemin={1}
             aria-valuemax={TOTAL}
             aria-label={`Question ${step + 1} sur ${TOTAL}`}
-            style={{ flex: 1, height: 4, borderRadius: 999, background: 'var(--tile-2)', overflow: 'hidden' }}
+            className="thread"
           >
-            <div
-              style={{
-                width: `${((step + 1) / TOTAL) * 100}%`, height: '100%', background: 'var(--ink)',
-                transition: 'width 380ms var(--ease-spring)',
-              }}
-            />
+            <span className="thread-line thread-todo" />
+            <span className="thread-line thread-done" style={{ width: `${((step + 1) / TOTAL) * 100}%` }} />
+            {KNOTS.map((end) => (
+              <span
+                key={end}
+                className="thread-knot"
+                data-tied={step >= end || undefined}
+                style={{ left: end === TOTAL ? 'calc(100% - 4.5px)' : `${(end / TOTAL) * 100}%` }}
+              />
+            ))}
           </div>
           <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{step + 1}/{TOTAL}</span>
         </div>

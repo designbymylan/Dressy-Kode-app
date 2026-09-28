@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CATEGORIES, MONTHS_SHORT, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
@@ -46,6 +46,46 @@ function history(p: PieceT) {
   return { labels, values };
 }
 
+/**
+ * La vignette qui s'ouvre : la pièce de la fiche part de la place et de la
+ * taille de la vignette touchée, puis grandit jusqu'à la sienne. L'œil ne
+ * perd jamais la pièce. Sans vignette d'origine (lien, tenue), rien ne bouge.
+ */
+function useGrowFrom(from?: { x: number; y: number; w: number; h: number }) {
+  const reduced = useReducedMotion();
+  const ref = useRef<View>(null);
+  const armed = useRef(Boolean(from) && !reduced);
+  const k = useSharedValue(armed.current ? 0 : 1);
+  // Cachée tant qu'elle n'est pas mesurée : pas d'éclair à sa place finale.
+  const shown = useSharedValue(armed.current ? 0 : 1);
+  const dx = useSharedValue(0);
+  const dy = useSharedValue(0);
+  const sc = useSharedValue(1);
+  const onLayout = () => {
+    if (!armed.current || !from) return;
+    armed.current = false;
+    ref.current?.measureInWindow((x, y, w, h) => {
+      shown.value = 1;
+      if (!w || !h) {
+        k.value = 1;
+        return;
+      }
+      dx.value = from.x + from.w / 2 - (x + w / 2);
+      dy.value = from.y + from.h / 2 - (y + h / 2);
+      sc.value = Math.min(from.w / w, from.h / h);
+      k.value = withSpring(1, motion.gentle);
+    });
+  };
+  const style = useAnimatedStyle(() => {
+    const t = k.value;
+    return {
+      opacity: shown.value,
+      transform: [{ translateX: dx.value * (1 - t) }, { translateY: dy.value * (1 - t) }, { scale: sc.value + (1 - sc.value) * t }],
+    };
+  });
+  return { ref, onLayout, style };
+}
+
 export function PieceScreen() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -57,6 +97,7 @@ export function PieceScreen() {
   const top = useStackTop();
   const [menu, setMenu] = useState(false);
   const piece = s.pieces.find((p) => p.id === params.id);
+  const grow = useGrowFrom(params.from);
 
   if (!piece) {
     return (
@@ -84,7 +125,9 @@ export function PieceScreen() {
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
         <View className="bg-stage items-center justify-end" style={{ height: top + 300, paddingBottom: 18 }}>
           <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: top + 6, height: 1.5, backgroundColor: hangOf(piece.kind) === 'none' ? 'transparent' : c.rod }} />
-          <Garment kind={piece.kind} tint={piece.tint} size={Math.min(236, width * 0.6)} hanger={hangOf(piece.kind) !== 'none'} hangerColor={c.rod} dark={scheme === 'dark'} label={piece.name} />
+          <Animated.View ref={grow.ref} onLayout={grow.onLayout} style={grow.style}>
+            <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={Math.min(236, width * 0.6)} hanger={hangOf(piece.kind) !== 'none'} hangerColor={c.rod} dark={scheme === 'dark'} label={piece.name} />
+          </Animated.View>
         </View>
 
         <View style={{ paddingHorizontal: space.gutter, paddingTop: 20, gap: 22 }}>
@@ -191,7 +234,7 @@ export function PieceScreen() {
               {goes.map((g) => (
                 <Tap key={g.id} testID={`goes-${g.id}`} onPress={() => nav.navigate('Compose', { pieces: [piece.id, g.id] })} accessibilityLabel={`Composer avec ${g.name}`} style={{ width: 96 }}>
                   <View className="bg-raised items-center justify-center" style={{ height: 112, borderRadius: 18 }}>
-                    <Garment kind={g.kind} tint={g.tint} size={64} dark={scheme === 'dark'} label={g.name} />
+                    <Garment kind={g.kind} tint={g.tint} image={g.image} size={64} dark={scheme === 'dark'} label={g.name} />
                   </View>
                   <T v="small" style={{ marginTop: 5 }} numberOfLines={1}>
                     {g.name}

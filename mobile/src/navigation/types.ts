@@ -13,7 +13,8 @@ export type RootParams = {
   Welcome: undefined;
   Onboarding: undefined;
   Tabs: NavigatorScreenParams<TabParams> | undefined;
-  Piece: { id: string };
+  /** `from` : où était la vignette touchée, pour que la fiche naisse d'elle. */
+  Piece: { id: string; from?: { x: number; y: number; w: number; h: number } };
   AddPiece: undefined;
   Compose: { day?: number; with?: string; pieces?: string[] } | undefined;
   Event: { id: string };

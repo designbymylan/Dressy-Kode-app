@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
-  ACTIVE_STATUSES, JOB_SELECT, groupByPhoto, jobNote, jobPhrases, jobTitle, jobsFilter,
+  ACTIVE_STATUSES, JOB_SELECT, groupByPhoto, jobNote, jobPhrases, jobStep, jobTitle, jobsFilter,
   type JobRow, type ScanPiece,
 } from '@/lib/jobs';
 import { iconFor } from '@/lib/wardrobe';
@@ -157,7 +157,7 @@ export function JobList({ initial }: { initial: JobView[] }) {
             <PhotoScan photo={g.jobs[0].photo} pieces={pieces} scanning={scanning} dim={failedPhoto.length === g.jobs.length} />
 
             {scanning && parent ? (
-              <KodeThinking key={parent.status} phrases={jobPhrases(parent)} center every={2400} />
+              <KodeThinking phrases={jobPhrases(parent)} step={jobStep(parent)} center every={2400} />
             ) : null}
             {note ? <p className="small muted center">{note}</p> : null}
             {hint ? <p className="small muted center">« {hint} »</p> : null}
@@ -202,9 +202,9 @@ export function JobList({ initial }: { initial: JobView[] }) {
                           Rangée sur ton portant, sans fond
                         </span>
                       ) : reveal ? (
-                        <KodeThinking phrases={['Kode enlève le fond', 'Kode la pose sur ton portant']} size={18} every={1400} style={{ minHeight: 24, gap: 8 }} />
+                        <KodeThinking phrases={['Kode enlève le fond', 'Kode la pose sur ton portant']} step="store" size={18} every={1400} style={{ minHeight: 24, gap: 8 }} />
                       ) : (
-                        <KodeThinking key={j.status} phrases={jobPhrases(j)} size={18} every={2600} style={{ minHeight: 24, gap: 8 } as CSSProperties} />
+                        <KodeThinking phrases={jobPhrases(j)} step={jobStep(j)} size={18} every={2600} style={{ minHeight: 24, gap: 8 } as CSSProperties} />
                       )}
                     </div>
                   </li>

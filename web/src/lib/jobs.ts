@@ -50,6 +50,27 @@ export function jobTitle(j: Pick<JobRow, 'target' | 'analysis'>): string {
 }
 
 /**
+ * L'étape de Kode, pour la couleur de son orbe : lavande quand il repère,
+ * pêche quand il dessine, ciel quand il compare, menthe quand il range.
+ */
+export type OrbStep = 'look' | 'draw' | 'check' | 'store';
+
+export function jobStep(j: Pick<JobRow, 'status' | 'target'>): OrbStep {
+  switch (j.status) {
+    case 'queued':
+    case 'prompting':
+      return j.target ? 'draw' : 'look';
+    case 'generating':
+      return 'draw';
+    case 'verifying':
+    case 'selecting':
+      return 'check';
+    default:
+      return 'store';
+  }
+}
+
+/**
  * Ce que Kode dit pendant qu'il travaille, étape par étape. Les phrases
  * tournent à l'écran ; aucune ne nomme un modèle ni un service.
  */

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, TextInput, View } from 'react-native';
-import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CATEGORIES, COLOR_FAMILIES, familyOf, isNew, newLabel, wornLabel, type CategoryId, type Piece, type Season } from '../data/wardrobe';
@@ -8,11 +8,11 @@ import { pieceLimit, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
-import { Tap } from '../ui/Tap';
+import { Tap, haptic } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
 import { Chip, Segmented } from '../ui/controls';
 import { Masthead, ScrollEdge, SectionHead, useTabScroll } from '../ui/layout';
-import { EmptyState, PieceTile } from '../ui/bits';
+import { EmptyState, PieceTile, measureOrigin, type Origin } from '../ui/bits';
 import { Garment, hangOf } from '../ui/Garment';
 import { FirstRail } from '../ui/onboarding';
 import { Sheet } from '../ui/Sheet';
@@ -272,7 +272,7 @@ export function Dressing() {
             />
             )
           }
-          renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} onPress={() => nav.navigate('Piece', { id: item.id })} />}
+          renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} onPress={(from) => nav.navigate('Piece', { id: item.id, from })} />}
         />
         {filterSheet}
       </View>
@@ -307,7 +307,7 @@ export function Dressing() {
                 }}
               />
             </View>
-            <Rail pieces={pieces} shelf={cat.id === 'chaussures' || cat.id === 'accessoires'} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
+            <Rail pieces={pieces} shelf={cat.id === 'chaussures' || cat.id === 'accessoires'} onPiece={(p, from) => nav.navigate('Piece', { id: p.id, from })} />
           </View>
         ))}
       </Animated.ScrollView>
@@ -356,8 +356,11 @@ const ITEM = 92;
  * balancent un instant quand on les pousse, comme de vrais cintres.
  * Chaussures et sacs sont posés sur une étagère, sans balancement.
  */
-function Rail({ pieces, shelf, onPiece }: { pieces: Piece[]; shelf: boolean; onPiece: (p: Piece) => void }) {
+function Rail({ pieces, shelf, onPiece }: { pieces: Piece[]; shelf: boolean; onPiece: (p: Piece, from?: Origin) => void }) {
   const { c, scheme } = useTheme();
+  const { s, a } = useStore();
+  const fresh = new Set(s.fresh);
+  let order = 0;
   const swing = useSharedValue(0);
   const lastX = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler({
@@ -374,21 +377,64 @@ function Rail({ pieces, shelf, onPiece }: { pieces: Piece[]; shelf: boolean; onP
       <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: shelf ? 104 : 2, height: shelf ? 2 : 1.5, backgroundColor: c.rod, opacity: shelf ? 0.5 : 1 }} />
       <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16} decelerationRate="fast" snapToInterval={ITEM + 16} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 16 }}>
         {pieces.map((p, i) => (
-          <Hanging key={p.id} piece={p} index={i} swing={swing} shelf={shelf} dark={scheme === 'dark'} rod={c.rod} onPress={() => onPiece(p)} />
+          <Hanging
+            key={p.id}
+            piece={p}
+            index={i}
+            swing={swing}
+            shelf={shelf}
+            dark={scheme === 'dark'}
+            rod={c.rod}
+            arriving={fresh.has(p.id) ? order++ : null}
+            onLanded={() => a.landed(p.id)}
+            onPress={(from) => onPiece(p, from)}
+          />
         ))}
       </Animated.ScrollView>
     </View>
   );
 }
 
-function Hanging({ piece, index, swing, shelf, dark, rod, onPress }: { piece: Piece; index: number; swing: SharedValue<number>; shelf: boolean; dark: boolean; rod: string; onPress: () => void }) {
+/**
+ * Une pièce sur son cintre. `arriving` (son rang parmi les nouvelles) : elle
+ * vient d'arriver, elle tombe sur la tringle et se balance un instant, avec
+ * une vibration légère, une seule fois.
+ */
+function Hanging({
+  piece, index, swing, shelf, dark, rod, arriving, onLanded, onPress,
+}: {
+  piece: Piece; index: number; swing: SharedValue<number>; shelf: boolean; dark: boolean; rod: string;
+  arriving: number | null; onLanded: () => void; onPress: (from?: Origin) => void;
+}) {
+  const art = useRef<View>(null);
+  const reduced = useReducedMotion();
   const k = 0.8 + (index % 3) * 0.15;
-  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${swing.value * k}deg` }] }));
+  const drop = useSharedValue(arriving !== null && !reduced ? 1 : 0);
+  const sway = useSharedValue(0);
+  useEffect(() => {
+    if (arriving === null) return;
+    if (reduced) return onLanded();
+    const wait = 200 + arriving * 140;
+    drop.value = withDelay(wait, withSpring(0, { damping: 15, stiffness: 190 }));
+    if (!shelf) sway.value = withDelay(wait + 220, withSequence(withSpring(9, { damping: 12, stiffness: 220 }), withSpring(0, motion.swing)));
+    const buzz = setTimeout(() => arriving === 0 && haptic('light'), wait + 240);
+    const done = setTimeout(onLanded, wait + 1600);
+    return () => {
+      clearTimeout(buzz);
+      clearTimeout(done);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const style = useAnimatedStyle(() => ({
+    opacity: 1 - drop.value,
+    transform: [{ translateY: -90 * drop.value }, { rotate: `${swing.value * k + sway.value}deg` }],
+  }));
   const hangs = hangOf(piece.kind) !== 'none';
   return (
-    <Tap testID={`rail-piece-${piece.id}`} onPress={onPress} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" style={{ width: ITEM, alignItems: 'center', gap: 2 }} scaleTo={0.96}>
-      <Animated.View style={[{ height: shelf ? 110 : 118, justifyContent: shelf ? 'flex-end' : 'flex-start', transformOrigin: 'top' }, !shelf && style]}>
-        <Garment kind={piece.kind} tint={piece.tint} size={shelf ? 84 : ITEM} hanger={hangs && !shelf} hangerColor={rod} dark={dark} label={piece.name} />
+    <Tap testID={`rail-piece-${piece.id}`} onPress={() => measureOrigin(art.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" style={{ width: ITEM, alignItems: 'center', gap: 2 }} scaleTo={0.96}>
+      <Animated.View style={[{ height: shelf ? 110 : 118, justifyContent: shelf ? 'flex-end' : 'flex-start', transformOrigin: 'top' }, style]}>
+        <View ref={art}>
+          <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={shelf ? 84 : ITEM} hanger={hangs && !shelf} hangerColor={rod} dark={dark} label={piece.name} />
+        </View>
       </Animated.View>
       <T v="caption" style={{ fontFamily: 'Sans500', textAlign: 'center' }} numberOfLines={1}>
         {piece.name}

@@ -155,7 +155,7 @@ function Arriving({ piece, size, dark }: { piece: Piece; size: number; dark: boo
   const hangs = hangOf(piece.kind) !== 'none';
   return (
     <Animated.View style={[{ transformOrigin: 'top', height: size * 1.25, justifyContent: hangs ? 'flex-start' : 'flex-end' }, style]}>
-      <Garment kind={piece.kind} tint={piece.tint} size={hangs ? size : size * 0.86} hanger={hangs} hangerColor={c.rod} dark={dark} label={piece.name} />
+      <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={hangs ? size : size * 0.86} hanger={hangs} hangerColor={c.rod} dark={dark} label={piece.name} />
     </Animated.View>
   );
 }

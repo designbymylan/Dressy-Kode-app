@@ -16,7 +16,8 @@ import { kodeReply, type KodeMessage, type KodeOutfit } from './kode';
 import { todayOutfits } from './outfits';
 import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
-import type { Account, PlanId, Period, Planned, Session } from './remote';
+import type { Account, PlanId, Period, Photo, Planned, Session } from './remote';
+import { isActive, type JobRow } from './jobs';
 
 export type { PlanId, Period, Planned, Session };
 export type { Silhouette, MeasureId, Profile } from './profile';
@@ -70,6 +71,10 @@ type State = {
   shares: Share[];
   toast: Toast | null;
   undo: Piece[] | null;
+  /** Les photos confiées à Kode pendant cette session, et leurs pièces. */
+  jobs: JobRow[];
+  /** Pièces arrivées depuis l'ouverture de l'app : elles tombent sur la tringle à leur première apparition. */
+  fresh: string[];
 };
 
 /** Au premier lancement : aucun profil, aucune pièce, l'offre gratuite. */
@@ -102,6 +107,8 @@ const initial: State = {
   shares: [],
   toast: null,
   undo: null,
+  jobs: [],
+  fresh: [],
 };
 
 const fresh: State = { ...initial, booting: false };
@@ -148,9 +155,15 @@ type Action =
   | { t: 'density'; value: State['density'] }
   | { t: 'share'; share: Share }
   | { t: 'toast'; text: string; undo?: boolean; warn?: boolean }
-  | { t: 'hideToast' };
+  | { t: 'hideToast' }
+  | { t: 'jobs'; jobs: JobRow[] }
+  | { t: 'pieces'; pieces: Piece[] }
+  | { t: 'landed'; id: string }
+  | { t: 'dropJob'; id: string };
 
 let toastId = 0;
+/** Dernière lecture des tâches de Kode : l'écran d'ajout lit toutes les 2 s, le suivi de fond n'a pas à doubler. */
+let lastJobsRead = 0;
 
 function reducer(s: State, a: Action): State {
   switch (a.t) {
@@ -210,12 +223,12 @@ function reducer(s: State, a: Action): State {
     case 'nextOutfit':
       return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces).length), wornToday: null };
     case 'addPiece':
-      return { ...s, pieces: [a.piece, ...s.pieces], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
+      return { ...s, pieces: [a.piece, ...s.pieces], fresh: [...s.fresh, a.piece.id], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
     case 'swapId': {
       // La base a donné son identifiant à une pièce ajoutée : on le reporte partout où elle apparaît.
       const swap = (id: string) => (id === a.from ? a.to : id);
       const planned = Object.fromEntries(Object.entries(s.planned).map(([d, o]) => [d, { ...o, pieces: o.pieces.map(swap) }]));
-      return { ...s, pieces: s.pieces.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)), planned, undo: s.undo?.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)) ?? null };
+      return { ...s, pieces: s.pieces.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)), planned, fresh: s.fresh.map(swap), undo: s.undo?.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)) ?? null };
     }
     case 'removePiece':
       return { ...s, undo: s.pieces, pieces: s.pieces.filter((p) => p.id !== a.id), toast: { id: ++toastId, text: 'Pièce retirée du dressing', undo: true } };
@@ -258,6 +271,25 @@ function reducer(s: State, a: Action): State {
       return { ...s, toast: { id: ++toastId, text: a.text, undo: a.undo, warn: a.warn } };
     case 'hideToast':
       return { ...s, toast: null, undo: null };
+    case 'jobs': {
+      // Les lignes relues remplacent celles de mêmes photos ; les autres photos restent suivies.
+      const photos = new Set(a.jobs.map((j) => j.source_paths[0]));
+      return { ...s, jobs: [...s.jobs.filter((j) => !photos.has(j.source_paths[0])), ...a.jobs] };
+    }
+    case 'pieces': {
+      const known = new Set(s.pieces.map((p) => p.id));
+      const arrived = a.pieces.filter((p) => !known.has(p.id));
+      return {
+        ...s,
+        pieces: a.pieces,
+        fresh: [...s.fresh, ...arrived.map((p) => p.id)],
+        toast: arrived.length ? { id: ++toastId, text: arrived.length > 1 ? `${arrived.length} pièces rejoignent tes portants` : `${arrived[0].name} rejoint tes portants` } : s.toast,
+      };
+    }
+    case 'landed':
+      return { ...s, fresh: s.fresh.filter((id) => id !== a.id) };
+    case 'dropJob':
+      return { ...s, jobs: s.jobs.filter((j) => j.id !== a.id) };
   }
 }
 
@@ -456,6 +488,44 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       share: (share: Share) => dispatch({ t: 'share', share }),
       toast: (text: string) => dispatch({ t: 'toast', text }),
       hideToast: () => dispatch({ t: 'hideToast' }),
+
+      /** Confie des photos à Kode ; rend les chemins des photos à suivre. */
+      sendPhotos: async (photos: Photo[], hint: string): Promise<remote.Result<{ paths: string[] }>> => {
+        const session = live();
+        if (!session) return { ok: false, message: 'Connecte-toi pour confier tes photos à Kode.' };
+        const r = await remote.sendPhotos(session, photos, hint);
+        if (!r.ok) return r;
+        dispatch({ t: 'jobs', jobs: r.jobs });
+        return { ok: true, paths: r.paths };
+      },
+      /** Relit l'état des photos suivies (l'écran d'ajout le fait toutes les deux secondes). */
+      readJobs: async (paths: string[]) => {
+        lastJobsRead = Date.now();
+        const jobs = await remote.readJobs(paths);
+        dispatch({ t: 'jobs', jobs });
+        return jobs;
+      },
+      retryJob: async (id: string) => {
+        const r = await remote.retryJob(id).catch(() => ({ ok: false as const, message: NETWORK }));
+        if (!r.ok) dispatch({ t: 'toast', text: r.message, warn: true });
+      },
+      dismissJob: async (id: string) => {
+        const r = await remote.dismissJob(id).catch(() => ({ ok: false as const, message: NETWORK }));
+        if (!r.ok) return dispatch({ t: 'toast', text: r.message, warn: true });
+        dispatch({ t: 'dropJob', id });
+      },
+      /** Relit les pièces : celles que Kode vient de ranger apparaissent, avec leur vignette. */
+      refreshPieces: async () => {
+        const session = live();
+        if (!session) return;
+        try {
+          dispatch({ t: 'pieces', pieces: await remote.loadPieces(session.spaceId) });
+        } catch (e) {
+          console.warn('[supabase] pièces :', e instanceof Error ? e.message : e);
+        }
+      },
+      /** Une pièce nouvelle a fait son entrée sur la tringle : elle ne la refera pas. */
+      landed: (id: string) => dispatch({ t: 'landed', id }),
     };
   }, [dispatch, getState]);
 }
@@ -531,6 +601,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       auth.data.subscription.unsubscribe();
     };
   }, []);
+
+  // Tant que Kode travaille sur une photo, on suit ses pièces même hors de l'écran
+  // d'ajout ; quand tout est rangé, le dressing est relu une fois.
+  const working = s.jobs.some(isActive);
+  useEffect(() => {
+    if (!working) return;
+    const timer = setInterval(() => {
+      if (AppState.currentState !== 'active' || Date.now() - lastJobsRead < 3000) return;
+      const paths = [...new Set(ref.current.jobs.filter(isActive).map((j) => j.source_paths[0]))];
+      remote.readJobs(paths).then((jobs) => dispatch({ t: 'jobs', jobs })).catch(() => undefined);
+    }, 4000);
+    return () => {
+      clearInterval(timer);
+      a.refreshPieces();
+    };
+  }, [working, a]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

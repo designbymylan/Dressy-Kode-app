@@ -86,7 +86,7 @@ export function PhotoScan({
               ) : p.state === 'failed' ? (
                 <b style={{ fontWeight: 700 }}>!</b>
               ) : (
-                <span className="kode-orb" style={{ '--orb': '11px' } as CSSProperties} />
+                <span className="kode-orb" data-step="draw" style={{ '--orb': '11px' } as CSSProperties} />
               )}
               {p.name}
             </span>

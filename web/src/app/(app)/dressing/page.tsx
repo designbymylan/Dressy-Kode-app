@@ -7,7 +7,7 @@ import { ACTIVE_STATUSES, JOB_SELECT, jobsFilter, type JobRow } from '@/lib/jobs
 import { loadPieces, signAll } from '@/lib/garments';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { JobList } from '@/components/JobList';
-import { PieceArt } from '@/components/PieceArt';
+import { DressingRails, type WearStat } from '@/components/DressingRails';
 import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
 
 export default async function Dressing({
@@ -20,7 +20,7 @@ export default async function Dressing({
   if (!viewer) redirect('/bienvenue');
   const supabase = await createClient();
 
-  const [items, { data: jobRows }] = await Promise.all([
+  const [items, { data: jobRows }, { data: statRows }] = await Promise.all([
     loadPieces(supabase),
     supabase
       .from('ai_jobs')
@@ -28,7 +28,12 @@ export default async function Dressing({
       // En cours, en échec, ou rangées depuis peu : la photo garde ses pièces cochées.
       .or(jobsFilter())
       .order('created_at'),
+    supabase.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', viewer.spaceId),
   ]);
+  const stats: Record<string, WearStat> = Object.fromEntries(
+    ((statRows ?? []) as { garment_id: string; wear_count: number | null; last_worn_on: string | null }[])
+      .map((st) => [st.garment_id, { wears: st.wear_count ?? 0, last: st.last_worn_on }]),
+  );
 
   const jobs = (jobRows ?? []) as unknown as JobRow[];
   const active = new Set<string>(ACTIVE_STATUSES);
@@ -44,7 +49,7 @@ export default async function Dressing({
   const cutouts = await signAll(supabase, 'garments', [...thumbOf.values()].filter(Boolean) as string[]);
 
   // Un portant par catégorie, bijoux et accessoires compris.
-  const rails = CATEGORIES.map((c) => ({ ...c, pieces: items.filter((g) => g.category_id === c.id) }));
+  const rails = CATEGORIES.map((c) => ({ id: c.id, label: c.label, icon: c.icon, pieces: items.filter((g) => g.category_id === c.id) }));
   const sent = Number(demande) || 0;
 
   return (
@@ -92,35 +97,7 @@ export default async function Dressing({
         </Card>
       ) : (
         <>
-          {rails
-            .filter((r) => r.pieces.length > 0)
-            .map((rail, r) => (
-              <section
-                key={rail.id}
-                className="rise"
-                style={{ '--i': 2 + r, display: 'flex', flexDirection: 'column', gap: 10 } as CSSProperties}
-              >
-                <h2 className="eyebrow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  <Icon d={rail.icon} size={14} width={1.8} />
-                  {rail.label}
-                  <span style={{ opacity: 0.6 }}>{rail.pieces.length}</span>
-                </h2>
-                <div className="scroll-x" style={{ paddingBlock: 4 }}>
-                  {rail.pieces.map((p, i) => (
-                    <article
-                      key={p.id}
-                      className="piece pop"
-                      style={{ '--i': i, flex: 'none', width: 108 } as CSSProperties}
-                    >
-                      <div className="piece-frame" style={{ aspectRatio: 'auto', height: 124, padding: 10 }}>
-                        <PieceArt piece={p} size={46} />
-                      </div>
-                      <span className="piece-name">{p.name}</span>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
+          <DressingRails rails={rails.filter((r) => r.pieces.length > 0)} stats={stats} />
 
           <div className="rise" style={{ '--i': 2 + rails.length, display: 'grid', gap: 10 } as CSSProperties}>
             <Link href="/dressing/ajouter" className="btn btn-primary btn-block">

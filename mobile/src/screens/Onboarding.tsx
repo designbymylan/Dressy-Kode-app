@@ -7,7 +7,8 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight, SlideOutLeft, SlideOutRight, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight, SlideOutLeft, SlideOutRight, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,7 +17,7 @@ import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision,
 import { canCompose, missingForOutfit, suggestOutfits } from '../state/outfits';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap, haptic } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
@@ -138,10 +139,8 @@ function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: numb
     <View style={{ paddingHorizontal: 12, gap: 6 }}>
       <View className="flex-row items-center" style={{ gap: 6 }}>
         <IconButton testID="onb-back" icon="back" label="Retour" variant="plain" onPress={onBack} />
-        <View className="flex-row" style={{ flex: 1, gap: 5 }} accessibilityRole="progressbar" accessibilityLabel={`Chapitre ${chapter + 1} sur 4 : ${CHAPTERS[chapter].label}`}>
-          {CHAPTERS.map((c, k) => (
-            <Segment key={c.label} value={k < chapter ? 1 : k === chapter ? fill : 0} />
-          ))}
+        <View style={{ flex: 1 }} accessibilityRole="progressbar" accessibilityLabel={`Chapitre ${chapter + 1} sur 4 : ${CHAPTERS[chapter].label}`}>
+          <Thread chapter={chapter} fill={fill} count={CHAPTERS.length} />
         </View>
         {onSkip ? (
           <T testID="onb-skip" v="bodyStrong" onPress={onSkip} accessibilityRole="button" style={{ paddingHorizontal: 10, paddingVertical: 12, minWidth: 64, textAlign: 'right' }}>
@@ -162,13 +161,51 @@ function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: numb
   );
 }
 
-function Segment({ value }: { value: number }) {
-  const style = useAnimatedStyle(() => ({ transform: [{ scaleX: withTiming(value, { duration: 320 }) }] }));
+/**
+ * Le fil de progression : un point de couture en pointillé qui avance à
+ * chaque question, et un nœud qui se forme à chaque chapitre franchi. Le
+ * vocabulaire de l'atelier plutôt qu'une barre générique.
+ */
+function Thread({ chapter, fill, count }: { chapter: number; fill: number; count: number }) {
+  const { c } = useTheme();
+  const reduced = useReducedMotion();
+  const [w, setW] = useState(0);
+  const progress = (chapter + fill) / count;
+  const p = useSharedValue(progress);
+  useEffect(() => {
+    p.value = reduced ? progress : withSpring(progress, motion.gentle);
+  }, [progress, reduced, p]);
+  const sewn = useAnimatedStyle(() => ({ width: Math.max(0, Math.min(1, p.value)) * w }));
+  const H = 14;
+  const stitch = (colour: string, width: number) => (
+    <Svg width={w} height={H}>
+      <Line x1={2} y1={H / 2} x2={w - 2} y2={H / 2} stroke={colour} strokeWidth={width} strokeDasharray="6 5" strokeLinecap="round" />
+    </Svg>
+  );
   return (
-    <View className="bg-rule" style={{ flex: 1, height: 3, borderRadius: 2, overflow: 'hidden' }}>
-      <Animated.View className="bg-ink" style={[{ height: 3, borderRadius: 2, transformOrigin: 'left' }, style]} />
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: H }}>
+      {w > 0 && (
+        <>
+          <View style={{ position: 'absolute', left: 0, top: 0 }}>{stitch(c['rule-strong'], 2)}</View>
+          <Animated.View style={[{ position: 'absolute', left: 0, top: 0, height: H, overflow: 'hidden' }, sewn]}>{stitch(c.ink, 2.4)}</Animated.View>
+          {Array.from({ length: count }, (_, k) => (
+            <Knot key={k} x={Math.min(((k + 1) / count) * w, w - 4.5)} tied={k < chapter} colour={c.ink} idle={c['rule-strong']} />
+          ))}
+        </>
+      )}
     </View>
   );
+}
+
+/** Un nœud en fin de chapitre : il se serre quand on le franchit. */
+function Knot({ x, tied, colour, idle }: { x: number; tied: boolean; colour: string; idle: string }) {
+  const reduced = useReducedMotion();
+  const k = useSharedValue(tied ? 1 : 0);
+  useEffect(() => {
+    k.value = reduced ? (tied ? 1 : 0) : withSpring(tied ? 1 : 0, motion.spring);
+  }, [tied, reduced, k]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: 0.55 + 0.45 * k.value }], backgroundColor: k.value > 0.5 ? colour : idle }));
+  return <Animated.View style={[{ position: 'absolute', top: 7 - 4.5, left: x - 4.5, width: 9, height: 9, borderRadius: 5 }, style]} />;
 }
 
 function Frame({ kicker, lead, em, intro, children, footer }: { kicker?: string; lead: string; em: string; intro?: string; children: ReactNode; footer?: ReactNode }) {

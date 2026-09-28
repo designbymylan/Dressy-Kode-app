@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, TextInput, View, type ScrollView } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { WEATHER, lcFirst, type Piece } from '../data/wardrobe';
@@ -14,10 +14,11 @@ import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
 import { Masthead, Rule } from '../ui/layout';
 import { Card } from '../ui/bits';
-import { OutfitBoard, Legend } from '../ui/outfit';
+import { OutfitBoard, Legend, assembleDelay } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { KodeThinking } from '../ui/KodeThinking';
 import type { Nav, Route } from '../navigation/types';
 
 export function Kode() {
@@ -29,6 +30,8 @@ export function Kode() {
   const [text, setText] = useState('');
   const [keyboard, setKeyboard] = useState(false);
   const list = useRef<ScrollView>(null);
+  // Les réponses déjà là à l'ouverture se relisent ; seules les nouvelles tenues s'assemblent.
+  const known = useRef(new Set(s.messages.map((m) => m.id)));
   const left = questionsLeft(s);
   const quota = LIMITS[s.plan].questions;
   const out = left === 0;
@@ -145,7 +148,7 @@ export function Kode() {
           </Animated.View>
         )}
 
-        {s.messages.map((m) => (m.from === 'me' ? <Mine key={m.id} m={m} /> : <FromKode key={m.id} m={m} />))}
+        {s.messages.map((m) => (m.from === 'me' ? <Mine key={m.id} m={m} /> : <FromKode key={m.id} m={m} fresh={!known.current.has(m.id)} />))}
         {s.kodeTyping && <Typing />}
 
         {out && (
@@ -194,7 +197,7 @@ function Mine({ m }: { m: KodeMessage }) {
   );
 }
 
-function FromKode({ m }: { m: KodeMessage }) {
+function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const { width } = useScreen();
@@ -209,13 +212,15 @@ function FromKode({ m }: { m: KodeMessage }) {
       <T v="bodyL">{m.text}</T>
       {m.outfit && pieces.length > 0 && (
         <Card style={{ gap: 12, paddingTop: 18 }}>
-          <OutfitBoard pieces={pieces} width={width - space.gutter * 2 - 32} onPiece={open} />
+          <OutfitBoard pieces={pieces} width={width - space.gutter * 2 - 32} onPiece={open} assemble={fresh} />
           <Legend pieces={pieces} onPiece={open} />
           <Rule />
-          <T v="cardTitle">{m.outfit.title}</T>
-          <T v="body" tone="ink2">
-            {m.outfit.why}
-          </T>
+          <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length)).duration(520) : undefined} style={{ gap: 12 }}>
+            <T v="cardTitle">{m.outfit.title}</T>
+            <T v="body" tone="ink2">
+              {m.outfit.why}
+            </T>
+          </Animated.View>
           <View className="flex-row" style={{ gap: 8 }}>
             <Button testID={`kode-plan-${m.id}`} label="Prévoir demain" size="m" grow onPress={() => { a.plan(1, { title: m.outfit!.title, pieces: m.outfit!.pieces }); a.toast('Prévue pour demain, dans ton agenda'); }} />
             <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces })} />
@@ -229,26 +234,16 @@ function FromKode({ m }: { m: KodeMessage }) {
   );
 }
 
+/** Ce que Kode dit pendant qu'il compose (web : lib/thinking.ts, `chat`). */
+const COMPOSING = ['Kode fouille ton dressing', 'Kode assemble les couleurs', 'Kode pense à la météo', 'Kode essaie une association', 'Kode peaufine la tenue'];
+
 function Typing() {
   return (
-    <View className="flex-row items-center" style={{ gap: 10 }} accessibilityLabel="Kode compose une réponse" accessibilityLiveRegion="polite">
+    <View style={{ gap: 8 }}>
       <T v="masthead" tone="ink2" style={{ letterSpacing: 2.4 }}>
         KODE
       </T>
-      <View className="flex-row" style={{ gap: 5 }}>
-        {[0, 1, 2].map((i) => (
-          <Dot key={i} i={i} />
-        ))}
-      </View>
+      <KodeThinking phrases={COMPOSING} every={2000} />
     </View>
   );
-}
-
-function Dot({ i }: { i: number }) {
-  const o = useSharedValue(0.25);
-  useEffect(() => {
-    o.value = withDelay(i * 160, withRepeat(withSequence(withTiming(1, { duration: 380 }), withTiming(0.25, { duration: 380 })), -1));
-  }, [o, i]);
-  const style = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View className="bg-brass" style={[{ width: 7, height: 7, borderRadius: 4 }, style]} />;
 }

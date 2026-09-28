@@ -1,5 +1,7 @@
-import { memo } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import { motion } from '../theme/tokens';
 import type { Piece } from '../data/wardrobe';
 import { useTheme } from '../theme/ThemeProvider';
 import { Garment } from './Garment';
@@ -34,10 +36,43 @@ const LOWER: Record<number, { x: number; s: number; r: number }[]> = {
 
 export const boardHeight = (w: number) => Math.round(w * 0.72);
 
-type Props = { pieces: Piece[]; width: number; numbered?: boolean; onPiece?: (p: Piece) => void };
+type Props = { pieces: Piece[]; width: number; numbered?: boolean; onPiece?: (p: Piece) => void; assemble?: boolean };
+
+/** Le temps que met une tenue à s'assembler : de quoi caler le titre qui s'écrit ensuite. */
+export const assembleDelay = (n: number) => 120 + n * 120 + 300;
+
+/**
+ * Une pièce posée sur la planche. Quand la tenue s'assemble, elle arrive de
+ * son côté de la planche et se pose, l'une après l'autre.
+ */
+function Placed({ i, x, y, r, s, width, assemble, children }: { i: number; x: number; y: number; r: number; s: number; width: number; assemble: boolean; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const k = useSharedValue(assemble && !reduced ? 0 : 1);
+  useEffect(() => {
+    if (assemble && !reduced) k.value = withDelay(120 + i * 120, withSpring(1, motion.gentle));
+  }, [assemble, reduced, k, i]);
+  const fx = (x + s / 2 < width / 2 ? -1 : 1) * width * 0.45;
+  const fy = (y < width * 0.15 ? -1 : 1) * width * 0.3;
+  const style = useAnimatedStyle(() => ({
+    opacity: Math.min(1, k.value * 1.5),
+    transform: [{ translateX: (1 - k.value) * fx }, { translateY: (1 - k.value) * fy }, { rotate: `${r * k.value}deg` }, { scale: 0.6 + 0.4 * k.value }],
+  }));
+  return <Animated.View style={[{ position: 'absolute', left: x, top: y }, style]}>{children}</Animated.View>;
+}
+
+/** Les numéros arrivent quand les pièces sont posées. */
+function Numeral({ delay, assemble, children }: { delay: number; assemble: boolean; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const k = useSharedValue(assemble && !reduced ? 0 : 1);
+  useEffect(() => {
+    if (assemble && !reduced) k.value = withDelay(delay, withSpring(1, motion.spring));
+  }, [assemble, reduced, k, delay]);
+  const style = useAnimatedStyle(() => ({ opacity: Math.min(1, k.value), transform: [{ scale: 0.6 + 0.4 * k.value }] }));
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
 
 /** La planche d'une tenue : les pièces posées, numérotées dans l'ordre de la légende. */
-function OutfitBoardBase({ pieces, width, numbered = true, onPiece }: Props) {
+function OutfitBoardBase({ pieces, width, numbered = true, onPiece, assemble = false }: Props) {
   const { scheme } = useTheme();
   const slots = assign(pieces);
   const upper = (['outer', 'top', 'bottom'] as Slot[]).filter((k) => slots[k]);
@@ -54,10 +89,10 @@ function OutfitBoardBase({ pieces, width, numbered = true, onPiece }: Props) {
   const order = (p: Piece) => pieces.findIndex((q) => q.id === p.id) + 1;
   return (
     <View style={{ width, height: boardHeight(width) }} accessibilityElementsHidden={!onPiece}>
-      {placed.map(({ p, x, y, s, r }) => {
-        const art = <Garment kind={p.kind} tint={p.tint} size={s} dark={scheme === 'dark'} label={p.name} />;
+      {placed.map(({ p, x, y, s, r }, i) => {
+        const art = <Garment kind={p.kind} tint={p.tint} image={p.image} size={s} dark={scheme === 'dark'} label={p.name} />;
         return (
-          <View key={p.id} style={{ position: 'absolute', left: x, top: y, transform: [{ rotate: `${r}deg` }] }}>
+          <Placed key={p.id} i={i} x={x} y={y} r={r} s={s} width={width} assemble={assemble}>
             {onPiece ? (
               <Tap onPress={() => onPiece(p)} accessibilityLabel={`${String(order(p)).padStart(2, '0')}, ${p.name}`} accessibilityHint="Ouvre la fiche de la pièce" scaleTo={0.96}>
                 {art}
@@ -65,15 +100,19 @@ function OutfitBoardBase({ pieces, width, numbered = true, onPiece }: Props) {
             ) : (
               art
             )}
-          </View>
+          </Placed>
         );
       })}
       {/* Les numéros passent au-dessus de toutes les pièces, jamais dessous. */}
       {numbered &&
         placed.map(({ p, x, y }) => (
-          <T key={`n-${p.id}`} v="numeral" tone="brass" pointerEvents="none" style={{ position: 'absolute', left: x - 2, top: y - 8, fontSize: Math.max(14, width * 0.054) }} accessibilityElementsHidden importantForAccessibility="no">
-            {String(order(p)).padStart(2, '0')}
-          </T>
+          <View key={`n-${p.id}`} pointerEvents="none" style={{ position: 'absolute', left: x - 2, top: y - 8 }}>
+            <Numeral delay={assembleDelay(placed.length) - 200} assemble={assemble}>
+              <T v="numeral" tone="brass" style={{ fontSize: Math.max(14, width * 0.054) }} accessibilityElementsHidden importantForAccessibility="no">
+                {String(order(p)).padStart(2, '0')}
+              </T>
+            </Numeral>
+          </View>
         ))}
     </View>
   );

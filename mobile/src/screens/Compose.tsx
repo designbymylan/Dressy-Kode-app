@@ -136,7 +136,7 @@ export function Compose() {
                   style={{ width: tile, height: tile * 1.2, borderRadius: 16, borderWidth: p ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: p ? c.raised : 'transparent' }}
                   className="items-center justify-center"
                 >
-                  {p ? <Garment kind={p.kind} tint={p.tint} size={tile * 0.78} dark={scheme === 'dark'} label={p.name} /> : <Icon name="plus" size={20} color={c.ink2} />}
+                  {p ? <Garment kind={p.kind} tint={p.tint} image={p.image} size={tile * 0.78} dark={scheme === 'dark'} label={p.name} /> : <Icon name="plus" size={20} color={c.ink2} />}
                 </View>
                 <T v="small" tone={p ? 'ink' : 'ink2'} numberOfLines={1} style={{ textAlign: 'center' }}>
                   {sl.label}
@@ -203,7 +203,7 @@ export function Compose() {
                 style={{ width: w }}
               >
                 <View className="items-center justify-center" style={{ height: w * 1.1, borderRadius: 16, backgroundColor: c.paper, borderWidth: on ? 2 : 0, borderColor: c.ink }}>
-                  <Garment kind={p.kind} tint={p.tint} size={w * 0.66} dark={scheme === 'dark'} label={p.name} />
+                  <Garment kind={p.kind} tint={p.tint} image={p.image} size={w * 0.66} dark={scheme === 'dark'} label={p.name} />
                 </View>
                 <T v="small" numberOfLines={1} style={{ marginTop: 4 }}>
                   {p.name}

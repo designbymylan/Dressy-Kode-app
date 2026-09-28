@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { WEATHER, WEATHER_WORD, DAYS_LETTER, dayDate, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
+import { WEATHER, WEATHER_WORD, DAYS_LETTER, dayDate, euros, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
 import { MODULE_LABELS, eventsOf, sleeping, usageRate, useStore, useTodayOutfits, type HomeModule } from '../state/store';
 import { missingForOutfit } from '../state/outfits';
 import { FirstRail } from '../ui/onboarding';
@@ -13,7 +14,8 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { Masthead, Rule, ScrollEdge, SectionHead, useTabScroll } from '../ui/layout';
-import { OutfitBoard, Legend } from '../ui/outfit';
+import { OutfitBoard, Legend, assembleDelay } from '../ui/outfit';
+import { motion } from '../theme/tokens';
 import { Card, WeatherIcon } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
@@ -42,7 +44,7 @@ export function Home() {
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
-      <Ambient />
+      <Ambient weather={w.kind} />
     <ScrollEdge y={edge} />
     <Animated.ScrollView
       testID="screen-home"
@@ -61,14 +63,17 @@ export function Home() {
           <T v="kicker" tone={worn ? 'positive' : 'ink2'} upper>
             {worn ? 'Portée aujourd’hui' : 'Tenue du jour'}
           </T>
-          <T v="hero" accessibilityRole="header">
-            {outfit.lead}
-            <T v="hero" style={{ fontFamily: 'Accent' }}>
-              {outfit.em}
+          {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
+          <Animated.View entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)}>
+            <T v="hero" accessibilityRole="header">
+              {outfit.lead}
+              <T v="hero" style={{ fontFamily: 'Accent' }}>
+                {outfit.em}
+              </T>
             </T>
-          </T>
+          </Animated.View>
         </View>
-        <OutfitBoard pieces={pieces} width={W} onPiece={open} />
+        <OutfitBoard pieces={pieces} width={W} onPiece={open} assemble />
         <Legend pieces={pieces} onPiece={open} />
         <View style={{ gap: 8, paddingTop: 12, borderTopWidth: 1 }} className="border-rule">
           <T v="quote">« {outfit.why} »</T>
@@ -79,15 +84,10 @@ export function Home() {
       </Animated.View>
 
       {worn ? (
-        <View className="flex-row items-center" style={{ gap: 10 }}>
-          <Icon name="check" size={20} color={c.positive} strokeWidth={2.2} />
-          <T v="body" tone="ink2" style={{ flex: 1 }}>
-            Bonne journée. Kode s’en souviendra pour tes prochaines tenues.
-          </T>
-        </View>
+        <WornToday pieces={pieces} />
       ) : (
         <View className="flex-row" style={{ gap: 8 }}>
-          <Button testID="wear-today" label="Je la porte" grow onPress={() => a.wear(outfit.pieces, 'Notée dans ton journal')} />
+          <Button testID="wear-today" label="Je la porte" grow feedback="success" onPress={() => a.wear(outfit.pieces, 'Notée dans ton journal')} />
           <Button testID="another-outfit" label="Une autre" variant="secondary" icon="refresh" grow disabled={outfits.length < 2} onPress={a.nextOutfit} />
         </View>
       )}
@@ -107,6 +107,68 @@ export function Home() {
     </Animated.ScrollView>
     </View>
   );
+}
+
+/**
+ * « Je la porte » tenu : la coche se pose, de petites pastilles aux couleurs
+ * de la tenue s'envolent, et le compteur de ports monte pendant que le coût
+ * par port baisse. Porter ce qu'on a, c'est tout le propos de l'app.
+ */
+function WornToday({ pieces }: { pieces: Piece[] }) {
+  const { c } = useTheme();
+  const reduced = useReducedMotion();
+  // Ce bloc n'apparaît qu'au geste (le port du jour n'est pas gardé d'un lancement à l'autre) : il joue une fois.
+  const k = useSharedValue(reduced ? 1 : 0);
+  const bump = useSharedValue(1);
+  useEffect(() => {
+    if (reduced) return;
+    k.value = withSpring(1, motion.spring);
+    bump.value = withDelay(380, withSequence(withTiming(1.18, { duration: 140 }), withSpring(1, motion.spring)));
+  }, [k, bump, reduced]);
+  const check = useAnimatedStyle(() => ({ transform: [{ scale: k.value }, { rotate: `${(1 - k.value) * -40}deg` }], opacity: Math.min(1, k.value * 2) }));
+  const count = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
+
+  const total = pieces.reduce((n, p) => n + p.wears, 0);
+  const priced = pieces.filter((p) => p.price);
+  const cpw = priced.length ? priced.reduce((n, p) => n + (p.price ?? 0), 0) / Math.max(1, priced.reduce((n, p) => n + p.wears, 0)) : null;
+  const colours = pieces.map((p) => p.tint ?? p.swatch);
+
+  return (
+    <View className="flex-row items-center" style={{ gap: 12 }} accessibilityLiveRegion="polite">
+      <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        {!reduced && colours.length > 0 && Array.from({ length: 12 }, (_, i) => <Spark key={i} i={i} colour={colours[i % colours.length]} />)}
+        <Animated.View className="bg-positive-soft items-center justify-center" style={[{ width: 44, height: 44, borderRadius: 22 }, check]}>
+          <Icon name="check" size={22} color={c.positive} strokeWidth={2.6} />
+        </Animated.View>
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <T v="body" tone="ink2">
+          Bonne journée. Kode s’en souviendra pour tes prochaines tenues.
+        </T>
+        <Animated.View style={[{ alignSelf: 'flex-start', transformOrigin: 'left' }, count]}>
+          <T v="caption" tone="ink">
+            {`${total} port${total > 1 ? 's' : ''} pour ces pièces${cpw !== null ? ` · coût par port ${euros(cpw)}` : ''}`}
+          </T>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+/** Une pastille qui s'envole de la coche, dans une couleur de la tenue. */
+function Spark({ i, colour }: { i: number; colour: string }) {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withTiming(1, { duration: 900, easing: motion.easing });
+  }, [t]);
+  const angle = (i / 12) * Math.PI * 2 + (i % 2) * 0.3;
+  const d = 34 + (i % 3) * 14;
+  const style = useAnimatedStyle(() => ({
+    // Elles restent bien visibles pendant le vol et s'éteignent à la fin.
+    opacity: 1 - t.value * t.value * t.value,
+    transform: [{ translateX: Math.cos(angle) * d * t.value }, { translateY: (Math.sin(angle) * d - 18) * t.value }, { scale: 1 - 0.6 * t.value }],
+  }));
+  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: 9, height: 9, borderRadius: 5, backgroundColor: colour }, style]} />;
 }
 
 /**
@@ -250,7 +312,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
           {list.map((p) => (
             <Tap key={p.id} testID={`sleeping-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${sinceLabel(p)}`} style={{ width: 118 }}>
               <View className="bg-raised items-center justify-center" style={{ height: 140, borderRadius: 20 }}>
-                <Garment kind={p.kind} tint={p.tint} size={78} dark={scheme === 'dark'} label={p.name} />
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={78} dark={scheme === 'dark'} label={p.name} />
               </View>
               <T v="caption" style={{ marginTop: 6, fontFamily: 'Sans600' }} numberOfLines={1}>
                 {p.name}
@@ -282,7 +344,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
           <View className="flex-row" style={{ gap: 4 }}>
             {camel.slice(0, 5).map((p) => (
               <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: (W - 32 - 16) / 5, alignItems: 'center' }}>
-                <Garment kind={p.kind} tint={p.tint} size={(W - 32 - 16) / 5 - 4} dark={scheme === 'dark'} label={p.name} />
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={(W - 32 - 16) / 5 - 4} dark={scheme === 'dark'} label={p.name} />
               </Tap>
             ))}
           </View>

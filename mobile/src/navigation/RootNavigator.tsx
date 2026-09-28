@@ -59,7 +59,8 @@ export function RootNavigator() {
       ) : (
         <>
           <Stack.Screen name="Tabs" component={Tabs} options={fadeOptions} />
-          <Stack.Screen name="Piece" component={PieceScreen} />
+          {/* Ouverte depuis une vignette, la fiche grandit d'elle : un fondu plutôt qu'un glissement. */}
+          <Stack.Screen name="Piece" component={PieceScreen} options={({ route }) => (route.params?.from ? fadeOptions : cardOptions)} />
           <Stack.Screen name="Compose" component={Compose} />
           <Stack.Screen name="Event" component={EventScreen} />
           <Stack.Screen name="Silhouette" component={SilhouetteScreen} />

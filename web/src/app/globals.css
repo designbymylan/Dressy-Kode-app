@@ -644,14 +644,27 @@ img { display: block; }
    ============================================================ */
 
 /* L'orbe de Kode : un anneau des couleurs des halos qui tourne, un cœur
-   de verre qui respire. */
+   de verre qui respire. Ses couleurs ne suivent pas le thème : il reste
+   lumineux en clair comme en sombre. Une teinte par étape (data-step) :
+   lavande pour le repérage, pêche pour le dessin, ciel pour le contrôle,
+   menthe pour le rangement ; déclarées en <color>, elles glissent de l'une
+   à l'autre au lieu de sauter. */
+@property --o1 { syntax: '<color>'; inherits: false; initial-value: #ffb89c; }
+@property --o2 { syntax: '<color>'; inherits: false; initial-value: #b9adff; }
+@property --o3 { syntax: '<color>'; inherits: false; initial-value: #9fd0ff; }
+@property --o4 { syntax: '<color>'; inherits: false; initial-value: #ffabc9; }
 .kode-orb {
+  --o1: #ffb89c;
+  --o2: #b9adff;
+  --o3: #9fd0ff;
+  --o4: #ffabc9;
   position: relative;
   flex: none;
   width: var(--orb, 28px);
   height: var(--orb, 28px);
   border-radius: 50%;
-  background: conic-gradient(from 0deg, #ffb89c, #b9adff, #9fd0ff, #ffabc9, #ffb89c);
+  background: conic-gradient(from 0deg, var(--o1), var(--o2), var(--o3), var(--o4), var(--o1));
+  transition: --o1 700ms var(--ease), --o2 700ms var(--ease), --o3 700ms var(--ease), --o4 700ms var(--ease);
   box-shadow: 0 0 0 1px var(--glass-edge), 0 6px 18px -6px rgba(107, 99, 184, 0.6);
   animation: orb-spin 2.8s linear infinite;
 }
@@ -675,6 +688,10 @@ img { display: block; }
   background: rgba(255, 255, 255, 0.7);
   filter: blur(1px);
 }
+.kode-orb[data-step='look'] { --o1: #b9adff; --o2: #9fd0ff; --o3: #d9d5ff; --o4: #9fd0ff; }
+.kode-orb[data-step='draw'] { --o1: #ffb89c; --o2: #ffabc9; --o3: #ffd6e5; --o4: #ffabc9; }
+.kode-orb[data-step='check'] { --o1: #9fd0ff; --o2: #b9e0ff; --o3: #cfe6ff; --o4: #b9e0ff; }
+.kode-orb[data-step='store'] { --o1: #8fddb8; --o2: #b8ebd2; --o3: #d4f3e4; --o4: #b8ebd2; }
 @keyframes orb-spin { to { transform: rotate(1turn); } }
 @keyframes orb-breathe { 50% { transform: scale(0.7); } }
 
@@ -954,4 +971,192 @@ img { display: block; }
 @media (prefers-reduced-motion: reduce) {
   .scan-beam { display: none; }
   .reveal.play .reveal-tag { opacity: 1; }
+}
+
+/* ============================================================
+   Le cintre qui se balance : une pièce arrivée tombe sur son portant
+   ============================================================ */
+
+.piece-button {
+  flex: none;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--r-tile);
+}
+.piece-button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+/* Un peu d'air au-dessus des vignettes : la pièce qui tombe se balance sans être rognée. */
+.rail { position: relative; padding-top: 10px !important; }
+.hang-in {
+  transform-origin: 50% 0;
+  animation: hang-drop 1.5s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 120ms + 150ms);
+}
+@keyframes hang-drop {
+  0% { transform: translateY(-80px); opacity: 0; }
+  28% { transform: translateY(4px) rotate(0deg); opacity: 1; }
+  36% { transform: translateY(0) rotate(7deg); }
+  52% { transform: rotate(-5deg); }
+  68% { transform: rotate(3deg); }
+  82% { transform: rotate(-1.2deg); }
+  100% { transform: none; opacity: 1; }
+}
+
+/* ============================================================
+   La vignette qui s'ouvre : la fiche naît de la vignette touchée
+   ============================================================ */
+
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 15, 19, 0.28);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.piece-sheet {
+  position: relative;
+  width: min(100%, 400px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--glass-strong);
+  box-shadow: var(--shadow-float);
+  transform-origin: 50% 50%;
+}
+.piece-sheet-stage {
+  height: 220px;
+  border-radius: var(--r-tile);
+  background: var(--stage);
+  border: 1px solid var(--glass-edge);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+.piece-sheet-stage img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 14px 18px rgba(20, 24, 40, 0.2)); }
+.piece-sheet-facts { display: flex; flex-direction: column; gap: 6px; animation: sheet-rise 420ms 180ms var(--ease) both; }
+.piece-sheet-facts + .piece-sheet-facts { animation-delay: 240ms; }
+@keyframes sheet-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hang-in, .piece-sheet-facts { animation: none; }
+}
+
+/* ============================================================
+   La tenue qui s'assemble : les pièces se posent, puis le titre s'écrit
+   ============================================================ */
+
+.assemble .outfit-spot { animation: gather 780ms var(--ease-spring) both; animation-delay: calc(var(--i, 0) * 120ms + 120ms); }
+@keyframes gather {
+  from { transform: translate(var(--fx), var(--fy)) rotate(0deg) scale(0.6); opacity: 0; }
+  to { transform: rotate(var(--r)); opacity: 1; }
+}
+.assemble .outfit-words h3 { animation: write-in 700ms var(--ease) both; animation-delay: calc(var(--n, 3) * 120ms + 420ms); }
+.assemble .outfit-words p { animation: sheet-rise 420ms var(--ease) both; animation-delay: calc(var(--n, 3) * 120ms + 620ms); }
+/* Le titre se dévoile de gauche à droite, comme écrit à la main. */
+@keyframes write-in {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.2; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assemble .outfit-spot, .assemble .outfit-words h3, .assemble .outfit-words p { animation: none; }
+}
+
+/* ============================================================
+   « Je la porte » : la coche se dessine, les pastilles s'envolent
+   ============================================================ */
+
+.worn-line { display: flex; align-items: center; gap: 12px; }
+.worn-check { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
+.worn-check svg { position: relative; overflow: visible; }
+.worn-check circle { fill: color-mix(in srgb, var(--ok) 14%, transparent); stroke: none; }
+.worn-check path { fill: none; stroke: var(--ok); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 30; stroke-dashoffset: 0; }
+.worn-line.play .worn-check svg { animation: pop 460ms var(--ease-spring) both; }
+.worn-line.play .worn-check path { stroke-dashoffset: 30; animation: draw 460ms 160ms var(--ease) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 0 1px var(--glass-edge);
+}
+.worn-line.play .spark { animation: fly 900ms var(--ease) forwards; }
+@keyframes fly {
+  from { transform: none; opacity: 1; }
+  65% { opacity: 0.9; }
+  to { transform: translate(var(--dx), var(--dy)) scale(0.4); opacity: 0; }
+}
+.worn-tally { display: inline-block; }
+.worn-line.play .worn-tally { animation: pop 460ms 420ms var(--ease-spring) both; }
+@media (prefers-reduced-motion: reduce) {
+  .worn-line.play .worn-check svg, .worn-line.play .worn-tally, .worn-line.play .spark { animation: none; }
+  .worn-line.play .worn-check path { animation: none; stroke-dashoffset: 0; }
+}
+
+/* ============================================================
+   La barre d'onglets liquide : le point s'étire puis se resserre
+   ============================================================ */
+
+.tab-drop {
+  position: absolute;
+  top: calc(50% + 15px);
+  height: 4px;
+  border-radius: 99px;
+  background: var(--ink);
+  pointer-events: none;
+}
+.tab-drop[data-moving] { transition: left 380ms var(--ease-spring), width 380ms var(--ease-spring); }
+@media (prefers-reduced-motion: reduce) {
+  .tab-drop[data-moving] { transition: none; }
+}
+
+/* ============================================================
+   Le fil de progression du questionnaire : couture et nœuds
+   ============================================================ */
+
+.thread { position: relative; flex: 1; height: 14px; }
+.thread-line {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 11px);
+}
+.thread-todo { right: 0; color: var(--muted); opacity: 0.4; }
+.thread-done { color: var(--ink); height: 2.4px; margin-top: -1.2px; transition: width 520ms var(--ease-spring); }
+.thread-knot {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+  transform: scale(0.55);
+  transition: transform 420ms var(--ease-spring), background-color 240ms var(--ease);
+}
+.thread-knot[data-tied] { background: var(--ink); transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .thread-done, .thread-knot { transition: none; }
 }

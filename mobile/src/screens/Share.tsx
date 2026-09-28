@@ -74,7 +74,7 @@ export function ShareScreen() {
         {/* L'aperçu de ce que l'amie recevra : la pièce, pas une photo, et aucun logo. */}
         <Card className="items-center" style={{ gap: 10, paddingVertical: 22 }}>
           <View className="bg-stage items-center justify-center" style={{ width: 150, height: 170, borderRadius: 22 }}>
-            <Garment kind={piece.kind} tint={piece.tint} size={110} dark={scheme === 'dark'} label={piece.name} />
+            <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={110} dark={scheme === 'dark'} label={piece.name} />
           </View>
           <T v="cardTitle">{piece.name}</T>
           <T v="caption" tone="ink2">

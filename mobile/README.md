@@ -8,8 +8,11 @@ italique serif. Les 18 écrans du brief, en clair et en sombre.
 
 Branchée sur Supabase quand `.env` contient l'URL et la clé publishable du projet
 (voir `.env.example`) : compte, profil, dressing, ports, tenues prévues, Kode et paiement
-y sont enregistrés. Sans ces deux lignes, l'app tourne en démonstration, sans réseau.
-« J'ai déjà un compte » ouvre alors le compte de démonstration.
+y sont enregistrés. Les photos ajoutées partent chez Kode, qui repère chaque pièce, la
+dessine et la range sans fond ; l'écran d'ajout montre le scan de repérage puis le
+détourage de chaque pièce. Sans ces deux lignes, l'app tourne en démonstration, sans
+réseau, et la reconnaissance des photos est simulée. « J'ai déjà un compte » ouvre
+alors le compte de démonstration.
 
 ## Polices
 
@@ -49,7 +52,7 @@ relance avec `npx expo start --clear` : les variables sont figées dans le cache
 | `src/theme/` | Jetons (couleurs, typo, rayons, mouvement) et thème clair/sombre |
 | `src/ui/` | Composants : verre, barre d'onglets, boutons, feuilles, illustrations, icônes |
 | `src/screens/` | Les écrans (voir la table ci-dessous) |
-| `src/state/` | État de l'app, pont Supabase (`remote.ts`), réponses simulées de Kode en démonstration |
+| `src/state/` | État de l'app, pont Supabase (`remote.ts`), suivi des photos confiées à Kode (`jobs.ts`), réponses simulées de Kode en démonstration |
 | `src/data/` | Le dressing fictif (37 pièces), l'agenda, la météo |
 
 | # | Écran du brief | Fichier |

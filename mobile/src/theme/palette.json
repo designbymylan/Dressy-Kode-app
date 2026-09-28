@@ -29,7 +29,19 @@
     "halo-1": "#FFD9C7",
     "halo-2": "#D9D5FF",
     "halo-3": "#CFE6FF",
-    "halo-4": "#FFD6E5"
+    "halo-4": "#FFD6E5",
+    "halo-sun-1": "#FFC9A8",
+    "halo-sun-2": "#FFE7A3",
+    "halo-sun-3": "#FFD2B8",
+    "halo-sun-4": "#FFD6E5",
+    "halo-rain-1": "#B7CDEA",
+    "halo-rain-2": "#CFC7FF",
+    "halo-rain-3": "#A9C1D9",
+    "halo-rain-4": "#C8D3F0",
+    "halo-cloud-1": "#DFE7F2",
+    "halo-cloud-2": "#C9D6E6",
+    "halo-cloud-3": "#EEF1F6",
+    "halo-cloud-4": "#D9DEE8"
   },
   "dark": {
     "paper": "#0B0C10",
@@ -61,6 +73,18 @@
     "halo-1": "#5B2F24",
     "halo-2": "#2F2A6B",
     "halo-3": "#173A5C",
-    "halo-4": "#5A2340"
+    "halo-4": "#5A2340",
+    "halo-sun-1": "#6B3A22",
+    "halo-sun-2": "#5C4A1C",
+    "halo-sun-3": "#6B3526",
+    "halo-sun-4": "#5A2340",
+    "halo-rain-1": "#1C3552",
+    "halo-rain-2": "#2F2A6B",
+    "halo-rain-3": "#1B3346",
+    "halo-rain-4": "#25305C",
+    "halo-cloud-1": "#2A3240",
+    "halo-cloud-2": "#232B38",
+    "halo-cloud-3": "#2E3440",
+    "halo-cloud-4": "#262C36"
   }
 }
