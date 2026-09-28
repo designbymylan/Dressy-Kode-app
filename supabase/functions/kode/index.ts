@@ -1,8 +1,8 @@
 /**
- * Kode, le styliste de Dressy.
+ * Kode, le styliste de Dresskode.
  *
  * Reçoit une question de la personne connectée, relit son dressing, son
- * profil et son agenda, et fait répondre Claude — avec, quand la question
+ * profil et son agenda, et fait répondre Claude, avec, quand la question
  * s'y prête, une tenue composée uniquement de pièces qu'elle possède.
  *
  *   POST { question }  →  { question_id, reply_id }
@@ -132,14 +132,14 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string) 
   const agenda: AgendaLine[] = [];
   for (const p of (planned.data ?? []) as unknown as { day: string; worn: boolean; outfits: OutfitEmbed }[]) {
     const names = pieceNames(p.outfits);
-    if (names) agenda.push({ day: `${p.day} (${weekday(p.day)})`, text: `tenue déjà prévue — ${names}${p.worn ? ' (portée)' : ''}` });
+    if (names) agenda.push({ day: `${p.day} (${weekday(p.day)})`, text: `tenue déjà prévue : ${names}${p.worn ? ' (portée)' : ''}` });
   }
   for (const e of events.data ?? []) {
     const details = [e.kind, e.dress_code && `dress code ${e.dress_code}`, e.stake && `enjeu ${e.stake.toLowerCase()}`]
       .filter(Boolean).join(', ');
     agenda.push({
       day: `${e.day} (${weekday(e.day)})${e.slot ? `, ${e.slot.toLowerCase()}` : ''}`,
-      text: `${e.title}${details ? ` (${details})` : ''}${e.note ? ` — ${e.note}` : ''}`,
+      text: `${e.title}${details ? ` (${details})` : ''}${e.note ? ` (${e.note})` : ''}`,
     });
   }
 
@@ -150,7 +150,7 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string) 
     .map((m): Turn => {
       if (m.author === 'user') return { role: 'user', content: m.body };
       const names = pieceNames(m.outfits);
-      const card = names ? `\n[Tenue proposée : « ${m.meta?.titre ?? m.outfits?.name ?? ''} » — ${names}]` : '';
+      const card = names ? `\n[Tenue proposée : « ${m.meta?.titre ?? m.outfits?.name ?? ''} » : ${names}]` : '';
       return { role: 'assistant', content: m.body + card };
     });
 
@@ -194,7 +194,7 @@ async function askClaude(system: string, context: string, turns: Turn[]) {
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
       console.error('Claude refuse la clé :', err.message);
-      throw new KodeError('Kode est indisponible pour le moment : la clé Anthropic est refusée.', 503);
+      throw new KodeError('Kode n’est pas disponible pour le moment. Réessaie un peu plus tard.', 503);
     }
     if (err instanceof Anthropic.RateLimitError) {
       throw new KodeError('Kode est très demandé en ce moment. Réessaie dans une minute.', 503);
@@ -205,7 +205,7 @@ async function askClaude(system: string, context: string, turns: Turn[]) {
     if (err instanceof Anthropic.APIError) {
       // Un crédit épuisé arrive ici (400) : le détail part dans les journaux.
       console.error(`Claude ${err.status} :`, err.message);
-      throw new KodeError(`Kode n’a pas pu répondre (erreur ${err.status ?? 'réseau'}). Réessaie dans un moment.`, 502);
+      throw new KodeError('Kode n’a pas pu répondre. Réessaie dans un moment.', 502);
     }
     throw err;
   }
@@ -265,8 +265,8 @@ async function reply(token: string, question: string) {
     const refs = withRefs(ctx.wardrobe);
     const context = [
       profileText(ctx.name, ctx.style),
-      `Agenda Dressy des deux prochaines semaines :\n${agendaText(ctx.agenda)}`,
-      `Dressing — ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
+      `Agenda Dresskode des deux prochaines semaines :\n${agendaText(ctx.agenda)}`,
+      `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
     ].join('\n\n');
 
     // La date n'entre que dans la dernière bulle : placée dans le contexte,

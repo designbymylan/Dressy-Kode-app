@@ -12,7 +12,7 @@ let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) fails++;
-  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` — attendu ${JSON.stringify(want)}, obtenu ${JSON.stringify(got)}`}`);
+  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` : attendu ${JSON.stringify(want)}, obtenu ${JSON.stringify(got)}`}`);
 };
 
 // ---------------------------------------------------------------- clés de prix

@@ -5,58 +5,182 @@
 
 export type Raster = { width: number; height: number; data: Uint8Array };
 
+type Rgb = [number, number, number];
+
 /**
- * Rend transparent le fond uni autour d'un vêtement.
+ * Teinte du fond : la médiane de TOUT le pourtour de l'image, canal par
+ * canal. Plus robuste que les quatre coins, qu'un pli de la pièce ou un
+ * reste d'ombre suffit à fausser.
+ */
+export function borderColour(r: Raster): Rgb {
+  const { width: w, height: h, data } = r;
+  const hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)];
+  let n = 0;
+  const add = (x: number, y: number) => {
+    const i = (y * w + x) * 4;
+    hist[0][data[i]]++; hist[1][data[i + 1]]++; hist[2][data[i + 2]]++;
+    n++;
+  };
+  for (let x = 0; x < w; x++) { add(x, 0); add(x, h - 1); }
+  for (let y = 1; y < h - 1; y++) { add(0, y); add(w - 1, y); }
+  const median = (hc: Uint32Array) => {
+    let acc = 0;
+    for (let v = 0; v < 256; v++) { acc += hc[v]; if (acc * 2 >= n) return v; }
+    return 255;
+  };
+  return [median(hist[0]), median(hist[1]), median(hist[2])];
+}
+
+/**
+ * Rend transparent le fond uni autour d'une pièce, en quatre temps.
  *
- * Le remplissage part des BORDS et progresse vers l'intérieur : seuls les
- * pixels proches du fond ET reliés au bord deviennent transparents. C'est ce
- * qui sauve une chemise ivoire ou un pantalon écru — leur clair n'est pas
- * relié au bord, il est entouré par le vêtement, donc il est conservé.
- *
- * Un seuil global (« tout ce qui est clair devient transparent ») effacerait
- * au contraire l'intérieur de ces pièces, qui sont justement au cœur du
- * dressing visé par le brief.
+ * 1. Remplissage depuis les BORDS : seuls les pixels proches du fond ET
+ *    reliés au bord deviennent transparents. C'est ce qui sauve une chemise
+ *    ivoire : son clair n'est pas relié au bord, il est entouré par le
+ *    vêtement, donc il est conservé. Un seuil global effacerait au contraire
+ *    l'intérieur des pièces claires.
+ * 2. Les trous : le fond enfermé dans la pièce (anse d'un sac, intérieur
+ *    d'un collier, d'une ceinture bouclée) n'est pas relié au bord. On le
+ *    vide s'il est parfaitement uni et de la teinte exacte du fond ; un
+ *    imprimé clair, lui, a toujours un grain qui le trahit.
+ * 3. Les poussières : les petits îlots détachés de la pièce disparaissent
+ *    (8-connexité, pour ne pas casser une chaîne fine en diagonale).
+ * 4. Les bords : une bande de deux pixels reçoit une transparence
+ *    progressive et perd la teinte du fond qui s'y mêlait, pour éviter le
+ *    liseré blanc ou gris autour de la pièce.
  */
 export function cutoutBackground(r: Raster, tolerance = 26): Raster {
   const { width: w, height: h, data } = r;
+  const size = w * h;
   const out = new Uint8Array(data);
-  const seen = new Uint8Array(w * h);
+  const bg = borderColour(r);
+  const tol = tolerance * 3;
 
-  // Teinte du fond : moyenne des quatre coins, plus robuste qu'un seul pixel.
-  const corners = [0, (w - 1) * 4, (h - 1) * w * 4, (h * w - 1) * 4];
-  let br = 0, bg = 0, bb = 0;
-  for (const c of corners) { br += data[c]; bg += data[c + 1]; bb += data[c + 2]; }
-  br /= 4; bg /= 4; bb /= 4;
-
-  const near = (i: number) => {
-    const d = Math.abs(data[i] - br) + Math.abs(data[i + 1] - bg) + Math.abs(data[i + 2] - bb);
-    return d <= tolerance * 3;
-  };
-
-  // File explicite plutôt que récursion : une image 1024² déborderait la pile.
-  const queue: number[] = [];
-  const push = (x: number, y: number) => {
-    if (x < 0 || y < 0 || x >= w || y >= h) return;
-    const p = y * w + x;
-    if (seen[p]) return;
-    seen[p] = 1;
-    if (near(p * 4)) queue.push(p);
-  };
-
-  for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
-  for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
-
-  while (queue.length) {
-    const p = queue.pop()!;
-    out[p * 4 + 3] = 0;
-    const x = p % w, y = (p / w) | 0;
-    push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
+  const dist = new Uint16Array(size);
+  for (let p = 0; p < size; p++) {
+    const i = p * 4;
+    dist[p] = Math.abs(data[i] - bg[0]) + Math.abs(data[i + 1] - bg[1]) + Math.abs(data[i + 2] - bg[2]);
   }
+
+  const clear = new Uint8Array(size); // 1 = fond, rendu transparent
+  const stack = new Int32Array(size);
+
+  // 1. remplissage depuis les bords
+  let top = 0;
+  const seed = (p: number) => {
+    if (clear[p] || dist[p] > tol) return;
+    clear[p] = 1;
+    stack[top++] = p;
+  };
+  for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+  while (top) {
+    const p = stack[--top];
+    const x = p % w;
+    if (x > 0) seed(p - 1);
+    if (x < w - 1) seed(p + 1);
+    if (p >= w) seed(p - w);
+    if (p < size - w) seed(p + w);
+  }
+
+  // 2. trous de fond enfermés dans la pièce
+  const seen = new Uint8Array(size);
+  const minHole = Math.max(48, Math.round(size * 0.0003));
+  const members: number[] = [];
+  for (let s = 0; s < size; s++) {
+    if (clear[s] || seen[s] || dist[s] > tol) continue;
+    members.length = 0;
+    seen[s] = 1;
+    stack[0] = s;
+    top = 1;
+    let sumD = 0, sumL = 0, sumL2 = 0;
+    while (top) {
+      const p = stack[--top];
+      members.push(p);
+      const i = p * 4;
+      const l = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
+      sumD += dist[p]; sumL += l; sumL2 += l * l;
+      const x = p % w;
+      const next = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p >= w ? p - w : -1, p < size - w ? p + w : -1];
+      for (const q of next) {
+        if (q < 0 || seen[q] || clear[q] || dist[q] > tol) continue;
+        seen[q] = 1;
+        stack[top++] = q;
+      }
+    }
+    const n = members.length;
+    const meanD = sumD / n;
+    const sd = Math.sqrt(Math.max(0, sumL2 / n - (sumL / n) ** 2));
+    if (n >= minHole && meanD <= 24 && sd <= 4) for (const p of members) clear[p] = 1;
+  }
+
+  // 3. îlots de poussière
+  const label = new Int32Array(size).fill(-1);
+  const areas: number[] = [];
+  for (let s = 0; s < size; s++) {
+    if (clear[s] || label[s] >= 0) continue;
+    const id = areas.length;
+    let area = 0;
+    label[s] = id;
+    stack[0] = s;
+    top = 1;
+    while (top) {
+      const p = stack[--top];
+      area++;
+      const x = p % w, y = (p / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= w || (!dx && !dy)) continue;
+          const q = yy * w + xx;
+          if (clear[q] || label[q] >= 0) continue;
+          label[q] = id;
+          stack[top++] = q;
+        }
+      }
+    }
+    areas.push(area);
+  }
+  if (areas.length > 1) {
+    const largest = Math.max(...areas);
+    const minIsland = Math.max(24, Math.round(largest * 0.004));
+    for (let p = 0; p < size; p++) if (label[p] >= 0 && areas[label[p]] < minIsland) clear[p] = 1;
+  }
+
+  for (let p = 0; p < size; p++) if (clear[p]) out[p * 4 + 3] = 0;
+
+  // 4. bords doux, sur deux pixels. Seuls les pixels « entre deux » (ni
+  // fond, ni franchement pièce) sont touchés : l'intérieur clair d'une pièce,
+  // même au ras de son contour, garde son opacité.
+  const soft = new Uint8Array(size);
+  const touches = (p: number, mark: (q: number) => boolean) => {
+    const x = p % w;
+    return (x > 0 && mark(p - 1)) || (x < w - 1 && mark(p + 1)) || (p >= w && mark(p - w)) || (p < size - w && mark(p + w));
+  };
+  const blend = (p: number) => dist[p] > tol && dist[p] < tol * 2;
+  const soften = (p: number) => {
+    const a = (dist[p] - tol) / tol;
+    const i = p * 4;
+    out[i + 3] = Math.round(255 * a);
+    for (let k = 0; k < 3; k++) {
+      const v = (data[i + k] - (1 - a) * bg[k]) / a;
+      out[i + k] = Math.max(0, Math.min(255, Math.round(v)));
+    }
+  };
+  for (let p = 0; p < size; p++) {
+    if (!clear[p] && blend(p) && touches(p, (q) => clear[q] === 1)) soft[p] = 1;
+  }
+  for (let p = 0; p < size; p++) {
+    if (!clear[p] && !soft[p] && blend(p) && touches(p, (q) => soft[q] === 1)) soft[p] = 2;
+  }
+  for (let p = 0; p < size; p++) if (soft[p]) soften(p);
 
   return { width: w, height: h, data: out };
 }
 
-/** Part des pixels rendus transparents — sert à repérer un détourage raté. */
+/** Part des pixels rendus transparents : sert à repérer un détourage raté. */
 export function alphaRatio(r: Raster): number {
   let clear = 0;
   for (let i = 3; i < r.data.length; i += 4) if (r.data[i] === 0) clear++;

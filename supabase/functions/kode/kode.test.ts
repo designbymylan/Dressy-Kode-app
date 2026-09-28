@@ -11,7 +11,7 @@ let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) fails++;
-  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` — attendu ${JSON.stringify(want)}, obtenu ${JSON.stringify(got)}`}`);
+  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` : attendu ${JSON.stringify(want)}, obtenu ${JSON.stringify(got)}`}`);
 };
 
 const g = (id: string, category_id: string, name: string, extra: Partial<Garment> = {}): Garment => ({
@@ -92,7 +92,7 @@ check('agenda trié par jour', agendaText([
   { day: '2026-09-30 (mardi)', text: 'Entretien' },
   { day: '2026-09-27 (dimanche)', text: 'Brunch' },
 ]), '- 2026-09-27 (dimanche) : Brunch\n- 2026-09-30 (mardi) : Entretien');
-check('agenda vide', agendaText([]), 'Rien de noté dans son agenda Dressy.');
+check('agenda vide', agendaText([]), 'Rien de noté dans son agenda Dresskode.');
 check('schéma strict : tout est requis', [ANSWER_SCHEMA.required, ANSWER_SCHEMA.properties.tenue.required],
   [['reponse', 'tenue'], ['titre', 'pourquoi', 'pieces']]);
 

@@ -6,13 +6,13 @@
  */
 import { cutoutBackground, alphaRatio, cropToContent, downscale, type Raster } from './cutout.ts';
 import { planRun, normaliseVerdict, isValidated, bestByScore, MAX_RUNS, type Candidate } from './decide.ts';
-import { backdropFor } from './prompts.ts';
+import { backdropFor, cleanTarget } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) fails++;
-  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` — attendu ${JSON.stringify(want)}, obtenu ${JSON.stringify(got)}`}`);
+  console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : ` : attendu ${JSON.stringify(want)}, obtenu ${JSON.stringify(got)}`}`);
 };
 
 // ---------------------------------------------------------------- détourage
@@ -71,20 +71,78 @@ check('moyenne pondérée par l\'alpha : couleur de la partie opaque', one.data[
 check('moyenne pondérée par l\'alpha : alpha moyen', one.data[3], 128);
 
 // ---------------------------------------------------------------- fond
+//
+// Le fond doit s'éloigner de TOUTES les couleurs de la pièce, pas seulement
+// de la dominante : une marinière marine et blanche sur fond blanc perdrait
+// ses rayures au détourage.
 
 check('fond blanc pour une pièce sombre', backdropFor(['marine']), '#FFFFFF');
 check('fond gris pour une pièce blanche', backdropFor(['blanc', 'noir']), '#808080');
 check('fond gris pour une pièce crème', backdropFor(['creme']), '#808080');
+check('fond gris si le blanc est en second', backdropFor(['marine', 'blanc']), '#808080');
+check('fond vert pour une pièce blanche ET grise', backdropFor(['blanc', 'gris']), '#00B140');
+check('fond gris pour un bijou argenté', backdropFor(['argente']), '#808080');
 check('fond blanc si aucune couleur', backdropFor([]), '#FFFFFF');
+
+// ---------------------------------------------------------------- détourage fin
+
+/** Fond blanc, un sac marine dont l'anse enferme un carré de fond, et une poussière. */
+function bag(): Raster {
+  const w = 100, h = 100;
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      let c = [255, 255, 255];
+      const body = x >= 20 && x < 80 && y >= 50 && y < 90;
+      const handle = x >= 30 && x < 70 && y >= 15 && y < 50 && !(x >= 38 && x < 62 && y >= 23);
+      if (body || handle) c = [38, 51, 77];
+      if (x >= 5 && x < 7 && y >= 5 && y < 7) c = [120, 120, 120]; // poussière de 4 px
+      if (x === 20 && y >= 60 && y < 70) c = [215, 220, 230]; // bord anticrénelé
+      data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255;
+    }
+  }
+  return { width: w, height: h, data };
+}
+const b = cutoutBackground(bag());
+const aAt = (x: number, y: number) => b.data[(y * 100 + x) * 4 + 3];
+check('anse : le fond enfermé devient transparent', aAt(50, 35), 0);
+check('anse : la matière reste opaque', aAt(33, 30), 255);
+check('poussière isolée effacée', aAt(5, 5), 0);
+check('corps du sac opaque', aAt(50, 70), 255);
+const edge = aAt(20, 65);
+check('bord anticrénelé : semi-transparent', edge > 0 && edge < 255, true);
+
+// Un imprimé clair ET texturé au milieu d'une pièce sombre n'est pas un trou.
+const printed = shirt();
+for (let y = 50; y < 70; y++) {
+  for (let x = 50; x < 70; x++) {
+    const i = (y * W + x) * 4;
+    const v = (x + y) % 2 ? 236 : 250; // grain du tissu
+    printed.data[i] = v; printed.data[i + 1] = v; printed.data[i + 2] = v;
+  }
+}
+check('imprimé clair texturé conservé', alphaAt(cutoutBackground(printed), 60, 60), 255);
+
+// ---------------------------------------------------------------- fiche
+
+const fiche = cleanTarget({
+  name: 'Veste en jean', category: 'vestes', kind: 'jean', colors: ['bleu', 'violetfluo', 'bleu', 'blanc', 'noir', 'gris'],
+  material: 'denim', where: 'portée par-dessus le t-shirt', description: '…', prompt: 'Reproduce only the denim jacket…',
+});
+check('fiche : type incohérent avec la catégorie → null', fiche?.kind, null);
+check('fiche : couleurs filtrées, dédoublonnées, 3 au plus', fiche?.colors, ['bleu', 'blanc', 'noir']);
+check('fiche : catégorie inconnue → accessoires', cleanTarget({ category: 'lingerie', prompt: 'x' })?.category, 'accessoires');
+check('fiche sans consigne → écartée', cleanTarget({ name: 'Pull', category: 'hauts', prompt: '  ' }), null);
 
 // ---------------------------------------------------------------- verdict
 
 const perfect = { type_coupe: 98, couleurs: 97, motifs: 100, matiere: 96, details: 95, proportions: 97 };
 
-check('verdict ≥ 95, fond uni, pièce entière → validé',
-  isValidated(normaliseVerdict({ criteres: perfect, score: 96, fond_uni: true, piece_entiere: true, ecarts: [] })), true);
-check('verdict à 94 → refusé',
-  isValidated(normaliseVerdict({ criteres: perfect, score: 94, fond_uni: true, piece_entiere: true })), false);
+check('verdict ≥ seuil, fond uni, pièce entière → validé',
+  isValidated(normaliseVerdict({ criteres: perfect, score: 90, fond_uni: true, piece_entiere: true, ecarts: [] })), true);
+check('verdict juste sous le seuil → refusé',
+  isValidated(normaliseVerdict({ criteres: perfect, score: 87, fond_uni: true, piece_entiere: true })), false);
 check('score 99 mais fond non uni → refusé',
   isValidated(normaliseVerdict({ criteres: perfect, score: 99, fond_uni: false, piece_entiere: true })), false);
 check('score plafonné au critère le plus faible + 5',
@@ -106,14 +164,14 @@ check('essai 1 refusé → essai 2', p2.kind === 'attempt' && p2.attempt, 2);
 check('essai 2 reçoit la critique du 1', p2.kind === 'attempt' && p2.previous?.ecarts, ['col trop large']);
 
 check('essai 2 validé → rangement',
-  planRun(3, [cand(1, 80), cand(2, 96, { validated: true })]).kind, 'finalize');
+  planRun(3, [cand(1, 80), cand(2, 90, { validated: true })]).kind, 'finalize');
 check('image générée mais pas jugée → juger, pas régénérer',
   planRun(3, [cand(1, 80), cand(2, null)]), { kind: 'judge', candidate: cand(2, null) });
-check('3 essais refusés → Claude choisit',
-  planRun(4, [cand(1, 80), cand(2, 90), cand(3, 85)]).kind, 'select');
+check('2 essais refusés → le contrôle choisit, pas de 3e essai',
+  planRun(3, [cand(1, 80), cand(2, 85)]).kind, 'select');
 check('choix déjà fait → rangement sans redemander',
-  planRun(5, [cand(1, 80), cand(2, 90, { chosen: true }), cand(3, 85)]),
-  { kind: 'finalize', candidate: cand(2, 90, { chosen: true }) });
+  planRun(5, [cand(1, 80), cand(2, 85, { chosen: true })]),
+  { kind: 'finalize', candidate: cand(2, 85, { chosen: true }) });
 check('trop de passages → échec', planRun(MAX_RUNS + 1, []).kind, 'fail');
 check('repli : meilleure note', bestByScore([cand(1, 80), cand(2, 91), cand(3, 85)]).attempt, 2);
 check('repli : à égalité, le plus récent', bestByScore([cand(1, 88), cand(2, 88)]).attempt, 2);

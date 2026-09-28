@@ -1,29 +1,69 @@
 /**
- * Les trois modèles que l'agent fait travailler. Chaque fonction ne fait
- * qu'un appel et rend un résultat propre ; l'enchaînement est dans index.ts.
+ * Les modèles que l'agent fait travailler. Chaque fonction ne fait qu'un
+ * appel et rend un résultat propre ; l'enchaînement est dans index.ts.
+ *
+ *   Opus 5 (MODELS.prompts) : repère les pièces d'une photo et écrit la
+ *     consigne de chacune ; réécrit la consigne après un essai refusé.
+ *   Nano Banana (MODELS.gemini) : dessine la pièce seule, sur fond uni.
+ *   Sonnet 5 (MODELS.judge) : contrôle qualité, plus rapide pour un verdict.
+ *
+ * Rien de ce fichier n'est montré tel quel : un AgentError porte un message
+ * écrit pour la personne (qui ne nomme jamais les modèles) et un détail
+ * technique qui ne va que dans les journaux.
  */
 import { Buffer } from 'node:buffer';
+import Anthropic, { APIError, APIConnectionTimeoutError } from '@anthropic-ai/sdk';
 import {
-  CATEGORIES, COLOUR_IDS, KINDS, DESCRIBE_TOOL, DESCRIBE_SYSTEM, describeUserText,
-  JUDGE_SYSTEM, VERDICT_TOOL, PICK_SYSTEM, PICK_TOOL, type Previous,
+  MAX_PIECES, cleanTarget,
+  INVENTORY_SYSTEM, INVENTORY_SCHEMA, inventoryUserText,
+  REFINE_SYSTEM, REFINE_SCHEMA, refineUserText,
+  JUDGE_SYSTEM, VERDICT_SCHEMA, judgeText,
+  PICK_SYSTEM, PICK_SCHEMA,
+  type Previous, type Target,
 } from './prompts.ts';
 import { normaliseVerdict, type Verdict } from './decide.ts';
 import { sniffMime } from './codec.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
 export type Usage = Record<string, unknown> | null;
+type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
-/** Erreur dont le message peut être montré tel quel dans le dressing. */
-export class AgentError extends Error {}
+/** Erreur dont `message` peut être montré dans le dressing ; `detail` reste dans les journaux. */
+export class AgentError extends Error {
+  constructor(message: string, readonly detail?: string) {
+    super(message);
+  }
+}
 
-const CLAUDE = Deno.env.get('CLAUDE_MODEL') ?? 'claude-sonnet-5';
+/** Les messages que la personne peut lire. Aucun ne nomme un modèle ni un fournisseur. */
+export const SAY = {
+  notReady: "Kode n'est pas encore prêt à dessiner tes pièces. Réessaie un peu plus tard.",
+  busy: 'Kode est très demandé en ce moment. Réessaie dans quelques minutes.',
+  failed: "Kode n'a pas pu finir cette pièce. Réessaie dans un moment.",
+  refused: "Kode n'a pas pu dessiner cette pièce. Essaie avec une autre photo.",
+  nothing: "Kode n'a trouvé aucune pièce à ranger sur cette photo. Essaie avec une photo où elle se voit en entier.",
+  photo: 'Kode ne retrouve plus ta photo. Confie-la de nouveau.',
+} as const;
+
+const env = (name: string) => Deno.env.get(name)?.trim() || undefined;
+const effort = (name: string, fallback: Effort): Effort => {
+  const v = env(name);
+  return v && ['low', 'medium', 'high', 'xhigh', 'max'].includes(v) ? v as Effort : fallback;
+};
 
 export const MODELS = {
-  // Claude décrit la photo et écrit la consigne ; il peut tourner sur un autre
-  // modèle que le contrôle qualité (CLAUDE_DESCRIBE_MODEL), sinon le même.
-  describe: Deno.env.get('CLAUDE_DESCRIBE_MODEL') ?? CLAUDE,
-  gemini: Deno.env.get('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
-  claude: CLAUDE,
+  // Opus 5 écrit les consignes de Nano Banana : c'est l'étape qui décide de
+  // la ressemblance, et un seul appel sert toutes les pièces d'une photo.
+  prompts: env('CLAUDE_PROMPT_MODEL') ?? 'claude-opus-5',
+  gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
+  judge: env('CLAUDE_MODEL') ?? 'claude-sonnet-5',
+};
+
+// L'effort est le premier levier de vitesse : « medium » est déjà très bon
+// sur Opus 5 ; le verdict, plus simple, passe en « low ».
+export const EFFORT = {
+  prompts: effort('CLAUDE_PROMPT_EFFORT', 'medium'),
+  judge: effort('CLAUDE_JUDGE_EFFORT', 'low'),
 };
 
 export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
@@ -37,7 +77,7 @@ function readKey(name: (typeof KEYS)[number]): string | undefined {
 
 function secret(name: (typeof KEYS)[number]): string {
   const v = readKey(name);
-  if (!v) throw new AgentError(`Clé ${name} absente des secrets Supabase (Edge Functions → Secrets).`);
+  if (!v) throw new AgentError(SAY.notReady, `${name} absente des secrets Supabase`);
   return v;
 }
 
@@ -54,15 +94,12 @@ function keyShape(name: (typeof KEYS)[number]) {
 
 const b64 = (u: Uint8Array) => Buffer.from(u).toString('base64');
 
-async function apiError(who: string, key: string, res: Response): Promise<AgentError> {
-  const text = (await res.text()).replace(/\s+/g, ' ').slice(0, 240);
-  if (res.status === 401 || res.status === 403) {
-    return new AgentError(`${who} refuse la clé ${key} (${res.status}). Vérifie-la dans les secrets Supabase.`);
-  }
-  if (res.status === 429) {
-    return new AgentError(`${who} limite les appels ou le crédit est épuisé (429). ${text}`);
-  }
-  return new AgentError(`${who} a répondu ${res.status} : ${text}`);
+/** Traduit un code HTTP d'un fournisseur en message lisible, le détail partant aux journaux. */
+function httpError(who: string, status: number, text: string): AgentError {
+  const detail = `${who} ${status} : ${text.replace(/\s+/g, ' ').slice(0, 300)}`;
+  if (status === 401 || status === 403) return new AgentError(SAY.notReady, detail);
+  if (status === 429 || status === 529 || /credit|quota|billing/i.test(text)) return new AgentError(SAY.busy, detail);
+  return new AgentError(SAY.failed, detail);
 }
 
 // ---------------------------------------------------------------- Nano Banana
@@ -86,32 +123,35 @@ export async function generate(prompt: string, sources: Img[]): Promise<Img & { 
     });
 
   const size = { aspectRatio: '1:1', imageSize: '1K' };
-  let res = await call({ responseModalities: ['IMAGE'], responseFormat: { image: size } });
-
-  // La documentation publie deux formes de ce réglage selon les pages et les
-  // modèles ; si la plus récente est refusée, on retente avec l'ancienne.
-  if (res.status === 400) {
-    const text = await res.text();
-    if (!/responseFormat|Unknown name|Invalid JSON payload/i.test(text)) {
-      throw new AgentError(`Nano Banana a répondu 400 : ${text.replace(/\s+/g, ' ').slice(0, 240)}`);
+  let res: Response;
+  try {
+    res = await call({ responseModalities: ['IMAGE'], responseFormat: { image: size } });
+    // La documentation publie deux formes de ce réglage selon les pages et les
+    // modèles ; si la plus récente est refusée, on retente avec l'ancienne.
+    if (res.status === 400) {
+      const text = await res.text();
+      if (!/responseFormat|Unknown name|Invalid JSON payload/i.test(text)) throw httpError('Nano Banana', 400, text);
+      res = await call({ responseModalities: ['IMAGE'], imageConfig: size });
     }
-    res = await call({ responseModalities: ['IMAGE'], imageConfig: size });
+  } catch (err) {
+    if (err instanceof AgentError) throw err;
+    throw new AgentError(SAY.failed, `Nano Banana injoignable : ${err instanceof Error ? err.message : err}`);
   }
-  if (!res.ok) throw await apiError('Nano Banana', 'GEMINI_API_KEY', res);
+  if (!res.ok) throw httpError('Nano Banana', res.status, await res.text());
 
   const body = await res.json();
   const candidate = body?.candidates?.[0];
   const blocked = body?.promptFeedback?.blockReason ?? (
     /SAFETY|PROHIBITED|BLOCK/.test(candidate?.finishReason ?? '') ? candidate.finishReason : null
   );
-  if (blocked) throw new AgentError(`Nano Banana a refusé de générer l'image (${blocked}).`);
+  if (blocked) throw new AgentError(SAY.refused, `Nano Banana a refusé : ${blocked}`);
 
   // Le modèle peut renvoyer des images de brouillon marquées « thought » : on
   // garde la dernière image définitive.
   type Part = { thought?: boolean; inlineData?: { data: string; mimeType?: string } };
   const images = ((candidate?.content?.parts ?? []) as Part[]).filter((p) => p.inlineData && !p.thought);
   const last = images.at(-1);
-  if (!last?.inlineData) throw new AgentError("Nano Banana n'a renvoyé aucune image.");
+  if (!last?.inlineData) throw new AgentError(SAY.refused, "Nano Banana n'a renvoyé aucune image");
 
   const bytes = new Uint8Array(Buffer.from(last.inlineData.data, 'base64'));
   const mime = sniffMime(bytes) ?? last.inlineData.mimeType ?? 'image/png';
@@ -120,113 +160,144 @@ export async function generate(prompt: string, sources: Img[]): Promise<Img & { 
 
 // ---------------------------------------------------------------- Claude
 
-type ClaudeBlock =
-  | { type: 'text'; text: string }
-  | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } };
-
-const imageBlock = (img: Img): ClaudeBlock => ({
-  type: 'image',
-  source: { type: 'base64', media_type: img.mime, data: b64(img.bytes) },
-});
-
-async function askClaude(
-  system: string,
-  tool: { name: string },
-  content: ClaudeBlock[],
-  opts: { model?: string; maxTokens?: number; missing?: string } = {},
-) {
-  const key = secret('ANTHROPIC_API_KEY');
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-    },
-    signal: AbortSignal.timeout(60_000),
-    body: JSON.stringify({
-      model: opts.model ?? MODELS.claude,
-      max_tokens: opts.maxTokens ?? 1500,
-      system,
-      tools: [tool],
-      tool_choice: { type: 'tool', name: tool.name },
-      messages: [{ role: 'user', content }],
-    }),
-  });
-  if (!res.ok) throw await apiError('Claude', 'ANTHROPIC_API_KEY', res);
-
-  const body = await res.json();
-  if (body.stop_reason === 'max_tokens') throw new AgentError('La réponse de Claude a été coupée (max_tokens) : relance la pièce.');
-  const use = (body.content ?? []).find((b: { type: string }) => b.type === 'tool_use');
-  if (!use) throw new AgentError(opts.missing ?? "Claude n'a pas rendu de verdict.");
-  return { input: use.input as unknown, usage: (body.usage ?? null) as Usage };
+let client: Anthropic | null = null;
+function anthropic(): Anthropic {
+  // Une seule reprise automatique : au-delà, c'est la file de l'agent qui
+  // retente, sans bloquer le passage.
+  client ??= new Anthropic({ apiKey: secret('ANTHROPIC_API_KEY'), timeout: 100_000, maxRetries: 1 });
+  return client;
 }
 
-// Claude décrit la photo et écrit la consigne de Nano Banana (étape tenue
-// autrefois par ChatGPT). La réponse passe par un outil forcé dont le schéma
-// est celui de la fiche : même contrat qu'avant pour le reste de l'agent.
+type Block =
+  | { type: 'text'; text: string }
+  | { type: 'image'; source: { type: 'base64'; media_type: 'image/jpeg' | 'image/png' | 'image/webp'; data: string } };
 
-export type Described = {
-  name: string;
-  category: (typeof CATEGORIES)[number];
-  /** Type précis (collier, bandeau, jean…), ou null s'il ne va pas avec la catégorie. */
-  kind: string | null;
-  colors: string[];
-  material: string;
-  description: string;
-  prompt: string;
-  usage: Usage;
-};
+const imageBlock = (img: Img): Block => ({
+  type: 'image',
+  source: {
+    type: 'base64',
+    media_type: (['image/jpeg', 'image/png', 'image/webp'].includes(img.mime) ? img.mime : 'image/jpeg') as 'image/jpeg',
+    data: b64(img.bytes),
+  },
+});
 
-export async function describe(input: {
-  sources: Img[];
-  hint: string;
-  gender: string | null;
-  previous: Previous | null;
-}): Promise<Described> {
-  const { input: raw, usage } = await askClaude(DESCRIBE_SYSTEM, DESCRIBE_TOOL, [
-    ...input.sources.map(imageBlock),
-    { type: 'text', text: describeUserText(input) },
-  ], { model: MODELS.describe, maxTokens: 3000, missing: "Claude n'a renvoyé aucune description." });
+/**
+ * Un appel Claude dont la réponse suit un schéma JSON (sorties structurées).
+ * La réflexion reste adaptative, par défaut sur ces modèles ; l'effort règle
+ * la vitesse.
+ */
+async function askJson(opts: {
+  model: string;
+  effort: Effort;
+  system: string;
+  schema: Record<string, unknown>;
+  content: Block[];
+  maxTokens: number;
+}): Promise<{ data: unknown; usage: Usage }> {
+  let res: Anthropic.Message;
+  try {
+    res = await anthropic().messages.create({
+      model: opts.model,
+      max_tokens: opts.maxTokens,
+      system: opts.system,
+      messages: [{ role: 'user', content: opts.content }],
+      output_config: { effort: opts.effort, format: { type: 'json_schema', schema: opts.schema } },
+    });
+  } catch (err) {
+    if (err instanceof AgentError) throw err;
+    if (err instanceof APIError && typeof err.status === 'number') throw httpError(`Claude ${opts.model}`, err.status, err.message);
+    if (err instanceof APIConnectionTimeoutError) throw new AgentError(SAY.failed, `Claude ${opts.model} : délai dépassé`);
+    throw new AgentError(SAY.failed, `Claude ${opts.model} : ${err instanceof Error ? err.message : err}`);
+  }
 
-  const parsed = (raw ?? {}) as Record<string, unknown>;
-  const category = (CATEGORIES as readonly string[]).includes(String(parsed.category))
-    ? parsed.category as Described['category']
-    : 'accessoires';
-  const kind = KINDS[category].includes(String(parsed.kind)) ? String(parsed.kind) : null;
-  const colors = (Array.isArray(parsed.colors) ? parsed.colors : [])
-    .map(String)
-    .filter((c) => (COLOUR_IDS as readonly string[]).includes(c))
-    .slice(0, 3);
-  const prompt = String(parsed.prompt ?? '').trim();
-  if (!prompt) throw new AgentError("Claude n'a pas renvoyé de consigne exploitable.");
+  if (res.stop_reason === 'refusal') {
+    throw new AgentError(SAY.refused, `Claude ${opts.model} a refusé (${JSON.stringify(res.stop_details ?? null)})`);
+  }
+  if (res.stop_reason === 'max_tokens') throw new AgentError(SAY.failed, `Claude ${opts.model} : réponse coupée (max_tokens)`);
 
-  return {
-    name: String(parsed.name ?? '').trim().slice(0, 60) || 'Pièce sans nom',
-    category,
-    kind,
-    colors,
-    material: String(parsed.material ?? '').trim().slice(0, 80),
-    description: String(parsed.description ?? '').trim(),
-    prompt,
-    usage,
-  };
+  const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
+  try {
+    return { data: JSON.parse(text), usage: res.usage as unknown as Usage };
+  } catch {
+    throw new AgentError(SAY.failed, `Claude ${opts.model} : JSON illisible (${text.slice(0, 120)})`);
+  }
+}
+
+/** Opus 5 repère toutes les pièces de la photo (ou celles que la personne a nommées) et écrit leur consigne. */
+export async function inventory(input: { sources: Img[]; hint: string; gender: string | null }): Promise<{ pieces: Target[]; note: string; usage: Usage }> {
+  const { data, usage } = await askJson({
+    model: MODELS.prompts,
+    effort: EFFORT.prompts,
+    system: INVENTORY_SYSTEM,
+    schema: INVENTORY_SCHEMA,
+    content: [...input.sources.map(imageBlock), { type: 'text', text: inventoryUserText(input) }],
+    maxTokens: 16_000,
+  });
+  const o = (data ?? {}) as { pieces?: unknown; note?: unknown };
+  const pieces = (Array.isArray(o.pieces) ? o.pieces : [])
+    .map(cleanTarget)
+    .filter((p): p is Target => p !== null)
+    .slice(0, MAX_PIECES);
+  return { pieces, note: String(o.note ?? '').trim(), usage };
+}
+
+/** Opus 5 réécrit la consigne d'une pièce d'après les écarts relevés par le contrôle. */
+export async function refine(input: { sources: Img[]; target: Target; previous: Previous }): Promise<{ prompt: string; usage: Usage }> {
+  const { data, usage } = await askJson({
+    model: MODELS.prompts,
+    effort: EFFORT.prompts,
+    system: REFINE_SYSTEM,
+    schema: REFINE_SCHEMA,
+    content: [...input.sources.map(imageBlock), { type: 'text', text: refineUserText(input.target, input.previous) }],
+    maxTokens: 8_000,
+  });
+  const prompt = String((data as { prompt?: unknown })?.prompt ?? '').trim();
+  // Faute de nouvelle consigne, on garde la précédente plutôt que d'échouer.
+  return { prompt: prompt || input.previous.prompt || input.target.prompt, usage };
 }
 
 export async function judge(input: {
   sources: Img[];
   generated: Img;
-  description: string;
+  target: Target;
   prompt: string;
 }): Promise<Verdict & { usage: Usage }> {
-  const { input: raw, usage } = await askClaude(JUDGE_SYSTEM, VERDICT_TOOL, [
-    { type: 'text', text: input.sources.length > 1 ? "Photos d'origine :" : "Photo d'origine :" },
-    ...input.sources.map(imageBlock),
-    { type: 'text', text: `Description établie :\n${input.description}\n\nConsigne envoyée au générateur :\n${input.prompt}` },
-    { type: 'text', text: 'Image générée :' },
-    imageBlock(input.generated),
-  ]);
-  return { ...normaliseVerdict(raw), usage };
+  const { data, usage } = await askJson({
+    model: MODELS.judge,
+    effort: EFFORT.judge,
+    system: JUDGE_SYSTEM,
+    schema: VERDICT_SCHEMA,
+    content: [
+      { type: 'text', text: input.sources.length > 1 ? "Photos d'origine :" : "Photo d'origine :" },
+      ...input.sources.map(imageBlock),
+      { type: 'text', text: judgeText(input.target, input.prompt) },
+      { type: 'text', text: 'Image générée :' },
+      imageBlock(input.generated),
+    ],
+    maxTokens: 6_000,
+  });
+  return { ...normaliseVerdict(data), usage };
+}
+
+/** Renvoie l'index (0, 1, 2…) de l'image que le contrôle garde parmi `options`. */
+export async function pickBest(sources: Img[], target: Target, options: { img: Img; score: number | null }[]): Promise<{ index: number; raison: string }> {
+  const content: Block[] = [
+    { type: 'text', text: sources.length > 1 ? "Photos d'origine :" : "Photo d'origine :" },
+    ...sources.map(imageBlock),
+    { type: 'text', text: `Pièce : ${target.name}, ${target.where || 'pièce principale'}.` },
+  ];
+  options.forEach((o, i) => {
+    content.push({ type: 'text', text: `Image ${i + 1} (note du contrôle : ${o.score ?? '?'}/100) :` });
+    content.push(imageBlock(o.img));
+  });
+
+  const { data } = await askJson({
+    model: MODELS.judge, effort: EFFORT.judge, system: PICK_SYSTEM, schema: PICK_SCHEMA, content, maxTokens: 4_000,
+  });
+  const o = (data ?? {}) as { image?: unknown; raison?: unknown };
+  const n = Math.round(Number(o.image));
+  if (!Number.isFinite(n) || n < 1 || n > options.length) throw new AgentError(SAY.failed, `choix hors liste : ${o.image}`);
+  return { index: n - 1, raison: String(o.raison ?? '') };
 }
 
 // ---------------------------------------------------------------- vérification
@@ -275,19 +346,19 @@ async function probe(
 
 export async function checkSetup() {
   const timeout = () => AbortSignal.timeout(15_000);
-  const anthropic = (k: string) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' });
+  const headers = (k: string) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' });
 
   const claudeModels = async (k: string) => {
-    const b = await (await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: anthropic(k), signal: timeout() })).json();
+    const b = await (await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: headers(k), signal: timeout() })).json();
     return (b.data ?? []).map((m: { id: string }) => m.id).sort();
   };
   const claudeProbe = (model: string) => probe(
     'ANTHROPIC_API_KEY', model,
-    (k) => fetch(`https://api.anthropic.com/v1/models/${model}`, { headers: anthropic(k), signal: timeout() }),
+    (k) => fetch(`https://api.anthropic.com/v1/models/${model}`, { headers: headers(k), signal: timeout() }),
     claudeModels,
   );
 
-  const [gemini, claude, description] = await Promise.all([
+  const [gemini, consignes, controle] = await Promise.all([
     probe(
       'GEMINI_API_KEY', MODELS.gemini,
       (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
@@ -296,30 +367,10 @@ export async function checkSetup() {
         return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).filter((id: string) => id.includes('image')).sort();
       },
     ),
-    claudeProbe(MODELS.claude),
-    MODELS.describe === MODELS.claude ? null : claudeProbe(MODELS.describe),
+    claudeProbe(MODELS.prompts),
+    claudeProbe(MODELS.judge),
   ]);
 
-  // « description » n'apparaît que si la description tourne sur un autre modèle Claude.
-  const probes = [gemini, claude, description].filter((p): p is Probe => p !== null);
-  const pret = probes.every((p) => p.cle === 'valide' && p.modele_trouve === true);
-  return { pret, gemini, claude, ...(description ? { description } : {}) };
-}
-
-/** Renvoie l'index (0, 1, 2…) de l'image que Claude garde parmi `options`. */
-export async function pickBest(sources: Img[], options: { img: Img; score: number | null }[]): Promise<{ index: number; raison: string }> {
-  const content: ClaudeBlock[] = [
-    { type: 'text', text: sources.length > 1 ? "Photos d'origine :" : "Photo d'origine :" },
-    ...sources.map(imageBlock),
-  ];
-  options.forEach((o, i) => {
-    content.push({ type: 'text', text: `Image ${i + 1} (note du contrôle : ${o.score ?? '?'}/100) :` });
-    content.push(imageBlock(o.img));
-  });
-
-  const { input } = await askClaude(PICK_SYSTEM, PICK_TOOL, content);
-  const o = (input ?? {}) as { image?: unknown; raison?: unknown };
-  const n = Math.round(Number(o.image));
-  if (!Number.isFinite(n) || n < 1 || n > options.length) throw new AgentError('Claude a désigné une image qui n\'existe pas.');
-  return { index: n - 1, raison: String(o.raison ?? '') };
+  const pret = [gemini, consignes, controle].every((p) => p.cle === 'valide' && p.modele_trouve === true);
+  return { pret, gemini, consignes, controle };
 }

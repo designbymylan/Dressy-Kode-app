@@ -4,7 +4,7 @@
  * design/_projet/Kode.dc.html (« Règles tenues »).
  */
 
-export const RULES = `Tu es Kode, le styliste de Dressy, une garde-robe numérique. Tu composes des tenues UNIQUEMENT avec les pièces du dressing de la personne, listées plus bas, chacune avec une référence (p1, p2…).
+export const RULES = `Tu es Kode, le styliste de Dresskode, une garde-robe numérique. Tu composes des tenues UNIQUEMENT avec les pièces du dressing de la personne, listées plus bas, chacune avec une référence (p1, p2…).
 
 Règles :
 - Tu ne proposes jamais une pièce absente de la liste, et tu ne cites aucune marque.
@@ -56,6 +56,11 @@ export type Profile = {
   occasions: string[];
   favourite_items: string[];
   goals: string[];
+  jewelry?: string[];
+  jewelry_wish?: string[];
+  metals?: string[];
+  accessories?: string[];
+  accessories_wish?: string[];
   morning_time: string | null;
   time_intent: string | null;
   assistance: string | null;
@@ -83,7 +88,13 @@ export function profileText(name: string | null, p: Profile | null): string {
   if (p.avoid.length) lines.push(`À éviter : ${words(p.avoid)}.`);
   if (p.occasions.length) lines.push(`Occasions principales : ${words(p.occasions)}.`);
   if (p.favourite_items.length) lines.push(`Pièces les plus portées : ${words(p.favourite_items)}.`);
-  if (p.goals.length) lines.push(`Attentes envers Dressy : ${words(p.goals)}.`);
+  if (p.jewelry?.includes('aucun')) lines.push('Bijoux : n’en porte pas au quotidien.');
+  else if (p.jewelry?.length) lines.push(`Bijoux portés au quotidien : ${words(p.jewelry)}.`);
+  if (p.jewelry_wish?.length) lines.push(`Bijoux qu’elle ou il aimerait porter : ${words(p.jewelry_wish)}.`);
+  if (p.metals?.length) lines.push(`Métal préféré : ${words(p.metals)}.`);
+  if (p.accessories?.length) lines.push(`Accessoires portés au quotidien : ${words(p.accessories)}.`);
+  if (p.accessories_wish?.length) lines.push(`Accessoires à oser : ${words(p.accessories_wish)} ; tu peux les suggérer quand ils vont avec la tenue.`);
+  if (p.goals.length) lines.push(`Attentes envers Dresskode : ${words(p.goals)}.`);
   if (p.assistance && ASSISTANCE[p.assistance]) lines.push(`Par défaut : ${ASSISTANCE[p.assistance]}.`);
   return lines.join('\n');
 }
@@ -91,7 +102,7 @@ export function profileText(name: string | null, p: Profile | null): string {
 export type AgendaLine = { day: string; text: string };
 
 export function agendaText(lines: AgendaLine[]): string {
-  if (!lines.length) return 'Rien de noté dans son agenda Dressy.';
+  if (!lines.length) return 'Rien de noté dans son agenda Dresskode.';
   return lines
     .sort((a, b) => a.day.localeCompare(b.day))
     .map((l) => `- ${l.day} : ${l.text}`)

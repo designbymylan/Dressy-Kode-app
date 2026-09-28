@@ -10,7 +10,7 @@ avec ce qu'on possède déjà.
 |---|---|
 | `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, branchée sur Supabase (mode démonstration sans réseau). Voir `mobile/README.md`. |
 | `web/` | L'application web (Next.js App Router, React 19, `@supabase/ssr`), branchée sur Supabase. |
-| `supabase/functions/dressy-agent/` | L'agent central : photo → Claude → Nano Banana → Claude → dressing. |
+| `supabase/functions/dressy-agent/` | L'agent central : photo → Opus 5 (toutes les pièces) → Nano Banana (une image par pièce, en parallèle) → Sonnet 5 → dressing. |
 | `supabase/functions/kode/` | Kode, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
 | `supabase/functions/billing/`, `stripe-webhook/` | Les abonnements : ouverture du paiement Stripe, et le webhook qui active l'offre. |
 | `supabase/migrations/` | Le schéma SQL complet, dans l'ordre où il a été appliqué au projet Supabase. |
@@ -35,17 +35,29 @@ de production est la référence pour vérifier.
 Chaque photo ajoutée devient une ligne `ai_jobs`. Un trigger réveille l'Edge
 Function `dressy-agent`, qui :
 
-1. demande à **Claude** de décrire la pièce et d'écrire la consigne d'image ;
-2. fait redessiner la pièce par **Nano Banana 2** à partir de la photo ;
-3. fait noter la fidélité par **Claude** — validée à 95/100 ;
-4. sinon recommence (3 essais au plus, avec la critique de Claude), puis fait
-   choisir la meilleure image à Claude ;
-5. détoure l'image retenue et la range dans le dressing.
+1. demande à **Claude Opus 5** de repérer TOUTES les pièces de la photo
+   (vêtements, chaussures, sacs, bijoux, accessoires), ou seulement celles que
+   la personne a nommées dans la précision, et d'écrire une consigne d'image
+   par pièce ;
+2. garde la première pièce et crée une tâche fille par pièce en plus : elles
+   se dessinent en parallèle, chacune dans son propre passage ;
+3. fait redessiner chaque pièce, seule et sur un fond uni choisi loin de ses
+   couleurs, par **Nano Banana** à partir de la photo ;
+4. fait noter la fidélité par **Claude Sonnet 5**, validée à 88/100 ; sinon
+   Opus 5 corrige la consigne pour un second essai, puis le contrôle garde la
+   meilleure des deux images ;
+5. détoure l'image retenue (fond, trous enfermés, poussières, bords doux) et
+   la range, transparente, dans le dressing.
+
+Rien de tout cela ne se voit à l'écran : la personne ne lit que « Kode repère
+chaque pièce », « Kode dessine ta pièce »… Les erreurs montrées ne nomment
+jamais un modèle ; le détail technique part dans les journaux de la fonction.
 
 Les clés `GEMINI_API_KEY` et `ANTHROPIC_API_KEY` se règlent dans
-Supabase > Edge Functions > Secrets, jamais dans le code. `CLAUDE_MODEL` règle
-le modèle Claude ; `CLAUDE_DESCRIBE_MODEL`, facultatif, fait tourner la
-description sur un autre modèle que le contrôle qualité. Vérification
+Supabase > Edge Functions > Secrets, jamais dans le code. Réglages facultatifs :
+`CLAUDE_PROMPT_MODEL` (consignes, `claude-opus-5` par défaut),
+`CLAUDE_MODEL` (contrôle, `claude-sonnet-5`), `CLAUDE_PROMPT_EFFORT` et
+`CLAUDE_JUDGE_EFFORT` (`medium` et `low`), `GEMINI_IMAGE_MODEL`. Vérification
 gratuite de la configuration : `GET /functions/v1/dressy-agent?verifier`.
 
 ## Kode, le styliste
@@ -82,7 +94,7 @@ Les offres de `Offres.dc.html`, vendues en abonnement mensuel ou annuel
 
 | Offre | Mensuel | Annuel | Pièces | Kode |
 |---|---|---|---|---|
-| Découverte (sans abonnement) | — | — | 30 | 5 questions / mois |
+| Découverte (sans abonnement) | · | · | 30 | 5 questions / mois |
 | Capsule | 6,99 € | 59,99 € | 60 | 20 questions / mois |
 | Atelier | 12,99 € | 109,99 € | 200 | sans limite |
 | Couture | 24,99 € | 219,99 € | sans limite | sans limite |
