@@ -38,6 +38,19 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
   sur le web et sur le mobile.
 - Ne rajoute ni dépendance, ni skill, ni service externe sans demander.
 
+Changements de disposition validés par l'utilisateur (29/09), à garder :
+
+- **Ajout d'une pièce (mobile, compte connecté)** : la galerie fictive
+  « Photos récentes » laisse place au champ « Seulement certaines pièces ? » ;
+  la galerie accepte jusqu'à 10 photos d'un coup.
+- **Dressing web** : une vignette ouvre la fiche de la pièce, qui naît de la
+  vignette, avec « Composer une tenue avec » (`DressingRails.tsx`).
+- **Barre d'onglets (web et mobile)** : un seul point, liquide, qui voyage
+  d'un onglet à l'autre, à la place d'un point par onglet.
+
+Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
+aussitôt, sans attendre la fin de la demande.
+
 ## Commandes
 
 ```bash
