@@ -3,10 +3,12 @@ import { View } from 'react-native';
 import Animated, { FadeIn, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { DAYS_LETTER, MONTHS, WEATHER, dayDate, longDate, relativeDay, shortDate, type Piece } from '../data/wardrobe';
+import { DAYS_LETTER, MONTHS, dayDate, longDate, relativeDay, shortDate, type Piece } from '../data/wardrobe';
 import { canCompose } from '../state/outfits';
 import { Toggle } from '../ui/controls';
-import { eventsOf, useStore, useTodayOutfits } from '../state/store';
+import { eventsOf, useMeteo, useStore, useTodayOutfits } from '../state/store';
+import { ferieDu, periode, pontDu, vacancesDu } from '../state/contexte';
+import { Credit } from '../ui/Credit';
 import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -38,7 +40,29 @@ export function Agenda() {
   }, [route.params]);
 
   const byId = new Map(s.pieces.map((p) => [p.id, p]));
-  const w = WEATHER[day];
+  const meteo = useMeteo();
+  const w = meteo.jours[day];
+  const ctx = meteo.reelle ? s.contexte : null;
+  const ferie = ferieDu(ctx, day);
+  const vacances = vacancesDu(ctx, day);
+  const pont = pontDu(ctx, day);
+  const fete = day === 0 ? ctx?.fete.valeur : null;
+  const soleil = day === 0 ? ctx?.soleil.valeur : null;
+  const air = day === 0 ? ctx?.air.valeur : null;
+  const hhmm = (x: string) => `${Number(x.slice(0, 2))}\u00a0h\u00a0${x.slice(3, 5)}`;
+  const airNote = air && (air.pollens.length || (air.indice ?? 0) > 40)
+    ? [air.qualite && `Qualité de l’air ${air.qualite}`, air.pollens.length ? `pollens : ${air.pollens.map((x) => x.nom).join(', ')}` : null].filter(Boolean).join(' · ')
+    : null;
+  const prevision = w ? `${w.low}° le soir` : meteo.reelle && s.contexte?.meteo.valeur ? 'Pas encore de prévision pour ce jour.' : null;
+  // Ce que l'on sait de ce jour, en lignes courtes sous la météo.
+  const notes = [
+    ferie && `Jour férié : ${ferie.nom}`,
+    pont && `Long week-end ${periode(pont.debut, pont.fin)}${pont.aPoser ? `, ${pont.aPoser} jour à poser` : ''}`,
+    vacances && `${vacances.nom} ${periode(vacances.debut, vacances.fin)}`,
+    fete && `Bonne fête aux ${fete.prenoms}`,
+    soleil && `Soleil de ${hhmm(soleil.lever)} à ${hhmm(soleil.coucher)}`,
+    airNote,
+  ].filter((x): x is string => !!x);
   const all = eventsOf(s.profile);
   const events = all.filter((e) => e.day === day);
   const outfits = useTodayOutfits();
@@ -68,16 +92,17 @@ export function Agenda() {
         {Array.from({ length: 14 }, (_, i) => {
           const d = dayDate(i);
           const on = i === day;
-          const busy = all.some((e) => e.day === i);
+          const ferieI = ferieDu(ctx, i);
+          const busy = all.some((e) => e.day === i) || !!ferieI;
           return (
-            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${busy ? ', un événement' : ''}`} style={{ width: 50, paddingVertical: 10, borderRadius: 25, alignItems: 'center', gap: 4 }} className={on ? 'bg-primary-bg' : ''}>
+            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ width: 50, paddingVertical: 10, borderRadius: 25, alignItems: 'center', gap: 4 }} className={on ? 'bg-primary-bg' : ''}>
               <T v="small" tone={on ? 'primary-fg' : 'ink2'}>
                 {DAYS_LETTER[d.getDay()]}
               </T>
               <T v="bodyStrong" tone={on ? 'primary-fg' : 'ink'} style={{ fontSize: 17 }}>
                 {d.getDate()}
               </T>
-              <WeatherIcon w={WEATHER[i]} size={16} color={on ? c['primary-fg'] : c.ink2} />
+              {meteo.jours[i] ? <WeatherIcon w={meteo.jours[i]!} size={16} color={on ? c['primary-fg'] : c.ink2} /> : <View style={{ height: 16 }} />}
               <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: busy ? (on ? c['primary-fg'] : c.brass) : 'transparent' }} />
             </Tap>
           );
@@ -86,14 +111,25 @@ export function Agenda() {
 
       <Animated.View key={day} entering={FadeIn.duration(220)} style={{ paddingHorizontal: space.gutter, gap: 18 }}>
         <View className="flex-row items-center" style={{ gap: 10 }}>
-          <WeatherIcon w={w} size={24} color={c.ink} />
+          {w ? <WeatherIcon w={w} size={24} color={c.ink} /> : <Icon name="calendar" size={24} color={c.ink} />}
           <T v="bodyL">
-            {cap(longDate(day))} · {w.t}°, {w.label}
+            {cap(longDate(day))}
+            {w ? ` · ${w.t}°, ${w.label}` : ''}
           </T>
         </View>
-        <T v="caption" tone="ink2" style={{ marginTop: -12, marginLeft: 34 }}>
-          {w.low}° le soir
-        </T>
+        <View style={{ marginTop: -12, marginLeft: 34, gap: 2 }}>
+          {prevision && (
+            <T v="caption" tone="ink2">
+              {prevision}
+            </T>
+          )}
+          {notes.map((n) => (
+            <T key={n} v="caption" tone="ink2">
+              {n}
+            </T>
+          ))}
+          {meteo.reelle && <Credit blocs={[s.contexte?.meteo, ferie || pont ? s.contexte?.feries : null, vacances ? s.contexte?.vacances : null, fete ? s.contexte?.fete : null, soleil ? s.contexte?.soleil : null, airNote ? s.contexte?.air : null]} style={{ marginTop: 4 }} />}
+        </View>
 
         <View style={{ gap: 0 }}>
           {!s.profile.agenda ? (

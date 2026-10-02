@@ -3,8 +3,8 @@ import { View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { EVENTS, WEATHER, longDate, type Piece } from '../data/wardrobe';
-import { useStore } from '../state/store';
+import { EVENTS, longDate, type Piece } from '../data/wardrobe';
+import { useMeteo, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -45,7 +45,7 @@ export function EventScreen() {
   const top = useStackTop();
   const [confirm, setConfirm] = useState(false);
   const e = EVENTS.find((x) => x.id === params.id) ?? EVENTS[4];
-  const w = WEATHER[e.day];
+  const w = useMeteo().jours[e.day];
   const owned = s.packs.includes('occasion') || s.plan === 'atelier' || s.plan === 'couture';
   const byId = new Map(s.pieces.map((p) => [p.id, p]));
   const resolve = (ids: string[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Piece[];
@@ -83,9 +83,9 @@ export function EventScreen() {
             </View>
           ))}
           <View className="flex-row items-center" style={{ minHeight: 46, gap: 12 }}>
-            <WeatherIcon w={w} size={20} color={c.ink2} />
-            <T v="body">
-              Prévision : {w.t}°, {w.label}, {w.low}° en soirée
+            {w ? <WeatherIcon w={w} size={20} color={c.ink2} /> : <Icon name="calendar" size={20} color={c.ink2} />}
+            <T v="body" style={{ flex: 1 }}>
+              {w ? `Prévision : ${w.t}°, ${w.label}, ${w.low}° en soirée` : 'Prévision : pas encore disponible pour ce jour'}
             </T>
           </View>
         </View>
@@ -99,7 +99,7 @@ export function EventScreen() {
           <Rule />
           <T v="cardTitle">Terracotta au jardin</T>
           <T v="body" tone="ink2">
-            La robe terracotta et le blazer lin, jamais porté, sont faits pour une fin d’après-midi dehors. Prévois une étole : {w.low}° après le dîner.
+            La robe terracotta et le blazer lin, jamais porté, sont faits pour une fin d’après-midi dehors. Prévois une étole{w ? ` : ${w.low}° après le dîner` : ' pour la soirée'}.
           </T>
           <Button testID="event-plan" label="Prévoir cette tenue" size="m" onPress={() => planIt('Terracotta au jardin', first.map((p) => p.id))} />
         </Card>

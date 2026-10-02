@@ -14,6 +14,11 @@ détourage de chaque pièce. Sans ces deux lignes, l'app tourne en démonstratio
 réseau, et la reconnaissance des photos est simulée. « J'ai déjà un compte » ouvre
 alors le compte de démonstration.
 
+Connectée, l'app reçoit aussi les **données du jour** de la fonction `donnees` : vraie
+météo de ta ville (accueil, agenda, Kode), jours fériés et ponts, vacances scolaires de
+ton académie, fête du jour, tendances du moment, chacune avec sa source et l'heure de sa
+mise à jour. En démonstration, la météo reste simulée.
+
 ## Polices
 
 La direction est dessinée en **Satoshi** (Fontshare). Ses fichiers ne sont pas publiés
@@ -53,7 +58,7 @@ relance avec `npx expo start --clear` : les variables sont figées dans le cache
 | `src/ui/` | Composants : verre, barre d'onglets, boutons, feuilles, illustrations, icônes |
 | `src/screens/` | Les écrans (voir la table ci-dessous) |
 | `src/state/` | État de l'app, pont Supabase (`remote.ts`), suivi des photos confiées à Kode (`jobs.ts`), réponses simulées de Kode en démonstration |
-| `src/data/` | Le dressing fictif (37 pièces), l'agenda, la météo |
+| `src/data/` | Le dressing fictif (37 pièces), l'agenda, la météo simulée de la démonstration |
 
 | # | Écran du brief | Fichier |
 |---|---|---|

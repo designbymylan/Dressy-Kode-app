@@ -3,9 +3,11 @@ import { Keyboard, KeyboardAvoidingView, Platform, TextInput, View, type ScrollV
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { WEATHER, lcFirst, type Piece } from '../data/wardrobe';
+import { lcFirst, type Piece } from '../data/wardrobe';
 import { kodeStarters, type KodeMessage } from '../state/kode';
-import { LIMITS, eventsOf, questionsLeft, useStore } from '../state/store';
+import { LIMITS, eventsOf, questionsLeft, useMeteo, useStore } from '../state/store';
+import { dateLongue, jourIso, periode } from '../state/contexte';
+import { Credit } from '../ui/Credit';
 import { canCompose } from '../state/outfits';
 import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
@@ -13,7 +15,7 @@ import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
 import { Masthead, Rule } from '../ui/layout';
-import { Card } from '../ui/bits';
+import { Card, WeatherIcon } from '../ui/bits';
 import { OutfitBoard, Legend, assembleDelay } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -72,7 +74,18 @@ export function Kode() {
   const p = s.profile;
   const starters = kodeStarters(p, s.pieces);
   const ready = canCompose(s.pieces);
-  const w = WEATHER[0];
+  const meteo = useMeteo();
+  const w = meteo.jours[0];
+  const ctx = meteo.reelle ? s.contexte : null;
+  // La prochaine date qui change les tenues : vacances scolaires ou jour férié, dans le mois.
+  const dansUnMois = jourIso(31);
+  const vac = ctx?.vacances.valeur?.find((v) => v.debut <= dansUnMois);
+  const ferie = ctx?.feries.valeur?.find((f) => f.date <= dansUnMois);
+  const prochain = vac && (!ferie || vac.debut <= ferie.date)
+    ? { text: `${vac.nom} ${periode(vac.debut, vac.fin)}`, bloc: ctx?.vacances }
+    : ferie
+      ? { text: `Férié : ${ferie.nom}, le ${dateLongue(ferie.date)}`, bloc: ctx?.feries }
+      : null;
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-kode">
@@ -101,12 +114,22 @@ export function Kode() {
               <T v="kicker" tone="ink2" upper>
                 Ce que Kode sait déjà
               </T>
-              <View className="flex-row items-center" style={{ gap: 8 }}>
-                <Icon name="showers" size={18} color={c.ink2} />
-                <T v="body">
-                  Aujourd’hui{p.city ? ` à ${p.city}` : ''}, {w.t}° et {w.label}
-                </T>
-              </View>
+              {w ? (
+                <View className="flex-row items-center" style={{ gap: 8 }}>
+                  <WeatherIcon w={w} size={18} color={c.ink2} />
+                  <T v="body" style={{ flex: 1 }}>
+                    Aujourd’hui{p.city ? ` à ${p.city}` : ''}, {w.low}° à {w.t}°, {w.label}
+                  </T>
+                </View>
+              ) : null}
+              {prochain && (
+                <View className="flex-row items-center" style={{ gap: 8 }}>
+                  <Icon name="calendar" size={18} color={c.ink2} />
+                  <T v="body" style={{ flex: 1 }}>
+                    {prochain.text}
+                  </T>
+                </View>
+              )}
               {tomorrow && (
                 <View className="flex-row items-center" style={{ gap: 8 }}>
                   <Icon name="calendar" size={18} color={c.ink2} />
@@ -129,7 +152,8 @@ export function Kode() {
                   {s.pieces.length ? `${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''} dans ton dressing${ready ? '' : ' : il en faut un peu plus'}` : 'Ton dressing est vide pour l’instant'}
                 </T>
               </View>
-                        </Card>
+              {meteo.reelle && <Credit blocs={[s.contexte?.meteo, prochain?.bloc]} style={{ marginTop: 4 }} />}
+            </Card>
             {!ready && <Button testID="kode-add" label="Ajouter mes premières pièces" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
             <T v="kicker" tone="ink2" upper>
               Pour commencer

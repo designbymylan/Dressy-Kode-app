@@ -10,7 +10,7 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 import { AppState, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EVENTS, PIECES, type Piece } from '../data/wardrobe';
+import { EVENTS, PIECES, WEATHER, type Piece, type Weather } from '../data/wardrobe';
 import { supabase } from '../lib/supabase';
 import { kodeReply, type KodeMessage, type KodeOutfit } from './kode';
 import { todayOutfits } from './outfits';
@@ -18,6 +18,7 @@ import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
 import type { Account, PlanId, Period, Photo, Planned, Session } from './remote';
 import { isActive, type JobRow } from './jobs';
+import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './contexte';
 
 export type { PlanId, Period, Planned, Session };
 export type { Silhouette, MeasureId, Profile } from './profile';
@@ -75,6 +76,10 @@ type State = {
   jobs: JobRow[];
   /** Pièces arrivées depuis l'ouverture de l'app : elles tombent sur la tringle à leur première apparition. */
   fresh: string[];
+  /** Les données du jour (météo, fériés, vacances, tendances) reçues du serveur ; gardées pour le hors-ligne. */
+  contexte: Contexte | null;
+  /** Quand elles ont été reçues (ms) : relues au retour dans l'app après une heure. */
+  contexteLu: number;
 };
 
 /** Au premier lancement : aucun profil, aucune pièce, l'offre gratuite. */
@@ -109,6 +114,8 @@ const initial: State = {
   undo: null,
   jobs: [],
   fresh: [],
+  contexte: null,
+  contexteLu: 0,
 };
 
 const fresh: State = { ...initial, booting: false };
@@ -159,7 +166,8 @@ type Action =
   | { t: 'jobs'; jobs: JobRow[] }
   | { t: 'pieces'; pieces: Piece[] }
   | { t: 'landed'; id: string }
-  | { t: 'dropJob'; id: string };
+  | { t: 'dropJob'; id: string }
+  | { t: 'contexte'; contexte: Contexte; at: number };
 
 let toastId = 0;
 /** Dernière lecture des tâches de Kode : l'écran d'ajout lit toutes les 2 s, le suivi de fond n'a pas à doubler. */
@@ -221,7 +229,7 @@ function reducer(s: State, a: Action): State {
     case 'undo':
       return s.undo ? { ...s, pieces: s.undo, undo: null, wornToday: null, toast: null } : s;
     case 'nextOutfit':
-      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces).length), wornToday: null };
+      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0]).length), wornToday: null };
     case 'addPiece':
       return { ...s, pieces: [a.piece, ...s.pieces], fresh: [...s.fresh, a.piece.id], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
     case 'swapId': {
@@ -290,13 +298,15 @@ function reducer(s: State, a: Action): State {
       return { ...s, fresh: s.fresh.filter((id) => id !== a.id) };
     case 'dropJob':
       return { ...s, jobs: s.jobs.filter((j) => j.id !== a.id) };
+    case 'contexte':
+      return { ...s, contexte: a.contexte, contexteLu: a.at };
   }
 }
 
 /* ---- Ce qui est gardé sur le téléphone ---- */
 
 const SAVED = 'dresskode:etat:v1';
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'planned', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'planned', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -526,6 +536,12 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       },
       /** Une pièce nouvelle a fait son entrée sur la tringle : elle ne la refera pas. */
       landed: (id: string) => dispatch({ t: 'landed', id }),
+      /** Relit les données du jour pour la ville du profil (compte connecté seulement). Sans réponse, le dernier paquet reste. */
+      refreshContexte: async () => {
+        if (!live()) return;
+        const c = await remote.loadContexte(getState().profile.city).catch(() => null);
+        if (c && live()) dispatch({ t: 'contexte', contexte: c, at: Date.now() });
+      },
     };
   }, [dispatch, getState]);
 }
@@ -538,7 +554,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const ref = useRef(s);
   ref.current = s;
   const a = useActions(dispatch, useMemo(() => () => ref.current, []));
+  const aRef = useRef(a);
+  aRef.current = a;
   const value = useMemo(() => ({ s, a }), [s, a]);
+
+  // Compte connecté : les données du jour à l'ouverture, et de nouveau quand la ville change
+  // (après une courte pause, le temps de finir de la taper).
+  const city = s.profile.city;
+  const spaceId = s.account === 'connecte' ? s.session?.spaceId : undefined;
+  useEffect(() => {
+    if (!spaceId) return;
+    const t = setTimeout(() => a.refreshContexte(), 800);
+    return () => clearTimeout(t);
+  }, [spaceId, city, a]);
 
   // Au lancement : le compte en ligne s'il y a une session, sinon l'espace gardé sur le téléphone.
   useEffect(() => {
@@ -549,7 +577,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         try {
           const acc = await remote.loadAccount();
           if (!alive) return;
-          if (acc) return dispatch({ t: 'account', acc });
+          if (acc) {
+            dispatch({ t: 'account', acc });
+            // Le dernier paquet du même espace s'affiche tout de suite, le neuf arrive ensuite.
+            if (saved?.contexte && saved.session?.spaceId === acc.session.spaceId) dispatch({ t: 'contexte', contexte: saved.contexte, at: saved.contexteLu ?? 0 });
+            return;
+          }
           // Plus de session : ce qui avait été relu d'un compte n'a plus à rester ici.
           if (saved?.account === 'connecte') {
             forget();
@@ -588,6 +621,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const cur = ref.current;
       if (state !== 'active' || cur.account !== 'connecte' || !cur.session) return;
       remote.loadPlan(cur.session.spaceId).then((p) => dispatch({ t: 'planSync', ...p })).catch(() => undefined);
+      // Fraîcheur « économe » : la météo est relue au plus une fois par heure, ou dès qu'un nouveau jour commence.
+      if (Date.now() - cur.contexteLu > RELIRE_APRES || cur.contexte?.jour !== jourIso(0)) aRef.current?.refreshContexte();
     });
     // Session révoquée ailleurs (mot de passe changé, compte supprimé) : retour à l'accueil.
     const auth = supabase.auth.onAuthStateChange((event) => {
@@ -650,10 +685,26 @@ export const sleeping = (pieces: Piece[]) =>
 /** Les événements visibles : seulement si l'agenda est relié. */
 export const eventsOf = (profile: Profile) => (profile.agenda ? EVENTS : []);
 
-/** Les tenues du jour de ce dressing (écrites à la main pour la démo, composées sinon). */
+/**
+ * La météo à afficher : la vraie (fonction `donnees`) pour un compte
+ * connecté, la simulée en démonstration et sans compte. `jours[i]` est le
+ * jour à `i` jours d'aujourd'hui, null quand il n'y a pas de prévision.
+ */
+export function meteoDe(s: Pick<State, 'account' | 'contexte'>): { jours: (Weather | null)[]; now: { t: number; kind: Weather['kind']; mot?: string } | null; reelle: boolean } {
+  if (s.account !== 'connecte') return { jours: WEATHER, now: { t: WEATHER[0].t, kind: WEATHER[0].kind }, reelle: false };
+  return { jours: semaine(s.contexte), now: maintenant(s.contexte), reelle: true };
+}
+
+export const useMeteo = () => {
+  const { s } = useStore();
+  return useMemo(() => meteoDe(s), [s.account, s.contexte]);
+};
+
+/** Les tenues du jour de ce dressing (écrites à la main pour la démo, composées sinon), selon la météo du jour. */
 export const useTodayOutfits = () => {
   const { s } = useStore();
-  return useMemo(() => todayOutfits(s.pieces), [s.pieces]);
+  const today = useMeteo().jours[0];
+  return useMemo(() => todayOutfits(s.pieces, today), [s.pieces, today]);
 };
 
 export { precision } from './profile';

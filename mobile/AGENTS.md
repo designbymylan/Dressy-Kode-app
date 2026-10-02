@@ -26,6 +26,13 @@ Direction de design validée : B « Éditorial », voir `../design/refonte/02-de
   `src/ui/scan.tsx`) ; les pièces rangées gardent leur vignette détourée (`Piece.image`).
   Sans compte, la reconnaissance est simulée, comme l'analyse de silhouette. Les textes
   de permission sont dans `app.json`.
+- **Données du jour** : météo, fériés, vacances scolaires, tendances, fête
+  du jour arrivent de la fonction `donnees` (`remote.loadContexte`), jamais
+  d'une API externe appelée depuis l'app. L'état les garde (`contexte`, aussi
+  sur le téléphone pour le hors-ligne) et les relit au lancement, au
+  changement de ville et au retour dans l'app après une heure. `useMeteo()`
+  donne la vraie météo à un compte connecté, la simulée en démonstration.
+  Chaque donnée affichée porte sa source et son heure (`ui/Credit.tsx`).
 - **Mouvement** : les moments forts (scan, détourage, cintre qui tombe, tenue qui
   s'assemble, « Je la porte », vignette qui s'ouvre, onglets liquides, fil du
   questionnaire, orbe de Kode par étape, météo dans les halos de l'accueil) sont tous

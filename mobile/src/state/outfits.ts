@@ -2,9 +2,10 @@
  * Les tenues du jour. Pour le compte de démonstration, des tenues écrites
  * à la main ; pour une nouvelle utilisatrice, des tenues composées à partir
  * de ses propres pièces, avec une raison lisible (météo, pièce peu portée).
- * Dans l'app réelle, c'est la fonction `kode` qui compose ; le format est le même.
+ * La météo est celle du jour : la vraie pour un compte connecté (fonction
+ * `donnees`), la simulée en démonstration, aucune si elle n'est pas connue.
  */
-import { TODAY_OUTFITS, WEATHER, lcFirst, type Outfit, type Piece } from '../data/wardrobe';
+import { TODAY_OUTFITS, WEATHER, lcFirst, type Outfit, type Piece, type Weather } from '../data/wardrobe';
 
 const LEADS: [string, string][] = [
   ['Ta première\ntenue, ', 'déjà prête.'],
@@ -27,8 +28,7 @@ export function missingForOutfit(pieces: Piece[]): string | null {
   return 'un haut et un bas, ou une robe';
 }
 
-export function suggestOutfits(pieces: Piece[]): Outfit[] {
-  const w = WEATHER[0];
+export function suggestOutfits(pieces: Piece[], w: Weather | null = WEATHER[0]): Outfit[] {
   // Les moins portées d'abord : Kode fait tourner le dressing.
   const by = (c: Piece['category']) => pieces.filter((p) => p.category === c).sort((a, b) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999));
   // Un cardigan se porte par-dessus : il compte comme une couche, pas comme le haut.
@@ -43,7 +43,7 @@ export function suggestOutfits(pieces: Piece[]): Outfit[] {
     const base = useDress ? [dresses[i % dresses.length]] : tops.length && bottoms.length ? [tops[i % tops.length], bottoms[i % bottoms.length]] : [];
     if (!base.length) break;
     const list = [...base];
-    const coat = w.t < 17 && coats.length ? coats[i % coats.length] : undefined;
+    const coat = w && w.t < 17 && coats.length ? coats[i % coats.length] : undefined;
     if (coat) list.unshift(coat);
     if (shoes.length) list.push(shoes[i % shoes.length]);
     if (accs.length) list.push(accs[i % accs.length]);
@@ -52,11 +52,13 @@ export function suggestOutfits(pieces: Piece[]): Outfit[] {
     seen.add(key);
     const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
     const baseLine = useDress ? `${cap(lcFirst(base[0].name))} en pièce centrale.` : `${cap(lcFirst(base[0].name))} avec ${lcFirst(base[1].name)}.`;
-    const weatherLine = coat
-      ? ` ${coat.name} par-dessus : ${w.t}° et des ${w.label}.`
-      : w.t < 15
-        ? ` Il fera ${w.t}° : une veste irait bien par-dessus, dès que tu en ajoutes une.`
-        : ` ${w.t}°, ${w.label} : c’est la bonne épaisseur.`;
+    const weatherLine = !w
+      ? ''
+      : coat
+        ? ` ${coat.name} par-dessus : ${w.t}°, ${w.label}.`
+        : w.t < 15
+          ? ` Il fera ${w.t}° : une veste irait bien par-dessus, dès que tu en ajoutes une.`
+          : ` ${w.t}°, ${w.label} : c’est la bonne épaisseur.`;
     out.push({
       id: `g${i}`,
       lead: LEADS[out.length][0],
@@ -68,9 +70,9 @@ export function suggestOutfits(pieces: Piece[]): Outfit[] {
   return out;
 }
 
-/** Les tenues proposées aujourd'hui pour ce dressing. */
-export function todayOutfits(pieces: Piece[]): Outfit[] {
+/** Les tenues proposées aujourd'hui pour ce dressing, selon la météo du jour (null : inconnue). */
+export function todayOutfits(pieces: Piece[], w: Weather | null = WEATHER[0]): Outfit[] {
   const ids = new Set(pieces.map((p) => p.id));
   const curated = TODAY_OUTFITS.filter((o) => o.pieces.every((id) => ids.has(id)));
-  return curated.length ? curated : suggestOutfits(pieces);
+  return curated.length ? curated : suggestOutfits(pieces, w);
 }

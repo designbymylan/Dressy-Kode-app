@@ -12,7 +12,7 @@ import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { COLOR_CHOICES, GALLERY, WEATHER, pieceFrom, type Found, type Piece } from '../data/wardrobe';
+import { COLOR_CHOICES, GALLERY, pieceFrom, type Found, type Piece } from '../data/wardrobe';
 import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision, sizeOptions, type MeasureId, type Profile, type Silhouette } from '../state/profile';
 import { canCompose, missingForOutfit, suggestOutfits } from '../state/outfits';
 import { useStore } from '../state/store';
@@ -816,7 +816,6 @@ function Ville({ draft, set, next }: Ctx) {
   const [q, setQ] = useState(draft.city ?? '');
   const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const list = CITIES.filter((x) => !q || norm(x).startsWith(norm(q))).slice(0, 6);
-  const w = WEATHER[0];
   return (
     <Frame lead={'Où tu\n'} em="vis ?" intro="Pour la météo de chaque matin : un trench quand il pleut, pas de laine quand il fait 25°." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
       <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 26, paddingHorizontal: 16, gap: 10 }}>
@@ -847,13 +846,11 @@ function Ville({ draft, set, next }: Ctx) {
       {draft.city && (
         <Animated.View entering={FadeInDown.duration(220)}>
           <Card className="flex-row items-center" style={{ gap: 12 }}>
-            <Icon name="showers" size={26} color={c.ink} />
+            <Icon name="cloud" size={26} color={c.ink} />
             <View style={{ flex: 1 }}>
-              <T v="bodyStrong">
-                Aujourd’hui à {draft.city} : {w.t}°
-              </T>
+              <T v="bodyStrong">{draft.city}, c’est noté</T>
               <T v="caption" tone="ink2">
-                {w.label[0].toUpperCase() + w.label.slice(1)}. Kode en tiendra compte dès demain matin.
+                Kode regardera sa météo chaque matin, dès ton compte créé.
               </T>
             </View>
           </Card>
@@ -1016,14 +1013,14 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
 
 function Generation({ draft, pieces, next }: Ctx) {
   const { c } = useTheme();
-  const outfits = useMemo(() => suggestOutfits(pieces), [pieces]);
-  const w = WEATHER[0];
+  // Pas encore de compte, donc pas encore de vraie météo : les tenues se composent sans.
+  const outfits = useMemo(() => suggestOutfits(pieces, null), [pieces]);
   const rayon = draft.rayon === 'femme' ? 'rayon femme' : draft.rayon === 'homme' ? 'rayon homme' : draft.rayon === 'mixte' ? 'rayons femme et homme' : '';
   const lines = [
     `Profil : ${[rayon, draft.height ? `${draft.height} cm` : '', draft.silhouette && draft.silhouette !== 'inconnue' ? `silhouette en ${draft.silhouette}` : ''].filter(Boolean).join(', ') || 'Kode apprendra en route'}`,
     `Style : ${draft.styles.length ? draft.styles.join(', ') : 'à découvrir avec toi'}`,
     `Palette : ${draft.love.length ? draft.love.join(', ') : 'toutes les couleurs'}${draft.avoid.length ? `, sans ${draft.avoid.join(', ').toLowerCase()}` : ''}`,
-    draft.city ? `Météo à ${draft.city} : ${w.t}°, ${w.label}` : 'Météo : ta ville, au prochain lancement',
+    draft.city ? `Météo de ${draft.city}, suivie chaque matin` : 'Météo : ta ville, au prochain lancement',
     pieces.length ? `${pieces.length} pièce${pieces.length > 1 ? 's' : ''} rangée${pieces.length > 1 ? 's' : ''} sur tes portants` : 'Tes portants, prêts à se remplir',
     outfits.length ? `${outfits.length} tenue${outfits.length > 1 ? 's' : ''} composée${outfits.length > 1 ? 's' : ''} pour aujourd’hui` : 'Ta première tenue, dès trois pièces',
   ];
@@ -1155,7 +1152,7 @@ function Compte({ draft, set, next }: Ctx) {
 }
 
 function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void }) {
-  const outfits = useMemo(() => suggestOutfits(pieces), [pieces]);
+  const outfits = useMemo(() => suggestOutfits(pieces, null), [pieces]);
   const first = outfits[0];
   const byId = new Map(pieces.map((p) => [p.id, p]));
   const shown = first ? (first.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];

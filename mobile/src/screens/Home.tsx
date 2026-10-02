@@ -3,8 +3,10 @@ import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { WEATHER, WEATHER_WORD, DAYS_LETTER, dayDate, euros, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
-import { MODULE_LABELS, eventsOf, sleeping, usageRate, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { WEATHER_WORD, DAYS_LETTER, dayDate, euros, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
+import { MODULE_LABELS, eventsOf, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { ferieDu, tendancesChezToi } from '../state/contexte';
+import { Credit } from '../ui/Credit';
 import { missingForOutfit } from '../state/outfits';
 import { FirstRail } from '../ui/onboarding';
 import { useTheme } from '../theme/ThemeProvider';
@@ -37,14 +39,20 @@ export function Home() {
   const outfit = outfits.length ? outfits[s.outfitIndex % outfits.length] : null;
   const pieces = outfit ? (outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];
   const worn = !!s.wornToday;
-  const w = WEATHER[0];
+  const meteo = useMeteo();
+  const now = meteo.now;
+  const city = s.profile.city;
+  // « Ven. 2 oct. · Lyon, 15°, nuageux » ; sans météo connue, la date et la ville seulement.
+  const meteoTxt = now ? `${now.t}°, ${now.mot ?? (city ? WEATHER_WORD[now.kind] : (meteo.jours[0]?.label ?? WEATHER_WORD[now.kind]))}` : null;
+  const meta = [capital(shortDate(0)), [city, meteoTxt].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+  const semaineVisible = s.modules.some((m) => m.id === 'semaine' && m.on);
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   const W = width - space.gutter * 2;
   const { c } = useTheme();
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
-      <Ambient weather={w.kind} />
+      <Ambient weather={now?.kind} />
     <ScrollEdge y={edge} />
     <Animated.ScrollView
       testID="screen-home"
@@ -52,7 +60,7 @@ export function Home() {
       scrollEventThrottle={16}
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}
     >
-      <Masthead kicker="DRESSKODE" meta={`${capital(shortDate(0))} · ${s.profile.city ? `${s.profile.city}, ` : ''}${w.t}°, ${s.profile.city ? WEATHER_WORD[w.kind] : w.label}`} />
+      <Masthead kicker="DRESSKODE" meta={meta} />
 
       {!outfit ? (
         <EmptyToday />
@@ -97,6 +105,9 @@ export function Home() {
       {s.modules.filter((m) => m.on).map((m) => (
         <Module key={m.id} id={m.id} W={W} />
       ))}
+
+      {/* La météo de l'en-tête est créditée dans « Ta semaine » ; module masqué, elle l'est ici. */}
+      {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
 
       <Tap testID="customize-home" onPress={() => nav.navigate('Customize')} scaleTo={1} accessibilityLabel="Personnaliser l’accueil" style={{ minHeight: 44 }} className="flex-row items-center justify-center">
         <Icon name="sliders" size={18} color={c.ink2} />
@@ -236,6 +247,7 @@ function EmptyToday() {
 
 function Module({ id, W }: { id: HomeModule; W: number }) {
   const { s } = useStore();
+  const meteo = useMeteo();
   const nav = useNavigation<Nav>();
   const { c, scheme } = useTheme();
   const title = MODULE_LABELS[id].title;
@@ -278,23 +290,26 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
         <View className="flex-row" style={{ gap: 4 }}>
           {Array.from({ length: 7 }, (_, i) => {
             const d = dayDate(i);
-            const w = WEATHER[i];
-            const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i];
+            const w = meteo.jours[i];
+            const ferie = ferieDu(s.contexte, i);
+            const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i] || !!ferie;
+            const label = [i === 0 ? 'Aujourd’hui' : shortDate(i), w ? `${w.t} degrés, ${w.label}` : null, ferie ? `férié, ${ferie.nom}` : null, busy && !ferie ? 'un événement' : null];
             return (
-              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={`${i === 0 ? 'Aujourd’hui' : shortDate(i)}, ${w.t} degrés${busy ? ', un événement' : ''}`} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }} className={i === 0 ? 'bg-pill' : ''}>
+              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }} className={i === 0 ? 'bg-pill' : ''}>
                 <T v="small" tone="ink2">
                   {DAYS_LETTER[d.getDay()]}
                 </T>
                 <T v="bodyStrong">{d.getDate()}</T>
-                <WeatherIcon w={w} size={18} color={c.ink2} />
+                {w ? <WeatherIcon w={w} size={18} color={c.ink2} /> : <View style={{ height: 18 }} />}
                 <T v="small" tone="ink2">
-                  {w.t}°
+                  {w ? `${w.t}°` : ' '}
                 </T>
                 <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: busy ? c.brass : 'transparent' }} />
               </Tap>
             );
           })}
         </View>
+        {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
       </View>
     );
   }
@@ -323,6 +338,35 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             </Tap>
           ))}
         </ScrollView>
+      </View>
+    );
+  }
+
+  if (id === 'tendance' && meteo.reelle) {
+    // Compte connecté : la pièce dont l'intérêt monte le plus cette semaine, et que le dressing a déjà.
+    const top = tendancesChezToi(s.contexte, s.pieces)[0];
+    if (!top) return null;
+    const { t, pieces: owned } = top;
+    const rare = owned.filter((p) => p.wears < 5).length;
+    const thumb = (W - 32 - 16) / 5;
+    return (
+      <View style={{ gap: 12 }}>
+        {head()}
+        <Card style={{ gap: 12 }}>
+          <T v="cardTitle">{t.variation !== null ? `${t.libelle} : +${t.variation} % d’intérêt cette semaine.` : `${t.libelle} : une pièce de saison.`}</T>
+          <T v="body" tone="ink2">
+            {`Pas besoin d’acheter : tu en as déjà ${owned.length > 1 ? `${owned.length} dans ton dressing` : 'une dans ton dressing'}${!rare ? '' : rare === owned.length ? `, presque jamais portée${rare > 1 ? 's' : ''}` : `, dont ${rare} presque jamais portée${rare > 1 ? 's' : ''}`}.`}
+          </T>
+          <View className="flex-row" style={{ gap: 4 }}>
+            {owned.slice(0, 5).map((p) => (
+              <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: thumb, alignItems: 'center' }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={thumb - 4} dark={scheme === 'dark'} label={p.name} />
+              </Tap>
+            ))}
+          </View>
+          <Button testID="trend-compose" label="Composer une tenue avec" variant="secondary" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, 1).map((p) => p.id) })} />
+          <Credit blocs={[s.contexte?.tendances]} />
+        </Card>
       </View>
     );
   }

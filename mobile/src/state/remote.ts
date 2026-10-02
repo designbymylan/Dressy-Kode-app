@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase';
 import { COLOR_CHOICES, type CategoryId, type Piece, type Season } from '../data/wardrobe';
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
+import type { Contexte } from './contexte';
 import type { KodeLink, KodeMessage } from './kode';
 import { JOB_SELECT, type JobRow, type Reveal } from './jobs';
 
@@ -467,6 +468,22 @@ export async function askKode(question: string): Promise<{ reply: Omit<KodeMessa
   if (row.error) return { reply: { text: 'Kode a répondu, mais la réponse n’a pas pu être relue. Rouvre la conversation dans un instant.' }, counted: true };
   const m = toMessage(row.data as unknown as MessageRow);
   return { reply: { id: m.id, text: m.text, outfit: m.outfit }, counted: true };
+}
+
+/**
+ * Les données du jour (météo, fériés, vacances scolaires, tendances…) pour la
+ * ville du profil, depuis la fonction serveur `donnees`. Jamais d'appel direct
+ * aux API depuis l'app : le serveur garde le cache et les sources de secours.
+ * null si la fonction ne répond pas : l'app garde alors le dernier paquet reçu.
+ */
+export async function loadContexte(ville?: string | null): Promise<Contexte | null> {
+  // La ville du téléphone part avec la demande : un changement de ville compte avant même d'être enregistré.
+  const { data, error } = await db().functions.invoke<Contexte>('donnees', { body: ville?.trim() ? { ville: ville.trim() } : {} });
+  if (error || !data?.jour) {
+    console.warn('[supabase] données du jour :', (await functionError(error, 'sans réponse')).message);
+    return null;
+  }
+  return data;
 }
 
 /** Ouvre le paiement Stripe (ou le portail pour changer d'offre) : rend l'adresse à ouvrir. */

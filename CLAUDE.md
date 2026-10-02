@@ -16,7 +16,13 @@ Deux applications, un seul projet Supabase :
 - **`web/` : l'app web Next.js pensée pour mobile** (App Router, React 19,
   TypeScript, `@supabase/ssr`) : compte, dressing, tenues, Kode, paiement.
 - `supabase/` : migrations, Edge Functions (`dressy-agent`, `kode`,
-  `billing`, `stripe-webhook`).
+  `billing`, `stripe-webhook`, `donnees`).
+- **Données du jour** (météo, fériés, vacances scolaires, tendances…) :
+  `supabase/functions/_shared/donnees/` (une source par fichier, cache
+  partagé `data_cache`, chaîne de repli ; voir son `README.md`). L'app les
+  reçoit par la fonction `donnees`, Kode les lit avec la question. Aucune API
+  externe n'est appelée depuis l'app, et toute donnée affichée porte sa
+  source et son heure de mise à jour (`mobile/src/ui/Credit.tsx`).
 
 Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur :
 
@@ -64,6 +70,7 @@ python3 design/refonte/contraste.py            # contraste AA de la palette mobi
 cd web && npm run typecheck
 cd web && npm run build                        # référence pour valider une modif
 cd web && npm run test:agent                   # tests de l'agent (détourage, décisions)
+cd web && npm run test:donnees                 # chaque source de données, contre la vraie API
 
 node tools/serve.mjs                           # maquettes sur http://localhost:4173
 ```
@@ -180,7 +187,8 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
 ## Sécurité et données
 
 - Les clés secrètes (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
-  `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL`) vivent dans
+  `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL`, et le facultatif
+  `DATA_USER_AGENT`) vivent dans
   Supabase > Edge Functions > Secrets, **jamais dans le code** ni dans un
   fichier commité, et ne se collent jamais dans une conversation.
 - `mobile/.env` et `web/.env.local` ne portent que l'URL du projet et la clé
@@ -190,6 +198,6 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   `getSession()` : seul `getUser()` revalide le jeton.
 - Schéma : `supabase/migrations/`. Toute modification passe par une nouvelle
   migration, dont le nom de fichier reprend la version appliquée au projet.
-- Edge Functions : `kode` et `billing` avec vérification JWT,
+- Edge Functions : `kode`, `billing` et `donnees` avec vérification JWT,
   `stripe-webhook` et `dressy-agent` sans (signature Stripe, déclencheur
   interne).
