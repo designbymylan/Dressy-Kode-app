@@ -117,6 +117,13 @@ console.log('\n· Hors ligne');
   b = await obtenir(cacheMemoire(), { cle: 'z', duree: HEURE, quoi: 'Tendances', sources: [ko('a')], params: null, maintenant, ultime: { source: ok('maison', 9), duree: HEURE, message: 'de saison' } });
   check('dernier recours maison quand rien d’autre', b.etat === 'frais' && b.valeur === 9 && b.message === 'de saison');
 
+  const z = cacheMemoire();
+  const saisonnier = { source: ok('maison', 9), duree: HEURE, message: 'de saison' };
+  await obtenir(z, { cle: 'z', duree: HEURE, quoi: 'Tendances', sources: [ko('a')], params: null, maintenant, ultime: saisonnier });
+  t += 2 * HEURE;
+  b = await obtenir(z, { cle: 'z', duree: HEURE, quoi: 'Tendances', sources: [ko('a')], params: null, maintenant, ultime: saisonnier });
+  check('le secours maison n’est jamais présenté comme une valeur ancienne', b.etat === 'frais' && b.message === 'de saison');
+
   const casse = { lire: async () => { throw new Error('base en panne'); }, ecrire: async () => { throw new Error('base en panne'); } };
   b = await obtenir(casse, { cle: 'w', duree: HEURE, quoi: 'Test', sources: [ok('a', 3)], params: null, maintenant });
   check('cache en panne : la source répond quand même', b.etat === 'frais' && b.valeur === 3);
@@ -160,8 +167,20 @@ await essai('IGN Géoplateforme : Saint-Denis (La Réunion) donne 974', async ()
   const v = await geoplateforme.lire('Saint-Denis 97400');
   vrai(v.departement === '974', JSON.stringify(v));
 });
+/** Nominatim : un appel par seconde au plus (règle d'usage) ; sur 429, un seul nouvel essai après 3 s. */
+async function poliment<T>(f: () => Promise<T>): Promise<T> {
+  await pause(1500);
+  try {
+    return await f();
+  } catch (e) {
+    if ((e as { status?: number }).status !== 429) throw e;
+    await pause(3000);
+    return f();
+  }
+}
+
 await essai('Nominatim : Lyon', async () => {
-  const v = await nominatim.lire('Lyon');
+  const v = await poliment(() => nominatim.lire('Lyon'));
   vrai(v.departement === '69', JSON.stringify(v));
   return `${v.nom} ${v.lat.toFixed(2)},${v.lon.toFixed(2)}`;
 });
@@ -259,6 +278,14 @@ await essai('contexte complet pour Lyon (cache en mémoire)', async () => {
   const t = Date.now();
   await contexteDuJour(cache, 'lyon');
   return `${etats.join(' ')} · second appel ${Date.now() - t} ms (cache)`;
+});
+
+await essai('ville introuvable : un message clair, et les fériés quand même', async () => {
+  await pause(1500); // ce cas interroge aussi Nominatim
+  const c = await contexteDuJour(cacheMemoire(), 'Zzqxw-ville-qui-n-existe-pas');
+  vrai(c.ville.etat === 'indisponible' && c.ville.message?.startsWith('Ville introuvable') === true, c.ville.message ?? '');
+  vrai(c.vacances.message?.startsWith('Ville introuvable') === true, c.vacances.message ?? '');
+  vrai(c.feries.etat === 'frais', c.feries.etat);
 });
 
 console.log(fails ? `\n${fails} échec(s)` : '\nTout est vert.');

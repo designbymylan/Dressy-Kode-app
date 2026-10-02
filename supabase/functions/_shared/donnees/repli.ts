@@ -77,8 +77,8 @@ export async function obtenir<P, T>(cache: Cache, d: Demande<P, T>): Promise<Blo
     }
   }
 
-  // 3. La dernière valeur connue.
-  if (enCache) {
+  // 3. La dernière valeur connue (sauf si c'était déjà notre secours maison : on le resert tel quel).
+  if (enCache && enCache.source !== d.ultime?.source.nom) {
     await ecrire({ ...enCache, reessai: iso(now + REESSAI_MS) });
     return ancien(enCache);
   }

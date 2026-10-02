@@ -56,11 +56,9 @@ Deno.serve(async (req) => {
     const input = await req.json().catch(() => ({}));
     let ville = typeof input?.ville === 'string' ? input.ville.trim().slice(0, 80) : '';
     if (!ville) {
-      const { data: space } = await db.from('spaces').select('id').limit(1).maybeSingle();
-      if (space) {
-        const { data: s } = await db.from('settings').select('city').eq('space_id', space.id).maybeSingle();
-        ville = s?.city ?? '';
-      }
+      // La RLS ne laisse voir que les réglages des espaces de la personne.
+      const { data: s } = await db.from('settings').select('city').limit(1).maybeSingle();
+      ville = s?.city ?? '';
     }
 
     const contexte = await contexteDuJour(cache, ville || null);

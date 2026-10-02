@@ -16,6 +16,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { RULES, ANSWER_SCHEMA, profileText, agendaText, type Answer, type AgendaLine, type Profile } from './prompt.ts';
 import { withRefs, wardrobeText, pickPieces, normaliseHistory, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
+import { cachePostgres } from '../_shared/donnees/cache.ts';
+import { contexteDuJour } from '../_shared/donnees/contexte.ts';
+import { contexteTexte } from '../_shared/donnees/texte.ts';
 
 const MODEL = Deno.env.get('KODE_MODEL') ?? 'claude-opus-5';
 const HISTORY = 12; // bulles relues pour suivre la conversation
@@ -85,8 +88,9 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string) 
   const today = parisDay(0);
   const horizon = parisDay(14);
 
-  const [profile, style, categories, garments, stats, planned, events, history] = await Promise.all([
+  const [profile, settings, style, categories, garments, stats, planned, events, history] = await Promise.all([
     db.from('profiles').select('display_name').eq('id', userId).maybeSingle(),
+    db.from('settings').select('city').eq('space_id', spaceId).maybeSingle(),
     db.from('style_profile').select('*').eq('space_id', spaceId).maybeSingle(),
     db.from('categories').select('id, label').order('sort'),
     db.from('garments')
@@ -157,6 +161,7 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string) 
   return {
     today,
     name: profile.data?.display_name ?? null,
+    city: (settings.data?.city as string | null | undefined) ?? null,
     style: (style.data ?? null) as Profile | null,
     labels: new Map((categories.data ?? []).map((c) => [c.id as string, c.label as string])),
     wardrobe,
@@ -254,6 +259,13 @@ async function reply(token: string, question: string) {
     throw new KodeError('Kode a besoin d’au moins deux pièces dans ton dressing pour composer une tenue.', 409, 'wardrobe');
   }
 
+  // Météo, fériés, vacances, tendances : lus en même temps que le quota, par
+  // le cache partagé. Jamais bloquant : sans réponse en 9 s, Kode répond sans.
+  const monde = Promise.race([
+    contexteDuJour(cachePostgres(admin), ctx.city).then(contexteTexte),
+    new Promise<string>((ok) => setTimeout(() => ok(''), 9000)),
+  ]).catch((e) => (console.warn('contexte du jour :', e instanceof Error ? e.message : e), ''));
+
   const asked = await admin.rpc('kode_ask', { target: space.id, question });
   if (asked.error) {
     if (asked.error.hint === 'quota') throw new KodeError(asked.error.message, 429, 'quota');
@@ -269,11 +281,12 @@ async function reply(token: string, question: string) {
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
     ].join('\n\n');
 
-    // La date n'entre que dans la dernière bulle : placée dans le contexte,
-    // elle invaliderait le cache chaque jour pour toutes les questions.
+    // La date et le contexte du jour n'entrent que dans la dernière bulle :
+    // placés dans le contexte, ils invalideraient le cache à chaque heure.
+    const jour = await monde;
     const turns = normaliseHistory([
       ...ctx.turns,
-      { role: 'user', content: `Nous sommes le ${todayLabel()}.\n\n${question}` },
+      { role: 'user', content: `Nous sommes le ${todayLabel()}.\n\n${jour ? `${jour}\n\n` : ''}${question}` },
     ]);
 
     const res = await askClaude(RULES, context, turns);

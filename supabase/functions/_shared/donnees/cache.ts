@@ -25,7 +25,7 @@ export type Cache = {
   ecrire(cle: string, e: Entree): Promise<void>;
 };
 
-/** Le cache en mémoire : pour les tests, ou en secours si la base ne répond pas. */
+/** Le cache en mémoire, pour les tests. */
 export function cacheMemoire(): Cache & { lignes: Map<string, Entree> } {
   const lignes = new Map<string, Entree>();
   return {
@@ -44,8 +44,13 @@ type Db = {
   };
 };
 
-/** Le cache en base, avec le client « service » de l'Edge Function. */
-export function cachePostgres(admin: Db): Cache {
+/**
+ * Le cache en base, avec le client « service » de l'Edge Function.
+ * Reçu sans type : comparer le client supabase-js complet à `Db` épuise le
+ * vérificateur de types (TS2589) ; on n'en utilise que ce que `Db` décrit.
+ */
+export function cachePostgres(client: unknown): Cache {
+  const admin = client as Db;
   return {
     async lire(cle) {
       const { data, error } = await admin.from('data_cache').select('valeur, source, mention, maj, expire, reessai').eq('cle', cle).maybeSingle();
