@@ -112,8 +112,9 @@ Ordre de priorité, du plus fort au plus faible :
 ### Règles visuelles (galerie et verre)
 
 - Fond blanc (`#ffffff`), texte noir, filets gris clair (`#e9e9e9`),
-  beaucoup de blanc. Derrière, des **halos beurre** très doux qui dérivent
-  lentement (gris par temps de pluie) : c'est eux que le verre laisse voir.
+  beaucoup de blanc. Derrière, des **halos crème** très discrets qui dérivent
+  lentement (gris clair par temps de pluie), **noirs en mode sombre**, sans
+  aucun jaune : c'est eux que le verre laisse voir (décision du 03/10).
 - **Le verre** (03/10) : cartes en blanc translucide, filet fin, ombre douce ;
   la couche de navigation (barre d'onglets, en-têtes, boutons flottants,
   feuilles) floutée, en vrai Liquid Glass sur iOS 26 (`ui/Glass.tsx`,

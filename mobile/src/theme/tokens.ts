@@ -3,7 +3,7 @@
  * d'origine dans design/charte-galerie.md) : fond blanc, texte noir, filets
  * gris d'un pixel, gris studio sous les vêtements, beurre pour les bandeaux
  * de service ; arrondis, verre dépoli et transparence façon iOS (décision du
- * 03/10), sur des halos beurre. Typographie : charte v1
+ * 03/10), sur des halos crème très discrets. Typographie : charte v1
  * (design/charte-typographique-v1.md, polices dans fonts.ts). Le mode sombre en est tiré (fond noir, texte blanc, beurre gardé).
  * La disposition des écrans, elle, reste celle de la refonte (design/refonte/).
  * Les couleurs vivent dans palette.json : c'est le fichier que lit

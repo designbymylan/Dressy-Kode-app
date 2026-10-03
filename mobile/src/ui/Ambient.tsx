@@ -8,9 +8,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useScreen } from './screen';
 
 /**
- * L'ambiance de la direction « vitrine de verre » : quatre halos pastel
- * (pêche, lavande, ciel, rose poudré) qui dérivent très lentement derrière
- * l'écran, comme le calque `.ambient` du web. Des dégradés radiaux plutôt
+ * L'ambiance derrière le verre : quatre halos crème, très discrets (noirs
+ * en sombre), qui dérivent très lentement derrière l'écran, comme le calque
+ * `.ambient` du web. Des dégradés radiaux plutôt
  * qu'un flou : même douceur, sans coût de rendu. Figés si les animations
  * sont réduites.
  */
@@ -22,9 +22,9 @@ const HALOS = [
 ] as const;
 
 /**
- * La météo dans les halos (accueil) : chauds et vifs au soleil, plus froids
- * et lents sous la pluie, presque blancs sous un ciel couvert. On sent le
- * temps qu'il fait avant de le lire.
+ * La météo dans les halos (accueil) : une crème un peu plus chaude au
+ * soleil, gris clair et plus lents sous la pluie, presque blancs sous un ciel
+ * couvert. Tout reste très discret ; en sombre, tout reste noir.
  */
 const WEATHER_HALOS: Record<Weather['kind'], { tone: 'sun' | 'rain' | 'cloud'; pace: number }> = {
   soleil: { tone: 'sun', pace: 0.75 },
@@ -37,7 +37,8 @@ export function Ambient({ weather }: { weather?: Weather['kind'] }) {
   const { c, scheme } = useTheme();
   const { width, height } = useScreen();
   const size = Math.max(width, height) * 0.8;
-  const opacity = scheme === 'dark' ? 0.55 : 0.85;
+  // Très discrets : un voile crème en clair, presque rien sur le noir en sombre.
+  const opacity = scheme === 'dark' ? 0.5 : 0.6;
   const w = weather ? WEATHER_HALOS[weather] : null;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">

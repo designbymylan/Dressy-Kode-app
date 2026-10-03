@@ -19,7 +19,7 @@ le verre (règles visuelles dans `../CLAUDE.md`).
 - **Verre** : `src/ui/Glass.tsx` pour la couche de navigation (flou, Liquid
   Glass sur iOS 26) ; `glassSurface()` pour les cartes (blanc translucide,
   filet fin, ombre douce). Rayons dans `theme/tokens.ts` (`radius`), ombres
-  dans `material`. Halos beurre derrière : `src/ui/Ambient.tsx`.
+  dans `material`. Halos crème très discrets derrière (noirs en sombre) : `src/ui/Ambient.tsx`.
 - **Beurre** : `<Card className="bg-butter">` passe son contenu en clair
   (`LightScope`), pour garder texte et boutons noirs sur le beurre en sombre.
 - **Polices** : par rôle, depuis `src/theme/fonts.ts` (`...F.s500`), jamais

@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="fr" data-theme={theme}>
       {/* Helvetica, celle du système : aucune police à télécharger. */}
       <body>
-        {/* Les halos beurre, derrière le verre : un seul calque fixe, sous tout le reste. */}
+        {/* Les halos crème (noirs en sombre), derrière le verre : un seul calque fixe, sous tout le reste. */}
         <div className="ambient" aria-hidden="true">
           <i />
           <i />

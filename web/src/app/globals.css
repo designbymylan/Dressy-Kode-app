@@ -15,7 +15,7 @@
    transparence.
 
    Fond blanc, texte noir, filets gris clair, beaucoup de blanc ; derrière,
-   des halos beurre très doux qui dérivent. Cartes en verre translucide,
+   des halos crème très discrets qui dérivent (noirs en sombre). Cartes en verre translucide,
    filet fin, ombre douce ; navigation floutée ; tout ce qui se clique en
    capsule. Une seule couleur, le beurre, réservée aux bandeaux de service.
    Les vêtements se posent sur gris studio. Mêmes valeurs que l'app mobile
@@ -55,12 +55,12 @@
   --shadow-glass: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 18px 40px -18px rgba(17, 17, 17, 0.22);
   --shadow-float: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 24px 60px -24px rgba(17, 17, 17, 0.32);
   --shadow-press: 0 6px 18px -8px rgba(0, 0, 0, 0.45);
-  /* Les halos beurre derrière le verre. */
-  --halo-1: #faedbc;
-  --halo-2: #f6e4b8;
-  --halo-3: #fbf3da;
-  --halo-4: #f3e7cc;
-  --halo-opacity: 0.85;
+  /* Les halos derrière le verre : crème, très discrets. */
+  --halo-1: #f6efe1;
+  --halo-2: #f2ebdd;
+  --halo-3: #f8f4ea;
+  --halo-4: #efe9de;
+  --halo-opacity: 0.6;
 
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -98,11 +98,11 @@
   --shadow-glass: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 40px -18px rgba(0, 0, 0, 0.7);
   --shadow-float: 0 24px 60px -24px rgba(0, 0, 0, 0.8);
   --shadow-press: 0 6px 18px -8px rgba(0, 0, 0, 0.8);
-  --halo-1: #3a3122;
-  --halo-2: #2e2719;
-  --halo-3: #3f3626;
-  --halo-4: #2a2419;
-  --halo-opacity: 0.55;
+  --halo-1: #141414;
+  --halo-2: #101010;
+  --halo-3: #171717;
+  --halo-4: #0e0e0e;
+  --halo-opacity: 0.5;
   color-scheme: dark;
 }
 
@@ -128,11 +128,11 @@
     --shadow-glass: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 40px -18px rgba(0, 0, 0, 0.7);
     --shadow-float: 0 24px 60px -24px rgba(0, 0, 0, 0.8);
     --shadow-press: 0 6px 18px -8px rgba(0, 0, 0, 0.8);
-    --halo-1: #3a3122;
-    --halo-2: #2e2719;
-    --halo-3: #3f3626;
-    --halo-4: #2a2419;
-    --halo-opacity: 0.55;
+    --halo-1: #141414;
+    --halo-2: #101010;
+    --halo-3: #171717;
+    --halo-4: #0e0e0e;
+    --halo-opacity: 0.5;
     color-scheme: dark;
   }
 }
@@ -215,7 +215,7 @@ img { display: block; }
 [data-composer] textarea:focus-visible { outline: none; }
 [data-composer]:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* ---------- l'ambiance : halos beurre qui dérivent derrière le verre ---------- */
+/* ---------- l'ambiance : halos crème qui dérivent derrière le verre ---------- */
 
 .ambient {
   position: fixed;
