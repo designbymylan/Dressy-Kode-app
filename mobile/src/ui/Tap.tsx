@@ -17,7 +17,8 @@ type Props = Omit<PressableProps, 'style' | 'children'> & {
   style?: StyleProp<ViewStyle>;
   /** Mise en page du conteneur touchable (flex, largeur) : le style visuel reste sur `style`. */
   outerStyle?: StyleProp<ViewStyle>;
-  className?: string;
+  /** Interdit : voir plus bas. */
+  className?: never;
   children: ReactNode;
   /** Ressort à l'appui : 0,97 par défaut, 1 pour ne rien bouger. */
   scaleTo?: number;
@@ -27,9 +28,10 @@ type Props = Omit<PressableProps, 'style' | 'children'> & {
 /**
  * Tout ce qui se touche passe par ici : un ressort court à l'appui (désactivé
  * si « Réduire les animations » est actif), un retour haptique discret, et
- * le rôle d'accessibilité « bouton » par défaut.
+ * le rôle d'accessibilité « bouton » par défaut. Le style passe par `style`
+ * (jetons de `useTheme().c`), jamais par des classes NativeWind.
  */
-export function Tap({ style, outerStyle, className, children, scaleTo = motion.pressScale, feedback = 'light', onPressIn, onPressOut, onPress, accessibilityRole = 'button', ...rest }: Props) {
+export function Tap({ style, outerStyle, children, scaleTo = motion.pressScale, feedback = 'light', onPressIn, onPressOut, onPress, accessibilityRole = 'button', ...rest }: Props) {
   const reduced = useReducedMotion();
   const s = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
@@ -51,7 +53,9 @@ export function Tap({ style, outerStyle, className, children, scaleTo = motion.p
       }}
       {...rest}
     >
-      <Animated.View className={className} style={[style, anim]}>
+      {/* Pas de className ici : sur iPhone, NativeWind fusionnerait le style
+          fixe et le style animé, et Reanimated ne garderait que l'animé. */}
+      <Animated.View style={[style, anim]}>
         {children}
       </Animated.View>
     </Pressable>

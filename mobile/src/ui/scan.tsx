@@ -178,8 +178,7 @@ function ScanLabel({ piece, i, left, top, maxWidth }: { piece: ScanPiece; i: num
   return (
     <Animated.View
       pointerEvents="none"
-      className="flex-row items-center"
-      style={[{ position: 'absolute', left, top, maxWidth, height: 24, paddingLeft: 7, paddingRight: 9, gap: 5, borderRadius: 999, backgroundColor: c['glass-strong'], transformOrigin: 'left' }, pop]}
+      style={[{ flexDirection: 'row', alignItems: 'center', position: 'absolute', left, top, maxWidth, height: 24, paddingLeft: 7, paddingRight: 9, gap: 5, borderRadius: 999, backgroundColor: c['glass-strong'], transformOrigin: 'left' }, pop]}
     >
       {piece.state === 'done' ? (
         <Icon name="check" size={12} color={tone} strokeWidth={2.6} />
@@ -287,7 +286,7 @@ export function RevealCutout({
           style={[{ position: 'absolute', left: -fw * 0.12, width: fw * 1.24, top: 0, height: 2, backgroundColor: WHITE, shadowColor: WHITE, shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }, beam]}
         />
       </View>
-      <Animated.View className="flex-row items-center" style={[{ position: 'absolute', bottom: 6, height: 22, paddingHorizontal: 9, gap: 4, borderRadius: 999, backgroundColor: c['glass-strong'] }, tagged]}>
+      <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', position: 'absolute', bottom: 6, height: 22, paddingHorizontal: 9, gap: 4, borderRadius: 999, backgroundColor: c['glass-strong'] }, tagged]}>
         <Icon name="check" size={11} color={c.positive} strokeWidth={2.6} />
         <T v="small" style={{ color: c.positive, ...F.s700, fontSize: 11.5 }}>
           Sans fond

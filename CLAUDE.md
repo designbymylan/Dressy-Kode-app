@@ -180,6 +180,12 @@ Ordre de priorité, du plus fort au plus faible :
   `Chip`, `Segmented`, `Sheet`, `TabBar`, `T`…) avant de créer un composant.
   Les icônes sont les SVG de `ui/Icon.tsx`. L'état est dans
   `state/store.tsx`, le pont Supabase dans `state/remote.ts`.
+  **Jamais de `className` sur un composant animé** (`Animated.View`,
+  `Animated.Text`…) **ni sur `Tap`** : sur iPhone, NativeWind y fusionnait le
+  style fixe et le style animé, et Reanimated ne gardait que l'animé (feuilles
+  transparentes, tenues en vrac, constaté le 03/10). Ces composants prennent
+  leur style par `style`, avec les jetons de `useTheme().c`. Le navigateur ne
+  montre pas ce bug : seul un vrai iPhone (Expo Go, `npm run apercu`) fait foi.
 - **Web** : styles en ligne + `globals.css` (classes `.glass`, `.btn`,
   `.chip`, `.segment`…). Réutilise `web/src/components/ui.tsx` (`Screen`,
   `Title`, `Card`, `buttonPrimary`…). Pas de Tailwind, pas de shadcn/ui, pas

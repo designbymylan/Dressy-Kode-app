@@ -47,7 +47,7 @@ export function Customize() {
           </T>
           <View style={{ marginTop: 6 }}>
             {s.modules.map((m, i) => (
-              <Animated.View key={m.id} layout={LinearTransition.springify().damping(22)} className="flex-row items-center" style={{ minHeight: 64, gap: 10, borderBottomWidth: i === s.modules.length - 1 ? 0 : 1, borderColor: c.rule }}>
+              <Animated.View key={m.id} layout={LinearTransition.springify().damping(22)} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 64, gap: 10, borderBottomWidth: i === s.modules.length - 1 ? 0 : 1, borderColor: c.rule }}>
                 <View style={{ flex: 1, opacity: m.on ? 1 : 0.55 }}>
                   <T v="bodyStrong">{MODULE_LABELS[m.id].title}</T>
                   <T v="caption" tone="ink2">

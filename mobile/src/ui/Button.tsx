@@ -56,8 +56,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'l', icon, 
       hitSlop={slop}
       feedback={feedback ?? (variant === 'primary' ? 'medium' : 'light')}
       outerStyle={grow ? { flexGrow: 1, flexBasis: 0 } : undefined}
-      style={[{ height: h, borderRadius: h / 2, opacity: disabled ? 0.45 : 1 }, surface]}
-      className={`flex-row items-center justify-center ${variant === 'plain' ? 'px-1' : size === 's' ? 'px-4' : 'px-6'}`}
+      style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: variant === 'plain' ? 4 : size === 's' ? 16 : 24, height: h, borderRadius: h / 2, opacity: disabled ? 0.45 : 1 }, surface]}
     >
       {loading ? (
         <ActivityIndicator color={fg} />

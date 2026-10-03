@@ -1,5 +1,4 @@
 import './global.css';
-import './src/ui/interop';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';

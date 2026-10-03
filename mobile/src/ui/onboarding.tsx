@@ -341,7 +341,7 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
 export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; badge?: string; testID?: string }) {
   const { c, scheme } = useTheme();
   return (
-    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={[{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 28 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
+    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} style={[{ flexDirection: 'row', alignItems: 'center', minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 28 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
       {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 20, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
       <View style={{ flex: 1, gap: 3 }}>
         {badge && (

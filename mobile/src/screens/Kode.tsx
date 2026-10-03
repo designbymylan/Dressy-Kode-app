@@ -160,7 +160,7 @@ export function Kode() {
               Pour commencer
             </T>
             {starters.map((q, i) => (
-              <Tap key={q} testID={`starter-${i}`} onPress={() => send(q)} disabled={out} accessibilityLabel={q} scaleTo={0.99} style={{ minHeight: 52, borderBottomWidth: 1, borderColor: c.rule, gap: 12 }} className="flex-row items-center">
+              <Tap key={q} testID={`starter-${i}`} onPress={() => send(q)} disabled={out} accessibilityLabel={q} scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: 1, borderColor: c.rule, gap: 12 }}>
                 <T v="numeral" tone="brass" style={{ fontSize: 17 }}>
                   {String(i + 1).padStart(2, '0')}
                 </T>

@@ -86,7 +86,7 @@ export function Shop() {
 
         <View style={{ gap: 0 }}>
           {PACKS.map((p, i) => (
-            <Tap key={p.id} testID={`pack-${p.id}`} onPress={() => setOpen(p.id)} scaleTo={0.99} accessibilityLabel={`${p.name}, ${owns(p.id) ? 'déjà à toi' : p.price}`} className="flex-row items-center" style={{ minHeight: 84, gap: 14, borderBottomWidth: i === PACKS.length - 1 ? 0 : 1, borderColor: c.rule, paddingVertical: 12 }}>
+            <Tap key={p.id} testID={`pack-${p.id}`} onPress={() => setOpen(p.id)} scaleTo={0.99} accessibilityLabel={`${p.name}, ${owns(p.id) ? 'déjà à toi' : p.price}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 84, gap: 14, borderBottomWidth: i === PACKS.length - 1 ? 0 : 1, borderColor: c.rule, paddingVertical: 12 }}>
               <View className="bg-sunk items-center justify-center" style={{ width: 48, height: 48, borderRadius: 24 }}>
                 <Icon name={p.icon} size={22} color={c.brass} />
               </View>
@@ -112,7 +112,7 @@ export function Shop() {
             <T v="body" tone="primary-fg" style={{ opacity: 0.85 }}>
               Occasion, Voyage, Audit, Couleurs et Défi, débloqués sans date limite.
             </T>
-            <Tap testID="bundle-buy" onPress={() => setBundle(true)} accessibilityLabel="Prendre les cinq pour 14,99 €" style={{ height: 50, borderRadius: 25, backgroundColor: c.paper }} className="items-center justify-center">
+            <Tap testID="bundle-buy" onPress={() => setBundle(true)} accessibilityLabel="Prendre les cinq pour 14,99 €" style={{ alignItems: 'center', justifyContent: 'center', height: 50, borderRadius: 25, backgroundColor: c.paper }}>
               <T v="button">Prendre les cinq · 14,99 €</T>
             </Tap>
           </Card>

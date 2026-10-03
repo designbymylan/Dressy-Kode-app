@@ -44,7 +44,7 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
           {toast.text}
         </T>
         {toast.undo && (
-          <Tap testID="toast-undo" onPress={a.undo} accessibilityLabel="Annuler" style={{ height: 44, paddingHorizontal: 10 }} className="items-center justify-center">
+          <Tap testID="toast-undo" onPress={a.undo} accessibilityLabel="Annuler" style={{ alignItems: 'center', justifyContent: 'center', height: 44, paddingHorizontal: 10 }}>
             <T v="button" upper style={{ color: c['butter-ink'], textDecorationLine: 'underline' }}>
               Annuler
             </T>

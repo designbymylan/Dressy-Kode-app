@@ -40,8 +40,9 @@ export function Skeleton({ w, h, r = 12, style }: { w: number | `${number}%`; h:
   useEffect(() => {
     if (!reduced) o.value = withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }), -1, true);
   }, [o, reduced]);
+  const { c } = useTheme();
   const anim = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View className="bg-sunk" style={[{ width: w, height: h, borderRadius: r }, anim, style]} />;
+  return <Animated.View style={[{ width: w, height: h, borderRadius: r, backgroundColor: c.sunk }, anim, style]} />;
 }
 
 /** Anneau de progression (précision de Kode, jauge de places). */

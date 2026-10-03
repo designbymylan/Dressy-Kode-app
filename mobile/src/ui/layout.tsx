@@ -53,7 +53,7 @@ export function SectionHead({ n, title, action, onAction, testID }: { n?: string
         {title}
       </T>
       {action && onAction && (
-        <Tap testID={testID} onPress={onAction} accessibilityRole="link" accessibilityLabel={action} scaleTo={1} className="flex-row items-center" style={{ minHeight: 44, paddingLeft: 8, gap: 4 }}>
+        <Tap testID={testID} onPress={onAction} accessibilityRole="link" accessibilityLabel={action} scaleTo={1} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingLeft: 8, gap: 4 }}>
           <T v="button" upper>
             {action}
           </T>

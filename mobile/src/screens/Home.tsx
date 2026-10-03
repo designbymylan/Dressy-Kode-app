@@ -112,7 +112,7 @@ export function Home() {
       {/* La météo de l'en-tête est créditée dans « Ta semaine » ; module masqué, elle l'est ici. */}
       {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
 
-      <Tap testID="customize-home" onPress={() => nav.navigate('Customize')} scaleTo={1} accessibilityLabel="Personnaliser l’accueil" style={{ minHeight: 44 }} className="flex-row items-center justify-center">
+      <Tap testID="customize-home" onPress={() => nav.navigate('Customize')} scaleTo={1} accessibilityLabel="Personnaliser l’accueil" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44 }}>
         <Icon name="sliders" size={18} color={c.ink2} />
         <T v="caption" tone="ink2" style={{ marginLeft: 8 }}>
           Personnaliser l’accueil
@@ -151,7 +151,7 @@ function WornToday({ pieces }: { pieces: Piece[] }) {
     <View className="flex-row items-center" style={{ gap: 12 }} accessibilityLiveRegion="polite">
       <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
         {!reduced && colours.length > 0 && Array.from({ length: 12 }, (_, i) => <Spark key={i} i={i} colour={colours[i % colours.length]} />)}
-        <Animated.View className="bg-primary-bg items-center justify-center" style={[{ width: 44, height: 44, borderRadius: 22 }, check]}>
+        <Animated.View style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }, check]}>
           <Icon name="check" size={22} color={c['primary-fg']} strokeWidth={2.2} />
         </Animated.View>
       </View>
@@ -289,7 +289,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     return (
       <View style={{ gap: 12 }}>
         {head()}
-        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" className="flex-row items-center bg-sunk" style={{ height: 50, borderRadius: 25, paddingHorizontal: 18, gap: 10 }}>
+        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c.sunk, height: 50, borderRadius: 25, paddingHorizontal: 18, gap: 10 }}>
           <Icon name="kode" size={20} color={c.brass} />
           <T v="body" tone="ink2">
             Pose ta question à Kode…
@@ -316,7 +316,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i] || !!ferie;
             const label = [i === 0 ? 'Aujourd’hui' : shortDate(i), w ? `${w.t} degrés, ${w.label}` : null, ferie ? `férié, ${ferie.nom}` : null, busy && !ferie ? 'un événement' : null];
             return (
-              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }} className={i === 0 ? 'bg-pill' : ''}>
+              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ backgroundColor: i === 0 ? c.pill : undefined, alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }}>
                 <T v="small" tone="ink2">
                   {DAYS_LETTER[d.getDay()]}
                 </T>

@@ -328,8 +328,7 @@ function AgeStep({ draft, set, next }: Ctx) {
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={age}
-              className="flex-row items-center justify-between"
-              style={{ minHeight: 58, borderBottomWidth: 1, borderColor: c.rule }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 58, borderBottomWidth: 1, borderColor: c.rule }}
             >
               <T v="bodyL" style={on ? { ...F.s600 } : undefined}>
                 {age}
@@ -554,7 +553,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
         </View>
       ) : (
         <>
-          <Tap testID="onb-consent" onPress={() => setConsent(!consent)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: consent }} accessibilityLabel="J’accepte que Kode analyse ces photos pour estimer ma silhouette. Elles sont supprimées juste après." className="flex-row" style={{ gap: 12, paddingVertical: 4, minHeight: 44 }}>
+          <Tap testID="onb-consent" onPress={() => setConsent(!consent)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: consent }} accessibilityLabel="J’accepte que Kode analyse ces photos pour estimer ma silhouette. Elles sont supprimées juste après." style={{ flexDirection: 'row', gap: 12, paddingVertical: 4, minHeight: 44 }}>
             <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: consent ? c.ink : c.control, backgroundColor: consent ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
               {consent && <Icon name="check" size={15} color={c['primary-fg']} strokeWidth={2.4} />}
             </View>
@@ -629,7 +628,7 @@ function Mesures({ draft, set, next }: Ctx) {
         </View>
       </View>
       {active && (
-        <Animated.View entering={FadeIn.duration(200)} className="items-center" style={{ gap: 8 }}>
+        <Animated.View entering={FadeIn.duration(200)} style={{ alignItems: 'center', gap: 8 }}>
           <Stepper
             value={m[active] ?? MEASURE_ROWS.find((r) => r.id === active)!.start[homme]}
             onChange={(v) => set({ measures: { ...m, [active]: v } })}
@@ -798,8 +797,7 @@ function Quotidien({ draft, set, next, W }: Ctx) {
               accessibilityState={{ checked: on }}
               accessibilityLabel={o.label}
               scaleTo={0.97}
-              className="flex-row items-center"
-              style={{ width: w, height: 58, borderRadius: 18, paddingHorizontal: 14, gap: 10, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}
+              style={{ flexDirection: 'row', alignItems: 'center', width: w, height: 58, borderRadius: 18, paddingHorizontal: 14, gap: 10, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}
             >
               <Icon name={o.icon} size={20} color={on ? c.ink : c.ink2} />
               <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={1}>
@@ -931,10 +929,10 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
       {n > 0 && (
         <View className="flex-row flex-wrap" style={{ gap: 8 }} testID="onb-photos">
           {photos.map((ph, i) => (
-            <Animated.View key={`${ph.uri}-${i}`} entering={FadeIn.duration(200)} className="bg-stage" style={{ width: tile, height: tile, borderRadius: 14, overflow: 'hidden' }}>
+            <Animated.View key={`${ph.uri}-${i}`} entering={FadeIn.duration(200)} style={{ backgroundColor: c.stage, width: tile, height: tile, borderRadius: 14, overflow: 'hidden' }}>
               <Image source={{ uri: ph.uri }} style={{ width: tile, height: tile }} accessibilityIgnoresInvertColors />
               <View style={{ position: 'absolute', top: 4, right: 4 }}>
-                <Tap onPress={() => setPhotos(photos.filter((_, j) => j !== i))} accessibilityLabel={`Retirer la photo ${i + 1}`} hitSlop={8} scaleTo={0.9} className="items-center justify-center" style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c['glass-strong'] }}>
+                <Tap onPress={() => setPhotos(photos.filter((_, j) => j !== i))} accessibilityLabel={`Retirer la photo ${i + 1}`} hitSlop={8} scaleTo={0.9} style={{ alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 14, backgroundColor: c['glass-strong'] }}>
                   <Icon name="close" size={13} color={c.ink} strokeWidth={2.2} />
                 </Tap>
               </View>

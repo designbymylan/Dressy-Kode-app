@@ -95,7 +95,7 @@ export function Agenda() {
           const ferieI = ferieDu(ctx, i);
           const busy = all.some((e) => e.day === i) || !!ferieI;
           return (
-            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ width: 50, paddingVertical: 10, borderRadius: 25, alignItems: 'center', gap: 4 }} className={on ? 'bg-primary-bg' : ''}>
+            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ backgroundColor: on ? c['primary-bg'] : undefined, width: 50, paddingVertical: 10, borderRadius: 25, alignItems: 'center', gap: 4 }}>
               <T v="small" tone={on ? 'primary-fg' : 'ink2'}>
                 {DAYS_LETTER[d.getDay()]}
               </T>
@@ -149,7 +149,7 @@ export function Agenda() {
             </T>
           ) : (
             events.map((e) => (
-              <Tap key={e.id} testID={`event-${e.id}`} disabled={!e.occasion} onPress={() => nav.navigate('Event', { id: e.id })} scaleTo={e.occasion ? 0.99 : 1} feedback={e.occasion ? 'light' : 'none'} accessibilityRole={e.occasion ? 'button' : 'text'} accessibilityLabel={`${e.time}, ${e.title}${e.place ? `, ${e.place}` : ''}`} className="flex-row items-center" style={{ minHeight: 56, gap: 14, borderBottomWidth: 1, borderColor: c.rule }}>
+              <Tap key={e.id} testID={`event-${e.id}`} disabled={!e.occasion} onPress={() => nav.navigate('Event', { id: e.id })} scaleTo={e.occasion ? 0.99 : 1} feedback={e.occasion ? 'light' : 'none'} accessibilityRole={e.occasion ? 'button' : 'text'} accessibilityLabel={`${e.time}, ${e.title}${e.place ? `, ${e.place}` : ''}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: 14, borderBottomWidth: 1, borderColor: c.rule }}>
                 <T v="numeral" tone="brass" style={{ width: 62, fontSize: 18 }}>
                   {e.time}
                 </T>
@@ -217,7 +217,7 @@ export function Agenda() {
               À venir
             </T>
             {later.map((e) => (
-              <Tap key={e.id} testID={`later-${e.id}`} onPress={() => (e.occasion ? nav.navigate('Event', { id: e.id }) : setDay(e.day))} scaleTo={0.99} accessibilityLabel={`${shortDate(e.day)}, ${e.title}`} className="flex-row items-center" style={{ minHeight: 52, gap: 14, borderBottomWidth: 1, borderColor: c.rule }}>
+              <Tap key={e.id} testID={`later-${e.id}`} onPress={() => (e.occasion ? nav.navigate('Event', { id: e.id }) : setDay(e.day))} scaleTo={0.99} accessibilityLabel={`${shortDate(e.day)}, ${e.title}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: 14, borderBottomWidth: 1, borderColor: c.rule }}>
                 <T v="caption" tone="ink2" style={{ width: 86 }}>
                   {cap(shortDate(e.day))}
                 </T>

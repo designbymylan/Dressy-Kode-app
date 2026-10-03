@@ -113,7 +113,7 @@ export function Compose() {
           </T>
         </View>
 
-        <Animated.View layout={LinearTransition.springify().damping(20)} className="bg-stage" style={{ borderRadius: 28, padding: 16, gap: 12 }}>
+        <Animated.View layout={LinearTransition.springify().damping(20)} style={{ backgroundColor: c.stage, borderRadius: 28, padding: 16, gap: 12 }}>
           {chosen.length ? (
             <>
               <OutfitBoard pieces={chosen} width={W - 32} frame={false} onPiece={(p) => setPicking(slotOf(p))} />

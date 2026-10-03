@@ -189,7 +189,7 @@ export function AddPiece() {
                     { icon: 'camera' as const, label: 'Prendre une photo', note: 'Sur un cintre ou à plat' },
                     { icon: 'image' as const, label: 'Depuis la galerie', note: demo ? 'Une photo à la fois' : 'Jusqu’à 10 à la fois' },
                   ].map((o) => (
-                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} className="bg-stage" style={{ borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
+                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} style={{ backgroundColor: c.stage, borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
                       <Icon name={o.icon} size={28} color={c.ink} />
                       <View style={{ gap: 2 }}>
                         <T v="bodyStrong">{o.label}</T>
@@ -243,7 +243,7 @@ export function AddPiece() {
                 </T>
                 <View className="flex-row flex-wrap" style={{ gap: 10 }}>
                   {gallery.slice(0, 9).map((g, i) => (
-                    <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ width: tile, height: tile * 1.2, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden' }} className="items-center justify-center">
+                    <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ alignItems: 'center', justifyContent: 'center', width: tile, height: tile * 1.2, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden' }}>
                       <View style={{ transform: [{ rotate: `${((i % 3) - 1) * 4}deg` }], opacity: 0.92 }}>
                         <Garment kind={g.kind} tint={g.tint} size={tile * 0.7} />
                       </View>

@@ -21,12 +21,11 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
       accessibilityLabel={count !== undefined ? `${label}, ${count}` : label}
       hitSlop={4}
       style={[
-        { height: 40, borderRadius: 20, borderWidth: 1 },
+        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 40, borderRadius: 20, borderWidth: 1 },
         on
           ? { backgroundColor: c['primary-bg'], borderColor: 'transparent', ...material.press[scheme] }
           : { backgroundColor: c['glass-strong'], borderColor: c['glass-border'] },
       ]}
-      className="flex-row items-center px-4"
     >
       {icon && (
         <View style={{ marginRight: 6 }}>
@@ -86,8 +85,7 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
             accessibilityState={role === 'tablist' ? { selected: on } : { checked: on }}
             accessibilityLabel={o.label}
             outerStyle={{ flexGrow: 1, flexBasis: 0 }}
-            style={{ height: h, borderRadius: 999, paddingHorizontal: compact ? 16 : 10 }}
-            className="flex-row items-center justify-center"
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: h, borderRadius: 999, paddingHorizontal: compact ? 16 : 10 }}
           >
             {o.icon && (
               <View style={{ marginRight: 6 }}>
@@ -144,8 +142,7 @@ export function Stepper({ value, onChange, min, max, step = 1, unit, label }: { 
       feedback="select"
       accessibilityLabel={`${dir > 0 ? 'Augmenter' : 'Diminuer'} ${label}`}
       disabled={dir < 0 ? value <= min : value >= max}
-      style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'], opacity: (dir < 0 ? value <= min : value >= max) ? 0.4 : 1 }}
-      className="items-center justify-center"
+      style={{ alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'], opacity: (dir < 0 ? value <= min : value >= max) ? 0.4 : 1 }}
     >
       <Icon name={dir > 0 ? 'plus' : 'minus'} size={18} color={c.ink} strokeWidth={1.9} />
     </Tap>
