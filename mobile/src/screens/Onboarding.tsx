@@ -10,7 +10,7 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } fr
 import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLOR_CHOICES } from '../data/wardrobe';
 import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision, sizeOptions, type MeasureId, type Profile, type Silhouette } from '../state/profile';
@@ -88,7 +88,8 @@ export function Onboarding() {
   };
   const next = () => go(i + 1);
   const back = () => {
-    if (i === 0) return nav.goBack();
+    // Le questionnaire a remplacé l'accueil (voir Welcome) : on y retourne de même.
+    if (i === 0) return nav.dispatch(StackActions.replace('Welcome'));
     // On ne revient pas sur l'écran de préparation : il se rejoue tout seul.
     go(ORDER[i - 1] === 'generation' ? i - 2 : i - 1);
   };

@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, space } from '../theme/tokens';
@@ -66,7 +66,10 @@ export function Welcome() {
           </T>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(700).duration(500)} style={{ gap: 6, marginTop: 8 }}>
-          <Button testID="welcome-start" label="Commencer" onPress={() => nav.navigate('Onboarding')} />
+          {/* Le questionnaire remplace l'accueil au lieu de s'empiler dessus : sur
+              iPhone, la pile native peut figer l'écran quand on retire
+              plusieurs écrans d'un coup en entrant dans l'app. */}
+          <Button testID="welcome-start" label="Commencer" onPress={() => nav.dispatch(StackActions.replace('Onboarding'))} />
           <Button
             testID="welcome-login"
             label="J’ai déjà un compte"
@@ -85,7 +88,7 @@ export function Welcome() {
         onDone={(next) => {
           setLogin(false);
           // Compte vierge (questionnaire jamais rempli) : on le remplit maintenant.
-          if (next !== 'app') nav.navigate('Onboarding');
+          if (next !== 'app') nav.dispatch(StackActions.replace('Onboarding'));
         }}
         onDemo={a.loginDemo}
       />
