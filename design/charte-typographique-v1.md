@@ -45,3 +45,11 @@ Le texte courant reste en Hanken Grotesk : c'est une troisième police, assumée
 - Mettre à jour le prototype (v0.3) avec ce duo, puis le brief Claude Design.
 - Faire dessiner le logo DRESSKODE (wordmark) au lieu de le composer en texte.
 - Tester le rendu en mode sombre sur iPhone.
+
+## Mise en œuvre (03/10/2026)
+- Fichiers tirés des polices Google Fonts (Cormorant Garamond 4.001, Hanken Grotesk 3.013, DM Mono), en graisses statiques : Cormorant 500 et 600, Hanken 400, 500 et 600, DM Mono 400. Licences OFL jointes aux fichiers.
+- Réduits au latin utile au français (accents, Œ, «  », €, espaces fines, flèches) : 420 Ko pour l'app (.ttf), 125 Ko pour le web (.woff2). La version complète de Cormorant pèse 1 Mo par graisse.
+- Chiffres : la version statique de Cormorant publiée par son auteur n'a pas de réglage « lining », seule la version Google en a un. Les chiffres alignés y sont mis **par défaut dans le fichier** : un prix se lit partout, sans `lining-nums`.
+- Rangement : `mobile/assets/fonts/` et `web/public/fonts/`, rôles dans `mobile/src/theme/fonts.ts` et `web/src/app/globals.css`.
+- Écarts assumés : étiquettes mono à 12 px (le bas de la fourchette, 10,5 px, passe sous le minimum de 11,5 px de l'app) ; poids 500 gardé en mode sombre, lisible sur fond noir aux tailles de titre (600 reste chargé si le rendu sur iPhone paraît trop fin).
+

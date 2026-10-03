@@ -50,11 +50,11 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
   dépoli** et la **transparence** façon iOS (barre d'onglets, feuilles, cartes,
   boutons). La galerie actuelle (angles droits, sans verre) reste en place
   d'ici là. Le flou est déjà installé (`expo-blur`, `expo-glass-effect`).
-- **Typographies** : l'utilisateur fournit deux polices (titres et texte),
-  avec leur licence (usage app et web). Elles se rangent dans
-  `mobile/assets/fonts/` et `web/public/fonts/`, se branchent par
-  `mobile/src/theme/fonts.ts` et des `@font-face` locales dans `globals.css`,
-  jamais par un service externe.
+- **Typographies** : la charte typographique v1
+  (`design/charte-typographique-v1.md`, décidée le 03/10) fait foi. Polices
+  rangées dans `mobile/assets/fonts/` (.ttf) et `web/public/fonts/` (.woff2),
+  licences OFL à côté, branchées par `mobile/src/theme/fonts.ts` et des
+  `@font-face` locales dans `globals.css`, jamais par un service externe.
 
 Changements de disposition validés par l'utilisateur (29/09), à garder :
 
@@ -124,12 +124,17 @@ Ordre de priorité, du plus fort au plus faible :
 - Boutons : l'action principale en noir plein, angles droits, libellé en
   capitales ; les autres en simple filet ou en texte en capitales, fond
   transparent. Liens de découverte : capitales + petite flèche noire.
-- Typographie : **Helvetica Neue** (iPhone) et Helvetica/Arial (web), à la
-  place de HelveticaNow (payante). Polices appelées par rôle (`Sans400`…
-  `Sans700`, `Accent`) via `mobile/src/theme/fonts.ts`. Libellés, navigation
-  et petites capitales en **13 px, graisse moyenne, sans interlettrage** ;
-  texte courant 15 px ; titres modérés, sans italique ni serif. Jamais sous
-  11,5 px.
+- Typographie (charte v1) : **Cormorant Garamond** 500 pour les titres
+  d'écran (capitales, +0,012 em, jamais sous 22 px), la marque (DRESSKODE,
+  capitales espacées de 0,24 em) et les grands chiffres ; **Hanken Grotesk**
+  400/500/600 pour le texte (15 px), les boutons (13 px, capitales), les
+  onglets et les formulaires ; **DM Mono** 12 px, casse normale, pour les
+  étiquettes courtes (25 caractères au plus, jamais du texte lu). Polices
+  appelées par rôle : `F.s400`… `F.display`, `F.mono` (mobile), variables
+  `--font`, `--font-display`, `--font-mono` (web). Titres sur 3 lignes au
+  plus. Jamais sous 11,5 px. Les fichiers sont réduits au latin et les
+  chiffres de Cormorant y sont alignés par défaut : pour régénérer une police,
+  refaire ces deux étapes (voir la fin de la charte).
 - **Mode sombre tiré de la charte** : fond noir, texte blanc, filets gris
   foncé, beurre conservé (texte noir dessus). Chaque écran marche en clair
   **et** en sombre.

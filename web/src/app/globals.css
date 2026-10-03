@@ -1,5 +1,16 @@
+/* ---------- polices (charte typographique v1) ----------
+   Servies par l'app elle-même (public/fonts, licence OFL), réduites au latin.
+   Les chiffres de Cormorant sont alignés par défaut dans le fichier. */
+@font-face { font-family: 'Cormorant Garamond'; src: url('/fonts/CormorantGaramond-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Cormorant Garamond'; src: url('/fonts/CormorantGaramond-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Hanken Grotesk'; src: url('/fonts/HankenGrotesk-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Hanken Grotesk'; src: url('/fonts/HankenGrotesk-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Hanken Grotesk'; src: url('/fonts/HankenGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'DM Mono'; src: url('/fonts/DMMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+
 /* ============================================================
    Dresskode, système visuel « galerie » (décidé le 02/10).
+   Typographie : charte v1 (design/charte-typographique-v1.md).
 
    Charte d'origine : design/charte-galerie.md (on en reprend le style,
    jamais le nom). Une galerie : fond blanc, texte noir, filets gris clair
@@ -35,7 +46,12 @@
 
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Texte, boutons, onglets, formulaires. */
+  --font: 'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Titres d'écran, marque, grands chiffres : jamais sous 22 px. */
+  --font-display: 'Cormorant Garamond', Garamond, Georgia, serif;
+  /* Étiquettes courtes, jamais du texte lu. */
+  --font-mono: 'DM Mono', ui-monospace, Menlo, monospace;
 
   color-scheme: light;
 }
@@ -118,18 +134,31 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  font-kerning: normal;
 }
 
-/* Titres modérés, graisse moyenne, ni italique ni serif. */
+/* Titres : Cormorant en capitales, interlettrage +0,012 em, jamais sous 22 px. */
 h1, h2, h3 {
-  font-family: var(--font);
+  font-family: var(--font-display);
   font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  line-height: 1.06;
   text-wrap: balance;
 }
+/* Grands chiffres (prix, compteurs) : Cormorant, en casse normale. */
+.stat { font-family: var(--font-display); font-weight: 500; letter-spacing: 0; }
+/* La marque : DRESSKODE en Cormorant, capitales espacées de 0,24 em. */
+.brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
 
-/* L'ancien « mot qui chante » : la galerie le garde dans la phrase, sans effet. */
+/* L'ancien « mot qui chante » : il garde la police du titre qui le porte. */
 em.accent, .accent {
   font: inherit;
   font-style: normal;
@@ -190,13 +219,15 @@ img { display: block; }
   gap: 20px;
 }
 
-.hero-title { font-size: 34px; letter-spacing: -0.026em; }
-/* Libellés et petites capitales : 13 px, graisse moyenne, sans interlettrage. */
+.hero-title { font-size: 32px; }
+/* Étiquette (« Tenue du jour ») : DM Mono 12 px, casse normale, gris. */
 .eyebrow {
-  font-size: 13px;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--muted);
 }
 .lead {
@@ -210,12 +241,11 @@ img { display: block; }
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-size: 22px;
 }
-/* Lien de découverte : capitales et petite flèche noire. */
+/* Lien de découverte : capitales et petite flèche noire, dans la police du texte. */
 .section-title a, .section-title small {
+  font-family: var(--font);
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);

@@ -53,8 +53,6 @@ export function HeroFan({ scale = 1 }: { scale?: number }) {
 
 export function Wordmark() {
   return (
-    <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--ink)' }}>
-      Dresskode
-    </span>
+    <span className="brand">Dresskode</span>
   );
 }

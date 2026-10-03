@@ -105,7 +105,7 @@ export function OffersPicker({
               <span style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 22, letterSpacing: '-.02em' }}>{p.name}</span>
+                    <span style={{ fontSize: 22, fontWeight: 500 }}>{p.name}</span>
                     {p.id === current ? (
                       <Tag>Ton offre</Tag>
                     ) : p.flagged ? (
@@ -115,7 +115,7 @@ export function OffersPicker({
                   <span style={{ fontSize: 12, color: muted }}>{p.note}</span>
                 </span>
                 <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flex: 'none' }}>
-                  <span style={{ fontSize: 24, letterSpacing: '-.02em' }}>
+                  <span className="stat" style={{ fontSize: 26 }}>
                     {euros(p.cents[period])}
                   </span>
                   <span style={{ fontSize: 12, color: muted }}>{yearly ? perMonth(p) : 'par mois'}</span>

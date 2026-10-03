@@ -22,11 +22,13 @@ mise à jour. En démonstration, la météo reste simulée.
 
 ## Polices
 
-Helvetica Neue, celle d'iOS : aucun fichier à charger. Le web prend Helvetica puis
-Arial, Android sa police système. Les écrans appellent les polices par leur rôle
-(`F.s400`, `F.s500`, `F.s600`, `F.s700`, `F.accent`) depuis `src/theme/fonts.ts` :
-changer de police, c'est changer ce seul fichier. Libellés et navigation en 13 px,
-graisse moyenne, sans interlettrage ; texte courant 15 px ; ni italique ni serif.
+Charte typographique v1 (`../design/charte-typographique-v1.md`) : Cormorant
+Garamond pour les titres en capitales, la marque et les grands chiffres ; Hanken
+Grotesk pour le texte, les boutons et les onglets ; DM Mono pour les étiquettes
+courtes. Les fichiers sont dans `assets/fonts/` (OFL, licences jointes), chargés
+par `App.tsx` avec `expo-font`. Les écrans appellent les polices par leur rôle
+(`F.s400`… `F.s600`, `F.display`, `F.mono`) depuis `src/theme/fonts.ts`, et
+l'échelle est dans `src/theme/tokens.ts` (`type`).
 
 ## L'essayer sur ton iPhone
 

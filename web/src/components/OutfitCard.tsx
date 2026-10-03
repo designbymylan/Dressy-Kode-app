@@ -68,7 +68,7 @@ export function OutfitCard({ outfit, children, assemble }: { outfit: OutfitView;
       </div>
 
       <div className="outfit-words" style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <h3 style={{ fontSize: 19 }}>{outfit.title}</h3>
+        <h3 style={{ fontSize: 22 }}>{outfit.title}</h3>
         {outfit.why ? (
           <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{outfit.why}</p>
         ) : null}

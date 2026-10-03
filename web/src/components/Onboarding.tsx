@@ -86,7 +86,7 @@ function TileGrid({
 
 function GroupTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--muted)', padding: '6px 4px 0' }}>
+    <h2 className="eyebrow" style={{ padding: '6px 4px 0' }}>
       {children}
     </h2>
   );
