@@ -440,6 +440,9 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
             return { ok: true, next: 'app' };
           }
           dispatch({ t: 'account', acc });
+          // Compte déjà rempli : l'espace du téléphone cède la place au compte,
+          // mais les photos confiées au questionnaire partent quand même.
+          if (acc.onboarded) await sendPending(acc.session, s.pendingPhotos);
           return { ok: true, next: acc.onboarded ? 'app' : 'onboarding' };
         } catch {
           return { ok: false, message: NETWORK };
