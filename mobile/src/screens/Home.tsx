@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { WEATHER_WORD, DAYS_LETTER, dayDate, euros, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
@@ -69,7 +69,7 @@ export function Home() {
         <EmptyToday />
       ) : (
       <>
-      <Animated.View key={outfit.id} entering={FadeIn.duration(320)} exiting={FadeOut.duration(120)} style={{ gap: 14 }}>
+      <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ gap: 14 }}>
         <View style={{ gap: 6 }}>
           <T v="kicker" tone={worn ? 'positive' : 'ink2'}>
             {worn ? 'Portée aujourd’hui' : 'Tenue du jour'}

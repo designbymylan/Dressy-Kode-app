@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme/ThemeProvider';
@@ -70,7 +70,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 {/* Le nom ne s'affiche que sous l'onglet actif. */}
                 <View style={{ height: 15, marginTop: kode ? 1 : 3, justifyContent: 'center' }}>
                   {on && (
-                    <Animated.View entering={reduced ? undefined : FadeIn.duration(180)} exiting={reduced ? undefined : FadeOut.duration(100)}>
+                    <Animated.View entering={reduced ? undefined : FadeIn.duration(180)}>
                       <T v="tab" importantForAccessibility="no" accessibilityElementsHidden>
                         {tab.label}
                       </T>

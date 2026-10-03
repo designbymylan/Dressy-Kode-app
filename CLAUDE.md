@@ -186,6 +186,11 @@ Ordre de priorité, du plus fort au plus faible :
   transparentes, tenues en vrac, constaté le 03/10). Ces composants prennent
   leur style par `style`, avec les jetons de `useTheme().c`. Le navigateur ne
   montre pas ce bug : seul un vrai iPhone (Expo Go, `npm run apercu`) fait foi.
+  **Jamais d'animation `exiting` (Reanimated)** : sur iPhone, une vue en
+  sortie peut rester montée, invisible, et bloquer les touches dessous
+  (Reanimated #10275 ; bouton « Entrer » mort le 03/10). Une entrée animée
+  suffit ; une sortie se fait à la main (`withTiming` puis démontage, voir
+  `ui/Sheet.tsx`).
 - **Web** : styles en ligne + `globals.css` (classes `.glass`, `.btn`,
   `.chip`, `.segment`…). Réutilise `web/src/components/ui.tsx` (`Screen`,
   `Title`, `Card`, `buttonPrimary`…). Pas de Tailwind, pas de shadcn/ui, pas

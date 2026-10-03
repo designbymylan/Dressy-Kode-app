@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
@@ -32,7 +32,6 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
     <Animated.View
       key={toast.id}
       entering={FadeInDown.springify().damping(20)}
-      exiting={FadeOutDown.duration(160)}
       pointerEvents="box-none"
       accessibilityLiveRegion="polite"
       style={{ position: 'absolute', left: 16, right: 16, bottom: aboveTabs ? (insets.bottom > 0 ? insets.bottom - 8 : 0) + material.tabBottom + material.tabHeight + 10 : Math.max(insets.bottom, 12) + 8 }}

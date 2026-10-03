@@ -7,7 +7,7 @@
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight, SlideOutLeft, SlideOutRight, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -126,7 +126,7 @@ export function Onboarding() {
             onSkip={SKIP[step] ? () => { set(SKIP[step]!); next(); } : undefined}
           />
         )}
-        <Animated.View key={step} entering={(dir > 0 ? SlideInRight : SlideInLeft).springify().damping(24)} exiting={(dir > 0 ? SlideOutLeft : SlideOutRight).duration(160)} style={{ flex: 1 }}>
+        <Animated.View key={step} entering={(dir > 0 ? SlideInRight : SlideInLeft).springify().damping(24)} style={{ flex: 1 }}>
           {body[step]}
         </Animated.View>
       </View>

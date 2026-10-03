@@ -1,6 +1,6 @@
 import { createContext, Fragment, useContext, useEffect, useId, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeIn, SlideInDown, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
@@ -68,14 +68,48 @@ type SheetProps = {
  * croix la ferme. Hauteur au contenu, 88 % de l'écran au plus.
  */
 export function Sheet({ visible, onClose, title, kicker, children, footer, testID }: SheetProps) {
-  return <Portal>{visible ? <SheetBody onClose={onClose} title={title} kicker={kicker} footer={footer} testID={testID}>{children}</SheetBody> : null}</Portal>;
+  // La feuille reste montée le temps de sa sortie, puis disparaît.
+  const [shown, setShown] = useState(visible);
+  useEffect(() => {
+    if (visible) setShown(true);
+  }, [visible]);
+  return (
+    <Portal>
+      {shown ? (
+        <SheetBody visible={visible} onGone={() => setShown(false)} onClose={onClose} title={title} kicker={kicker} footer={footer} testID={testID}>
+          {children}
+        </SheetBody>
+      ) : null}
+    </Portal>
+  );
 }
 
-function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<SheetProps, 'visible'>) {
+/**
+ * La sortie est animée à la main, jamais par `exiting` de Reanimated : sur
+ * iPhone, une vue en sortie peut rester montée, invisible, et bloquer les
+ * touches en dessous (Reanimated #10275). Pendant la sortie, la feuille ne
+ * capte déjà plus rien.
+ */
+function SheetBody({ visible, onGone, onClose, title, kicker, children, footer, testID }: SheetProps & { onGone: () => void }) {
   const { c, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
+  const { height } = useWindowDimensions();
   const y = useSharedValue(0);
+  const fade = useSharedValue(1);
+  useEffect(() => {
+    if (visible) {
+      fade.value = 1;
+      y.value = 0;
+      return;
+    }
+    if (reduced) return onGone();
+    fade.value = withTiming(0, { duration: motion.duration.base });
+    y.value = withTiming(height, { duration: motion.duration.base }, (done) => {
+      if (done) runOnJS(onGone)();
+    });
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  const scrim = useAnimatedStyle(() => ({ opacity: fade.value }));
   const drag = Gesture.Pan()
     .onChange((e) => {
       y.value = Math.max(0, y.value + e.changeY);
@@ -87,13 +121,12 @@ function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<Sh
   const panel = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
 
   return (
-    <View style={StyleSheet.absoluteFill} testID={testID}>
-      <Animated.View entering={FadeIn.duration(motion.duration.base)} exiting={FadeOut.duration(motion.duration.fast)} style={[StyleSheet.absoluteFill, { backgroundColor: c.scrim }]}>
+    <View style={StyleSheet.absoluteFill} testID={visible ? testID : undefined} pointerEvents={visible ? 'auto' : 'none'}>
+      <Animated.View entering={FadeIn.duration(motion.duration.base)} style={[StyleSheet.absoluteFill, { backgroundColor: c.scrim }, scrim]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer la feuille" />
       </Animated.View>
       <Animated.View
         entering={reduced ? FadeIn : SlideInDown.springify().damping(motion.sheet.damping).stiffness(motion.sheet.stiffness)}
-        exiting={reduced ? FadeOut : SlideOutDown.duration(motion.duration.base)}
         pointerEvents="box-none"
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0, justifyContent: 'flex-end' }}
       >
