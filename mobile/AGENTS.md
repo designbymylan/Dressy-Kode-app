@@ -1,5 +1,7 @@
 Application mobile Dresskode : Expo SDK 57 (React Native 0.86), iOS d'abord.
-Direction de design validée : B « Éditorial », voir `../design/refonte/02-design-system.md`.
+Disposition validée : B « Éditorial », voir `../design/refonte/02-design-system.md`.
+Apparence : la « galerie » (règles visuelles dans `../CLAUDE.md`, charte
+`../design/charte-galerie.md`).
 
 ## Choix du projet (à respecter)
 
@@ -14,7 +16,13 @@ Direction de design validée : B « Éditorial », voir `../design/refonte/02-de
   suivent donc le thème. N'écris pas de couleur en dur : ajoute un jeton.
 - **Toute nouvelle couleur de texte** doit être ajoutée aux couples de
   `../design/refonte/contraste.py`, qui doit rester vert (`python3 ../design/refonte/contraste.py`).
-- **Verre** : `src/ui/Glass.tsx`, uniquement pour la couche de navigation.
+- **Surfaces** : `src/ui/Glass.tsx` n'est plus du verre, c'est une surface plate
+  (blanc ou noir, filet d'un pixel). Pas d'ombre, pas de flou, angles droits
+  (`radius` vaut 0, sauf `round` pour le bouton de Kode et les avatars).
+- **Beurre** : `<Card className="bg-butter">` passe son contenu en clair
+  (`LightScope`), pour garder texte et boutons noirs sur le beurre en sombre.
+- **Polices** : par rôle, depuis `src/theme/fonts.ts` (`...F.s500`), jamais
+  un nom de fichier.
 - **Animations** : Reanimated 4 (pas Moti, qui dépend de framer-motion 6 et suit mal Reanimated 4).
 - **Données** : l'état vit dans `src/state/store.tsx` ; connecté, chaque action passe
   aussi par Supabase (`src/state/remote.ts`). Sans compte ou en démonstration (Alice,
@@ -34,8 +42,8 @@ Direction de design validée : B « Éditorial », voir `../design/refonte/02-de
   donne la vraie météo à un compte connecté, la simulée en démonstration.
   Chaque donnée affichée porte sa source et son heure (`ui/Credit.tsx`).
 - **Mouvement** : les moments forts (scan, détourage, cintre qui tombe, tenue qui
-  s'assemble, « Je la porte », vignette qui s'ouvre, onglets liquides, fil du
-  questionnaire, orbe de Kode par étape, météo dans les halos de l'accueil) sont tous
+  s'assemble, « Je la porte », vignette qui s'ouvre, nom de l'onglet actif, fil du
+  questionnaire, anneau de Kode par étape) sont tous
   coupés par « Réduire les animations » (`useReducedMotion`).
 
 ## Commandes

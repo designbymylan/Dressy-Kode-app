@@ -5,11 +5,12 @@ import { Tap } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { material, motion } from '../theme/tokens';
+import { motion } from '../theme/tokens';
+import { F } from '../theme/fonts';
 
-/** Puce de filtre ou de choix (globals.css : `.chip`) : verre clair, encre pleine quand elle est active. */
+/** Puce de filtre ou de choix (globals.css : `.chip`) : angles droits, filet gris, noir plein quand elle est active. */
 export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: string; on?: boolean; onPress: () => void; icon?: IconName; count?: number; testID?: string; dot?: string }) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   return (
     <Tap
       testID={testID}
@@ -20,10 +21,8 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
       accessibilityLabel={count !== undefined ? `${label}, ${count}` : label}
       hitSlop={4}
       style={[
-        { height: 40, borderRadius: 20, borderWidth: 1 },
-        on
-          ? { backgroundColor: c['primary-bg'], borderColor: 'transparent', ...material.press[scheme] }
-          : { backgroundColor: c['glass-strong'], borderColor: c['glass-border'] },
+        { height: 40, borderWidth: 1 },
+        on ? { backgroundColor: c['primary-bg'], borderColor: c['primary-bg'] } : { backgroundColor: 'transparent', borderColor: c.rule },
       ]}
       className="flex-row items-center px-4"
     >
@@ -32,8 +31,8 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
           <Icon name={icon} size={16} color={on ? c['primary-fg'] : c.ink} strokeWidth={1.8} />
         </View>
       )}
-      {dot && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: dot, marginRight: 7, borderWidth: 1, borderColor: on ? c['primary-fg'] : c.rule }} />}
-      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={{ fontFamily: 'Sans500', fontSize: 13.5 }}>
+      {dot && <View style={{ width: 14, height: 14, borderRadius: 0, backgroundColor: dot, marginRight: 7, borderWidth: 1, borderColor: on ? c['primary-fg'] : c.rule }} />}
+      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={{ ...F.s500 }}>
         {label}
       </T>
       {count !== undefined && (
@@ -54,7 +53,7 @@ export function Segmented<V extends string>({ options, value, onChange, label }:
 }
 
 function SegmentTrack<V extends string>({ options, value, onChange, label, role, idPrefix, compact }: { options: { value: V; label: string; icon?: IconName }[]; value: V; onChange: (v: V) => void; label: string; role: 'tablist' | 'radiogroup'; idPrefix: string; compact?: boolean }) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   const w = useSharedValue(0);
   const x = useSharedValue(index);
@@ -69,9 +68,9 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
       accessibilityLabel={label}
       onLayout={(e) => (w.value = (e.nativeEvent.layout.width - 8) / options.length)}
       className="flex-row"
-      style={[{ padding: 4, borderRadius: 999, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'] }, compact && { alignSelf: 'flex-start' }]}
+      style={[{ padding: 3, borderWidth: 1, borderColor: c.rule }, compact && { alignSelf: 'flex-start' }]}
     >
-      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 4, bottom: 4, left: 4, borderRadius: 999, backgroundColor: c['primary-bg'] }, material.press[scheme], thumb]} />
+      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 3, bottom: 3, left: 3, backgroundColor: c['primary-bg'] }, thumb]} />
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -85,7 +84,7 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
             accessibilityState={role === 'tablist' ? { selected: on } : { checked: on }}
             accessibilityLabel={o.label}
             outerStyle={{ flexGrow: 1, flexBasis: 0 }}
-            style={{ height: h, borderRadius: 999, paddingHorizontal: compact ? 16 : 10 }}
+            style={{ height: h, borderRadius: 0, paddingHorizontal: compact ? 16 : 10 }}
             className="flex-row items-center justify-center"
           >
             {o.icon && (
@@ -93,7 +92,7 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
                 <Icon name={o.icon} size={16} color={on ? c['primary-fg'] : c.ink2} />
               </View>
             )}
-            <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={{ fontFamily: on ? 'Sans600' : 'Sans500', fontSize: 14 }}>
+            <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={{ ...F.s500 }} upper>
               {o.label}
             </T>
           </Tap>
@@ -126,9 +125,9 @@ export function Toggle({ value, onChange, label, testID }: { value: boolean; onC
       accessibilityState={{ checked: value }}
       accessibilityLabel={label}
       hitSlop={8}
-      style={{ width: 51, height: 31, borderRadius: 16, borderWidth: 1.5, borderColor: value ? c['primary-bg'] : c.control, backgroundColor: value ? c['primary-bg'] : c['glass-strong'], justifyContent: 'center', paddingHorizontal: 2 }}
+      style={{ width: 48, height: 28, borderWidth: 1, borderColor: value ? c['primary-bg'] : c.control, backgroundColor: value ? c['primary-bg'] : 'transparent', justifyContent: 'center', paddingHorizontal: 3 }}
     >
-      <Animated.View style={[{ width: 24, height: 24, borderRadius: 12, backgroundColor: value ? c['primary-fg'] : c.control, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }, knob]} />
+      <Animated.View style={[{ width: 20, height: 20, backgroundColor: value ? c['primary-fg'] : c.control }, knob]} />
     </Tap>
   );
 }
@@ -143,7 +142,7 @@ export function Stepper({ value, onChange, min, max, step = 1, unit, label }: { 
       feedback="select"
       accessibilityLabel={`${dir > 0 ? 'Augmenter' : 'Diminuer'} ${label}`}
       disabled={dir < 0 ? value <= min : value >= max}
-      style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'], opacity: (dir < 0 ? value <= min : value >= max) ? 0.4 : 1 }}
+      style={{ width: 44, height: 44, borderWidth: 1, borderColor: c.rule, opacity: (dir < 0 ? value <= min : value >= max) ? 0.4 : 1 }}
       className="items-center justify-center"
     >
       <Icon name={dir > 0 ? 'plus' : 'minus'} size={18} color={c.ink} strokeWidth={1.9} />
@@ -165,8 +164,8 @@ export function Stepper({ value, onChange, min, max, step = 1, unit, label }: { 
 export function Swatch({ hex, on, onPress, label, size = 44 }: { hex: string; on: boolean; onPress: () => void; label: string; size?: number }) {
   const { c } = useTheme();
   return (
-    <Tap onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, padding: 3, borderWidth: 2, borderColor: on ? c.ink : 'transparent' }}>
-      <View style={{ flex: 1, borderRadius: size / 2, backgroundColor: hex, borderWidth: 1, borderColor: c.rule }} className="items-center justify-center">
+    <Tap onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: 0, padding: 3, borderWidth: 2, borderColor: on ? c.ink : 'transparent' }}>
+      <View style={{ flex: 1, borderRadius: 0, backgroundColor: hex, borderWidth: 1, borderColor: c.rule }} className="items-center justify-center">
         {on && <Icon name="check" size={16} color={isLight(hex) ? '#1C1A17' : '#FFFFFF'} strokeWidth={2.4} />}
       </View>
     </Tap>

@@ -35,6 +35,7 @@ import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, valid
 import { online } from '../state/remote';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte' | 'bienvenue';
 
@@ -152,7 +153,7 @@ function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: numb
       </View>
       <View className="flex-row justify-center" style={{ gap: 18 }}>
         {CHAPTERS.map((c, k) => (
-          <T key={c.label} v="small" tone={k === chapter ? 'ink' : 'ink2'} style={{ fontFamily: k === chapter ? 'Sans700' : 'Sans500', letterSpacing: 0.4 }} upper>
+          <T key={c.label} v="small" tone={k === chapter ? 'ink' : 'ink2'} style={{ ...(k === chapter ? F.s700 : F.s500), letterSpacing: 0.4 }} upper>
             {c.label}
           </T>
         ))}
@@ -205,7 +206,7 @@ function Knot({ x, tied, colour, idle }: { x: number; tied: boolean; colour: str
     k.value = reduced ? (tied ? 1 : 0) : withSpring(tied ? 1 : 0, motion.spring);
   }, [tied, reduced, k]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: 0.55 + 0.45 * k.value }], backgroundColor: k.value > 0.5 ? colour : idle }));
-  return <Animated.View style={[{ position: 'absolute', top: 7 - 4.5, left: x - 4.5, width: 9, height: 9, borderRadius: 5 }, style]} />;
+  return <Animated.View style={[{ position: 'absolute', top: 7 - 4.5, left: x - 4.5, width: 9, height: 9, borderRadius: 0 }, style]} />;
 }
 
 function Frame({ kicker, lead, em, intro, children, footer }: { kicker?: string; lead: string; em: string; intro?: string; children: ReactNode; footer?: ReactNode }) {
@@ -220,7 +221,7 @@ function Frame({ kicker, lead, em, intro, children, footer }: { kicker?: string;
           )}
           <T v="title" accessibilityRole="header">
             {lead}
-            <T v="title" style={{ fontFamily: 'Accent' }}>
+            <T v="title" style={{ ...F.accent }}>
               {em}
             </T>
           </T>
@@ -276,7 +277,7 @@ function Prenom({ draft, set, next }: Ctx) {
         maxLength={30}
         onSubmitEditing={() => ok && next()}
         accessibilityLabel="Ton prénom"
-        style={{ fontFamily: 'Sans500', fontSize: 34, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
+        style={{ ...F.s500, fontSize: 34, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
       />
       <Why>Kode t’appellera comme ça. Rien n’est public.</Why>
     </Frame>
@@ -329,10 +330,10 @@ function AgeStep({ draft, set, next }: Ctx) {
               className="flex-row items-center justify-between"
               style={{ minHeight: 58, borderBottomWidth: 1, borderColor: c.rule }}
             >
-              <T v="bodyL" style={on ? { fontFamily: 'Sans600' } : undefined}>
+              <T v="bodyL" style={on ? { ...F.s600 } : undefined}>
                 {age}
               </T>
-              <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 7 : 1.5, borderColor: on ? c.ink : c.control }} />
+              <View style={{ width: 24, height: 24, borderRadius: 0, borderWidth: on ? 7 : 1.5, borderColor: on ? c.ink : c.control }} />
             </Tap>
           );
         })}
@@ -491,7 +492,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
       >
         <Animated.View entering={FadeInDown.duration(300)}>
           <Card className="flex-row items-center" style={{ gap: 16 }}>
-            <View className="bg-sunk items-center justify-center" style={{ width: 92, height: 120, borderRadius: 18 }}>
+            <View className="bg-sunk items-center justify-center" style={{ width: 92, height: 120, borderRadius: 0 }}>
               <SilhouetteShape id={result} size={44} color={c.ink} fill={c.raised} />
             </View>
             <View style={{ flex: 1, gap: 6 }}>
@@ -499,7 +500,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
               <T v="caption" tone="ink2">
                 Kode va privilégier les coupes qui marquent la taille, et les longueurs qui gardent l’équilibre épaules-hanches.
               </T>
-              <T v="small" tone="positive" style={{ fontFamily: 'Sans600' }}>
+              <T v="small" tone="positive" style={{ ...F.s600 }}>
                 Confiance : bonne
               </T>
             </View>
@@ -528,7 +529,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
           { icon: 'sun' as const, text: 'Lumière du jour, fond uni, téléphone à hauteur de taille.' },
         ].map((t) => (
           <View key={t.text} className="flex-row items-center" style={{ gap: 10 }}>
-            <View className="bg-sunk items-center justify-center" style={{ width: 30, height: 30, borderRadius: 15 }}>
+            <View className="bg-sunk items-center justify-center" style={{ width: 30, height: 30, borderRadius: 0 }}>
               <Icon name={t.icon} size={16} color={c.ink} />
             </View>
             <T v="caption" style={{ flex: 1 }}>
@@ -553,7 +554,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
       ) : (
         <>
           <Tap testID="onb-consent" onPress={() => setConsent(!consent)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: consent }} accessibilityLabel="J’accepte que Kode analyse ces photos pour estimer ma silhouette. Elles sont supprimées juste après." className="flex-row" style={{ gap: 12, paddingVertical: 4, minHeight: 44 }}>
-            <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: consent ? c.ink : c.control, backgroundColor: consent ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
+            <View style={{ width: 24, height: 24, borderRadius: 0, borderWidth: 1.5, borderColor: consent ? c.ink : c.control, backgroundColor: consent ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
               {consent && <Icon name="check" size={15} color={c['primary-fg']} strokeWidth={2.4} />}
             </View>
             <T v="caption" style={{ flex: 1 }}>
@@ -596,7 +597,7 @@ function Mesures({ draft, set, next }: Ctx) {
       footer={<Button testID="onb-next" label="Continuer" onPress={next} />}
     >
       <View className="flex-row" style={{ gap: 12 }}>
-        <View className="bg-raised items-center justify-center" style={{ borderRadius: 22, paddingVertical: 12, paddingHorizontal: 6 }}>
+        <View className="bg-stage items-center justify-center" style={{ borderRadius: 0, paddingVertical: 12, paddingHorizontal: 6 }}>
           <MeasureFigure active={active} done={m} height={200} />
         </View>
         <View style={{ flex: 1 }}>
@@ -615,7 +616,7 @@ function Mesures({ draft, set, next }: Ctx) {
                 accessibilityLabel={`${r.label} : ${v ? `${v} centimètres` : 'à ajouter'}`}
                 style={{ minHeight: 60, justifyContent: 'center', borderBottomWidth: 1, borderColor: c.rule }}
               >
-                <T v="caption" tone={on ? 'brass' : 'ink2'} style={{ fontFamily: 'Sans600' }}>
+                <T v="caption" tone={on ? 'brass' : 'ink2'} style={{ ...F.s600 }}>
                   {r.label}
                 </T>
                 <T v="cardTitle" style={{ fontSize: 22 }}>
@@ -641,7 +642,7 @@ function Mesures({ draft, set, next }: Ctx) {
       )}
       <Card className="flex-row items-center" style={{ gap: 14 }}>
         <Ring value={score} size={56} stroke={5}>
-          <T v="small" style={{ fontFamily: 'Sans700' }}>
+          <T v="small" style={{ ...F.s700 }}>
             {score} %
           </T>
         </Ring>
@@ -757,7 +758,7 @@ function Couleurs({ draft, set, next, W }: Ctx) {
           <Card style={{ gap: 4 }}>
             {draft.love.length > 0 && (
               <T v="caption">
-                <T v="caption" style={{ fontFamily: 'Sans700' }}>
+                <T v="caption" style={{ ...F.s700 }}>
                   Tu aimes :{' '}
                 </T>
                 {draft.love.join(', ')}
@@ -765,7 +766,7 @@ function Couleurs({ draft, set, next, W }: Ctx) {
             )}
             {draft.avoid.length > 0 && (
               <T v="caption">
-                <T v="caption" style={{ fontFamily: 'Sans700' }}>
+                <T v="caption" style={{ ...F.s700 }}>
                   Tu évites :{' '}
                 </T>
                 {draft.avoid.join(', ')}
@@ -797,7 +798,7 @@ function Quotidien({ draft, set, next, W }: Ctx) {
               accessibilityLabel={o.label}
               scaleTo={0.97}
               className="flex-row items-center"
-              style={{ width: w, height: 58, borderRadius: 18, paddingHorizontal: 14, gap: 10, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}
+              style={{ width: w, height: 58, borderRadius: 0, paddingHorizontal: 14, gap: 10, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}
             >
               <Icon name={o.icon} size={20} color={on ? c.ink : c.ink2} />
               <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={1}>
@@ -818,7 +819,7 @@ function Ville({ draft, set, next }: Ctx) {
   const list = CITIES.filter((x) => !q || norm(x).startsWith(norm(q))).slice(0, 6);
   return (
     <Frame lead={'Où tu\n'} em="vis ?" intro="Pour la météo de chaque matin : un trench quand il pleut, pas de laine quand il fait 25°." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
-      <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 26, paddingHorizontal: 16, gap: 10 }}>
+      <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 0, paddingHorizontal: 16, gap: 10 }}>
         <Icon name="pin" size={20} color={c.ink2} />
         <TextInput
           testID="onb-city"
@@ -832,7 +833,7 @@ function Ville({ draft, set, next }: Ctx) {
           autoComplete="postal-address-locality"
           textContentType="addressCity"
           accessibilityLabel="Ta ville"
-          style={{ flex: 1, height: 52, color: c.ink, fontFamily: 'Sans500', fontSize: 17 }}
+          style={{ flex: 1, height: 52, color: c.ink, ...F.s500, fontSize: 17 }}
         />
       </View>
       {!draft.city && (
@@ -936,10 +937,10 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
       <View className="flex-row items-center" style={{ gap: 10 }}>
         <View className="flex-row" style={{ gap: 5 }}>
           {[0, 1, 2].map((k) => (
-            <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, pieces.length) ? (ok ? c.positive : c.ink) : c.rule }} />
+            <View key={k} style={{ width: 10, height: 10, borderRadius: 0, backgroundColor: k < Math.min(3, pieces.length) ? (ok ? c.positive : c.ink) : c.rule }} />
           ))}
         </View>
-        <T v="caption" tone={ok ? 'positive' : 'ink2'} style={{ flex: 1, fontFamily: 'Sans600' }}>
+        <T v="caption" tone={ok ? 'positive' : 'ink2'} style={{ flex: 1, ...F.s600 }}>
           {ok ? `${pieces.length} pièces : Kode peut composer.` : pieces.length ? `${pieces.length} pièce${pieces.length > 1 ? 's' : ''} · il manque ${missing}` : '3 pièces suffisent pour une première tenue'}
         </T>
       </View>
@@ -957,12 +958,12 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
       {imported.length > 0 && (
         <View className="flex-row flex-wrap" style={{ gap: 8 }}>
           {imported.map((x) => (
-            <View key={x.id} style={{ width: tile, height: tile, borderRadius: 14, overflow: 'hidden' }} className="bg-sunk">
+            <View key={x.id} style={{ width: tile, height: tile, borderRadius: 0, overflow: 'hidden' }} className="bg-sunk">
               <Animated.View entering={FadeIn}>
                 <Image source={{ uri: x.uri }} style={{ width: tile, height: tile, opacity: 0.7 }} />
               </Animated.View>
               <View className="absolute items-center justify-center" style={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                <T v="small" style={{ fontFamily: 'Sans700' }}>
+                <T v="small" style={{ ...F.s700 }}>
                   Analyse…
                 </T>
               </View>
@@ -987,7 +988,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
                 disabled={added || working}
                 accessibilityLabel={added ? `${g.name}, ajouté` : `Photo ${n + 1}`}
                 accessibilityState={{ selected: added, busy: working }}
-                style={{ width: tile, height: tile * 1.15, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden', opacity: added ? 0.45 : 1 }}
+                style={{ width: tile, height: tile * 1.15, borderRadius: 0, backgroundColor: g.backdrop, overflow: 'hidden', opacity: added ? 0.45 : 1 }}
                 className="items-center justify-center"
                 scaleTo={0.95}
               >
@@ -995,7 +996,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
                   <Garment kind={g.kind} tint={g.tint} size={tile * 0.66} />
                 </View>
                 {(added || working) && (
-                  <View className="absolute items-center justify-center" style={{ top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: added ? c['primary-bg'] : c.raised }}>
+                  <View className="absolute items-center justify-center" style={{ top: 6, right: 6, width: 22, height: 22, borderRadius: 0, backgroundColor: added ? c['primary-bg'] : c.raised }}>
                     <Icon name={added ? 'check' : 'clock'} size={13} color={added ? c['primary-fg'] : c.ink} strokeWidth={2.2} />
                   </View>
                 )}
@@ -1043,7 +1044,7 @@ function Generation({ draft, pieces, next }: Ctx) {
         </Ring>
         <T v="title" style={{ textAlign: 'center' }}>
           Kode prépare{'\n'}
-          <T v="title" style={{ fontFamily: 'Accent' }}>
+          <T v="title" style={{ ...F.accent }}>
             ton espace…
           </T>
         </T>
@@ -1137,7 +1138,7 @@ function Compte({ draft, set, next }: Ctx) {
       <Why>Sans compte, tout reste sur ce téléphone ; tu pourras le créer plus tard depuis Moi.</Why>
       {online && (
         <T v="caption" tone="ink2" onPress={() => setLogin(true)} accessibilityRole="button" testID="onb-login" style={{ paddingVertical: 6 }}>
-          Tu as déjà un compte ? <T v="caption" style={{ fontFamily: 'Sans600', textDecorationLine: 'underline' }}>Me connecter</T>
+          Tu as déjà un compte ? <T v="caption" style={{ ...F.s600, textDecorationLine: 'underline' }}>Me connecter</T>
         </T>
       )}
       {legal}
@@ -1173,7 +1174,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
         <Animated.View entering={FadeInDown.duration(400)}>
           <T v="hero" accessibilityRole="header">
             Bienvenue,{'\n'}
-            <T v="hero" style={{ fontFamily: 'Accent' }}>
+            <T v="hero" style={{ ...F.accent }}>
               {draft.name}.
             </T>
           </T>
@@ -1202,7 +1203,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
           <Card style={{ gap: 12 }}>
             <View className="flex-row items-center" style={{ gap: 14 }}>
               <Ring value={score} size={52} stroke={5}>
-                <T v="small" style={{ fontFamily: 'Sans700' }}>
+                <T v="small" style={{ ...F.s700 }}>
                   {score} %
                 </T>
               </Ring>
@@ -1216,8 +1217,8 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
             {chips.length > 0 && (
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {chips.map((x) => (
-                  <View key={x} className="bg-pill" style={{ borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5 }}>
-                    <T v="small" style={{ fontFamily: 'Sans600' }}>
+                  <View key={x} className="bg-pill" style={{ borderRadius: 0, paddingHorizontal: 10, paddingVertical: 5 }}>
+                    <T v="small" style={{ ...F.s600 }}>
                       {x}
                     </T>
                   </View>

@@ -22,6 +22,7 @@ import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
 import type { Nav, Route } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 export function Kode() {
   const { s, a } = useStore();
@@ -97,7 +98,7 @@ export function Kode() {
         <View style={{ gap: 8 }}>
           <T v="title" accessibilityRole="header">
             Ton styliste,{'\n'}
-            <T v="title" style={{ fontFamily: 'Accent' }}>
+            <T v="title" style={{ ...F.accent }}>
               avec ce que tu as.
             </T>
           </T>
@@ -187,7 +188,7 @@ export function Kode() {
       </Animated.ScrollView>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: keyboard ? 10 : TAB_CLEARANCE - 14 + insets.bottom }}>
-        <View className="flex-row items-end bg-sunk" style={{ borderRadius: 26, paddingLeft: 18, paddingRight: 4, paddingVertical: 4, gap: 8, opacity: out ? 0.5 : 1 }}>
+        <View className="flex-row items-end bg-sunk" style={{ borderRadius: 0, paddingLeft: 18, paddingRight: 4, paddingVertical: 4, gap: 8, opacity: out ? 0.5 : 1 }}>
           <TextInput
             testID="kode-input"
             value={text}
@@ -200,7 +201,7 @@ export function Kode() {
             blurOnSubmit
             returnKeyType="send"
             accessibilityLabel="Ta question à Kode"
-            style={{ flex: 1, color: c.ink, fontFamily: 'Sans400', fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
+            style={{ flex: 1, color: c.ink, ...F.s400, fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
           />
           <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} onPress={() => send(text)} />
         </View>
@@ -212,7 +213,7 @@ export function Kode() {
 function Mine({ m }: { m: KodeMessage }) {
   return (
     <Animated.View entering={FadeInDown.springify().damping(18)} style={{ alignSelf: 'flex-end', maxWidth: '82%' }}>
-      <View className="bg-primary-bg" style={{ borderRadius: 22, borderBottomRightRadius: 6, paddingHorizontal: 16, paddingVertical: 11 }}>
+      <View className="bg-primary-bg" style={{ paddingHorizontal: 16, paddingVertical: 11 }}>
         <T v="body" tone="primary-fg">
           {m.text}
         </T>
@@ -230,7 +231,7 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   return (
     <Animated.View entering={FadeInDown.duration(320)} style={{ gap: 10 }} accessibilityLiveRegion="polite">
-      <T v="masthead" tone="ink2" style={{ letterSpacing: 2.4 }}>
+      <T v="masthead" tone="ink2">
         KODE
       </T>
       <T v="bodyL">{m.text}</T>
@@ -264,7 +265,7 @@ const COMPOSING = ['Kode fouille ton dressing', 'Kode assemble les couleurs', 'K
 function Typing() {
   return (
     <View style={{ gap: 8 }}>
-      <T v="masthead" tone="ink2" style={{ letterSpacing: 2.4 }}>
+      <T v="masthead" tone="ink2">
         KODE
       </T>
       <KodeThinking phrases={COMPOSING} every={2000} />

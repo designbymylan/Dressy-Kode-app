@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Platform, useColorScheme, View } from 'react-native';
 import { vars } from 'nativewind';
 import { colors, type Colors, type Scheme } from './tokens';
@@ -56,6 +56,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeContext.Provider value={value}>
       <View style={[{ flex: 1, backgroundColor: colors[scheme].paper }, VARS[scheme]]}>{children}</View>
+    </ThemeContext.Provider>
+  );
+}
+
+/**
+ * Une zone toujours claire : le bandeau beurre garde son texte noir, ses
+ * boutons noirs et ses filets clairs, même en mode sombre. Les jetons (contexte
+ * et variables CSS) repassent en clair pour tout ce qui est dessous ; `style`
+ * va sur la vue qui porte ces variables.
+ */
+export function LightScope({ children, style, ...rest }: ComponentProps<typeof View>) {
+  const v = useTheme();
+  const value = useMemo(() => ({ ...v, scheme: 'light' as const, c: colors.light }), [v]);
+  return (
+    <ThemeContext.Provider value={value}>
+      <View {...rest} style={[VARS.light, style]}>
+        {children}
+      </View>
     </ThemeContext.Provider>
   );
 }

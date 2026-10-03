@@ -17,6 +17,7 @@ import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 type Mode = ShareT['mode'];
 
@@ -46,8 +47,8 @@ export function ShareScreen() {
     return (
       <View className="bg-paper items-center justify-center" style={{ flex: 1, padding: space.gutter, gap: 14 }} testID="share-sent">
       <Ambient />
-        <Animated.View entering={ZoomIn.springify().damping(14)} className="bg-positive-soft items-center justify-center" style={{ width: 84, height: 84, borderRadius: 42 }}>
-          <Icon name="check" size={40} color={c.positive} strokeWidth={2.2} />
+        <Animated.View entering={ZoomIn.springify().damping(14)} className="bg-primary-bg items-center justify-center" style={{ width: 84, height: 84, borderRadius: 0 }}>
+          <Icon name="check" size={40} color={c['primary-fg']} strokeWidth={2.2} />
         </Animated.View>
         <T v="title" style={{ textAlign: 'center' }}>
           Envoyé à {name}.
@@ -73,7 +74,7 @@ export function ShareScreen() {
 
         {/* L'aperçu de ce que l'amie recevra : la pièce, pas une photo, et aucun logo. */}
         <Card className="items-center" style={{ gap: 10, paddingVertical: 22 }}>
-          <View className="bg-stage items-center justify-center" style={{ width: 150, height: 170, borderRadius: 22 }}>
+          <View className="bg-stage items-center justify-center" style={{ width: 150, height: 170, borderRadius: 0 }}>
             <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={110} dark={scheme === 'dark'} label={piece.name} />
           </View>
           <T v="cardTitle">{piece.name}</T>
@@ -136,7 +137,7 @@ export function ShareScreen() {
             multiline
             accessibilityLabel="Ton message"
             className="bg-sunk"
-            style={{ minHeight: 88, borderRadius: 20, padding: 16, paddingTop: 14, color: c.ink, fontFamily: 'Sans400', fontSize: 16, lineHeight: 22, textAlignVertical: 'top' }}
+            style={{ minHeight: 88, borderRadius: 0, padding: 16, paddingTop: 14, color: c.ink, ...F.s400, fontSize: 16, lineHeight: 22, textAlignVertical: 'top' }}
           />
         </View>
 

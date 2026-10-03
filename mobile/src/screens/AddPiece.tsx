@@ -23,6 +23,7 @@ import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
 import { PhotoScan, RawCrop, RevealCutout, frameOf, usePreloaded } from '../ui/scan';
 import type { Nav } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 /** Une photo choisie sur le téléphone, avec ses proportions. */
 type Picked = { uri: string; ratio: number; mime?: string | null };
@@ -156,7 +157,7 @@ export function AddPiece() {
             )}
 
             {full ? (
-              <Card className="bg-caution-soft" style={{ gap: 10 }} testID="add-full">
+              <Card className="bg-butter" style={{ gap: 10 }} testID="add-full">
                 <T v="cardTitle">Ton dressing est plein.</T>
                 <T v="body" tone="ink2">
                   Tu pourrais ajouter 30 places pour 4,99 €, une seule fois, ou passer à Atelier, jusqu’à 200 pièces.
@@ -173,7 +174,7 @@ export function AddPiece() {
                     { icon: 'camera' as const, label: 'Prendre une photo', note: 'Sur un cintre ou à plat' },
                     { icon: 'image' as const, label: 'Depuis la galerie', note: live ? 'Jusqu’à 10 à la fois' : 'Une photo à la fois' },
                   ].map((o) => (
-                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} className="bg-raised" style={{ borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
+                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} className="bg-stage" style={{ borderRadius: 0, padding: 16, gap: 18, minHeight: 128 }}>
                       <Icon name={o.icon} size={28} color={c.ink} />
                       <View style={{ gap: 2 }}>
                         <T v="bodyStrong">{o.label}</T>
@@ -185,7 +186,7 @@ export function AddPiece() {
                   ))}
                 </View>
                 {error && (
-                  <Card className="bg-caution-soft" style={{ gap: 6 }} testID="add-error">
+                  <Card className="bg-butter" style={{ gap: 6 }} testID="add-error">
                     <T v="body">{error}</T>
                   </Card>
                 )}
@@ -203,7 +204,7 @@ export function AddPiece() {
                       placeholderTextColor={c.ink2}
                       accessibilityLabel="Les pièces que Kode doit dessiner, si tu ne veux pas toute la photo"
                       className="bg-sunk"
-                      style={{ minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, fontFamily: 'Sans400', fontSize: 16 }}
+                      style={{ minHeight: 50, borderRadius: 0, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
                     />
                     <T v="small" tone="ink2">
                       Sinon, Kode dessine toutes les pièces qu’il voit : vêtements, chaussures, sacs et bijoux.
@@ -216,7 +217,7 @@ export function AddPiece() {
                 </T>
                 <View className="flex-row flex-wrap" style={{ gap: 10 }}>
                   {gallery.slice(0, 9).map((g, i) => (
-                    <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ width: tile, height: tile * 1.2, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden' }} className="items-center justify-center">
+                    <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ width: tile, height: tile * 1.2, borderRadius: 0, backgroundColor: g.backdrop, overflow: 'hidden' }} className="items-center justify-center">
                       <View style={{ transform: [{ rotate: `${((i % 3) - 1) * 4}deg` }], opacity: 0.92 }}>
                         <Garment kind={g.kind} tint={g.tint} size={tile * 0.7} />
                       </View>
@@ -255,13 +256,13 @@ export function AddPiece() {
 
         {phase === 'result' && draft && (
           <Animated.View entering={FadeInDown.duration(260)} style={{ gap: 18 }} testID="add-result">
-            <View className="bg-stage items-center justify-center" style={{ height: 250, borderRadius: 28 }}>
+            <View className="bg-stage items-center justify-center" style={{ height: 250, borderRadius: 0 }}>
               <RevealCutout
                 frame={[184, 230]}
                 size={[width - space.gutter * 2, 250]}
                 label={draft.name}
                 raw={
-                  <View className="items-center justify-center" style={{ width: 184, height: 230, borderRadius: 6, backgroundColor: found?.backdrop }}>
+                  <View className="items-center justify-center" style={{ width: 184, height: 230, borderRadius: 0, backgroundColor: found?.backdrop }}>
                     <Garment kind={draft.kind} tint={draft.tint} size={170} />
                   </View>
                 }
@@ -295,7 +296,7 @@ export function AddPiece() {
                 onChangeText={(name) => setDraft({ ...draft, name })}
                 accessibilityLabel="Nom de la pièce"
                 className="bg-sunk"
-                style={{ height: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, fontFamily: 'Sans500', fontSize: 16 }}
+                style={{ height: 50, borderRadius: 0, paddingHorizontal: 18, color: c.ink, ...F.s500, fontSize: 16 }}
               />
             </View>
             <View style={{ gap: 8 }}>
@@ -440,7 +441,7 @@ function LiveTracking({ picked, paths, hint, onAgain }: { picked: Picked[]; path
       <View style={{ gap: 8 }}>
         <T v="title" accessibilityRole="header">
           {working || playing ? 'Kode s’occupe\n' : 'Tout est\n'}
-          <T v="title" style={{ fontFamily: 'Accent' }}>
+          <T v="title" style={{ ...F.accent }}>
             {working || playing ? 'de tes photos.' : 'rangé.'}
           </T>
         </T>
@@ -532,7 +533,7 @@ function PieceRow({ job, reveal, cut, onRevealed }: { job: JobRow; reveal?: Reve
 
   return (
     <View className="flex-row items-center" style={{ gap: 12 }}>
-      <View className="bg-raised items-center justify-center" style={{ width: big, height: big, borderRadius: 18, overflow: 'hidden' }}>
+      <View className="bg-stage items-center justify-center" style={{ width: big, height: big, borderRadius: 0, overflow: 'hidden' }}>
         {reveal ? (
           <RevealCutout
             frame={frame}

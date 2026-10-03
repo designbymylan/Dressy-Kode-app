@@ -150,7 +150,7 @@ export function PieceScreen() {
           </View>
 
           {dormant && (
-            <Card className="bg-caution-soft" style={{ gap: 10 }}>
+            <Card className="bg-butter" style={{ gap: 10 }}>
               <T v="cardTitle">
                 {piece.lastWorn === null ? `Jamais porté${f.e}, pour l’instant.` : `${f.il} ${f.v('dort', 'dorment')} depuis ${sinceLabel(piece).replace('il y a ', '')}.`}
               </T>
@@ -168,9 +168,9 @@ export function PieceScreen() {
             <T v="kicker" tone="ink2" upper>
               L’étiquette
             </T>
-            {/* Une étiquette cousue : bord pointillé, rangées nettes. */}
-            <View className="bg-raised" style={{ borderRadius: 20, padding: 6 }}>
-              <View style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: c['rule-strong'], borderRadius: 15, paddingHorizontal: 14 }}>
+            {/* Une fiche de galerie : des rangées entre deux filets. */}
+            <View>
+              <View style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.rule }}>
                 {[
                   ['Couleur', piece.color],
                   ['Matière', piece.material],
@@ -183,7 +183,7 @@ export function PieceScreen() {
                       {k}
                     </T>
                     <View className="flex-row items-center" style={{ gap: 8, flexShrink: 1 }}>
-                      {k === 'Couleur' && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: piece.swatch, borderWidth: 1, borderColor: c.rule }} />}
+                      {k === 'Couleur' && <View style={{ width: 14, height: 14, borderRadius: 0, backgroundColor: piece.swatch, borderWidth: 1, borderColor: c.rule }} />}
                       <T v="bodyStrong" numberOfLines={1}>
                         {v}
                       </T>
@@ -233,7 +233,7 @@ export function PieceScreen() {
             <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
               {goes.map((g) => (
                 <Tap key={g.id} testID={`goes-${g.id}`} onPress={() => nav.navigate('Compose', { pieces: [piece.id, g.id] })} accessibilityLabel={`Composer avec ${g.name}`} style={{ width: 96 }}>
-                  <View className="bg-raised items-center justify-center" style={{ height: 112, borderRadius: 18 }}>
+                  <View className="bg-stage items-center justify-center" style={{ height: 112, borderRadius: 0 }}>
                     <Garment kind={g.kind} tint={g.tint} image={g.image} size={64} dark={scheme === 'dark'} label={g.name} />
                   </View>
                   <T v="small" style={{ marginTop: 5 }} numberOfLines={1}>

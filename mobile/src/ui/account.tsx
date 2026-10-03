@@ -12,6 +12,7 @@ import { Button } from './Button';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { Tap } from './Tap';
+import { F } from '../theme/fonts';
 
 export const validEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 export const PASSWORD_MIN = 8;
@@ -21,7 +22,7 @@ type FieldProps = { value: string; onChange: (v: string) => void; onSubmit?: () 
 export function EmailField({ value, onChange, onSubmit, testID }: FieldProps) {
   const { c } = useTheme();
   return (
-    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 27, paddingHorizontal: 18, gap: 10 }}>
+    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 0, paddingHorizontal: 18, gap: 10 }}>
       <Icon name="mail" size={18} color={c.ink2} />
       <TextInput
         testID={testID}
@@ -37,7 +38,7 @@ export function EmailField({ value, onChange, onSubmit, testID }: FieldProps) {
         returnKeyType="next"
         onSubmitEditing={onSubmit}
         accessibilityLabel="Ton adresse e-mail"
-        style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'Sans500', fontSize: 17 }}
+        style={{ flex: 1, height: 54, color: c.ink, ...F.s500, fontSize: 17 }}
       />
       {validEmail(value) && <Icon name="check" size={18} color={c.positive} strokeWidth={2.2} />}
     </View>
@@ -48,7 +49,7 @@ export function PasswordField({ value, onChange, onSubmit, testID, isNew }: Fiel
   const { c } = useTheme();
   const [shown, setShown] = useState(false);
   return (
-    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 27, paddingLeft: 18, paddingRight: 6, gap: 10 }}>
+    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 0, paddingLeft: 18, paddingRight: 6, gap: 10 }}>
       <Icon name="lock" size={18} color={c.ink2} />
       <TextInput
         testID={testID}
@@ -64,7 +65,7 @@ export function PasswordField({ value, onChange, onSubmit, testID, isNew }: Fiel
         returnKeyType="done"
         onSubmitEditing={onSubmit}
         accessibilityLabel={isNew ? 'Choisis un mot de passe' : 'Ton mot de passe'}
-        style={{ flex: 1, height: 54, color: c.ink, fontFamily: 'Sans500', fontSize: 17 }}
+        style={{ flex: 1, height: 54, color: c.ink, ...F.s500, fontSize: 17 }}
       />
       <Tap
         onPress={() => setShown((v) => !v)}

@@ -5,6 +5,7 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { useStore } from '../state/store';
 import { ScreenSize } from '../ui/screen';
+import { F } from '../theme/fonts';
 
 const W = 390;
 const H = 844;
@@ -36,7 +37,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
 
   const pill = (label: string, on: boolean, onPress: () => void, id: string) => (
     <Pressable key={id} testID={id} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center', backgroundColor: on ? ink : 'transparent', borderWidth: 1, borderColor: on ? ink : dark ? 'rgba(244,244,246,0.3)' : 'rgba(14,15,19,0.3)' }}>
-      <Text style={{ fontFamily: 'Sans600', fontSize: 13, color: on ? page : ink }}>{label}</Text>
+      <Text style={{ ...F.s600, fontSize: 13, color: on ? page : ink }}>{label}</Text>
     </Pressable>
   );
 
@@ -47,7 +48,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
         {pill('Sombre', pref === 'dark' || (pref === 'auto' && dark), () => setPref('dark'), 'frame-dark')}
         <View style={{ width: 8 }} />
         {pill('Recommencer', false, a.restart, 'frame-restart')}
-        <Text style={{ fontFamily: 'Sans500', fontSize: 12, color: muted, marginLeft: 6 }}>Aperçu · données fictives</Text>
+        <Text style={{ ...F.s500, fontSize: 12, color: muted, marginLeft: 6 }}>Aperçu · données fictives</Text>
       </View>
       <View style={{ width: (W + BEZEL * 2) * scale, height: (H + BEZEL * 2) * scale }}>
         <View style={{ position: 'absolute', left: 0, top: 0, width: W + BEZEL * 2, height: H + BEZEL * 2, transform: [{ scale }], transformOrigin: 'top left', borderRadius: 56 + BEZEL, backgroundColor: '#161514', padding: BEZEL, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: 20 } }}>
@@ -75,7 +76,7 @@ function StatusBarMock({ color }: { color: string }) {
   const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 34, paddingTop: 6 }}>
-      <Text style={{ fontFamily: 'Sans600', fontSize: 16, color, width: 60 }}>{time}</Text>
+      <Text style={{ ...F.s600, fontSize: 16, color, width: 60 }}>{time}</Text>
       <View style={{ position: 'absolute', top: 11, left: (W - 124) / 2, width: 124, height: 36, borderRadius: 18, backgroundColor: '#000' }} />
       <Svg width={62} height={14} viewBox="0 0 62 14">
         <Rect x={0} y={9} width={3} height={4} rx={1} fill={color} />

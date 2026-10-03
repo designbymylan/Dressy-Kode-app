@@ -40,8 +40,9 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
 - **La disposition de l'app mobile** (écrans, sections, parcours, ordre des
   blocs) : c'est celle de la refonte (`design/refonte/`, `mobile/src/screens/`).
   On peut retoucher l'apparence d'un écran sans changer sa structure.
-- **L'apparence** : la direction « vitrine de verre » (voir plus bas), la même
-  sur le web et sur le mobile.
+- **L'apparence** : la direction « galerie » (voir plus bas, décidée le
+  02/10 à partir de la charte `design/charte-galerie.md`), la même sur le web
+  et sur le mobile. Elle remplace la « vitrine de verre ».
 - Ne rajoute ni dépendance, ni skill, ni service externe sans demander.
 
 Changements de disposition validés par l'utilisateur (29/09), à garder :
@@ -51,8 +52,9 @@ Changements de disposition validés par l'utilisateur (29/09), à garder :
   la galerie accepte jusqu'à 10 photos d'un coup.
 - **Dressing web** : une vignette ouvre la fiche de la pièce, qui naît de la
   vignette, avec « Composer une tenue avec » (`DressingRails.tsx`).
-- **Barre d'onglets (web et mobile)** : un seul point, liquide, qui voyage
-  d'un onglet à l'autre, à la place d'un point par onglet.
+- **Barre d'onglets (web et mobile)** : plate, collée en bas ; l'onglet
+  actif montre son icône pleine et son nom dessous (décision du 02/10, qui
+  remplace le point liquide du 29/09). Kode reste au centre, en rond.
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -82,62 +84,76 @@ function`) : en cas de doute, c'est `npm run build && npm start` qui fait foi.
 
 Ordre de priorité, du plus fort au plus faible :
 
-1. **L'apparence « vitrine de verre »** : `web/src/app/globals.css` pour le
-   web ; `mobile/src/theme/` (`palette.json`, `tokens.ts`) et les composants
-   de `mobile/src/ui/` pour le mobile. Les deux doivent rester cohérents.
+1. **L'apparence « galerie »** : `web/src/app/globals.css` pour le web ;
+   `mobile/src/theme/` (`palette.json`, `tokens.ts`, `fonts.ts`) et les
+   composants de `mobile/src/ui/` pour le mobile. Les deux doivent rester
+   cohérents. La charte d'origine est dans `design/charte-galerie.md` (on en
+   reprend le style, jamais le nom ni la marque).
 2. **La disposition des écrans mobiles** : `mobile/src/screens/` et
    `design/refonte/` (recherche, design system, parcours).
 3. **Les maquettes Claude Design** (`design/_projet/*.dc.html`) pour le
    contenu et les fonctions d'un écran que ni l'app ni la refonte ne
-   couvrent. Leur apparence est remplacée par la vitrine de verre.
+   couvrent. Leur apparence est remplacée par la galerie.
 4. **Le brief v0.2** (`Brief_Dresskode_Claude_Design.docx`) pour le reste.
-   Sa typographie est périmée (ni Archivo ni Hanken Grotesk).
+   Sa typographie est périmée.
 5. Les skills de design, en dernier (voir plus bas).
 
-### Règles visuelles (vitrine de verre)
+### Règles visuelles (galerie)
 
-- Fond perle traversé de halos pastel qui dérivent lentement (pêche, lavande,
-  ciel, rose poudré) : `.ambient` sur le web, `ui/Ambient.tsx` sur le mobile.
-- Surfaces en verre : cartes et vignettes en blanc translucide, filet clair,
-  ombre douce, sans contour sombre ; la navigation (onglets, boutons
-  flottants, feuilles, messages) en verre flouté, ou Liquid Glass sur iOS 26.
-- Boutons pilule : encre pleine pour l'action principale (une par écran),
-  verre clair pour le reste. Puces et segments de verre, actifs en encre.
-- Titres en grotesque serré (−0,035 em), le mot qui chante en italique serif
-  (Instrument Serif). Texte courant en grotesque, base 15 px, jamais sous
+- Une galerie : fond blanc (`#ffffff`), texte noir, filets gris clair d'un
+  pixel (`#e9e9e9`) pour séparer, beaucoup de blanc. Pas de halos, pas de
+  verre, pas de dégradé, **aucune ombre**.
+- Une seule couleur : le **beurre** (`#faedbc`), réservé aux bandeaux de
+  service (messages de Kode, offres, informations). Le reste est noir, blanc
+  et gris. Gris studio (`#f3f3f3`) pour les vignettes de vêtements et les
+  champs de saisie.
+- **Angles droits partout** (cartes, vignettes, boutons, champs, feuilles,
+  puces). Une seule forme ronde : le bouton de Kode au centre de la barre
+  d'onglets (et les avatars).
+- Boutons : l'action principale en noir plein, angles droits, libellé en
+  capitales ; les autres en simple filet ou en texte en capitales, fond
+  transparent. Liens de découverte : capitales + petite flèche noire.
+- Typographie : **Helvetica Neue** (iPhone) et Helvetica/Arial (web), à la
+  place de HelveticaNow (payante). Polices appelées par rôle (`Sans400`…
+  `Sans700`, `Accent`) via `mobile/src/theme/fonts.ts`. Libellés, navigation
+  et petites capitales en **13 px, graisse moyenne, sans interlettrage** ;
+  texte courant 15 px ; titres modérés, sans italique ni serif. Jamais sous
   11,5 px.
-- Polices : **Satoshi** dans la direction. Sur le mobile, **DM Sans** la
-  remplace tant que ses fichiers ne sont pas dans `mobile/assets/fonts/` ;
-  les polices y sont appelées par rôle (`Sans400`…`Sans700`, `Accent`), le
-  changement se fait dans `mobile/App.tsx` seulement.
+- **Mode sombre tiré de la charte** : fond noir, texte blanc, filets gris
+  foncé, beurre conservé (texte noir dessus). Chaque écran marche en clair
+  **et** en sombre.
 - Couleurs uniquement par les jetons : variables CSS sur le web
-  (`var(--ink)`, `var(--glass)`…), `useTheme().c` ou classes NativeWind
-  (`bg-card`, `text-ink2`…) sur le mobile. Jamais de code hexadécimal dans un
+  (`var(--ink)`, `var(--rule)`…), `useTheme().c` ou classes NativeWind
+  (`bg-paper`, `text-ink2`…) sur le mobile. Jamais de code hexadécimal dans un
   composant, sauf pour une couleur qui ne suit pas le thème (teinte d'un
-  vêtement, aperçu de thème). Chaque écran marche en clair **et** en sombre.
-- Laiton (`--hi`, `brass`) : très rare, numéros et détails seulement.
-- Formes : tout ce qui se clique est en capsule (999) ; cartes 28, vignettes 22.
-- Vêtements : illustrations vectorielles plates, jamais de photo produit, pas
-  de 3D.
-- Mouvement : ressorts courts, jamais bloquants, coupés par « Réduire les
-  animations ».
+  vêtement, aperçu de thème). Le gris inactif (`#aaaaaa`) ne sert jamais au
+  texte courant.
+- Vêtements : illustrations vectorielles plates ou détourages de Kode, posés
+  sur gris studio dans des cadres droits ; jamais de photo produit, pas de 3D.
+- Icônes : noires et monochromes, au trait, **pleines quand actives**, des
+  formes qui se comprennent sans leur nom. Dans la barre d'onglets, seul
+  l'onglet actif affiche son nom ; tous gardent leur libellé pour les
+  lecteurs d'écran.
+- Mouvement : discret (fondus, ressorts courts), jamais bloquant, coupé par
+  « Réduire les animations ».
 - Accessibilité : contraste AA (`contraste.py` après toute retouche de
   palette), cibles tactiles de 44 pt minimum, focus clavier visible, libellés
-  pour les lecteurs d'écran (y compris la barre d'onglets, qui n'affiche que
-  des icônes).
+  pour les lecteurs d'écran.
 
 ### Comment c'est codé
 
 - **Mobile** : NativeWind (classes branchées sur les jetons de
   `palette.json`), Reanimated, react-native-svg. Réutilise `mobile/src/ui/`
-  (`Glass`, `Button`, `IconButton`, `Card`, `Group`, `Row`, `Chip`,
-  `Segmented`, `Sheet`, `TabBar`, `Ambient`, `T`…) avant de créer un
-  composant. Les icônes sont les SVG de `ui/Icon.tsx`. L'état est dans
+  (`Glass` (surface plate), `Button`, `IconButton`, `Card`, `Group`, `Row`,
+  `Chip`, `Segmented`, `Sheet`, `TabBar`, `T`…) avant de créer un composant.
+  Les icônes sont les SVG de `ui/Icon.tsx`. L'état est dans
   `state/store.tsx`, le pont Supabase dans `state/remote.ts`.
 - **Web** : styles en ligne + `globals.css` (classes `.glass`, `.btn`,
   `.chip`, `.segment`…). Réutilise `web/src/components/ui.tsx` (`Screen`,
   `Title`, `Card`, `buttonPrimary`…). Pas de Tailwind, pas de shadcn/ui, pas
-  de bibliothèque d'icônes (Lucide, Iconify…), pas de kit d'interface.
+  de bibliothèque d'icônes (Lucide, Iconify…), pas de kit d'interface (le
+  dock magnétique proposé le 02/10 a été écarté : web seulement, souris
+  seulement, contraire à la charte).
 
 ## Skills de design
 
@@ -146,11 +162,11 @@ de conflit avec ce fichier, ce fichier gagne.** Ne reprends jamais leurs choix
 techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
 
 - `dressy-design` : la méthode maison pour passer d'une maquette à un écran
-  web vérifié. Elle a été écrite pour `web/` avant la vitrine de verre : sa
-  partie couleurs et polices (sable, lilas, beurre, Gambarino) est **périmée** ;
+  web vérifié. Elle a été écrite pour `web/` avant la galerie : sa partie
+  couleurs et polices (sable, lilas, beurre, Gambarino) est **périmée** ;
   garde sa méthode, suis les règles visuelles de ce fichier.
 - `expo-native-ui` : s'applique à `mobile/`. Reste sur les choix déjà en place
-  (NativeWind, Reanimated, `expo-glass-effect`, SVG maison).
+  (NativeWind, Reanimated, SVG maison) ; pas de verre ni de Liquid Glass.
 - `mobile-app-ui-design` : principes utiles (zone du pouce, hiérarchie, états
   vides, pic émotionnel). Ignore sa section « Implementation Notes ».
 - `design-mobile-apps` (Sleek, service payant, clé `SLEEK_API_KEY`) : **que
@@ -174,8 +190,8 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   (« Kode repère chaque pièce », « Kode dessine ta pièce »,
   `web/src/components/KodeThinking.tsx`). Les messages d'erreur montrés
   suivent la même règle ; le détail technique part dans les journaux.
-- Chaque attente a son animation : `loading.tsx` des routes (squelettes en
-  verre), anneau `.spinner` dans un bouton qui attend, `KodeThinking` quand
+- Chaque attente a son animation : `loading.tsx` des routes (squelettes gris
+  studio), anneau `.spinner` dans un bouton qui attend, `KodeThinking` quand
   Kode travaille.
 - Mode conseil : « tu pourrais », jamais « tu dois ».
 - Prix à la française : `12,99 €`.

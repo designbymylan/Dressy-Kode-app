@@ -16,6 +16,7 @@ import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 /**
  * Écran 18 : la revue des feuilles, états vides, chargements et erreurs,
@@ -56,7 +57,7 @@ export function States() {
           </T>
           <T v="title" accessibilityRole="header">
             Feuilles, vides{'\n'}
-            <T v="title" style={{ fontFamily: 'Accent' }}>
+            <T v="title" style={{ ...F.accent }}>
               et chargements.
             </T>
           </T>
@@ -126,8 +127,8 @@ export function States() {
               </T>
             </View>
           </Card>
-          <Card className="bg-caution-soft flex-row" style={{ gap: 12 }}>
-            <Icon name="kode" size={24} color={c.caution} />
+          <Card className="bg-butter flex-row" style={{ gap: 12 }}>
+            <Icon name="kode" size={24} color={c['butter-ink']} />
             <View style={{ flex: 1, gap: 4 }}>
               <T v="bodyStrong">Kode n’a pas pu répondre</T>
               <T v="body" tone="ink2">

@@ -1,17 +1,10 @@
 import './global.css';
 import './src/ui/interop';
-import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme, NavigationContainer, type NavigationState } from '@react-navigation/native';
-import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
-import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
-import { DMSans_600SemiBold } from '@expo-google-fonts/dm-sans/600SemiBold';
-import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
-import { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif/400Regular_Italic';
 import { StoreProvider } from './src/state/store';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { PortalHost } from './src/ui/Sheet';
@@ -20,22 +13,15 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { PhoneFrame } from './src/web/PhoneFrame';
 
 export default function App() {
-  // Les polices sont chargées sous leur rôle (Sans400…, Accent) : changer de
-  // famille ne touche que ces lignes. La direction « vitrine de verre » est
-  // dessinée en Satoshi ; DM Sans, libre et très proche, la remplace tant que
-  // les fichiers Satoshi ne sont pas dans assets/fonts (voir mobile/README.md).
-  const [loaded] = useFonts({
-    Sans400: DMSans_400Regular,
-    Sans500: DMSans_500Medium,
-    Sans600: DMSans_600SemiBold,
-    Sans700: DMSans_700Bold,
-    Accent: InstrumentSerif_400Regular_Italic,
-  });
+  // Rien à charger : la galerie utilise Helvetica Neue, déjà sur l'iPhone, et
+  // la pile Helvetica/Arial sur le web (src/theme/fonts.ts).
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StoreProvider>
-          <ThemeProvider>{loaded ? <Shell /> : <View style={{ flex: 1 }} />}</ThemeProvider>
+          <ThemeProvider>
+            <Shell />
+          </ThemeProvider>
         </StoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

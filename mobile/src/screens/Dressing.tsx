@@ -20,6 +20,7 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 type Usage = 'jamais' | 'oubliees' | null;
 type Sort = 'recentes' | 'plus' | 'moins';
@@ -91,7 +92,7 @@ export function Dressing() {
       <Masthead kicker="LE DRESSING" meta={`${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}${limit === null ? '' : ` sur ${limit}`}`} />
       {searching ? (
         <Animated.View entering={FadeIn.duration(180)} className="flex-row items-center" style={{ gap: 10 }}>
-          <View className="flex-row items-center bg-sunk" style={{ flex: 1, height: 44, borderRadius: 22, paddingHorizontal: 14, gap: 8 }}>
+          <View className="flex-row items-center bg-sunk" style={{ flex: 1, height: 44, borderRadius: 0, paddingHorizontal: 14, gap: 8 }}>
             <Icon name="search" size={18} color={c.ink2} />
             <TextInput
               testID="search-input"
@@ -102,7 +103,7 @@ export function Dressing() {
               placeholderTextColor={c.ink2}
               returnKeyType="search"
               accessibilityLabel="Rechercher dans le dressing"
-              style={{ flex: 1, color: c.ink, fontFamily: 'Sans400', fontSize: 16, height: 44 }}
+              style={{ flex: 1, color: c.ink, ...F.s400, fontSize: 16, height: 44 }}
             />
           </View>
           <T
@@ -149,7 +150,7 @@ export function Dressing() {
         />
         <Tap testID="open-filters" onPress={openFilters} accessibilityLabel={active ? `Filtres, ${active} actifs` : 'Filtres'} scaleTo={1} style={{ minHeight: 44, gap: 6 }} className="flex-row items-center">
           <Icon name="filter" size={18} color={c.ink} />
-          <T v="bodyStrong" style={{ fontSize: 14.5, fontFamily: 'Sans500' }}>
+          <T v="bodyStrong" style={{ fontSize: 14.5, ...F.s500 }}>
             Filtres{active ? ` · ${active}` : ''}
           </T>
         </Tap>
@@ -436,7 +437,7 @@ function Hanging({
           <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={shelf ? 84 : ITEM} hanger={hangs && !shelf} hangerColor={rod} dark={dark} label={piece.name} />
         </View>
       </Animated.View>
-      <T v="caption" style={{ fontFamily: 'Sans500', textAlign: 'center' }} numberOfLines={1}>
+      <T v="caption" style={{ ...F.s500, textAlign: 'center' }} numberOfLines={1}>
         {piece.name}
       </T>
       <T v="small" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'} numberOfLines={1}>

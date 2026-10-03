@@ -8,14 +8,15 @@ import { space } from '../theme/tokens';
 import { T } from './T';
 import { IconButton } from './Button';
 import { Glass } from './Glass';
-import type { IconName } from './Icon';
+import { Icon, type IconName } from './Icon';
+import { Tap } from './Tap';
 
 /** Filet éditorial. */
 export function Rule({ strong, style }: { strong?: boolean; style?: object }) {
   return <View style={[{ height: 1 }, style]} className={strong ? 'bg-rule-strong' : 'bg-rule'} />;
 }
 
-/** L'ours d'une page : le mot de la page en capitales espacées à gauche, le contexte à droite. */
+/** L'ours d'une page : le mot de la page en capitales noires à gauche, le contexte à droite, en 13 pt. */
 export function Masthead({ kicker, meta, right }: { kicker: string; meta?: string; right?: ReactNode }) {
   return (
     <View style={{ gap: 10, paddingBottom: 2 }}>
@@ -35,12 +36,16 @@ export function Masthead({ kicker, meta, right }: { kicker: string; meta?: strin
   );
 }
 
-/** Titre de section numéroté : « 01 Manteaux … 9 pièces ». */
+/**
+ * Titre de section numéroté : « 01 Manteaux … 9 pièces ». L'action est un
+ * lien de découverte : capitales noires et petite flèche, sans fond.
+ */
 export function SectionHead({ n, title, action, onAction, testID }: { n?: string; title: string; action?: string; onAction?: () => void; testID?: string }) {
+  const { c } = useTheme();
   return (
-    <View className="flex-row items-baseline" style={{ gap: 10 }}>
+    <View className="flex-row items-center" style={{ gap: 10 }}>
       {n && (
-        <T v="numeral" tone="ink2" style={{ fontSize: 20 }} accessibilityElementsHidden importantForAccessibility="no">
+        <T v="numeral" tone="ink2" accessibilityElementsHidden importantForAccessibility="no">
           {n}
         </T>
       )}
@@ -48,9 +53,12 @@ export function SectionHead({ n, title, action, onAction, testID }: { n?: string
         {title}
       </T>
       {action && onAction && (
-        <T testID={testID} v="caption" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 13, paddingLeft: 8 }}>
-          {action}
-        </T>
+        <Tap testID={testID} onPress={onAction} accessibilityRole="link" accessibilityLabel={action} scaleTo={1} className="flex-row items-center" style={{ minHeight: 44, paddingLeft: 8, gap: 4 }}>
+          <T v="button" upper>
+            {action}
+          </T>
+          <Icon name="arrow" size={14} color={c.ink} strokeWidth={1.8} />
+        </Tap>
       )}
     </View>
   );
@@ -91,14 +99,14 @@ export function useTabScroll(edge?: SharedValue<number>) {
   });
 }
 
-/** Le voile de verre sous la barre d'état, qui n'apparaît qu'au défilement (effet de bord d'iOS 26). */
+/** Le bandeau blanc sous la barre d'état, qui n'apparaît qu'au défilement, pour que le texte n'y passe pas dessous. */
 export function ScrollEdge({ y }: { y: SharedValue<number> }) {
   const insets = useSafeAreaInsets();
   const style = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [0, 28], [0, 1], 'clamp') }));
   if (!insets.top) return null;
   return (
     <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 4, zIndex: 5 }, style]}>
-      <Glass radius={0} shadow={false} style={StyleSheet.absoluteFill} />
+      <Glass edge="none" style={StyleSheet.absoluteFill} />
     </Animated.View>
   );
 }
@@ -121,9 +129,9 @@ type HeaderProps = {
 };
 
 /**
- * Bouton retour flottant en verre ; le titre et un bandeau de verre
- * n'apparaissent qu'au défilement (l'« effet de bord » d'iOS 26), pour que
- * le haut de page reste éditorial au repos.
+ * Bouton retour : la flèche seule, noire. Le titre et un bandeau blanc
+ * bordé d'un filet n'apparaissent qu'au défilement, pour que le haut de page
+ * reste éditorial au repos.
  */
 export function StackHeader({ title, y, right = [], close, onBack }: HeaderProps) {
   const nav = useNavigation();
@@ -134,7 +142,7 @@ export function StackHeader({ title, y, right = [], close, onBack }: HeaderProps
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
       <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, right: 0, top: 0, height: top + 50 }, band]}>
-        <Glass radius={0} shadow={false} style={StyleSheet.absoluteFill} />
+        <Glass edge="none" style={StyleSheet.absoluteFill} />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 1, backgroundColor: c.rule }} />
         <View style={{ position: 'absolute', left: 64, right: 64, top, height: 44, justifyContent: 'center' }}>
           <T v="bodyStrong" numberOfLines={1} style={{ textAlign: 'center' }}>
@@ -147,12 +155,12 @@ export function StackHeader({ title, y, right = [], close, onBack }: HeaderProps
           testID="header-back"
           icon={close ? 'close' : 'back'}
           label={close ? 'Fermer' : 'Retour'}
-          variant="glass"
+          variant="plain"
           onPress={onBack ?? (() => nav.goBack())}
         />
         <View className="flex-row" style={{ gap: 8 }}>
           {right.map((r) => (
-            <IconButton key={r.label} testID={r.testID} icon={r.icon} label={r.label} variant="glass" onPress={r.onPress} />
+            <IconButton key={r.label} testID={r.testID} icon={r.icon} label={r.label} variant="plain" onPress={r.onPress} />
           ))}
         </View>
       </View>

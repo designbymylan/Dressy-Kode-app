@@ -17,6 +17,7 @@ import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 /** Mêmes montants que web/src/lib/plans.ts (source unique côté serveur). */
 export const PLANS: { id: PlanId; name: string; note: string; cents: Record<Period, number>; features: { label: string; soon?: boolean }[]; flagged?: boolean }[] = [
@@ -54,7 +55,7 @@ export function Offers() {
           </T>
           <T v="title" accessibilityRole="header">
             Porte mieux,{'\n'}
-            <T v="title" style={{ fontFamily: 'Accent' }}>
+            <T v="title" style={{ ...F.accent }}>
               paie juste.
             </T>
           </T>
@@ -111,8 +112,7 @@ export function Offers() {
                   disabled={mine}
                   scaleTo={0.99}
                   accessibilityLabel={`${p.name}, ${free ? 'gratuit' : `${price(p.cents[period])} par ${period}`}${mine ? ', ton offre actuelle' : ''}`}
-                  style={{ borderRadius: 24, padding: 18, gap: 10, borderWidth: mine || p.flagged ? 1.5 : 1, borderColor: mine ? c.ink : p.flagged ? c.brass : c.rule }}
-                  className={mine ? 'bg-raised' : ''}
+                  style={{ borderRadius: 0, padding: 18, gap: 10, borderWidth: mine || p.flagged ? 1.5 : 1, borderColor: mine ? c.ink : p.flagged ? c.brass : c.rule }}
                 >
                   <View className="flex-row items-start justify-between" style={{ gap: 10 }}>
                     <View style={{ flex: 1, gap: 2 }}>

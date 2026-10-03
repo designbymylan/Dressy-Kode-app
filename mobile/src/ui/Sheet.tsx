@@ -4,7 +4,7 @@ import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, runOnJS, useAnima
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
-import { motion, radius, space } from '../theme/tokens';
+import { motion, space } from '../theme/tokens';
 import { T } from './T';
 import { IconButton } from './Button';
 
@@ -72,7 +72,7 @@ export function Sheet({ visible, onClose, title, kicker, children, footer, testI
 }
 
 function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<SheetProps, 'visible'>) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const y = useSharedValue(0);
@@ -100,15 +100,14 @@ function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<Sh
       <Animated.View
         accessibilityViewIsModal
         style={[
-          { maxHeight: '88%', backgroundColor: c.raised, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, paddingBottom: Math.max(insets.bottom, 16) },
+          { maxHeight: '88%', backgroundColor: c.raised, paddingBottom: Math.max(insets.bottom, 16) },
           { borderTopWidth: 1, borderColor: c['glass-border'] },
-          scheme === 'light' && { shadowColor: '#282C46', shadowOpacity: 0.2, shadowRadius: 30, shadowOffset: { width: 0, height: -8 } },
           panel,
         ]}
       >
         <GestureDetector gesture={drag}>
           <View style={{ paddingTop: 8, paddingHorizontal: space.gutter }}>
-            <View style={{ alignSelf: 'center', width: 38, height: 5, borderRadius: 3, backgroundColor: c['rule-strong'] }} />
+            <View style={{ alignSelf: 'center', width: 36, height: 3, backgroundColor: c['rule-strong'] }} />
             {(title || kicker) && (
               <View className="flex-row items-start" style={{ marginTop: 10, gap: 12 }}>
                 <View style={{ flex: 1, paddingTop: 4 }}>
@@ -123,7 +122,7 @@ function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<Sh
                     </T>
                   )}
                 </View>
-                <IconButton icon="close" label="Fermer" variant="quiet" size={36} onPress={onClose} testID="sheet-close" />
+                <IconButton icon="close" label="Fermer" variant="plain" size={40} onPress={onClose} testID="sheet-close" />
               </View>
             )}
           </View>

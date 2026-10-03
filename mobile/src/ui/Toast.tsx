@@ -5,10 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { material } from '../theme/tokens';
-import { Glass } from './Glass';
 import { T } from './T';
 import { Tap } from './Tap';
 import { Icon } from './Icon';
+import { F } from '../theme/fonts';
 
 /**
  * Le retour d'une action (« Notée dans ton journal · Annuler »), posé
@@ -35,23 +35,22 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
       exiting={FadeOutDown.duration(160)}
       pointerEvents="box-none"
       accessibilityLiveRegion="polite"
-      style={{ position: 'absolute', left: 16, right: 16, bottom: aboveTabs ? (insets.bottom > 0 ? insets.bottom - 8 : 0) + material.tabBottom + material.tabHeight + 10 : Math.max(insets.bottom, 12) + 8 }}
+      style={{ position: 'absolute', left: 0, right: 0, bottom: aboveTabs ? insets.bottom + material.tabHeight : Math.max(insets.bottom, 12) }}
     >
-      <Glass radius={999} strong>
-        <View className="flex-row items-center" style={{ minHeight: 48, paddingLeft: 16, paddingRight: 6, gap: 10 }}>
-          <Icon name={toast.warn ? 'alert' : 'check'} size={18} color={toast.warn ? c.caution : c.positive} strokeWidth={2.2} />
-          <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={3}>
-            {toast.text}
-          </T>
-          {toast.undo && (
-            <Tap testID="toast-undo" onPress={a.undo} accessibilityLabel="Annuler" style={{ height: 40, paddingHorizontal: 14, borderRadius: 20 }} className="items-center justify-center bg-pill">
-              <T v="caption" style={{ fontFamily: 'Sans600' }}>
-                Annuler
-              </T>
-            </Tap>
-          )}
-        </View>
-      </Glass>
+      {/* Un bandeau de service beurre, à plat, sur toute la largeur. */}
+      <View className="flex-row items-center bg-butter" style={{ minHeight: 48, paddingLeft: 16, paddingRight: 8, gap: 10 }}>
+        <Icon name={toast.warn ? 'alert' : 'check'} size={18} color={c['butter-ink']} strokeWidth={1.8} />
+        <T v="caption" style={{ flex: 1, ...F.s500, color: c['butter-ink'] }} numberOfLines={3}>
+          {toast.text}
+        </T>
+        {toast.undo && (
+          <Tap testID="toast-undo" onPress={a.undo} accessibilityLabel="Annuler" style={{ height: 44, paddingHorizontal: 10 }} className="items-center justify-center">
+            <T v="button" upper style={{ color: c['butter-ink'], textDecorationLine: 'underline' }}>
+              Annuler
+            </T>
+          </Tap>
+        )}
+      </View>
     </Animated.View>
   );
 }

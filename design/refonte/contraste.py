@@ -141,6 +141,9 @@ APP_PAIRS = [
     ('control', 'paper', L, 'contour d’un interrupteur, d’une case, d’un champ'),
     ('control', 'raised', L, 'contour de contrôle sur carte'),
     ('ink2', 'raised', L, 'icône secondaire'),
+    ('butter-ink', 'butter', N, 'bandeau de service beurre'),
+    ('tab-off', 'paper', N, 'onglet inactif sur la barre'),
+    ('ink', 'stage', L, 'illustration noire sur gris studio'),
 ]
 APP_GLASS = [
     ('ink', 'onglet actif et texte sur verre'),
@@ -172,7 +175,7 @@ if __name__ == '__main__':
     sections = dict(DIRECTIONS)
     palette = json.loads(PALETTE.read_text())
     for theme in ('light', 'dark'):
-        sections[f'App : vitrine de verre · {"clair" if theme == "light" else "sombre"}'] = app_checks(theme, palette[theme])
+        sections[f'App : galerie · {"clair" if theme == "light" else "sombre"}'] = app_checks(theme, palette[theme])
     count = 0
     for name, checks in sections.items():
         print(f'\n{name}')

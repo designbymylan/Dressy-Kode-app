@@ -95,7 +95,7 @@ export function Agenda() {
           const ferieI = ferieDu(ctx, i);
           const busy = all.some((e) => e.day === i) || !!ferieI;
           return (
-            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ width: 50, paddingVertical: 10, borderRadius: 25, alignItems: 'center', gap: 4 }} className={on ? 'bg-primary-bg' : ''}>
+            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ width: 50, paddingVertical: 10, borderRadius: 0, alignItems: 'center', gap: 4 }} className={on ? 'bg-primary-bg' : ''}>
               <T v="small" tone={on ? 'primary-fg' : 'ink2'}>
                 {DAYS_LETTER[d.getDay()]}
               </T>
@@ -103,7 +103,7 @@ export function Agenda() {
                 {d.getDate()}
               </T>
               {meteo.jours[i] ? <WeatherIcon w={meteo.jours[i]!} size={16} color={on ? c['primary-fg'] : c.ink2} /> : <View style={{ height: 16 }} />}
-              <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: busy ? (on ? c['primary-fg'] : c.brass) : 'transparent' }} />
+              <View style={{ width: 5, height: 5, borderRadius: 0, backgroundColor: busy ? (on ? c['primary-fg'] : c.brass) : 'transparent' }} />
             </Tap>
           );
         })}

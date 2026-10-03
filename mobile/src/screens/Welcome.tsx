@@ -14,6 +14,7 @@ import { Garment, type GarmentKind } from '../ui/Garment';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 const RAIL: { kind: GarmentKind; tint?: string }[] = [
   { kind: 'trench' },
@@ -56,7 +57,7 @@ export function Welcome() {
         <Animated.View entering={FadeInDown.delay(500).duration(500)} style={{ gap: 14 }}>
           <T v="hero" style={{ fontSize: 54, lineHeight: 52 }} accessibilityRole="header">
             Porte mieux,{'\n'}achète{' '}
-            <T v="hero" style={{ fontSize: 54, lineHeight: 52, fontFamily: 'Accent' }}>
+            <T v="hero" style={{ fontSize: 54, lineHeight: 52, ...F.accent }}>
               moins.
             </T>
           </T>

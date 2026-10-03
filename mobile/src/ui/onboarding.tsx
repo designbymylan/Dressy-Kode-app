@@ -17,6 +17,7 @@ import { T } from './T';
 import { Tap, haptic } from './Tap';
 import { IconButton } from './Button';
 import { isLight } from './controls';
+import { F } from '../theme/fonts';
 
 /* ---- Règle graduée (taille, poids) ---- */
 
@@ -109,7 +110,7 @@ export function Ruler({ value, onChange, min, max, unit, label, width, testID }:
             })}
           </Svg>
         </ScrollView>
-        <View pointerEvents="none" style={{ position: 'absolute', left: pad - 1.5, top: -4, width: 3, height: 36, borderRadius: 2, backgroundColor: c.brass }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: pad - 1.5, top: -4, width: 3, height: 36, borderRadius: 0, backgroundColor: c.brass }} />
       </View>
     </View>
   );
@@ -202,21 +203,21 @@ export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, s
   return (
     <Tap testID={testID} onPress={onPress} accessibilityLabel={filled ? `${label} : photo ajoutée. Changer` : `${label} : ajouter une photo`} style={{ width, gap: 8 }} scaleTo={0.98}>
       <View
-        style={{ width, height: h, borderRadius: 22, overflow: 'hidden', borderWidth: filled ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: filled ? (example ? '#CFC6B8' : c.sunk) : 'transparent' }}
+        style={{ width, height: h, borderRadius: 0, overflow: 'hidden', borderWidth: filled ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: filled ? (example ? '#DADADA' : c.sunk) : 'transparent' }}
         className="items-center justify-center"
       >
         {uri ? (
           <Image source={{ uri }} style={{ width, height: h }} resizeMode="cover" accessibilityIgnoresInvertColors />
         ) : example ? (
-          <Figure pose={pose} color="#6B6258" fill="#E9E2D6" width={width * 0.36} />
+          <Figure pose={pose} color="#5E5E5E" fill="#F3F3F3" width={width * 0.36} />
         ) : (
           <View className="items-center" style={{ gap: 10, opacity: 0.9 }}>
             <View style={{ opacity: 0.55 }}>
               <Figure pose={pose} color={c.control} fill="transparent" width={width * 0.3} />
             </View>
-            <View className="flex-row items-center bg-pill" style={{ borderRadius: 14, paddingHorizontal: 10, height: 28, gap: 4 }}>
+            <View className="flex-row items-center bg-pill" style={{ borderRadius: 0, paddingHorizontal: 10, height: 28, gap: 4 }}>
               <Icon name="plus" size={14} color={c.ink} strokeWidth={2} />
-              <T v="small" style={{ fontFamily: 'Sans600' }}>
+              <T v="small" style={{ ...F.s600 }}>
                 Ajouter
               </T>
             </View>
@@ -224,7 +225,7 @@ export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, s
         )}
         {scanning && <ScanLine height={h} />}
       </View>
-      <T v="caption" style={{ textAlign: 'center', fontFamily: 'Sans600' }}>
+      <T v="caption" style={{ textAlign: 'center', ...F.s600 }}>
         {label}
       </T>
     </Tap>
@@ -279,7 +280,7 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
   const { c, scheme } = useTheme();
   const g = width * 0.36;
   return (
-    <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={[{ width, borderRadius: 22, overflow: 'hidden' }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]} scaleTo={0.97}>
+    <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={[{ width, borderRadius: 0, overflow: 'hidden' }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]} scaleTo={0.97}>
       <View className="flex-row items-end justify-center" style={{ height: width * 0.62, paddingBottom: 6, backgroundColor: c.stage }}>
         {kinds.map(([k, t], i) => (
           <View key={i} style={{ marginLeft: i ? -g * 0.34 : 0, transform: [{ rotate: `${(i - 1) * 5}deg` }, { translateY: i === 1 ? -6 : 0 }] }}>
@@ -287,8 +288,8 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
           </View>
         ))}
         {on && (
-          <View className="absolute bg-primary-bg items-center justify-center" style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: 12 }}>
-            <T v="small" tone="primary-fg" style={{ fontFamily: 'Sans700' }}>
+          <View className="absolute bg-primary-bg items-center justify-center" style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: 0 }}>
+            <T v="small" tone="primary-fg" style={{ ...F.s700 }}>
               {order}
             </T>
           </View>
@@ -322,13 +323,13 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
       style={{ width: width ?? size + 18, alignItems: 'center', gap: 6 }}
       scaleTo={0.94}
     >
-      <View style={{ width: size, height: size, borderRadius: size / 2, padding: 3, borderWidth: 2, borderColor: state === 'aime' ? c.ink : state === 'evite' ? c.caution : 'transparent' }}>
-        <View style={{ flex: 1, borderRadius: size / 2, backgroundColor: hex, borderWidth: 1, borderColor: c.rule, opacity: state === 'evite' ? 0.4 : 1 }} className="items-center justify-center">
+      <View style={{ width: size, height: size, borderRadius: 0, padding: 3, borderWidth: 2, borderColor: state === 'aime' ? c.ink : state === 'evite' ? c.caution : 'transparent' }}>
+        <View style={{ flex: 1, borderRadius: 0, backgroundColor: hex, borderWidth: 1, borderColor: c.rule, opacity: state === 'evite' ? 0.4 : 1 }} className="items-center justify-center">
           {state === 'aime' && <Icon name="heart" size={18} color={tone} strokeWidth={2} />}
           {state === 'evite' && <Icon name="close" size={18} color={c.ink} strokeWidth={2.2} />}
         </View>
       </View>
-      <T v="small" tone={state ? 'ink' : 'ink2'} numberOfLines={1} style={state ? { fontFamily: 'Sans600' } : undefined}>
+      <T v="small" tone={state ? 'ink' : 'ink2'} numberOfLines={1} style={state ? { ...F.s600 } : undefined}>
         {name}
       </T>
     </Tap>
@@ -340,11 +341,11 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
 export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; badge?: string; testID?: string }) {
   const { c, scheme } = useTheme();
   return (
-    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={[{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 28 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
-      {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 20, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
+    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={[{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 0 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
+      {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 0, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
       <View style={{ flex: 1, gap: 3 }}>
         {badge && (
-          <T v="small" tone="brass" style={{ fontFamily: 'Sans700', letterSpacing: 0.6 }} upper>
+          <T v="small" tone="brass" style={{ ...F.s700, letterSpacing: 0.6 }} upper>
             {badge}
           </T>
         )}
@@ -355,7 +356,7 @@ export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { t
           {note}
         </T>
       </View>
-      <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 0 : 1.5, borderColor: c.control, backgroundColor: on ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
+      <View style={{ width: 24, height: 24, borderRadius: 0, borderWidth: on ? 0 : 1.5, borderColor: c.control, backgroundColor: on ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
         {on && <Icon name="check" size={14} color={c['primary-fg']} strokeWidth={2.4} />}
       </View>
     </Tap>

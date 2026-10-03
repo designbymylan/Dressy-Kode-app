@@ -1,16 +1,17 @@
 /**
- * Jetons du design system Dresskode, « vitrine de verre ».
- * La direction vient du travail du portable (web/src/app/globals.css, planches
- * « App design » du 28/09) : fond perle traversé de halos pastel, surfaces en
- * verre dépoli, boutons pilule (encre pleine pour l'action, verre pour le
- * reste), titres serrés avec un mot en italique serif. La disposition des
- * écrans, elle, reste celle de la refonte (design/refonte/).
+ * Jetons du design system Dresskode, direction « galerie » (CLAUDE.md, charte
+ * d'origine dans design/charte-galerie.md) : fond blanc, texte noir, filets
+ * gris d'un pixel, gris studio sous les vêtements, beurre pour les bandeaux
+ * de service ; angles droits, aucune ombre ; Helvetica Neue en 13 px pour les
+ * libellés. Le mode sombre en est tiré (fond noir, texte blanc, beurre gardé).
+ * La disposition des écrans, elle, reste celle de la refonte (design/refonte/).
  * Les couleurs vivent dans palette.json : c'est le fichier que lit
  * design/refonte/contraste.py, pour que le code et la vérification AA
  * ne puissent pas diverger.
  */
 import { Easing } from 'react-native-reanimated';
 import palette from './palette.json';
+import { F } from './fonts';
 
 export type Scheme = 'light' | 'dark';
 export type ColorName = keyof typeof palette.light;
@@ -18,69 +19,56 @@ export type Colors = Record<ColorName, string>;
 
 export const colors: Record<Scheme, Colors> = palette;
 
-/** Grille de 4 pt ; la gouttière de page est de 20 pt. */
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 40, gutter: 20 } as const;
+/** Grille de 4 pt ; marge de page de 16 pt, sections espacées de 40. */
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 40, gutter: 16 } as const;
 
 /**
- * Rayons : cartes de verre 28, vignettes 22 (globals.css : --r-card, --r-tile).
- * Tout ce qui se clique est en capsule.
+ * Angles droits partout : cartes, vignettes, boutons, champs, feuilles, puces.
+ * Une seule forme ronde (`round`) : le bouton de Kode au centre de la barre
+ * d'onglets, et les avatars.
  */
-export const radius = { sm: 12, md: 18, tile: 22, lg: 24, card: 28, xl: 32, sheet: 32, capsule: 999 } as const;
+export const radius = { sm: 0, md: 0, tile: 0, lg: 0, card: 0, xl: 0, sheet: 0, capsule: 0, round: 999 } as const;
 
 /** Taille mini d'une cible tactile (HIG) : 44 × 44 pt. */
 export const HIT = 44;
 
 /**
- * Échelle typographique. Un seul grotesque pour l'interface et les titres
- * (Satoshi dans la direction, DM Sans en attendant ses fichiers : voir App.tsx),
- * serré dans les grands corps (−0,035 em) ; l'italique serif (Instrument
- * Serif) ne porte que le mot qui chante d'un titre, les citations de Kode et
- * les numéros. Jamais sous 11,5 pt.
+ * Échelle typographique. Helvetica Neue (fonts.ts). Libellés, navigation et
+ * petites capitales en 13 px, graisse moyenne, sans interlettrage ; texte
+ * courant 15 px ; titres modérés, sans italique. Jamais sous 11,5 pt.
  */
 export const type = {
-  masthead: { fontFamily: 'Sans700', fontSize: 12, letterSpacing: 3.6, lineHeight: 16 },
-  kicker: { fontFamily: 'Sans500', fontSize: 12, letterSpacing: 1, lineHeight: 16 },
-  hero: { fontFamily: 'Sans500', fontSize: 44, lineHeight: 47, letterSpacing: -1.6 },
-  title: { fontFamily: 'Sans500', fontSize: 34, lineHeight: 37, letterSpacing: -1.2 },
-  section: { fontFamily: 'Sans500', fontSize: 23, lineHeight: 27, letterSpacing: -0.7 },
-  quote: { fontFamily: 'Accent', fontSize: 21, lineHeight: 26 },
-  cardTitle: { fontFamily: 'Sans500', fontSize: 20, lineHeight: 24, letterSpacing: -0.5 },
-  numeral: { fontFamily: 'Accent', fontSize: 20, lineHeight: 23 },
-  bodyL: { fontFamily: 'Sans400', fontSize: 17, lineHeight: 25 },
-  body: { fontFamily: 'Sans400', fontSize: 15, lineHeight: 22 },
-  bodyStrong: { fontFamily: 'Sans600', fontSize: 15, lineHeight: 22, letterSpacing: -0.15 },
-  button: { fontFamily: 'Sans600', fontSize: 15, lineHeight: 20, letterSpacing: -0.15 },
-  caption: { fontFamily: 'Sans500', fontSize: 13, lineHeight: 19 },
-  small: { fontFamily: 'Sans500', fontSize: 12, lineHeight: 16 },
-  tab: { fontFamily: 'Sans600', fontSize: 10.5, lineHeight: 13 },
+  masthead: { ...F.s700, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
+  kicker: { ...F.s500, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
+  hero: { ...F.s500, fontSize: 34, lineHeight: 37, letterSpacing: -0.9 },
+  title: { ...F.s500, fontSize: 28, lineHeight: 31, letterSpacing: -0.6 },
+  section: { ...F.s500, fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
+  quote: { ...F.accent, fontSize: 17, lineHeight: 24, letterSpacing: -0.1 },
+  cardTitle: { ...F.s500, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
+  numeral: { ...F.s500, fontSize: 13, lineHeight: 18 },
+  bodyL: { ...F.s400, fontSize: 17, lineHeight: 24 },
+  body: { ...F.s400, fontSize: 15, lineHeight: 21 },
+  bodyStrong: { ...F.s500, fontSize: 15, lineHeight: 21 },
+  button: { ...F.s500, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
+  caption: { ...F.s400, fontSize: 13, lineHeight: 18 },
+  small: { ...F.s400, fontSize: 12, lineHeight: 16 },
+  tab: { ...F.s500, fontSize: 12, lineHeight: 15 },
 } as const;
 
+const NONE = { shadowOpacity: 0, elevation: 0 } as const;
+
 /**
- * Matière. Le verre des cartes est une surface blanche translucide posée
- * sur les halos, bordée d'un filet clair et d'une ombre douce ; la couche de
- * navigation (onglets, boutons flottants, feuilles) ajoute le flou, ou le
- * vrai Liquid Glass sur iOS 26. Opacité de la navigation : 72 % en clair,
- * 80 % en sombre, le minimum qui garde les icônes lisibles quel que soit
- * le vêtement qui passe dessous (contraste.py).
+ * Matière : il n'y en a plus. Les surfaces restent à plat et se distinguent
+ * par le blanc, les filets et les cadres ; aucune ombre, aucun flou. Les clés
+ * restent pour que les composants n'aient qu'un endroit à lire.
  */
 export const material = {
-  blur: 24,
-  tabHeight: 66,
-  tabBottom: 12,
-  shadow: {
-    light: { shadowColor: '#282C46', shadowOpacity: 0.22, shadowRadius: 24, shadowOffset: { width: 0, height: 14 }, elevation: 8 },
-    dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 24, shadowOffset: { width: 0, height: 14 }, elevation: 8 },
-  },
-  /** Ombre d'une carte de verre (--shadow-glass). */
-  card: {
-    light: { shadowColor: '#282C46', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 0 },
-    dark: { shadowColor: '#000000', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 0 },
-  },
-  /** Ombre d'un bouton encre (--shadow-press). */
-  press: {
-    light: { shadowColor: '#0E0F13', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-    dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  },
+  blur: 0,
+  tabHeight: 58,
+  tabBottom: 0,
+  shadow: { light: NONE, dark: NONE },
+  card: { light: NONE, dark: NONE },
+  press: { light: NONE, dark: NONE },
 } as const;
 
 /** Motion : des ressorts plutôt que des courbes, courts, jamais bloquants. */
@@ -97,5 +85,5 @@ export const motion = {
   pressScale: 0.965,
 } as const;
 
-/** Espace laissé sous le contenu pour la barre d'onglets flottante. */
-export const TAB_CLEARANCE = material.tabHeight + material.tabBottom + 24;
+/** Espace laissé sous le contenu pour la barre d'onglets. */
+export const TAB_CLEARANCE = material.tabHeight + 24;

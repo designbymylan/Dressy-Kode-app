@@ -20,6 +20,7 @@ import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 type SlotId = 'veste' | 'haut' | 'bas' | 'chaussures' | 'sac';
 const SLOTS: { id: SlotId; label: string; cats: CategoryId[] }[] = [
@@ -106,16 +107,16 @@ export function Compose() {
           </T>
           <T v="title" accessibilityRole="header">
             Compose,{'\n'}
-            <T v="title" style={{ fontFamily: 'Accent' }}>
+            <T v="title" style={{ ...F.accent }}>
               Kode ajuste.
             </T>
           </T>
         </View>
 
-        <Animated.View layout={LinearTransition.springify().damping(20)} className="bg-raised" style={{ borderRadius: 28, padding: 16, gap: 12 }}>
+        <Animated.View layout={LinearTransition.springify().damping(20)} className="bg-stage" style={{ borderRadius: 0, padding: 16, gap: 12 }}>
           {chosen.length ? (
             <>
-              <OutfitBoard pieces={chosen} width={W - 32} onPiece={(p) => setPicking(slotOf(p))} />
+              <OutfitBoard pieces={chosen} width={W - 32} frame={false} onPiece={(p) => setPicking(slotOf(p))} />
               <Legend pieces={chosen} />
             </>
           ) : (
@@ -133,7 +134,7 @@ export function Compose() {
             return (
               <Tap key={sl.id} testID={`slot-${sl.id}`} onPress={() => setPicking(sl.id)} accessibilityLabel={p ? `${sl.label} : ${p.name}. Changer` : `${sl.label} : vide. Choisir`} style={{ width: tile, gap: 6, alignItems: 'center' }}>
                 <View
-                  style={{ width: tile, height: tile * 1.2, borderRadius: 16, borderWidth: p ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: p ? c.raised : 'transparent' }}
+                  style={{ width: tile, height: tile * 1.2, borderRadius: 0, borderWidth: p ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: p ? c.raised : 'transparent' }}
                   className="items-center justify-center"
                 >
                   {p ? <Garment kind={p.kind} tint={p.tint} image={p.image} size={tile * 0.78} dark={scheme === 'dark'} label={p.name} /> : <Icon name="plus" size={20} color={c.ink2} />}
@@ -150,7 +151,7 @@ export function Compose() {
           <Card className="bg-sunk" style={{ gap: 10 }}>
             <View className="flex-row items-center" style={{ gap: 8 }}>
               <Icon name="kode" size={18} color={c.brass} />
-              <T v="masthead" tone="ink2" style={{ letterSpacing: 2.4 }}>
+              <T v="masthead" tone="ink2">
                 KODE
               </T>
             </View>
@@ -202,7 +203,7 @@ export function Compose() {
                 accessibilityState={{ selected: !!on }}
                 style={{ width: w }}
               >
-                <View className="items-center justify-center" style={{ height: w * 1.1, borderRadius: 16, backgroundColor: c.paper, borderWidth: on ? 2 : 0, borderColor: c.ink }}>
+                <View className="items-center justify-center" style={{ height: w * 1.1, borderRadius: 0, backgroundColor: c.paper, borderWidth: on ? 2 : 0, borderColor: c.ink }}>
                   <Garment kind={p.kind} tint={p.tint} image={p.image} size={w * 0.66} dark={scheme === 'dark'} label={p.name} />
                 </View>
                 <T v="small" numberOfLines={1} style={{ marginTop: 4 }}>

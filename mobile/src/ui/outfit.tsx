@@ -36,7 +36,7 @@ const LOWER: Record<number, { x: number; s: number; r: number }[]> = {
 
 export const boardHeight = (w: number) => Math.round(w * 0.72);
 
-type Props = { pieces: Piece[]; width: number; numbered?: boolean; onPiece?: (p: Piece) => void; assemble?: boolean };
+type Props = { pieces: Piece[]; width: number; numbered?: boolean; onPiece?: (p: Piece) => void; assemble?: boolean; frame?: boolean };
 
 /** Le temps que met une tenue à s'assembler : de quoi caler le titre qui s'écrit ensuite. */
 export const assembleDelay = (n: number) => 120 + n * 120 + 300;
@@ -72,8 +72,11 @@ function Numeral({ delay, assemble, children }: { delay: number; assemble: boole
 }
 
 /** La planche d'une tenue : les pièces posées, numérotées dans l'ordre de la légende. */
-function OutfitBoardBase({ pieces, width, numbered = true, onPiece, assemble = false }: Props) {
+function OutfitBoardBase({ pieces, width: outer, numbered = true, onPiece, assemble = false, frame = true }: Props) {
   const { scheme } = useTheme();
+  // Galerie : la tenue est posée sur un cadre gris studio, à angles droits.
+  const pad = frame ? Math.round(outer * 0.05) : 0;
+  const width = outer - pad * 2;
   const slots = assign(pieces);
   const upper = (['outer', 'top', 'bottom'] as Slot[]).filter((k) => slots[k]);
   const lower = (['shoes', 'acc'] as Slot[]).filter((k) => slots[k]);
@@ -88,32 +91,34 @@ function OutfitBoardBase({ pieces, width, numbered = true, onPiece, assemble = f
   });
   const order = (p: Piece) => pieces.findIndex((q) => q.id === p.id) + 1;
   return (
-    <View style={{ width, height: boardHeight(width) }} accessibilityElementsHidden={!onPiece}>
-      {placed.map(({ p, x, y, s, r }, i) => {
-        const art = <Garment kind={p.kind} tint={p.tint} image={p.image} size={s} dark={scheme === 'dark'} label={p.name} />;
-        return (
-          <Placed key={p.id} i={i} x={x} y={y} r={r} s={s} width={width} assemble={assemble}>
-            {onPiece ? (
-              <Tap onPress={() => onPiece(p)} accessibilityLabel={`${String(order(p)).padStart(2, '0')}, ${p.name}`} accessibilityHint="Ouvre la fiche de la pièce" scaleTo={0.96}>
-                {art}
-              </Tap>
-            ) : (
-              art
-            )}
-          </Placed>
-        );
-      })}
-      {/* Les numéros passent au-dessus de toutes les pièces, jamais dessous. */}
-      {numbered &&
-        placed.map(({ p, x, y }) => (
-          <View key={`n-${p.id}`} pointerEvents="none" style={{ position: 'absolute', left: x - 2, top: y - 8 }}>
-            <Numeral delay={assembleDelay(placed.length) - 200} assemble={assemble}>
-              <T v="numeral" tone="brass" style={{ fontSize: Math.max(14, width * 0.054) }} accessibilityElementsHidden importantForAccessibility="no">
-                {String(order(p)).padStart(2, '0')}
-              </T>
-            </Numeral>
-          </View>
-        ))}
+    <View className={frame ? 'bg-stage' : ''} style={{ width: outer, padding: pad }} accessibilityElementsHidden={!onPiece}>
+      <View style={{ width, height: boardHeight(width) }}>
+        {placed.map(({ p, x, y, s, r }, i) => {
+          const art = <Garment kind={p.kind} tint={p.tint} image={p.image} size={s} dark={scheme === 'dark'} label={p.name} />;
+          return (
+            <Placed key={p.id} i={i} x={x} y={y} r={r} s={s} width={width} assemble={assemble}>
+              {onPiece ? (
+                <Tap onPress={() => onPiece(p)} accessibilityLabel={`${String(order(p)).padStart(2, '0')}, ${p.name}`} accessibilityHint="Ouvre la fiche de la pièce" scaleTo={0.96}>
+                  {art}
+                </Tap>
+              ) : (
+                art
+              )}
+            </Placed>
+          );
+        })}
+        {/* Les numéros passent au-dessus de toutes les pièces, jamais dessous. */}
+        {numbered &&
+          placed.map(({ p, x, y }) => (
+            <View key={`n-${p.id}`} pointerEvents="none" style={{ position: 'absolute', left: x - 2, top: y - 8 }}>
+              <Numeral delay={assembleDelay(placed.length) - 200} assemble={assemble}>
+                <T v="numeral" tone="brass" style={{ fontSize: Math.max(14, width * 0.054) }} accessibilityElementsHidden importantForAccessibility="no">
+                  {String(order(p)).padStart(2, '0')}
+                </T>
+              </Numeral>
+            </View>
+          ))}
+      </View>
     </View>
   );
 }

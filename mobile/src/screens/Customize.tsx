@@ -11,6 +11,7 @@ import { SegmentedPill, Toggle } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
+import { F } from '../theme/fonts';
 
 export function Customize() {
   const { s, a } = useStore();
@@ -31,7 +32,7 @@ export function Customize() {
           </T>
           <T v="title" accessibilityRole="header">
             Ton app,{'\n'}
-            <T v="title" style={{ fontFamily: 'Accent' }}>
+            <T v="title" style={{ ...F.accent }}>
               à ta façon.
             </T>
           </T>
