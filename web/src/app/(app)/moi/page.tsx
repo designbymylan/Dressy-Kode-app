@@ -94,8 +94,8 @@ export default async function Moi({
                     title={labelsFor('colours', [id])[0]}
                     className="pop"
                     style={{
-                      '--i': i, width: 24, height: 24, borderRadius: 0, background: colourHex(id),
-                      border: '2px solid var(--glass-edge)',
+                      '--i': i, width: 24, height: 24, borderRadius: 999, background: colourHex(id),
+                      border: '2px solid var(--glass-edge)', boxShadow: 'var(--shadow-glass)',
                     } as CSSProperties}
                   />
                 ))}

@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 
 /**
- * Briques communes aux écrans, sur le système « galerie » de globals.css.
+ * Briques communes aux écrans, sur le système de globals.css (couleurs de la
+ * galerie, arrondis et verre).
  * Les styles vivent dans les classes (.glass, .btn…) ; les objets
  * `buttonPrimary`, `inputStyle`… restent exportés pour les composants qui
  * composent encore leurs styles en ligne.
@@ -63,7 +64,7 @@ export function Card({
 
 /* Styles en ligne conservés pour les composants existants : mêmes valeurs que .btn. */
 const baseButton: CSSProperties = {
-  minHeight: 50, padding: '0 22px', border: '1px solid transparent', borderRadius: 0,
+  minHeight: 52, padding: '0 24px', border: '1px solid transparent', borderRadius: 999,
   fontSize: 13, fontWeight: 500, cursor: 'pointer', letterSpacing: 0, textTransform: 'uppercase',
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
   transition: 'opacity 200ms',
@@ -73,17 +74,21 @@ export const buttonPrimary: CSSProperties = {
   ...baseButton,
   background: 'var(--ink)',
   color: 'var(--on-ink)',
+  boxShadow: 'var(--shadow-press)',
 };
 
 export const buttonQuiet: CSSProperties = {
   ...baseButton,
-  background: 'transparent',
+  background: 'var(--glass-strong)',
   color: 'var(--ink)',
-  borderColor: 'var(--ink)',
+  borderColor: 'var(--glass-edge)',
+  boxShadow: 'var(--shadow-glass)',
+  backdropFilter: 'blur(18px)',
+  WebkitBackdropFilter: 'blur(18px)',
 };
 
 export const inputStyle: CSSProperties = {
-  minHeight: 50, width: '100%', border: '1px solid transparent', borderRadius: 0,
+  minHeight: 52, width: '100%', border: '1px solid transparent', borderRadius: 999,
   background: 'var(--stage)', padding: '0 16px', fontSize: 15, outline: 'none',
 };
 

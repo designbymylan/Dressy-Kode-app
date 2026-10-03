@@ -18,7 +18,7 @@ function Submit({ label }: { label: string }) {
 }
 
 const segment = (on: boolean) => ({
-  flex: 1, minHeight: 36, border: 'none', borderRadius: 0, cursor: 'pointer',
+  flex: 1, minHeight: 36, border: 'none', borderRadius: 999, cursor: 'pointer',
   fontSize: 13.5, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
   background: on ? 'var(--ink)' : 'transparent', color: on ? 'var(--ground)' : 'var(--muted)',
 });
@@ -56,7 +56,7 @@ export function OffersPicker({
         role="radiogroup"
         aria-label="Facturation"
         style={{
-          minHeight: 44, borderRadius: 0, background: 'var(--ground)',
+          minHeight: 44, borderRadius: 999, background: 'var(--ground)', boxShadow: 'var(--shadow-soft)',
           display: 'flex', alignItems: 'center', padding: 4, gap: 4,
         }}
       >
@@ -65,7 +65,7 @@ export function OffersPicker({
           {trial ? (
             <span
               style={{
-                fontSize: 12, padding: '2px 8px', borderRadius: 0,
+                fontSize: 12, padding: '2px 8px', borderRadius: 999,
                 background: yearly ? 'rgba(255,255,255,.16)' : 'var(--tile)',
               }}
             >
@@ -97,8 +97,8 @@ export function OffersPicker({
               aria-checked={on}
               onClick={() => setPlan(p.id)}
               style={{
-                textAlign: 'left', border: 'none', borderRadius: 0, padding: 20, cursor: 'pointer',
-                background: on ? 'var(--ink)' : 'var(--ground)', color: fg,
+                textAlign: 'left', border: 'none', borderRadius: 28, padding: 20, cursor: 'pointer',
+                background: on ? 'var(--ink)' : 'var(--ground)', color: fg, boxShadow: 'var(--shadow-card)',
                 display: 'flex', flexDirection: 'column', gap: 14,
               }}
             >
@@ -144,8 +144,8 @@ export function OffersPicker({
 
       <div
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 'calc(58px + env(safe-area-inset-bottom, 0px))', padding: '14px 16px 16px', zIndex: 5,
-          background: 'var(--bg)', borderTop: '1px solid var(--rule)',
+          position: 'fixed', left: 0, right: 0, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 78px)', padding: '14px 16px 16px', zIndex: 5,
+          background: 'linear-gradient(to top, var(--bg) 62%, transparent)',
         }}
       >
         <div style={{ maxWidth: 350, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -178,7 +178,7 @@ function Tag({ children }: { children: string }) {
   return (
     <span
       style={{
-        height: 22, padding: '0 9px', borderRadius: 0, background: 'var(--accent-tint)', color: 'var(--accent-ink)',
+        height: 22, padding: '0 9px', borderRadius: 999, background: 'var(--accent-tint)', color: 'var(--accent-ink)',
         fontSize: 12, fontWeight: 500, display: 'inline-flex', alignItems: 'center',
       }}
     >

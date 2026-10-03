@@ -34,9 +34,10 @@ export function HeroFan({ scale = 1 }: { scale?: number }) {
             className="float"
             style={{
               '--r': `${c.r}deg`, animationDelay: `${i * -1.4}s`, animationDuration: `${6.5 + i * 0.6}s`,
-              width: w, height: h, borderRadius: 0,
+              width: w, height: h, borderRadius: 28 * scale,
               // Gris studio plein, sous un filet : les cartes voisines ne se voient pas au travers.
-              background: 'var(--stage)', border: '1px solid var(--bg)', color: 'var(--ink)',
+              background: 'var(--glass-strong)', border: '1px solid var(--glass-edge)', color: 'var(--ink)', boxShadow: 'var(--shadow-float)',
+              backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
               display: 'grid', placeItems: 'center',
             } as CSSProperties}
           >

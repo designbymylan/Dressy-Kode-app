@@ -144,8 +144,10 @@ function Row({
             onClick={() => scrollTo(i, true)}
             style={{
               flex: 'none', width: ITEM, height: ITEM * 1.12, scrollSnapAlign: 'center',
-              borderRadius: 0, border: '1px solid var(--glass-edge)', padding: 12,
+              borderRadius: 26, border: '1px solid var(--glass-edge)', padding: 12,
               background: i === index ? 'var(--glass-strong)' : 'var(--glass)',
+              boxShadow: i === index ? 'var(--shadow-float)' : 'none',
+              backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
               display: 'grid', placeItems: 'center', cursor: 'pointer',
               transition: 'background-color 300ms, box-shadow 300ms',
               willChange: 'transform',
@@ -341,7 +343,7 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
                   <span
                     className="piece-frame"
                     style={{
-                      width: 86, aspectRatio: '1', padding: 10, borderRadius: 0,
+                      width: 86, aspectRatio: '1', padding: 10, borderRadius: 22,
                       outline: on ? '2px solid var(--ink)' : '2px solid transparent', outlineOffset: 2,
                       transform: on ? 'scale(1.04)' : 'none',
                     }}
@@ -349,7 +351,7 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
                     <PieceArt piece={p} size={44} />
                     {on ? (
                       <span style={{
-                        position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 0,
+                        position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 99,
                         background: 'var(--ink)', color: 'var(--on-ink)', display: 'grid', placeItems: 'center',
                       }} className="pop">
                         <Icon d={ICON.check} size={13} width={2.6} />
@@ -376,8 +378,8 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
         <div
           className="glass"
           style={{
-            pointerEvents: 'auto', width: '100%', maxWidth: 398, borderRadius: 0, padding: 7,
-            display: 'flex', gap: 8, background: 'var(--nav-glass)',
+            pointerEvents: 'auto', width: '100%', maxWidth: 398, borderRadius: 999, padding: 7,
+            display: 'flex', gap: 8, background: 'var(--nav-glass)', boxShadow: 'var(--shadow-float)',
           }}
         >
           <Link href="/tenues" className="btn btn-glass btn-icon" aria-label="Retour aux tenues">
@@ -421,14 +423,14 @@ function Saved({ onAgain }: { onAgain: () => void }) {
       <div
         className="glass glass-strong card card-center"
         style={{
-          width: '100%', maxWidth: 430, borderRadius: 0, paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+          width: '100%', maxWidth: 430, borderRadius: '34px 34px 0 0', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
           animation: 'sheet-up 520ms cubic-bezier(.2,.8,.2,1) both', gap: 16,
         }}
       >
         <span
           style={{
-            width: 78, height: 78, borderRadius: 0, background: 'var(--ink)', color: 'var(--on-ink)',
-            display: 'grid', placeItems: 'center',
+            width: 78, height: 78, borderRadius: 999, background: 'var(--ink)', color: 'var(--on-ink)',
+            display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-float)',
           }}
           className="pop"
         >

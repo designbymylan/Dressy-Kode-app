@@ -46,7 +46,7 @@ export function ThemeChoice({ current }: { current: Theme }) {
           >
             <span
               style={{
-                width: '100%', height: 56, borderRadius: 0, background: opt.swatch,
+                width: '100%', height: 56, borderRadius: 18, background: opt.swatch,
                 border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`,
                 boxSizing: 'border-box',
                 transition: 'border-color 200ms cubic-bezier(.2,.8,.2,1)',

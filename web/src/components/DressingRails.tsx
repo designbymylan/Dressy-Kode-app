@@ -172,8 +172,8 @@ function PieceSheet({
     if (d && card.current) {
       card.current.animate(
         [
-          { transform: `translate(${d.x}px, ${d.y}px) scale(${d.sx}, ${d.sy})`, borderRadius: 0, opacity: 0.4 },
-          { transform: 'none', borderRadius: 0, opacity: 1 },
+          { transform: `translate(${d.x}px, ${d.y}px) scale(${d.sx}, ${d.sy})`, borderRadius: '40px', opacity: 0.4 },
+          { transform: 'none', borderRadius: 'var(--r-card)', opacity: 1 },
         ],
         { duration: 520, easing: 'cubic-bezier(0.34, 1.3, 0.64, 1)' },
       );

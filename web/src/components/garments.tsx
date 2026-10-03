@@ -107,8 +107,8 @@ export function FlatLay() {
             className="float"
             style={{
               '--r': `${p.r}deg`, animationDelay: `${i * -1.3}s`, animationDuration: `${6.5 + i * 0.5}s`,
-              width: p.s, height: p.s, borderRadius: 0,
-              background: 'var(--stage)', border: '1px solid var(--bg)', color: 'var(--ink)',
+              width: p.s, height: p.s, borderRadius: 26,
+              background: 'var(--glass-strong)', border: '1px solid var(--glass-edge)', color: 'var(--ink)', boxShadow: 'var(--shadow-float)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             } as React.CSSProperties}
           >

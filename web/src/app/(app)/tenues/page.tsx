@@ -48,8 +48,8 @@ export default async function Tenues() {
                 key={i}
                 className="float"
                 style={{
-                  '--r': `${r}deg`, animationDelay: `${i * -2}s`, width: 64, height: 78, borderRadius: 0,
-                  background: 'var(--tile)', border: '1px solid var(--glass-edge)',
+                  '--r': `${r}deg`, animationDelay: `${i * -2}s`, width: 64, height: 78, borderRadius: 20,
+                  background: 'var(--tile)', border: '1px solid var(--glass-edge)', boxShadow: 'var(--shadow-glass)',
                   display: 'grid', placeItems: 'center',
                 } as CSSProperties}
               >
@@ -69,7 +69,7 @@ export default async function Tenues() {
             <article
               key={o.id}
               className="glass outfit-card pop"
-              style={{ '--i': Math.min(i, 10), padding: 10, borderRadius: 0, display: 'flex', flexDirection: 'column', gap: 8 } as CSSProperties}
+              style={{ '--i': Math.min(i, 10), padding: 10, borderRadius: 26, display: 'flex', flexDirection: 'column', gap: 8 } as CSSProperties}
             >
               <div className="board" aria-hidden="true">
                 {o.items.slice(0, 4).map((p) => (
