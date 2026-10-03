@@ -44,6 +44,17 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
   02/10 à partir de la charte `design/charte-galerie.md`), la même sur le web
   et sur le mobile. Elle remplace la « vitrine de verre ».
 - Ne rajoute ni dépendance, ni skill, ni service externe sans demander.
+- **Décision du 03/10, pour la prochaine charte** : une nouvelle charte change
+  les couleurs et les typographies, jamais ces trois choses, à garder
+  absolument sur le web et le mobile : les **arrondis**, l'**effet de verre
+  dépoli** et la **transparence** façon iOS (barre d'onglets, feuilles, cartes,
+  boutons). La galerie actuelle (angles droits, sans verre) reste en place
+  d'ici là. Le flou est déjà installé (`expo-blur`, `expo-glass-effect`).
+- **Typographies** : l'utilisateur fournit deux polices (titres et texte),
+  avec leur licence (usage app et web). Elles se rangent dans
+  `mobile/assets/fonts/` et `web/public/fonts/`, se branchent par
+  `mobile/src/theme/fonts.ts` et des `@font-face` locales dans `globals.css`,
+  jamais par un service externe.
 
 Changements de disposition validés par l'utilisateur (29/09), à garder :
 
