@@ -2,12 +2,13 @@ import { ActivityIndicator, View } from 'react-native';
 import { Tap, type Feedback } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
+import { Glass } from './Glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { HIT } from '../theme/tokens';
+import { HIT, material } from '../theme/tokens';
 
 type Variant = 'primary' | 'secondary' | 'quiet' | 'plain';
 type Size = 'l' | 'm' | 's';
-const HEIGHT: Record<Size, number> = { l: 50, m: 44, s: 40 };
+const HEIGHT: Record<Size, number> = { l: 54, m: 46, s: 40 };
 
 type Props = {
   label: string;
@@ -25,21 +26,21 @@ type Props = {
 };
 
 /**
- * Les boutons de la galerie : angles droits, libellé en capitales (13 pt,
- * graisse moyenne, sans interlettrage). Principal en noir plein, une seule
- * action par écran ; secondaire en simple filet, fond transparent ; discret
- * sur gris studio ; simple en texte. Jamais d'ombre, toujours ≥ 44 pt de
+ * Les boutons (décision du 03/10) : toujours en capsule, libellé en capitales
+ * (Hanken Grotesk 13 pt). Principal en noir plein avec son ombre portée, une
+ * seule action par écran ; secondaire en verre clair bordé d'un filet ;
+ * discret en pastille grise ; simple en texte souligné. Toujours ≥ 44 pt de
  * zone tactile.
  */
 export function Button({ label, onPress, variant = 'primary', size = 'l', icon, iconRight, grow, disabled, loading, hint, feedback, testID }: Props) {
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const h = HEIGHT[size];
   const fg = variant === 'primary' ? c['primary-fg'] : c.ink;
   const surface =
     variant === 'primary'
-      ? { backgroundColor: c['primary-bg'] }
+      ? { backgroundColor: c['primary-bg'], ...material.press[scheme] }
       : variant === 'secondary'
-        ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.ink }
+        ? { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['glass-border'], ...material.card[scheme] }
         : variant === 'quiet'
           ? { backgroundColor: c.pill }
           : null;
@@ -53,11 +54,10 @@ export function Button({ label, onPress, variant = 'primary', size = 'l', icon, 
       accessibilityHint={hint}
       accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       hitSlop={slop}
-      scaleTo={0.98}
       feedback={feedback ?? (variant === 'primary' ? 'medium' : 'light')}
       outerStyle={grow ? { flexGrow: 1, flexBasis: 0 } : undefined}
-      style={[{ height: h, borderRadius: 0, opacity: disabled ? 0.4 : 1 }, surface]}
-      className={`flex-row items-center justify-center ${variant === 'plain' ? 'px-1' : size === 's' ? 'px-4' : 'px-5'}`}
+      style={[{ height: h, borderRadius: h / 2, opacity: disabled ? 0.45 : 1 }, surface]}
+      className={`flex-row items-center justify-center ${variant === 'plain' ? 'px-1' : size === 's' ? 'px-4' : 'px-6'}`}
     >
       {loading ? (
         <ActivityIndicator color={fg} />
@@ -85,29 +85,32 @@ type IconButtonProps = {
 };
 
 /**
- * Bouton icône : l'icône seule, noire, sur fond transparent (la charte n'a
- * pas de pastille autour des icônes). « solid » : carré noir ; « glass » :
- * carré blanc à filet, pour flotter au-dessus d'une image ; « quiet » : gris
- * studio. Le libellé reste pour les lecteurs d'écran.
+ * Bouton icône, toujours rond. « solid » : noir plein ; « glass » : rond de
+ * verre flouté, pour flotter au-dessus d'une image ou d'un contenu ;
+ * « outline » : rond de verre clair ; « quiet » : pastille grise ; « plain » :
+ * l'icône seule. Le libellé reste pour les lecteurs d'écran.
  */
 export function IconButton({ icon, label, onPress, variant = 'outline', size = HIT, testID, badge }: IconButtonProps) {
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const fg = variant === 'solid' ? c['primary-fg'] : c.ink;
+  const body = (
+    <View style={{ width: size, height: size }} className="items-center justify-center">
+      <Icon name={icon} size={Math.round(size * 0.46)} color={fg} strokeWidth={1.8} />
+      {badge && <View className="absolute bg-ink" style={{ top: size * 0.2, right: size * 0.2, width: 8, height: 8, borderRadius: 4 }} />}
+    </View>
+  );
   const surface =
     variant === 'solid'
-      ? { backgroundColor: c['primary-bg'] }
-      : variant === 'glass'
-        ? { backgroundColor: c.glass, borderWidth: 1, borderColor: c['glass-border'] }
+      ? { backgroundColor: c['primary-bg'], ...material.press[scheme] }
+      : variant === 'outline'
+        ? { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['glass-border'], ...material.card[scheme] }
         : variant === 'quiet'
           ? { backgroundColor: c.pill }
           : null;
   const slop = Math.max(0, (HIT - size) / 2);
   return (
-    <Tap testID={testID} onPress={onPress} accessibilityLabel={label} hitSlop={slop} style={[{ borderRadius: 0 }, surface]}>
-      <View style={{ width: size, height: size }} className="items-center justify-center">
-        <Icon name={icon} size={Math.round(size * 0.5)} color={fg} strokeWidth={1.8} />
-        {badge && <View className="absolute bg-ink" style={{ top: size * 0.2, right: size * 0.2, width: 7, height: 7 }} />}
-      </View>
+    <Tap testID={testID} onPress={onPress} accessibilityLabel={label} hitSlop={slop} style={[{ borderRadius: size / 2 }, surface]}>
+      {variant === 'glass' ? <Glass radius={size / 2}>{body}</Glass> : body}
     </Tap>
   );
 }

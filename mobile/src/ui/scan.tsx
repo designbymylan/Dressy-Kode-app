@@ -68,7 +68,7 @@ export function PhotoScan({
   return (
     <View
       className="bg-stage"
-      style={{ width: w, height: h, alignSelf: 'center', borderRadius: 0, overflow: 'hidden', opacity: dim ? 0.6 : 1 }}
+      style={{ width: w, height: h, alignSelf: 'center', borderRadius: radius.tile, overflow: 'hidden', opacity: dim ? 0.6 : 1 }}
       accessible
       accessibilityRole="image"
       accessibilityLabel={label}
@@ -149,13 +149,13 @@ function ScanBox({ piece, i, w, h }: { piece: ScanPiece; i: number; w: number; h
   const leftEdge = useAnimatedStyle(() => ({ opacity: breathe.value, transform: [{ scaleY: clamp01(t.value * 4 - 3) }] }));
   const fill = useAnimatedStyle(() => ({ opacity: interpolate(t.value, [0.8, 1], [0, 1], 'clamp') }));
 
-  const line = { position: 'absolute' as const, backgroundColor: colour };
+  const line = { position: 'absolute' as const, backgroundColor: colour, shadowColor: '#000000', shadowOpacity: 0.35, shadowRadius: 1.5, shadowOffset: { width: 0, height: 0 } };
   const inside = top < h * 0.07; // pas la place au-dessus : l'étiquette entre dans le cadre
 
   return (
     <>
       <View pointerEvents="none" style={{ position: 'absolute', left, top, width, height }}>
-        {piece.state === 'done' ? <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 0 }, fill]} /> : null}
+        {piece.state === 'done' ? <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4 }, fill]} /> : null}
         <Animated.View style={[line, { left: 0, top: 0, width, height: 2, transformOrigin: 'left' }, topEdge]} />
         <Animated.View style={[line, { right: 0, top: 0, width: 2, height, transformOrigin: 'top' }, rightEdge]} />
         <Animated.View style={[line, { left: 0, bottom: 0, width, height: 2, transformOrigin: 'right' }, bottomEdge]} />
@@ -179,7 +179,7 @@ function ScanLabel({ piece, i, left, top, maxWidth }: { piece: ScanPiece; i: num
     <Animated.View
       pointerEvents="none"
       className="flex-row items-center"
-      style={[{ position: 'absolute', left, top, maxWidth, height: 24, paddingLeft: 7, paddingRight: 9, gap: 5, borderRadius: 0, backgroundColor: c['glass-strong'], transformOrigin: 'left' }, pop]}
+      style={[{ position: 'absolute', left, top, maxWidth, height: 24, paddingLeft: 7, paddingRight: 9, gap: 5, borderRadius: 999, backgroundColor: c['glass-strong'], transformOrigin: 'left' }, pop]}
     >
       {piece.state === 'done' ? (
         <Icon name="check" size={12} color={tone} strokeWidth={2.6} />
@@ -284,10 +284,10 @@ export function RevealCutout({
         </Animated.View>
         <Animated.View
           pointerEvents="none"
-          style={[{ position: 'absolute', left: -fw * 0.12, width: fw * 1.24, top: 0, height: 2, backgroundColor: WHITE }, beam]}
+          style={[{ position: 'absolute', left: -fw * 0.12, width: fw * 1.24, top: 0, height: 2, backgroundColor: WHITE, shadowColor: WHITE, shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }, beam]}
         />
       </View>
-      <Animated.View className="flex-row items-center" style={[{ position: 'absolute', bottom: 6, height: 22, paddingHorizontal: 9, gap: 4, borderRadius: 0, backgroundColor: c['glass-strong'] }, tagged]}>
+      <Animated.View className="flex-row items-center" style={[{ position: 'absolute', bottom: 6, height: 22, paddingHorizontal: 9, gap: 4, borderRadius: 999, backgroundColor: c['glass-strong'] }, tagged]}>
         <Icon name="check" size={11} color={c.positive} strokeWidth={2.6} />
         <T v="small" style={{ color: c.positive, ...F.s700, fontSize: 11.5 }}>
           Sans fond

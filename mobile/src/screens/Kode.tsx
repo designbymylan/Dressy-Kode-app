@@ -188,7 +188,7 @@ export function Kode() {
       </Animated.ScrollView>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: keyboard ? 10 : TAB_CLEARANCE - 14 + insets.bottom }}>
-        <View className="flex-row items-end bg-sunk" style={{ borderRadius: 0, paddingLeft: 18, paddingRight: 4, paddingVertical: 4, gap: 8, opacity: out ? 0.5 : 1 }}>
+        <View className="flex-row items-end bg-sunk" style={{ borderRadius: 26, paddingLeft: 18, paddingRight: 4, paddingVertical: 4, gap: 8, opacity: out ? 0.5 : 1 }}>
           <TextInput
             testID="kode-input"
             value={text}
@@ -213,7 +213,7 @@ export function Kode() {
 function Mine({ m }: { m: KodeMessage }) {
   return (
     <Animated.View entering={FadeInDown.springify().damping(18)} style={{ alignSelf: 'flex-end', maxWidth: '82%' }}>
-      <View className="bg-primary-bg" style={{ paddingHorizontal: 16, paddingVertical: 11 }}>
+      <View className="bg-primary-bg" style={{ borderRadius: 22, borderBottomRightRadius: 6, paddingHorizontal: 16, paddingVertical: 11 }}>
         <T v="body" tone="primary-fg">
           {m.text}
         </T>

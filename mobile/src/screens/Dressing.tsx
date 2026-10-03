@@ -92,7 +92,7 @@ export function Dressing() {
       <Masthead kicker="LE DRESSING" meta={`${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}${limit === null ? '' : ` sur ${limit}`}`} />
       {searching ? (
         <Animated.View entering={FadeIn.duration(180)} className="flex-row items-center" style={{ gap: 10 }}>
-          <View className="flex-row items-center bg-sunk" style={{ flex: 1, height: 44, borderRadius: 0, paddingHorizontal: 14, gap: 8 }}>
+          <View className="flex-row items-center bg-sunk" style={{ flex: 1, height: 44, borderRadius: 22, paddingHorizontal: 14, gap: 8 }}>
             <Icon name="search" size={18} color={c.ink2} />
             <TextInput
               testID="search-input"

@@ -206,7 +206,7 @@ function Knot({ x, tied, colour, idle }: { x: number; tied: boolean; colour: str
     k.value = reduced ? (tied ? 1 : 0) : withSpring(tied ? 1 : 0, motion.spring);
   }, [tied, reduced, k]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: 0.55 + 0.45 * k.value }], backgroundColor: k.value > 0.5 ? colour : idle }));
-  return <Animated.View style={[{ position: 'absolute', top: 7 - 4.5, left: x - 4.5, width: 9, height: 9, borderRadius: 0 }, style]} />;
+  return <Animated.View style={[{ position: 'absolute', top: 7 - 4.5, left: x - 4.5, width: 9, height: 9, borderRadius: 5 }, style]} />;
 }
 
 function Frame({ kicker, lead, em, intro, children, footer }: { kicker?: string; lead: string; em: string; intro?: string; children: ReactNode; footer?: ReactNode }) {
@@ -333,7 +333,7 @@ function AgeStep({ draft, set, next }: Ctx) {
               <T v="bodyL" style={on ? { ...F.s600 } : undefined}>
                 {age}
               </T>
-              <View style={{ width: 24, height: 24, borderRadius: 0, borderWidth: on ? 7 : 1.5, borderColor: on ? c.ink : c.control }} />
+              <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 7 : 1.5, borderColor: on ? c.ink : c.control }} />
             </Tap>
           );
         })}
@@ -492,7 +492,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
       >
         <Animated.View entering={FadeInDown.duration(300)}>
           <Card className="flex-row items-center" style={{ gap: 16 }}>
-            <View className="bg-sunk items-center justify-center" style={{ width: 92, height: 120, borderRadius: 0 }}>
+            <View className="bg-sunk items-center justify-center" style={{ width: 92, height: 120, borderRadius: 18 }}>
               <SilhouetteShape id={result} size={44} color={c.ink} fill={c.raised} />
             </View>
             <View style={{ flex: 1, gap: 6 }}>
@@ -529,7 +529,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
           { icon: 'sun' as const, text: 'Lumière du jour, fond uni, téléphone à hauteur de taille.' },
         ].map((t) => (
           <View key={t.text} className="flex-row items-center" style={{ gap: 10 }}>
-            <View className="bg-sunk items-center justify-center" style={{ width: 30, height: 30, borderRadius: 0 }}>
+            <View className="bg-sunk items-center justify-center" style={{ width: 30, height: 30, borderRadius: 15 }}>
               <Icon name={t.icon} size={16} color={c.ink} />
             </View>
             <T v="caption" style={{ flex: 1 }}>
@@ -554,7 +554,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
       ) : (
         <>
           <Tap testID="onb-consent" onPress={() => setConsent(!consent)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: consent }} accessibilityLabel="J’accepte que Kode analyse ces photos pour estimer ma silhouette. Elles sont supprimées juste après." className="flex-row" style={{ gap: 12, paddingVertical: 4, minHeight: 44 }}>
-            <View style={{ width: 24, height: 24, borderRadius: 0, borderWidth: 1.5, borderColor: consent ? c.ink : c.control, backgroundColor: consent ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
+            <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: consent ? c.ink : c.control, backgroundColor: consent ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
               {consent && <Icon name="check" size={15} color={c['primary-fg']} strokeWidth={2.4} />}
             </View>
             <T v="caption" style={{ flex: 1 }}>
@@ -597,7 +597,7 @@ function Mesures({ draft, set, next }: Ctx) {
       footer={<Button testID="onb-next" label="Continuer" onPress={next} />}
     >
       <View className="flex-row" style={{ gap: 12 }}>
-        <View className="bg-stage items-center justify-center" style={{ borderRadius: 0, paddingVertical: 12, paddingHorizontal: 6 }}>
+        <View className="bg-stage items-center justify-center" style={{ borderRadius: 22, paddingVertical: 12, paddingHorizontal: 6 }}>
           <MeasureFigure active={active} done={m} height={200} />
         </View>
         <View style={{ flex: 1 }}>
@@ -798,7 +798,7 @@ function Quotidien({ draft, set, next, W }: Ctx) {
               accessibilityLabel={o.label}
               scaleTo={0.97}
               className="flex-row items-center"
-              style={{ width: w, height: 58, borderRadius: 0, paddingHorizontal: 14, gap: 10, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}
+              style={{ width: w, height: 58, borderRadius: 18, paddingHorizontal: 14, gap: 10, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, backgroundColor: on ? c.raised : 'transparent' }}
             >
               <Icon name={o.icon} size={20} color={on ? c.ink : c.ink2} />
               <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={1}>
@@ -819,7 +819,7 @@ function Ville({ draft, set, next }: Ctx) {
   const list = CITIES.filter((x) => !q || norm(x).startsWith(norm(q))).slice(0, 6);
   return (
     <Frame lead={'Où tu\n'} em="vis ?" intro="Pour la météo de chaque matin : un trench quand il pleut, pas de laine quand il fait 25°." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
-      <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 0, paddingHorizontal: 16, gap: 10 }}>
+      <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 26, paddingHorizontal: 16, gap: 10 }}>
         <Icon name="pin" size={20} color={c.ink2} />
         <TextInput
           testID="onb-city"
@@ -937,7 +937,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
       <View className="flex-row items-center" style={{ gap: 10 }}>
         <View className="flex-row" style={{ gap: 5 }}>
           {[0, 1, 2].map((k) => (
-            <View key={k} style={{ width: 10, height: 10, borderRadius: 0, backgroundColor: k < Math.min(3, pieces.length) ? (ok ? c.positive : c.ink) : c.rule }} />
+            <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, pieces.length) ? (ok ? c.positive : c.ink) : c.rule }} />
           ))}
         </View>
         <T v="caption" tone={ok ? 'positive' : 'ink2'} style={{ flex: 1, ...F.s600 }}>
@@ -958,7 +958,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
       {imported.length > 0 && (
         <View className="flex-row flex-wrap" style={{ gap: 8 }}>
           {imported.map((x) => (
-            <View key={x.id} style={{ width: tile, height: tile, borderRadius: 0, overflow: 'hidden' }} className="bg-sunk">
+            <View key={x.id} style={{ width: tile, height: tile, borderRadius: 14, overflow: 'hidden' }} className="bg-sunk">
               <Animated.View entering={FadeIn}>
                 <Image source={{ uri: x.uri }} style={{ width: tile, height: tile, opacity: 0.7 }} />
               </Animated.View>
@@ -988,7 +988,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
                 disabled={added || working}
                 accessibilityLabel={added ? `${g.name}, ajouté` : `Photo ${n + 1}`}
                 accessibilityState={{ selected: added, busy: working }}
-                style={{ width: tile, height: tile * 1.15, borderRadius: 0, backgroundColor: g.backdrop, overflow: 'hidden', opacity: added ? 0.45 : 1 }}
+                style={{ width: tile, height: tile * 1.15, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden', opacity: added ? 0.45 : 1 }}
                 className="items-center justify-center"
                 scaleTo={0.95}
               >
@@ -996,7 +996,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
                   <Garment kind={g.kind} tint={g.tint} size={tile * 0.66} />
                 </View>
                 {(added || working) && (
-                  <View className="absolute items-center justify-center" style={{ top: 6, right: 6, width: 22, height: 22, borderRadius: 0, backgroundColor: added ? c['primary-bg'] : c.raised }}>
+                  <View className="absolute items-center justify-center" style={{ top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: added ? c['primary-bg'] : c.raised }}>
                     <Icon name={added ? 'check' : 'clock'} size={13} color={added ? c['primary-fg'] : c.ink} strokeWidth={2.2} />
                   </View>
                 )}
@@ -1217,7 +1217,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
             {chips.length > 0 && (
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {chips.map((x) => (
-                  <View key={x} className="bg-pill" style={{ borderRadius: 0, paddingHorizontal: 10, paddingVertical: 5 }}>
+                  <View key={x} className="bg-pill" style={{ borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5 }}>
                     <T v="small" style={{ ...F.s600 }}>
                       {x}
                     </T>

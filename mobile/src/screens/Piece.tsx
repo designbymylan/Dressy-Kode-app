@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { CATEGORIES, MONTHS_SHORT, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
+import { glassSurface } from '../ui/Glass';
 import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
@@ -168,9 +169,9 @@ export function PieceScreen() {
             <T v="kicker" tone="ink2">
               L’étiquette
             </T>
-            {/* Une fiche de galerie : des rangées entre deux filets. */}
-            <View>
-              <View style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.rule }}>
+            {/* Une étiquette cousue, sur une carte de verre : bord pointillé, rangées nettes. */}
+            <View style={[{ borderRadius: 22, padding: 6 }, glassSurface(c, scheme)]}>
+              <View style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: c['rule-strong'], borderRadius: 16, paddingHorizontal: 14 }}>
                 {[
                   ['Couleur', piece.color],
                   ['Matière', piece.material],
@@ -183,7 +184,7 @@ export function PieceScreen() {
                       {k}
                     </T>
                     <View className="flex-row items-center" style={{ gap: 8, flexShrink: 1 }}>
-                      {k === 'Couleur' && <View style={{ width: 14, height: 14, borderRadius: 0, backgroundColor: piece.swatch, borderWidth: 1, borderColor: c.rule }} />}
+                      {k === 'Couleur' && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: piece.swatch, borderWidth: 1, borderColor: c.rule }} />}
                       <T v="bodyStrong" numberOfLines={1}>
                         {v}
                       </T>
@@ -233,7 +234,7 @@ export function PieceScreen() {
             <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
               {goes.map((g) => (
                 <Tap key={g.id} testID={`goes-${g.id}`} onPress={() => nav.navigate('Compose', { pieces: [piece.id, g.id] })} accessibilityLabel={`Composer avec ${g.name}`} style={{ width: 96 }}>
-                  <View className="bg-stage items-center justify-center" style={{ height: 112, borderRadius: 0 }}>
+                  <View className="bg-stage items-center justify-center" style={{ height: 112, borderRadius: 18 }}>
                     <Garment kind={g.kind} tint={g.tint} image={g.image} size={64} dark={scheme === 'dark'} label={g.name} />
                   </View>
                   <T v="small" style={{ marginTop: 5 }} numberOfLines={1}>

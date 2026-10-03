@@ -161,7 +161,7 @@ export function SilhouetteScreen() {
             {SILHOUETTES.map((x) => {
               const on = p.silhouette === x.id;
               return (
-                <Tap key={x.id} testID={`sil-${x.id}`} onPress={() => set({ silhouette: x.id, silhouetteSource: 'choix' })} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`En ${x.id} : ${x.note}`} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', paddingVertical: 12, borderRadius: 0, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, gap: 6 }}>
+                <Tap key={x.id} testID={`sil-${x.id}`} onPress={() => set({ silhouette: x.id, silhouetteSource: 'choix' })} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`En ${x.id} : ${x.note}`} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', paddingVertical: 12, borderRadius: 18, borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c.rule, gap: 6 }}>
                   <SilhouetteShape id={x.id} size={30} color={c.ink} fill={on ? c.sunk : 'transparent'} />
                   <T v="bodyStrong">{x.id}</T>
                 </Tap>

@@ -103,14 +103,14 @@ export function Ruler({ value, onChange, min, max, unit, label, width, testID }:
               const v = Math.ceil(min / 10) * 10 + k * 10;
               if (v > max) return null;
               return (
-                <SvgText key={v} x={(v - min) * TICK} y={46} fill={c.ink2} fontSize={12} fontFamily="Sans500" textAnchor="middle">
+                <SvgText key={v} x={(v - min) * TICK} y={46} fill={c.ink2} fontSize={12} fontFamily={F.s500.fontFamily} textAnchor="middle">
                   {v}
                 </SvgText>
               );
             })}
           </Svg>
         </ScrollView>
-        <View pointerEvents="none" style={{ position: 'absolute', left: pad - 1.5, top: -4, width: 3, height: 36, borderRadius: 0, backgroundColor: c.brass }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: pad - 1.5, top: -4, width: 3, height: 36, borderRadius: 2, backgroundColor: c.brass }} />
       </View>
     </View>
   );
@@ -203,7 +203,7 @@ export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, s
   return (
     <Tap testID={testID} onPress={onPress} accessibilityLabel={filled ? `${label} : photo ajoutée. Changer` : `${label} : ajouter une photo`} style={{ width, gap: 8 }} scaleTo={0.98}>
       <View
-        style={{ width, height: h, borderRadius: 0, overflow: 'hidden', borderWidth: filled ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: filled ? (example ? '#DADADA' : c.sunk) : 'transparent' }}
+        style={{ width, height: h, borderRadius: 22, overflow: 'hidden', borderWidth: filled ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: filled ? (example ? '#DADADA' : c.sunk) : 'transparent' }}
         className="items-center justify-center"
       >
         {uri ? (
@@ -215,7 +215,7 @@ export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, s
             <View style={{ opacity: 0.55 }}>
               <Figure pose={pose} color={c.control} fill="transparent" width={width * 0.3} />
             </View>
-            <View className="flex-row items-center bg-pill" style={{ borderRadius: 0, paddingHorizontal: 10, height: 28, gap: 4 }}>
+            <View className="flex-row items-center bg-pill" style={{ borderRadius: 14, paddingHorizontal: 10, height: 28, gap: 4 }}>
               <Icon name="plus" size={14} color={c.ink} strokeWidth={2} />
               <T v="small" style={{ ...F.s600 }}>
                 Ajouter
@@ -266,7 +266,7 @@ export function MeasureFigure({ active, done, height = 190 }: { active: MeasureI
         );
       })}
       {(Object.keys(LINES) as MeasureId[]).map((id) => (
-        <SvgText key={`t${id}`} x={54} y={LINES[id].y + 3} fill={active === id ? c.brass : c.ink2} fontSize={7.5} fontFamily="Sans600">
+        <SvgText key={`t${id}`} x={54} y={LINES[id].y + 3} fill={active === id ? c.brass : c.ink2} fontSize={7.5} fontFamily={F.s600.fontFamily}>
           {LINES[id].label}
         </SvgText>
       ))}
@@ -280,7 +280,7 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
   const { c, scheme } = useTheme();
   const g = width * 0.36;
   return (
-    <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={[{ width, borderRadius: 0, overflow: 'hidden' }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]} scaleTo={0.97}>
+    <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={[{ width, borderRadius: 22, overflow: 'hidden' }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]} scaleTo={0.97}>
       <View className="flex-row items-end justify-center" style={{ height: width * 0.62, paddingBottom: 6, backgroundColor: c.stage }}>
         {kinds.map(([k, t], i) => (
           <View key={i} style={{ marginLeft: i ? -g * 0.34 : 0, transform: [{ rotate: `${(i - 1) * 5}deg` }, { translateY: i === 1 ? -6 : 0 }] }}>
@@ -288,7 +288,7 @@ export function StyleCard({ name, note, kinds, on, order, width, onPress }: { na
           </View>
         ))}
         {on && (
-          <View className="absolute bg-primary-bg items-center justify-center" style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: 0 }}>
+          <View className="absolute bg-primary-bg items-center justify-center" style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: 12 }}>
             <T v="small" tone="primary-fg" style={{ ...F.s700 }}>
               {order}
             </T>
@@ -323,8 +323,8 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
       style={{ width: width ?? size + 18, alignItems: 'center', gap: 6 }}
       scaleTo={0.94}
     >
-      <View style={{ width: size, height: size, borderRadius: 0, padding: 3, borderWidth: 2, borderColor: state === 'aime' ? c.ink : state === 'evite' ? c.caution : 'transparent' }}>
-        <View style={{ flex: 1, borderRadius: 0, backgroundColor: hex, borderWidth: 1, borderColor: c.rule, opacity: state === 'evite' ? 0.4 : 1 }} className="items-center justify-center">
+      <View style={{ width: size, height: size, borderRadius: size / 2, padding: 3, borderWidth: 2, borderColor: state === 'aime' ? c.ink : state === 'evite' ? c.caution : 'transparent' }}>
+        <View style={{ flex: 1, borderRadius: size / 2, backgroundColor: hex, borderWidth: 1, borderColor: c.rule, opacity: state === 'evite' ? 0.4 : 1 }} className="items-center justify-center">
           {state === 'aime' && <Icon name="heart" size={18} color={tone} strokeWidth={2} />}
           {state === 'evite' && <Icon name="close" size={18} color={c.ink} strokeWidth={2.2} />}
         </View>
@@ -341,8 +341,8 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
 export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; badge?: string; testID?: string }) {
   const { c, scheme } = useTheme();
   return (
-    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={[{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 0 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
-      {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 0, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
+    <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} className="flex-row items-center" style={[{ minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 28 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
+      {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 20, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
       <View style={{ flex: 1, gap: 3 }}>
         {badge && (
           <T v="kicker" tone="brass">
@@ -356,7 +356,7 @@ export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { t
           {note}
         </T>
       </View>
-      <View style={{ width: 24, height: 24, borderRadius: 0, borderWidth: on ? 0 : 1.5, borderColor: c.control, backgroundColor: on ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
+      <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: on ? 0 : 1.5, borderColor: c.control, backgroundColor: on ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
         {on && <Icon name="check" size={14} color={c['primary-fg']} strokeWidth={2.4} />}
       </View>
     </Tap>

@@ -1,7 +1,7 @@
 Application mobile Dresskode : Expo SDK 57 (React Native 0.86), iOS d'abord.
 Disposition validée : B « Éditorial », voir `../design/refonte/02-design-system.md`.
-Apparence : la « galerie » (règles visuelles dans `../CLAUDE.md`, charte
-`../design/charte-galerie.md`).
+Apparence : couleurs de la « galerie » et typographie v1, sur les arrondis et
+le verre (règles visuelles dans `../CLAUDE.md`).
 
 ## Choix du projet (à respecter)
 
@@ -16,9 +16,10 @@ Apparence : la « galerie » (règles visuelles dans `../CLAUDE.md`, charte
   suivent donc le thème. N'écris pas de couleur en dur : ajoute un jeton.
 - **Toute nouvelle couleur de texte** doit être ajoutée aux couples de
   `../design/refonte/contraste.py`, qui doit rester vert (`python3 ../design/refonte/contraste.py`).
-- **Surfaces** : `src/ui/Glass.tsx` n'est plus du verre, c'est une surface plate
-  (blanc ou noir, filet d'un pixel). Pas d'ombre, pas de flou, angles droits
-  (`radius` vaut 0, sauf `round` pour le bouton de Kode et les avatars).
+- **Verre** : `src/ui/Glass.tsx` pour la couche de navigation (flou, Liquid
+  Glass sur iOS 26) ; `glassSurface()` pour les cartes (blanc translucide,
+  filet fin, ombre douce). Rayons dans `theme/tokens.ts` (`radius`), ombres
+  dans `material`. Halos beurre derrière : `src/ui/Ambient.tsx`.
 - **Beurre** : `<Card className="bg-butter">` passe son contenu en clair
   (`LightScope`), pour garder texte et boutons noirs sur le beurre en sombre.
 - **Polices** : par rôle, depuis `src/theme/fonts.ts` (`...F.s500`), jamais

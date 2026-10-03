@@ -112,5 +112,5 @@ function Dot({ i }: { i: number }) {
     o.value = withDelay(i * 150, withRepeat(withSequence(withTiming(1, { duration: 480 }), withTiming(0.25, { duration: 480 })), -1));
   }, [o, i, reduced]);
   const style = useAnimatedStyle(() => ({ opacity: o.value, transform: [{ translateY: (o.value - 0.25) * -3 }] }));
-  return <Animated.View style={[{ width: 4, height: 4, backgroundColor: c.ink2 }, style]} />;
+  return <Animated.View style={[{ width: 4, height: 4, borderRadius: 2, backgroundColor: c.ink2 }, style]} />;
 }

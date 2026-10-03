@@ -22,7 +22,7 @@ type FieldProps = { value: string; onChange: (v: string) => void; onSubmit?: () 
 export function EmailField({ value, onChange, onSubmit, testID }: FieldProps) {
   const { c } = useTheme();
   return (
-    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 0, paddingHorizontal: 18, gap: 10 }}>
+    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 27, paddingHorizontal: 18, gap: 10 }}>
       <Icon name="mail" size={18} color={c.ink2} />
       <TextInput
         testID={testID}
@@ -49,7 +49,7 @@ export function PasswordField({ value, onChange, onSubmit, testID, isNew }: Fiel
   const { c } = useTheme();
   const [shown, setShown] = useState(false);
   return (
-    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 0, paddingLeft: 18, paddingRight: 6, gap: 10 }}>
+    <View className="flex-row items-center bg-sunk" style={{ height: 54, borderRadius: 27, paddingLeft: 18, paddingRight: 6, gap: 10 }}>
       <Icon name="lock" size={18} color={c.ink2} />
       <TextInput
         testID={testID}

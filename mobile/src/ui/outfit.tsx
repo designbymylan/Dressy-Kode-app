@@ -74,7 +74,7 @@ function Numeral({ delay, assemble, children }: { delay: number; assemble: boole
 /** La planche d'une tenue : les pièces posées, numérotées dans l'ordre de la légende. */
 function OutfitBoardBase({ pieces, width: outer, numbered = true, onPiece, assemble = false, frame = true }: Props) {
   const { scheme } = useTheme();
-  // Galerie : la tenue est posée sur un cadre gris studio, à angles droits.
+  // La tenue est posée sur une scène gris studio, aux angles arrondis.
   const pad = frame ? Math.round(outer * 0.05) : 0;
   const width = outer - pad * 2;
   const slots = assign(pieces);
@@ -91,7 +91,7 @@ function OutfitBoardBase({ pieces, width: outer, numbered = true, onPiece, assem
   });
   const order = (p: Piece) => pieces.findIndex((q) => q.id === p.id) + 1;
   return (
-    <View className={frame ? 'bg-stage' : ''} style={{ width: outer, padding: pad }} accessibilityElementsHidden={!onPiece}>
+    <View className={frame ? 'bg-stage' : ''} style={{ width: outer, padding: pad, borderRadius: frame ? 22 : 0 }} accessibilityElementsHidden={!onPiece}>
       <View style={{ width, height: boardHeight(width) }}>
         {placed.map(({ p, x, y, s, r }, i) => {
           const art = <Garment kind={p.kind} tint={p.tint} image={p.image} size={s} dark={scheme === 'dark'} label={p.name} />;

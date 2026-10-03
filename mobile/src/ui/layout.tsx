@@ -99,14 +99,14 @@ export function useTabScroll(edge?: SharedValue<number>) {
   });
 }
 
-/** Le bandeau blanc sous la barre d'état, qui n'apparaît qu'au défilement, pour que le texte n'y passe pas dessous. */
+/** Le voile de verre sous la barre d'état, qui n'apparaît qu'au défilement (effet de bord d'iOS 26). */
 export function ScrollEdge({ y }: { y: SharedValue<number> }) {
   const insets = useSafeAreaInsets();
   const style = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [0, 28], [0, 1], 'clamp') }));
   if (!insets.top) return null;
   return (
     <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 4, zIndex: 5 }, style]}>
-      <Glass edge="none" style={StyleSheet.absoluteFill} />
+      <Glass edge="none" shadow={false} style={StyleSheet.absoluteFill} />
     </Animated.View>
   );
 }
@@ -129,9 +129,9 @@ type HeaderProps = {
 };
 
 /**
- * Bouton retour : la flèche seule, noire. Le titre et un bandeau blanc
- * bordé d'un filet n'apparaissent qu'au défilement, pour que le haut de page
- * reste éditorial au repos.
+ * Bouton retour flottant en verre ; le titre et un bandeau de verre
+ * n'apparaissent qu'au défilement (l'« effet de bord » d'iOS 26), pour que
+ * le haut de page reste éditorial au repos.
  */
 export function StackHeader({ title, y, right = [], close, onBack }: HeaderProps) {
   const nav = useNavigation();
@@ -142,7 +142,7 @@ export function StackHeader({ title, y, right = [], close, onBack }: HeaderProps
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
       <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, right: 0, top: 0, height: top + 50 }, band]}>
-        <Glass edge="none" style={StyleSheet.absoluteFill} />
+        <Glass edge="none" shadow={false} style={StyleSheet.absoluteFill} />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 1, backgroundColor: c.rule }} />
         <View style={{ position: 'absolute', left: 64, right: 64, top, height: 44, justifyContent: 'center' }}>
           <T v="bodyStrong" numberOfLines={1} style={{ textAlign: 'center' }}>
@@ -155,12 +155,12 @@ export function StackHeader({ title, y, right = [], close, onBack }: HeaderProps
           testID="header-back"
           icon={close ? 'close' : 'back'}
           label={close ? 'Fermer' : 'Retour'}
-          variant="plain"
+          variant="glass"
           onPress={onBack ?? (() => nav.goBack())}
         />
         <View className="flex-row" style={{ gap: 8 }}>
           {right.map((r) => (
-            <IconButton key={r.label} testID={r.testID} icon={r.icon} label={r.label} variant="plain" onPress={r.onPress} />
+            <IconButton key={r.label} testID={r.testID} icon={r.icon} label={r.label} variant="glass" onPress={r.onPress} />
           ))}
         </View>
       </View>

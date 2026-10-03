@@ -149,7 +149,7 @@ function WornToday({ pieces }: { pieces: Piece[] }) {
     <View className="flex-row items-center" style={{ gap: 12 }} accessibilityLiveRegion="polite">
       <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
         {!reduced && colours.length > 0 && Array.from({ length: 12 }, (_, i) => <Spark key={i} i={i} colour={colours[i % colours.length]} />)}
-        <Animated.View className="bg-primary-bg items-center justify-center" style={[{ width: 44, height: 44, borderRadius: 0 }, check]}>
+        <Animated.View className="bg-primary-bg items-center justify-center" style={[{ width: 44, height: 44, borderRadius: 22 }, check]}>
           <Icon name="check" size={22} color={c['primary-fg']} strokeWidth={2.2} />
         </Animated.View>
       </View>
@@ -180,7 +180,7 @@ function Spark({ i, colour }: { i: number; colour: string }) {
     opacity: 1 - t.value * t.value * t.value,
     transform: [{ translateX: Math.cos(angle) * d * t.value }, { translateY: (Math.sin(angle) * d - 18) * t.value }, { scale: 1 - 0.6 * t.value }],
   }));
-  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: 9, height: 9, borderRadius: 0, backgroundColor: colour }, style]} />;
+  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: 9, height: 9, borderRadius: 5, backgroundColor: colour }, style]} />;
 }
 
 /**
@@ -212,7 +212,7 @@ function EmptyToday() {
       <View className="flex-row items-center" style={{ gap: 10 }}>
         <View className="flex-row" style={{ gap: 5 }}>
           {[0, 1, 2].map((k) => (
-            <View key={k} style={{ width: 10, height: 10, borderRadius: 0, backgroundColor: k < Math.min(3, n) ? c.ink : c.rule }} />
+            <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, n) ? c.ink : c.rule }} />
           ))}
         </View>
         <T v="caption" tone="ink2" style={{ flex: 1 }}>
@@ -226,7 +226,7 @@ function EmptyToday() {
           { icon: 'hanger' as const, t: 'Une illustration', d: 'rangée sur tes portants' },
           { icon: 'kode' as const, t: 'Des tenues', d: 'selon la météo et ton style' },
         ].map((x, k) => (
-          <View key={x.t} className="bg-stage" style={{ flex: 1, borderRadius: 0, padding: 12, gap: 6 }}>
+          <View key={x.t} className="bg-stage" style={{ flex: 1, borderRadius: 18, padding: 12, gap: 6 }}>
             <View className="flex-row items-center justify-between">
               <Icon name={x.icon} size={20} color={k === 2 ? c.brass : c.ink} />
               <T v="numeral" tone="brass" style={{ fontSize: 15 }}>
@@ -269,7 +269,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     return (
       <View style={{ gap: 12 }}>
         {head()}
-        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" className="flex-row items-center bg-sunk" style={{ height: 50, borderRadius: 0, paddingHorizontal: 18, gap: 10 }}>
+        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" className="flex-row items-center bg-sunk" style={{ height: 50, borderRadius: 25, paddingHorizontal: 18, gap: 10 }}>
           <Icon name="kode" size={20} color={c.brass} />
           <T v="body" tone="ink2">
             Pose ta question à Kode…
@@ -296,7 +296,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i] || !!ferie;
             const label = [i === 0 ? 'Aujourd’hui' : shortDate(i), w ? `${w.t} degrés, ${w.label}` : null, ferie ? `férié, ${ferie.nom}` : null, busy && !ferie ? 'un événement' : null];
             return (
-              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 0 }} className={i === 0 ? 'bg-pill' : ''}>
+              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }} className={i === 0 ? 'bg-pill' : ''}>
                 <T v="small" tone="ink2">
                   {DAYS_LETTER[d.getDay()]}
                 </T>
@@ -305,7 +305,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
                 <T v="small" tone="ink2">
                   {w ? `${w.t}°` : ' '}
                 </T>
-                <View style={{ width: 5, height: 5, borderRadius: 0, backgroundColor: busy ? c.brass : 'transparent' }} />
+                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: busy ? c.brass : 'transparent' }} />
               </Tap>
             );
           })}
@@ -327,7 +327,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
           {list.map((p) => (
             <Tap key={p.id} testID={`sleeping-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${sinceLabel(p)}`} style={{ width: 118 }}>
-              <View className="bg-stage items-center justify-center" style={{ height: 140, borderRadius: 0 }}>
+              <View className="bg-stage items-center justify-center" style={{ height: 140, borderRadius: 20 }}>
                 <Garment kind={p.kind} tint={p.tint} image={p.image} size={78} dark={scheme === 'dark'} label={p.name} />
               </View>
               <T v="caption" style={{ marginTop: 6, ...F.s600 }} numberOfLines={1}>

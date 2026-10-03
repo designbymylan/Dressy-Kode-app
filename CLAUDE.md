@@ -40,16 +40,15 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
 - **La disposition de l'app mobile** (écrans, sections, parcours, ordre des
   blocs) : c'est celle de la refonte (`design/refonte/`, `mobile/src/screens/`).
   On peut retoucher l'apparence d'un écran sans changer sa structure.
-- **L'apparence** : la direction « galerie » (voir plus bas, décidée le
-  02/10 à partir de la charte `design/charte-galerie.md`), la même sur le web
-  et sur le mobile. Elle remplace la « vitrine de verre ».
+- **L'apparence** : les couleurs de la « galerie » (charte
+  `design/charte-galerie.md`, 02/10) et la typographie v1, sur les formes de
+  la « vitrine de verre » : arrondis, verre dépoli, transparence (décision du
+  03/10). La même sur le web et sur le mobile.
 - Ne rajoute ni dépendance, ni skill, ni service externe sans demander.
-- **Décision du 03/10, pour la prochaine charte** : une nouvelle charte change
-  les couleurs et les typographies, jamais ces trois choses, à garder
-  absolument sur le web et le mobile : les **arrondis**, l'**effet de verre
-  dépoli** et la **transparence** façon iOS (barre d'onglets, feuilles, cartes,
-  boutons). La galerie actuelle (angles droits, sans verre) reste en place
-  d'ici là. Le flou est déjà installé (`expo-blur`, `expo-glass-effect`).
+- **Décision du 03/10, appliquée le jour même** : les **arrondis**, l'**effet
+  de verre dépoli** et la **transparence** façon iOS (barre d'onglets, feuilles,
+  cartes, boutons) sont là pour de bon, sur le web et le mobile. Une nouvelle
+  charte change les couleurs et les typographies, jamais ces trois choses.
 - **Typographies** : la charte typographique v1
   (`design/charte-typographique-v1.md`, décidée le 03/10) fait foi. Polices
   rangées dans `mobile/assets/fonts/` (.ttf) et `web/public/fonts/` (.woff2),
@@ -63,9 +62,10 @@ Changements de disposition validés par l'utilisateur (29/09), à garder :
   la galerie accepte jusqu'à 10 photos d'un coup.
 - **Dressing web** : une vignette ouvre la fiche de la pièce, qui naît de la
   vignette, avec « Composer une tenue avec » (`DressingRails.tsx`).
-- **Barre d'onglets (web et mobile)** : plate, collée en bas ; l'onglet
-  actif montre son icône pleine et son nom dessous (décision du 02/10, qui
-  remplace le point liquide du 29/09). Kode reste au centre, en rond.
+- **Barre d'onglets (web et mobile)** : une capsule de verre qui flotte en
+  bas (03/10) ; l'onglet actif montre son icône pleine et son nom dessous
+  (02/10, qui remplace le point liquide du 29/09). Kode reste au centre, en
+  rond noir.
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -95,7 +95,7 @@ function`) : en cas de doute, c'est `npm run build && npm start` qui fait foi.
 
 Ordre de priorité, du plus fort au plus faible :
 
-1. **L'apparence « galerie »** : `web/src/app/globals.css` pour le web ;
+1. **L'apparence (galerie et verre)** : `web/src/app/globals.css` pour le web ;
    `mobile/src/theme/` (`palette.json`, `tokens.ts`, `fonts.ts`) et les
    composants de `mobile/src/ui/` pour le mobile. Les deux doivent rester
    cohérents. La charte d'origine est dans `design/charte-galerie.md` (on en
@@ -109,21 +109,25 @@ Ordre de priorité, du plus fort au plus faible :
    Sa typographie est périmée.
 5. Les skills de design, en dernier (voir plus bas).
 
-### Règles visuelles (galerie)
+### Règles visuelles (galerie et verre)
 
-- Une galerie : fond blanc (`#ffffff`), texte noir, filets gris clair d'un
-  pixel (`#e9e9e9`) pour séparer, beaucoup de blanc. Pas de halos, pas de
-  verre, pas de dégradé, **aucune ombre**.
+- Fond blanc (`#ffffff`), texte noir, filets gris clair (`#e9e9e9`),
+  beaucoup de blanc. Derrière, des **halos beurre** très doux qui dérivent
+  lentement (gris par temps de pluie) : c'est eux que le verre laisse voir.
+- **Le verre** (03/10) : cartes en blanc translucide, filet fin, ombre douce ;
+  la couche de navigation (barre d'onglets, en-têtes, boutons flottants,
+  feuilles) floutée, en vrai Liquid Glass sur iOS 26 (`ui/Glass.tsx`,
+  `.glass` sur le web). « Verre plus opaque » repasse en surfaces pleines.
+- **Les arrondis** (03/10) : cartes 28, vignettes 22, feuilles 32 ; tout ce
+  qui se clique est en capsule (boutons, puces, sélecteurs, champs) ; boutons
+  icônes et Kode en rond.
 - Une seule couleur : le **beurre** (`#faedbc`), réservé aux bandeaux de
-  service (messages de Kode, offres, informations). Le reste est noir, blanc
-  et gris. Gris studio (`#f3f3f3`) pour les vignettes de vêtements et les
-  champs de saisie.
-- **Angles droits partout** (cartes, vignettes, boutons, champs, feuilles,
-  puces). Une seule forme ronde : le bouton de Kode au centre de la barre
-  d'onglets (et les avatars).
-- Boutons : l'action principale en noir plein, angles droits, libellé en
-  capitales ; les autres en simple filet ou en texte en capitales, fond
-  transparent. Liens de découverte : capitales + petite flèche noire.
+  service (messages de Kode, offres, informations), avec texte noir en
+  clair comme en sombre. Le reste est noir, blanc et gris. Gris studio
+  (`#f3f3f3`) pour les vignettes de vêtements et les champs de saisie.
+- Boutons : l'action principale en capsule noire avec son ombre, libellé en
+  capitales ; les autres en capsule de verre ou en texte en capitales. Liens
+  de découverte : capitales + petite flèche noire.
 - Typographie (charte v1) : **Cormorant Garamond** 500 pour les titres
   d'écran (capitales, +0,012 em, jamais sous 22 px), la marque (DRESSKODE,
   capitales espacées de 0,24 em) et les grands chiffres ; **Hanken Grotesk**
@@ -145,7 +149,8 @@ Ordre de priorité, du plus fort au plus faible :
   vêtement, aperçu de thème). Le gris inactif (`#aaaaaa`) ne sert jamais au
   texte courant.
 - Vêtements : illustrations vectorielles plates ou détourages de Kode, posés
-  sur gris studio dans des cadres droits ; jamais de photo produit, pas de 3D.
+  sur gris studio dans des vignettes arrondies ; jamais de photo produit, pas
+  de 3D.
 - Icônes : noires et monochromes, au trait, **pleines quand actives**, des
   formes qui se comprennent sans leur nom. Dans la barre d'onglets, seul
   l'onglet actif affiche son nom ; tous gardent leur libellé pour les
@@ -160,7 +165,7 @@ Ordre de priorité, du plus fort au plus faible :
 
 - **Mobile** : NativeWind (classes branchées sur les jetons de
   `palette.json`), Reanimated, react-native-svg. Réutilise `mobile/src/ui/`
-  (`Glass` (surface plate), `Button`, `IconButton`, `Card`, `Group`, `Row`,
+  (`Glass` (verre flouté), `Button`, `IconButton`, `Card`, `Group`, `Row`,
   `Chip`, `Segmented`, `Sheet`, `TabBar`, `T`…) avant de créer un composant.
   Les icônes sont les SVG de `ui/Icon.tsx`. L'état est dans
   `state/store.tsx`, le pont Supabase dans `state/remote.ts`.
@@ -182,7 +187,7 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   couleurs et polices (sable, lilas, beurre, Gambarino) est **périmée** ;
   garde sa méthode, suis les règles visuelles de ce fichier.
 - `expo-native-ui` : s'applique à `mobile/`. Reste sur les choix déjà en place
-  (NativeWind, Reanimated, SVG maison) ; pas de verre ni de Liquid Glass.
+  (NativeWind, Reanimated, SVG maison) ; le verre passe par `ui/Glass.tsx`.
 - `mobile-app-ui-design` : principes utiles (zone du pouce, hiérarchie, états
   vides, pic émotionnel). Ignore sa section « Implementation Notes ».
 - `design-mobile-apps` (Sleek, service payant, clé `SLEEK_API_KEY`) : **que

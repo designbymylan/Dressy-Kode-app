@@ -18,7 +18,7 @@ import { F } from '../theme/fonts';
  */
 export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
   const { s, a } = useStore();
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const toast = s.toast;
   useEffect(() => {
@@ -35,10 +35,10 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
       exiting={FadeOutDown.duration(160)}
       pointerEvents="box-none"
       accessibilityLiveRegion="polite"
-      style={{ position: 'absolute', left: 0, right: 0, bottom: aboveTabs ? insets.bottom + material.tabHeight : Math.max(insets.bottom, 12) }}
+      style={{ position: 'absolute', left: 16, right: 16, bottom: aboveTabs ? (insets.bottom > 0 ? insets.bottom - 8 : 0) + material.tabBottom + material.tabHeight + 10 : Math.max(insets.bottom, 12) + 8 }}
     >
-      {/* Un bandeau de service beurre, à plat, sur toute la largeur. */}
-      <View className="flex-row items-center bg-butter" style={{ minHeight: 48, paddingLeft: 16, paddingRight: 8, gap: 10 }}>
+      {/* Un message de service beurre, en capsule flottante. */}
+      <View className="flex-row items-center bg-butter" style={[{ minHeight: 48, borderRadius: 24, paddingLeft: 16, paddingRight: 8, gap: 10 }, material.shadow[scheme]]}>
         <Icon name={toast.warn ? 'alert' : 'check'} size={18} color={c['butter-ink']} strokeWidth={1.8} />
         <T v="caption" style={{ flex: 1, ...F.s500, color: c['butter-ink'] }} numberOfLines={3}>
           {toast.text}

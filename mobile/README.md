@@ -1,11 +1,10 @@
 # Dresskode, application mobile
 
 L'app Expo (iOS d'abord). **La disposition** (écrans, sections, parcours) est celle de la
-refonte, direction B ; **l'apparence** suit la direction « galerie » (décidée le 02/10,
-charte `../design/charte-galerie.md`, la même que `web/src/app/globals.css`) : fond
-blanc, texte noir, filets d'un pixel, angles droits, aucune ombre ; une seule couleur,
-le beurre, pour les bandeaux de service ; vêtements posés sur gris studio. Les 18
-écrans du brief, en clair et en sombre (fond noir, texte blanc, beurre conservé).
+refonte, direction B ; **l'apparence** reprend les couleurs de la « galerie » (fond blanc,
+texte noir, beurre pour les messages, gris studio sous les vêtements) et la typographie v1,
+sur les formes de la vitrine de verre : arrondis, verre dépoli, transparence, halos beurre
+très doux derrière. Les 18 écrans du brief, en clair et en sombre.
 
 Branchée sur Supabase quand `.env` contient l'URL et la clé publishable du projet
 (voir `.env.example`) : compte, profil, dressing, ports, tenues prévues, Kode et paiement

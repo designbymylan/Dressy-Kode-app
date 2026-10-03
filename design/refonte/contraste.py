@@ -175,7 +175,7 @@ if __name__ == '__main__':
     sections = dict(DIRECTIONS)
     palette = json.loads(PALETTE.read_text())
     for theme in ('light', 'dark'):
-        sections[f'App : galerie · {"clair" if theme == "light" else "sombre"}'] = app_checks(theme, palette[theme])
+        sections[f'App : galerie et verre · {"clair" if theme == "light" else "sombre"}'] = app_checks(theme, palette[theme])
     count = 0
     for name, checks in sections.items():
         print(f'\n{name}')

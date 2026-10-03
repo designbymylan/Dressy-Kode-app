@@ -41,7 +41,7 @@ export function Skeleton({ w, h, r = 12, style }: { w: number | `${number}%`; h:
     if (!reduced) o.value = withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }), -1, true);
   }, [o, reduced]);
   const anim = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View className="bg-sunk" style={[{ width: w, height: h, borderRadius: 0 }, anim, style]} />;
+  return <Animated.View className="bg-sunk" style={[{ width: w, height: h, borderRadius: r }, anim, style]} />;
 }
 
 /** Anneau de progression (précision de Kode, jauge de places). */
@@ -64,8 +64,8 @@ export function Ring({ value, size = 96, stroke = 7, children }: { value: number
 export function Gauge({ value, max, label }: { value: number; max: number; label: string }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={{ min: 0, max, now: value }} className="bg-rule" style={{ height: 8, borderRadius: 0, overflow: 'hidden' }}>
-      <View className={pct >= 90 ? 'bg-caution' : 'bg-ink'} style={{ width: `${pct}%`, height: 8, borderRadius: 0 }} />
+    <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={{ min: 0, max, now: value }} className="bg-rule" style={{ height: 8, borderRadius: 4, overflow: 'hidden' }}>
+      <View className={pct >= 90 ? 'bg-caution' : 'bg-ink'} style={{ width: `${pct}%`, height: 8, borderRadius: 4 }} />
     </View>
   );
 }
@@ -77,7 +77,7 @@ export function Bars({ values, labels }: { values: number[]; labels: string[] })
     <View className="flex-row items-end" style={{ gap: 10, height: 96 }} accessibilityLabel={`Ports par mois : ${values.map((v, i) => `${labels[i]} ${v}`).join(', ')}`}>
       {values.map((v, i) => (
         <View key={i} className="items-center" style={{ flex: 1, gap: 6 }}>
-          <View className={i === values.length - 1 ? 'bg-ink' : 'bg-faint'} style={{ width: '70%', height: Math.max(3, (v / max) * 64), borderRadius: 0, opacity: i === values.length - 1 ? 1 : 0.55 }} />
+          <View className={i === values.length - 1 ? 'bg-ink' : 'bg-faint'} style={{ width: '70%', height: Math.max(3, (v / max) * 64), borderRadius: 6, opacity: i === values.length - 1 ? 1 : 0.55 }} />
           <T v="small" tone="ink2">
             {labels[i]}
           </T>
@@ -113,12 +113,12 @@ export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; widt
   const frame = useRef<View>(null);
   return (
     <Tap testID={`tile-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" style={{ width }} scaleTo={0.97}>
-      {/* La pièce sur gris studio, cadre droit, sans filet ni ombre. */}
-      <View ref={frame} className="items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.08), backgroundColor: c.stage }}>
+      {/* La pièce sur gris studio, dans une vignette arrondie. */}
+      <View ref={frame} className="items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.08), borderRadius: dense ? 18 : 22, backgroundColor: c.stage }}>
         <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} dark={scheme === 'dark'} label={piece.name} />
         {piece.wears === 0 && (
-          // Une étiquette noire compacte, comme un cartel de galerie.
-          <View className="absolute bg-primary-bg" style={{ top: 0, left: 0, paddingHorizontal: 8, paddingVertical: 4 }}>
+          // Une pastille noire compacte, comme un cartel de galerie.
+          <View className="absolute bg-primary-bg" style={{ top: 8, left: 8, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
             <T v="kicker" tone="primary-fg">
               {isNew(piece) ? newLabel(piece) : 'Jamais portée'}
             </T>
@@ -145,8 +145,8 @@ export function Row({ icon, title, detail, onPress, right, testID, last }: { ico
   const inner = (
     <View className="flex-row items-center" style={{ minHeight: 58, gap: 14, borderBottomWidth: last ? 0 : 1, borderColor: c.rule }}>
       {icon && (
-        <View className="items-center justify-center" style={{ width: 28 }}>
-          <Icon name={icon} size={22} color={c.ink} />
+        <View className="items-center justify-center" style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.pill }}>
+          <Icon name={icon} size={19} color={c.ink} />
         </View>
       )}
       <View style={{ flex: 1, paddingVertical: 10 }}>
@@ -168,13 +168,13 @@ export function Row({ icon, title, detail, onPress, right, testID, last }: { ico
   );
 }
 
-/** Carte (globals.css : `.card`) : à plat, filet gris d'un pixel, angles droits, 16 de marge intérieure. */
+/** Carte de verre (globals.css : `.glass.card`) : blanc translucide sur les halos, filet fin, ombre douce. */
 export function Card({ children, style, className = '', testID }: { children: ReactNode; style?: object; className?: string; testID?: string }) {
-  const { c } = useTheme();
-  // Une carte teintée (beurre, encre…) garde sa couleur, sans filet.
-  const { backgroundColor, ...edge } = glassSurface(c);
+  const { c, scheme } = useTheme();
+  // Une carte teintée (beurre, encre…) garde sa couleur : on ne lui prend que le filet et l'ombre.
+  const { backgroundColor, ...edge } = glassSurface(c, scheme);
   const tinted = /\bbg-/.test(className);
-  const s = [{ padding: 16 }, edge, !tinted && { backgroundColor }, tinted && { borderColor: 'transparent' }, style];
+  const s = [{ borderRadius: 28, padding: 18 }, edge, !tinted && { backgroundColor }, tinted && { borderColor: 'transparent' }, style];
   // Le beurre reste clair en mode sombre : texte et boutons noirs dessus.
   if (/\bbg-butter\b/.test(className))
     return (
@@ -189,11 +189,11 @@ export function Card({ children, style, className = '', testID }: { children: Re
   );
 }
 
-/** Groupe de lignes de réglage : des filets en haut et en bas, rien d'autre. */
+/** Groupe de lignes de réglage, posé dans une carte de verre. */
 export function Group({ children, testID }: { children: ReactNode; testID?: string }) {
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   return (
-    <View testID={testID} style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.rule }}>
+    <View testID={testID} style={[{ borderRadius: 28, paddingHorizontal: 16, paddingVertical: 2 }, glassSurface(c, scheme)]}>
       {children}
     </View>
   );
@@ -202,11 +202,11 @@ export function Group({ children, testID }: { children: ReactNode; testID?: stri
 /** Pastille d'état (« Portée aujourd'hui », « Ton offre »). */
 export function Badge({ label, tone = 'positive', icon }: { label: string; tone?: 'positive' | 'caution' | 'neutral'; icon?: IconName }) {
   const { c } = useTheme();
-  // Galerie : une étiquette noire (état acquis), beurre (à surveiller) ou au filet.
+  // Une pastille noire (état acquis), beurre (à surveiller) ou au filet.
   const bg = tone === 'positive' ? 'bg-primary-bg' : tone === 'caution' ? 'bg-butter' : '';
   const fg = tone === 'positive' ? c['primary-fg'] : tone === 'caution' ? c['butter-ink'] : c.ink;
   return (
-    <View className={`flex-row items-center self-start ${bg}`} style={[{ paddingHorizontal: 8, paddingVertical: 4, gap: 5 }, tone === 'neutral' && { borderWidth: 1, borderColor: c.ink }]}>
+    <View className={`flex-row items-center self-start ${bg}`} style={[{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 4, gap: 5 }, tone === 'neutral' && { borderWidth: 1, borderColor: c.ink }]}>
       {icon && <Icon name={icon} size={14} color={fg} strokeWidth={1.8} />}
       <T v="kicker" style={{ color: fg }}>
         {label}
