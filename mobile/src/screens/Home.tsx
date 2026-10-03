@@ -23,6 +23,8 @@ import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { KodeThinking } from '../ui/KodeThinking';
+import { isActive } from '../state/jobs';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -193,8 +195,26 @@ function EmptyToday() {
   const { c } = useTheme();
   const n = s.pieces.length;
   const missing = missingForOutfit(s.pieces);
+  // Les photos confiées à Kode (au questionnaire ou depuis l'ajout) : on voit qu'il travaille.
+  const drawing = new Set(s.jobs.filter(isActive).map((j) => j.source_paths[0])).size;
+  const waiting = s.pendingPhotos.length;
   return (
     <Animated.View entering={FadeIn.duration(320)} style={{ gap: 16 }} testID="home-empty">
+      {drawing > 0 ? (
+        <Card className="bg-butter" style={{ gap: 8 }} testID="home-drawing">
+          <KodeThinking phrases={['Kode repère chaque pièce', 'Kode dessine tes pièces', 'Kode les range sur tes portants']} />
+          <T v="body" tone="ink2">
+            {drawing > 1 ? `${drawing} photos en cours` : 'Une photo en cours'} : chaque vêtement arrive sur tes portants, sans fond, dès qu’il est dessiné.
+          </T>
+        </Card>
+      ) : waiting > 0 ? (
+        <Card className="bg-butter" style={{ gap: 6 }} testID="home-waiting">
+          <T v="cardTitle">{waiting > 1 ? `${waiting} photos attendent ton compte.` : 'Une photo attend ton compte.'}</T>
+          <T v="body" tone="ink2">
+            {s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kode dessinera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kode dessinera tes pièces aussitôt.'}
+          </T>
+        </Card>
+      ) : null}
       <View style={{ gap: 6 }}>
         <T v="kicker" tone="ink2">
           Ta première tenue

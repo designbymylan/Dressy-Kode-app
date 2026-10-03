@@ -20,6 +20,7 @@ import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { AccountSheet } from '../ui/account';
 import { KodeThinking } from '../ui/KodeThinking';
 import { PhotoScan, RawCrop, RevealCutout, frameOf, usePreloaded } from '../ui/scan';
 import type { Nav } from '../navigation/types';
@@ -44,10 +45,14 @@ export function AddPiece() {
   const [photo, setPhoto] = useState<Picked | null>(null);
   // Compte connecté : les photos partent vraiment chez Kode, qui repère et dessine chaque pièce.
   const live = s.account === 'connecte' && remote.online;
+  // Le compte de démonstration seul garde la galerie d'exemples ; un espace sans compte n'a aucune pièce fictive.
+  const demo = s.account === 'demo';
+  const [account, setAccount] = useState(false);
+  const waiting = s.pendingPhotos.length;
   const [hint, setHint] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<{ picked: Picked[]; paths: string[] | null } | null>(null);
-  // La galerie simulée propose d'abord ce qui n'est pas déjà dans le dressing.
+  // La galerie de la démonstration propose d'abord ce qui n'est pas déjà dans le dressing.
   const names = new Set(s.pieces.map((p) => p.name));
   const gallery = [...GALLERY.filter((g) => !names.has(g.name)), ...GALLERY.filter((g) => names.has(g.name))];
   const limit = pieceLimit(s);
@@ -86,7 +91,11 @@ export function AddPiece() {
     setSent({ picked, paths: r.paths });
   };
 
-  /** Une vraie photo (appareil ou galerie). Sans compte, la reconnaissance est simulée. */
+  /**
+   * Une vraie photo (appareil ou galerie). Connectée, elle part chez Kode ;
+   * sans compte, elle attend sur le téléphone et la création du compte est
+   * proposée ; dans la démonstration seule, la reconnaissance est simulée.
+   */
   const fromDevice = async (camera: boolean) => {
     try {
       if (camera && Platform.OS !== 'web') {
@@ -96,11 +105,15 @@ export function AddPiece() {
       const r =
         camera && Platform.OS !== 'web'
           ? await ImagePicker.launchCameraAsync({ quality: 0.5 })
-          : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: live, selectionLimit: live ? 10 : 1 });
+          : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
       if (r.canceled || !r.assets.length) return;
       const picked = r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType, ratio: x.width && x.height ? x.width / x.height : 0.75 }));
       if (live) confide(picked.slice(0, 10));
-      else pick(gallery[0], picked[0]);
+      else if (demo) pick(gallery[0], picked[0]);
+      else {
+        a.queuePhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })));
+        setAccount(true);
+      }
     } catch {
       // Annulé : on reste sur le choix de la source.
     }
@@ -130,6 +143,8 @@ export function AddPiece() {
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-add">
       <Ambient />
       <StackHeader title="Ajouter une pièce" close />
+      {/* Sans compte : les photos choisies attendent ; une fois le compte créé, elles partent chez Kode. */}
+      <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => { setAccount(false); nav.goBack(); }} initial={s.pendingEmail ? 'login' : 'signup'} />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {phase === 'source' && (
           <Animated.View entering={FadeIn.duration(200)} style={{ gap: 18 }}>
@@ -172,7 +187,7 @@ export function AddPiece() {
                 <View className="flex-row" style={{ gap: 10 }}>
                   {[
                     { icon: 'camera' as const, label: 'Prendre une photo', note: 'Sur un cintre ou à plat' },
-                    { icon: 'image' as const, label: 'Depuis la galerie', note: live ? 'Jusqu’à 10 à la fois' : 'Une photo à la fois' },
+                    { icon: 'image' as const, label: 'Depuis la galerie', note: demo ? 'Une photo à la fois' : 'Jusqu’à 10 à la fois' },
                   ].map((o) => (
                     <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} className="bg-stage" style={{ borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
                       <Icon name={o.icon} size={28} color={c.ink} />
@@ -210,10 +225,21 @@ export function AddPiece() {
                       Sinon, Kode dessine toutes les pièces qu’il voit : vêtements, chaussures, sacs et bijoux.
                     </T>
                   </View>
+                ) : !demo ? (
+                  // Sans compte : aucune pièce d'exemple, l'invitation à créer le compte.
+                  <Card className="bg-butter" style={{ gap: 10 }} testID="add-account">
+                    <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kode dessine tes pièces avec ton compte.'}</T>
+                    <T v="body" tone="ink2">
+                      {remote.online
+                        ? 'Crée ton compte, gratuit et en une minute : Kode repère chaque vêtement de tes photos et le range sur tes portants, sans fond.'
+                        : 'Dans cet aperçu, Kode ne reçoit pas les photos. Dans l’app, avec ton compte, il repère chaque vêtement et le range sur tes portants.'}
+                    </T>
+                    {remote.online && <Button testID="add-create-account" label="Créer mon compte" size="m" onPress={() => setAccount(true)} />}
+                  </Card>
                 ) : (
                 <>
                 <T v="kicker" tone="ink2">
-                  Photos récentes
+                  Photos d’exemple de la démonstration
                 </T>
                 <View className="flex-row flex-wrap" style={{ gap: 10 }}>
                   {gallery.slice(0, 9).map((g, i) => (

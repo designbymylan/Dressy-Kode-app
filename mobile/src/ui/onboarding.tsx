@@ -118,7 +118,7 @@ export function Ruler({ value, onChange, min, max, unit, label, width, testID }:
 
 /* ---- Le premier portant ---- */
 
-/** Un cintre vide qui attend une pièce : contour pointillé, léger balancement. */
+/** Un cintre vide qui attend une pièce : le cintre seul, léger balancement. */
 function EmptyHanger({ size, i }: { size: number; i: number }) {
   const { c } = useTheme();
   const reduced = useReducedMotion();
@@ -130,10 +130,9 @@ function EmptyHanger({ size, i }: { size: number; i: number }) {
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${r.value}deg` }] }));
   return (
     <Animated.View style={[{ transformOrigin: 'top' }, style]}>
-      <Svg width={size} height={size * 1.25} viewBox="0 0 120 150">
+      <Svg width={size} height={size * 0.3} viewBox="0 0 120 36">
         <Path d="M60 17 L60 9 Q60 3 65 3 Q70 3 70 8" stroke={c.rod} strokeWidth={2.4} fill="none" strokeLinecap="round" />
         <Path d="M60 17 L30 28 M60 17 L90 28" stroke={c.rod} strokeWidth={3} fill="none" strokeLinecap="round" />
-        <Path d="M34 30 L86 30 L90 118 L30 118 Z" stroke={c.control} strokeWidth={1.6} strokeDasharray="5 6" fill="none" strokeLinejoin="round" />
       </Svg>
     </Animated.View>
   );
@@ -165,8 +164,9 @@ function Arriving({ piece, size, dark }: { piece: Piece; size: number; dark: boo
 export function FirstRail({ pieces, slots = 5, size = 76, onPiece }: { pieces: Piece[]; slots?: number; size?: number; onPiece?: (p: Piece) => void }) {
   const { c, scheme } = useTheme();
   const empty = Math.max(0, slots - pieces.length);
+  // Sans pièce, le portant ne garde que ses cintres : pas de place réservée à des vêtements absents.
   return (
-    <View style={{ height: size * 1.25 + 8 }}>
+    <View style={{ height: (pieces.length ? size * 1.25 : size * 0.3) + 8 }}>
       <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 2, height: 1.5, backgroundColor: c.rod }} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 6 }}>
         {pieces.map((p) => (

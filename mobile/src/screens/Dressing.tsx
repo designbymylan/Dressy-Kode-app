@@ -266,7 +266,7 @@ export function Dressing() {
               </View>
             ) : (
             <EmptyState
-              art={<Garment kind="pull" size={84} tint={c.sunk} />}
+              art={<Icon name="search" size={34} color={c.ink2} />}
               title="Rien ne correspond"
               body={query ? `Aucune pièce ne contient « ${query} ». Tu pourrais essayer une couleur ou une matière.` : 'Tu pourrais retirer un filtre pour élargir.'}
               action={<Button testID="clear-filters" label="Tout afficher" variant="secondary" size="m" onPress={reset} />}

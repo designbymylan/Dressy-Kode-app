@@ -74,6 +74,12 @@ type State = {
   undo: Piece[] | null;
   /** Les photos confiées à Kode pendant cette session, et leurs pièces. */
   jobs: JobRow[];
+  /**
+   * Photos choisies pendant le questionnaire, avant que le compte existe :
+   * elles partent chez Kode dès que la session s'ouvre (création du compte,
+   * ou première connexion si l'e-mail était à confirmer).
+   */
+  pendingPhotos: Photo[];
   /** Pièces arrivées depuis l'ouverture de l'app : elles tombent sur la tringle à leur première apparition. */
   fresh: string[];
   /** Les données du jour (météo, fériés, vacances, tendances) reçues du serveur ; gardées pour le hors-ligne. */
@@ -113,6 +119,7 @@ const initial: State = {
   toast: null,
   undo: null,
   jobs: [],
+  pendingPhotos: [],
   fresh: [],
   contexte: null,
   contexteLu: 0,
@@ -139,7 +146,8 @@ type Action =
   | { t: 'hydrate'; patch: Partial<State> }
   | { t: 'account'; acc: Account }
   | { t: 'session'; session: Session | null; pendingEmail: string | null }
-  | { t: 'onboard'; profile: Profile; pieces: Piece[] }
+  | { t: 'onboard'; profile: Profile; pieces: Piece[]; photos: Photo[] }
+  | { t: 'pendingPhotos'; photos: Photo[] }
   | { t: 'demo' }
   | { t: 'profile'; patch: Partial<Profile> }
   | { t: 'restart' }
@@ -209,7 +217,10 @@ function reducer(s: State, a: Action): State {
         onboarded: true,
         profile: a.profile,
         pieces: a.pieces,
+        pendingPhotos: a.photos,
       };
+    case 'pendingPhotos':
+      return { ...s, pendingPhotos: a.photos };
     case 'demo':
       return { ...demo };
     case 'profile':
@@ -306,7 +317,7 @@ function reducer(s: State, a: Action): State {
 /* ---- Ce qui est gardé sur le téléphone ---- */
 
 const SAVED = 'dresskode:etat:v1';
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'planned', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -359,11 +370,28 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       if (acc) dispatch({ t: 'account', acc });
     };
 
+    /**
+     * Les photos du questionnaire partent chez Kode, une fois le compte prêt :
+     * l'agent repère et dessine leurs pièces, qui arrivent sur les portants
+     * (suivies en tâche de fond, voir plus bas).
+     */
+    const sendPending = async (session: Session, photos: Photo[]) => {
+      if (!photos.length) return;
+      const r = await remote.sendPhotos(session, photos, '').catch((e: unknown) => ({ ok: false as const, message: e instanceof Error ? e.message : String(e) }));
+      dispatch({ t: 'pendingPhotos', photos: [] });
+      if (!r.ok) {
+        console.warn('[supabase] photos du questionnaire :', r.message);
+        return dispatch({ t: 'toast', text: 'Tes photos n’ont pas pu partir chez Kode. Tu peux les ajouter depuis ton dressing.', warn: true });
+      }
+      dispatch({ t: 'jobs', jobs: r.jobs });
+      dispatch({ t: 'toast', text: photos.length > 1 ? `Kode dessine les pièces de tes ${photos.length} photos` : 'Kode dessine les pièces de ta photo' });
+    };
+
     return {
-      completeOnboarding: (profile: Profile, pieces: Piece[]) => {
+      completeOnboarding: (profile: Profile, pieces: Piece[], photos: Photo[] = []) => {
         const { session } = getState();
-        dispatch({ t: 'onboard', profile: { ...profile, email: session?.email ?? profile.email }, pieces });
-        if (session) sync(push(session, profile, pieces, {}));
+        dispatch({ t: 'onboard', profile: { ...profile, email: session?.email ?? profile.email }, pieces, photos });
+        if (session) sync(push(session, profile, pieces, {}).then(() => sendPending(session, photos)));
       },
 
       /** Crée le compte. Sans confirmation d'e-mail demandée, la session s'ouvre tout de suite. */
@@ -375,7 +403,16 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
             dispatch({ t: 'session', session: null, pendingEmail: email.trim().toLowerCase() });
           } else {
             const acc = await remote.loadAccount();
-            dispatch({ t: 'session', session: acc?.session ?? null, pendingEmail: null });
+            const s = getState();
+            if (acc && !acc.onboarded && s.onboarded && s.account === 'nouveau') {
+              // Compte créé après coup (depuis Moi ou l'ajout d'une pièce) : l'espace
+              // rempli sur ce téléphone part sur le compte, puis les photos en attente.
+              dispatch({ t: 'session', session: acc.session, pendingEmail: null });
+              await push(acc.session, s.profile, s.pieces, s.planned);
+              await sendPending(acc.session, s.pendingPhotos);
+            } else {
+              dispatch({ t: 'session', session: acc?.session ?? null, pendingEmail: null });
+            }
           }
           return r;
         } catch {
@@ -398,6 +435,8 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
             dispatch({ t: 'session', session: acc.session, pendingEmail: null });
             await push(acc.session, s.profile, s.pieces, s.planned);
             dispatch({ t: 'toast', text: 'Ton espace est enregistré sur ton compte' });
+            // Les photos du questionnaire attendaient le compte : elles partent maintenant.
+            await sendPending(acc.session, s.pendingPhotos);
             return { ok: true, next: 'app' };
           }
           dispatch({ t: 'account', acc });
@@ -499,6 +538,8 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       toast: (text: string) => dispatch({ t: 'toast', text }),
       hideToast: () => dispatch({ t: 'hideToast' }),
 
+      /** Sans compte : les photos attendent sur le téléphone (10 au plus) et partent à sa création. */
+      queuePhotos: (photos: Photo[]) => dispatch({ t: 'pendingPhotos', photos: [...getState().pendingPhotos, ...photos].slice(0, 10) }),
       /** Confie des photos à Kode ; rend les chemins des photos à suivre. */
       sendPhotos: async (photos: Photo[], hint: string): Promise<remote.Result<{ paths: string[] }>> => {
         const session = live();

@@ -34,6 +34,12 @@ Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur 
   pièce) : la vitesse compte autant que la ressemblance.
 - Chaque pièce arrive dans le dressing **sans fond** (PNG transparent,
   détouré par `cutout.ts`), jamais avec le fond de la photo ou du générateur.
+- **Aucune pièce d'exemple dans un espace utilisateur** (décision du 03/10) :
+  un nouvel espace est vide, avec sa structure (portants, catégories, appel à
+  ajouter). Seul le compte de démonstration (Alice) a des pièces dessinées.
+  Les photos du questionnaire restent sur le téléphone puis partent chez
+  Kode dès que le compte existe (`sendPending`, `state/store.tsx`) ; sans
+  compte, elles attendent et la création du compte est proposée.
 
 Ce qui ne bouge pas sans décision explicite de l'utilisateur :
 

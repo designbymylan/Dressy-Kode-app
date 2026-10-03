@@ -5,16 +5,15 @@
  * ses premières pièces et Kode compose les premières tenues : l'utilisatrice
  * voit la valeur de l'app avant même d'y entrer.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight, SlideOutLeft, SlideOutRight, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { COLOR_CHOICES, GALLERY, pieceFrom, type Found, type Piece } from '../data/wardrobe';
+import { COLOR_CHOICES } from '../data/wardrobe';
 import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision, sizeOptions, type MeasureId, type Profile, type Silhouette } from '../state/profile';
-import { canCompose, missingForOutfit, suggestOutfits } from '../state/outfits';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, space } from '../theme/tokens';
@@ -25,14 +24,12 @@ import { Chip, Stepper, Toggle } from '../ui/controls';
 import { Card, Ring } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Masthead } from '../ui/layout';
-import { OutfitBoard, Legend } from '../ui/outfit';
-import { Garment } from '../ui/Garment';
 import { Sheet } from '../ui/Sheet';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
 import { ChoiceCard, ColorChoice, FirstRail, Figure, MeasureFigure, PhotoSlot, Ruler, StyleCard, Trio, IS_WEB, type ColorState } from '../ui/onboarding';
 import { useScreen } from '../ui/screen';
 import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, validEmail } from '../ui/account';
-import { online } from '../state/remote';
+import { online, type Photo } from '../state/remote';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
@@ -62,11 +59,15 @@ const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
 type Ctx = {
   draft: Profile;
   set: (patch: Partial<Profile>) => void;
-  pieces: Piece[];
-  setPieces: (p: Piece[]) => void;
+  /** Les vraies photos choisies au premier portant : Kode les dessine une fois le compte créé. */
+  photos: Photo[];
+  setPhotos: (p: Photo[]) => void;
   next: () => void;
   W: number;
 };
+
+/** Photos confiées d'un coup, comme sur l'écran d'ajout. */
+const MAX_PHOTOS = 10;
 
 export function Onboarding() {
   const { a } = useStore();
@@ -76,7 +77,7 @@ export function Onboarding() {
   const [i, setI] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
   const [draft, setDraft] = useState<Profile>(EMPTY_PROFILE);
-  const [pieces, setPieces] = useState<Piece[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const step = ORDER[i];
   const chapter = CHAPTERS.findIndex((c) => c.steps.includes(step));
   const W = width - space.gutter * 2;
@@ -92,7 +93,7 @@ export function Onboarding() {
     go(ORDER[i - 1] === 'generation' ? i - 2 : i - 1);
   };
   const set = (patch: Partial<Profile>) => setDraft((d) => ({ ...d, ...patch }));
-  const ctx: Ctx = { draft, set, pieces, setPieces, next, W };
+  const ctx: Ctx = { draft, set, photos, setPhotos, next, W };
   const full = step === 'generation' || step === 'bienvenue';
 
   const body: Record<StepId, ReactNode> = {
@@ -110,7 +111,7 @@ export function Onboarding() {
     pieces: <Pieces {...ctx} />,
     generation: <Generation {...ctx} />,
     compte: <Compte {...ctx} />,
-    bienvenue: <Bienvenue {...ctx} onEnter={() => a.completeOnboarding(draft, pieces)} />,
+    bienvenue: <Bienvenue {...ctx} onEnter={() => a.completeOnboarding(draft, [], photos)} />,
   };
 
   return (
@@ -873,47 +874,31 @@ function Ville({ draft, set, next }: Ctx) {
 
 /* ---- 4. Dressing ---- */
 
-function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
+/**
+ * Le premier portant : de vraies photos (une tenue entière ou une pièce à
+ * plat), jamais de pièces d'exemple. Elles restent sur l'appareil jusqu'à la
+ * création du compte, puis partent chez Kode, qui repère chaque vêtement et
+ * le dessine pour les portants (state/store.tsx : sendPending).
+ */
+function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
   const { c } = useTheme();
-  const [busy, setBusy] = useState<string[]>([]);
-  const [imported, setImported] = useState<{ id: string; uri: string }[]>([]);
-  const [last, setLast] = useState<string | null>(null);
-  const counter = useRef(0);
-  const used = new Set(pieces.map((p) => p.name));
   const tile = (W - 3 * 8) / 4;
-  const ok = canCompose(pieces);
-  const missing = missingForOutfit(pieces);
-
-  const recognise = (f: Found, key: string, uri?: string) => {
-    setBusy((b) => [...b, key]);
-    if (uri) setImported((x) => [...x, { id: key, uri }]);
-    setTimeout(() => {
-      setBusy((b) => b.filter((k) => k !== key));
-      setImported((x) => x.filter((y) => y.id !== key));
-      setPieces([...piecesRef.current, pieceFrom(f, `n${Date.now()}${counter.current++}`)]);
-      setLast(f.name);
-      haptic('success');
-    }, 900);
-  };
-  const piecesRef = useRef(pieces);
-  piecesRef.current = pieces;
+  const n = photos.length;
+  const room = MAX_PHOTOS - n;
 
   const importPhotos = async (camera: boolean) => {
+    if (room <= 0) return;
     try {
       if (camera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) return;
       }
       const r = camera
-        ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 10, quality: 0.6 });
+        ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7 });
       if (r.canceled) return;
-      // Aperçu : chaque photo est « reconnue » comme une pièce de la galerie pas encore ajoutée.
-      const free = GALLERY.filter((g) => !used.has(g.name));
-      r.assets.forEach((asset, n) => {
-        const f = free[n % Math.max(1, free.length)] ?? GALLERY[n % GALLERY.length];
-        setTimeout(() => recognise(f, `imp${Date.now()}${n}`, asset.uri), n * 250);
-      });
+      setPhotos([...photos, ...r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType }))].slice(0, MAX_PHOTOS));
+      haptic('success');
     } catch {
       // Sélection annulée : rien à faire.
     }
@@ -923,107 +908,59 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
     <Frame
       lead={'Ton premier\n'}
       em="portant."
-      intro={`Ajoute quelques pièces que tu portes souvent${draft.name ? `, ${draft.name}` : ''}. Kode compose tes premières tenues avec, avant même que tu entres.`}
+      intro={`Ajoute des photos des pièces que tu portes souvent${draft.name ? `, ${draft.name}` : ''} : une tenue entière ou une pièce posée à plat. Kode repère chaque vêtement et le dessine pour tes portants.`}
       footer={
         <>
-          <Button testID="onb-generate" label={ok ? `Générer mes premières tenues` : pieces.length ? `Il manque ${missing}` : 'Ajoute tes premières pièces'} icon={ok ? 'kode' : undefined} disabled={!ok} onPress={next} />
-          <Button testID="onb-later" label="Plus tard : entrer avec un dressing vide" variant="plain" onPress={next} />
+          <Button testID="onb-generate" label={n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kode` : 'Ajoute une première photo'} icon={n ? 'kode' : undefined} disabled={!n} onPress={next} />
+          <Button testID="onb-later" label="Plus tard : entrer avec un dressing vide" variant="plain" onPress={() => { setPhotos([]); next(); }} />
         </>
       }
     >
       <View style={{ marginHorizontal: -space.gutter }}>
-        <FirstRail pieces={pieces} slots={5} size={74} onPiece={(p) => setPieces(pieces.filter((x) => x.id !== p.id))} />
+        <FirstRail pieces={[]} slots={5} size={74} />
       </View>
-      <View className="flex-row items-center" style={{ gap: 10 }}>
-        <View className="flex-row" style={{ gap: 5 }}>
-          {[0, 1, 2].map((k) => (
-            <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, pieces.length) ? (ok ? c.positive : c.ink) : c.rule }} />
-          ))}
-        </View>
-        <T v="caption" tone={ok ? 'positive' : 'ink2'} style={{ flex: 1, ...F.s600 }}>
-          {ok ? `${pieces.length} pièces : Kode peut composer.` : pieces.length ? `${pieces.length} pièce${pieces.length > 1 ? 's' : ''} · il manque ${missing}` : '3 pièces suffisent pour une première tenue'}
-        </T>
-      </View>
-      {last && (
-        <Animated.View key={last + pieces.length} entering={FadeIn.duration(200)} accessibilityLiveRegion="polite">
-          <T v="small" tone="ink2">
-            Reconnu : {last}. Touche une pièce sur la tringle pour la retirer.
-          </T>
-        </Animated.View>
-      )}
+      <T v="caption" tone="ink2" accessibilityLiveRegion="polite">
+        {n
+          ? `${n} photo${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} · Kode dessine tes pièces dès que ton compte est créé.`
+          : 'Une photo peut porter plusieurs pièces : Kode les repère toutes, jusqu’à 10 photos à la fois.'}
+      </T>
       <View className="flex-row" style={{ gap: 8 }}>
-        <Button testID="onb-import" label="Importer des photos" icon="image" variant="secondary" size="m" grow onPress={() => importPhotos(false)} />
-        {!IS_WEB && <Button label="Photographier" icon="camera" variant="secondary" size="m" grow onPress={() => importPhotos(true)} />}
+        <Button testID="onb-import" label="Importer des photos" icon="image" variant="secondary" size="m" grow disabled={room <= 0} onPress={() => importPhotos(false)} />
+        {!IS_WEB && <Button label="Photographier" icon="camera" variant="secondary" size="m" grow disabled={room <= 0} onPress={() => importPhotos(true)} />}
       </View>
-      {imported.length > 0 && (
-        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-          {imported.map((x) => (
-            <View key={x.id} style={{ width: tile, height: tile, borderRadius: 14, overflow: 'hidden' }} className="bg-sunk">
-              <Animated.View entering={FadeIn}>
-                <Image source={{ uri: x.uri }} style={{ width: tile, height: tile, opacity: 0.7 }} />
-              </Animated.View>
-              <View className="absolute items-center justify-center" style={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                <T v="small" style={{ ...F.s700 }}>
-                  Analyse…
-                </T>
+      {n > 0 && (
+        <View className="flex-row flex-wrap" style={{ gap: 8 }} testID="onb-photos">
+          {photos.map((ph, i) => (
+            <Animated.View key={`${ph.uri}-${i}`} entering={FadeIn.duration(200)} className="bg-stage" style={{ width: tile, height: tile, borderRadius: 14, overflow: 'hidden' }}>
+              <Image source={{ uri: ph.uri }} style={{ width: tile, height: tile }} accessibilityIgnoresInvertColors />
+              <View style={{ position: 'absolute', top: 4, right: 4 }}>
+                <Tap onPress={() => setPhotos(photos.filter((_, j) => j !== i))} accessibilityLabel={`Retirer la photo ${i + 1}`} hitSlop={8} scaleTo={0.9} className="items-center justify-center" style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c['glass-strong'] }}>
+                  <Icon name="close" size={13} color={c.ink} strokeWidth={2.2} />
+                </Tap>
               </View>
-            </View>
+            </Animated.View>
           ))}
         </View>
       )}
-      <View style={{ gap: 8 }}>
-        <T v="kicker" tone="ink2">
-          Photos récentes
-        </T>
-        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-          {GALLERY.map((g, n) => {
-            const key = `g${n}`;
-            const added = used.has(g.name);
-            const working = busy.includes(key);
-            return (
-              <Tap
-                key={g.name}
-                testID={`onb-photo-${n}`}
-                onPress={() => !added && !working && recognise(g, key)}
-                disabled={added || working}
-                accessibilityLabel={added ? `${g.name}, ajouté` : `Photo ${n + 1}`}
-                accessibilityState={{ selected: added, busy: working }}
-                style={{ width: tile, height: tile * 1.15, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden', opacity: added ? 0.45 : 1 }}
-                className="items-center justify-center"
-                scaleTo={0.95}
-              >
-                <View style={{ transform: [{ rotate: `${((n % 3) - 1) * 5}deg` }] }}>
-                  <Garment kind={g.kind} tint={g.tint} size={tile * 0.66} />
-                </View>
-                {(added || working) && (
-                  <View className="absolute items-center justify-center" style={{ top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: added ? c['primary-bg'] : c.raised }}>
-                    <Icon name={added ? 'check' : 'clock'} size={13} color={added ? c['primary-fg'] : c.ink} strokeWidth={2.2} />
-                  </View>
-                )}
-              </Tap>
-            );
-          })}
-        </View>
-        <T v="small" tone="ink2">
-          Tes photos servent seulement à dessiner tes pièces : elles ne sont ni publiées ni partagées.{IS_WEB ? ' Aperçu : la reconnaissance est simulée.' : ''}
-        </T>
-      </View>
+      <T v="small" tone="ink2">
+        Tes photos servent seulement à dessiner tes pièces : elles ne sont ni publiées ni partagées.
+        {!online ? ' Dans cet aperçu, elles restent sur l’appareil : c’est l’app, avec ton compte, qui les confie à Kode.' : ''}
+      </T>
     </Frame>
   );
 }
 
-function Generation({ draft, pieces, next }: Ctx) {
+function Generation({ draft, photos, next }: Ctx) {
   const { c } = useTheme();
-  // Pas encore de compte, donc pas encore de vraie météo : les tenues se composent sans.
-  const outfits = useMemo(() => suggestOutfits(pieces, null), [pieces]);
+  const n = photos.length;
   const rayon = draft.rayon === 'femme' ? 'rayon femme' : draft.rayon === 'homme' ? 'rayon homme' : draft.rayon === 'mixte' ? 'rayons femme et homme' : '';
   const lines = [
     `Profil : ${[rayon, draft.height ? `${draft.height} cm` : '', draft.silhouette && draft.silhouette !== 'inconnue' ? `silhouette en ${draft.silhouette}` : ''].filter(Boolean).join(', ') || 'Kode apprendra en route'}`,
     `Style : ${draft.styles.length ? draft.styles.join(', ') : 'à découvrir avec toi'}`,
     `Palette : ${draft.love.length ? draft.love.join(', ') : 'toutes les couleurs'}${draft.avoid.length ? `, sans ${draft.avoid.join(', ').toLowerCase()}` : ''}`,
     draft.city ? `Météo de ${draft.city}, suivie chaque matin` : 'Météo : ta ville, au prochain lancement',
-    pieces.length ? `${pieces.length} pièce${pieces.length > 1 ? 's' : ''} rangée${pieces.length > 1 ? 's' : ''} sur tes portants` : 'Tes portants, prêts à se remplir',
-    outfits.length ? `${outfits.length} tenue${outfits.length > 1 ? 's' : ''} composée${outfits.length > 1 ? 's' : ''} pour aujourd’hui` : 'Ta première tenue, dès trois pièces',
+    n ? `${n} photo${n > 1 ? 's' : ''} pour Kode : il dessine tes pièces dès ton arrivée` : 'Tes portants, prêts à se remplir',
+    n ? 'Tes premières tenues, dès tes pièces dessinées' : 'Ta première tenue, dès trois pièces',
   ];
   const [k, setK] = useState(0);
   useEffect(() => {
@@ -1152,11 +1089,9 @@ function Compte({ draft, set, next }: Ctx) {
   );
 }
 
-function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void }) {
-  const outfits = useMemo(() => suggestOutfits(pieces, null), [pieces]);
-  const first = outfits[0];
-  const byId = new Map(pieces.map((p) => [p.id, p]));
-  const shown = first ? (first.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];
+function Bienvenue({ draft, photos, W, onEnter }: Ctx & { onEnter: () => void }) {
+  const { s } = useStore();
+  const n = photos.length;
   const score = precision(draft);
   const chips = [
     draft.silhouette && draft.silhouette !== 'inconnue' ? `Silhouette en ${draft.silhouette}` : null,
@@ -1167,6 +1102,14 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
     ...draft.styles,
     draft.city,
   ].filter(Boolean) as string[];
+  // Ce que deviennent les photos : dessinées tout de suite, ou en attente du compte.
+  const [title, body] = !n
+    ? ['Ton dressing t’attend.', `Dès trois pièces ajoutées, Kode compose ta première tenue, avec la météo ${draft.city ? `de ${draft.city}` : 'du jour'} et ton style.`]
+    : s.session
+      ? ['Kode dessine tes pièces.', `Tes ${n > 1 ? `${n} photos partent` : 'photo part'} chez Kode dès que tu entres : chaque vêtement arrive sur tes portants, sans fond, en quelques instants.`]
+      : !online
+        ? ['Tes photos attendent l’app.', 'Dans cet aperçu, Kode ne reçoit pas les photos. Dans l’app, avec ton compte, il les dessine pour tes portants.']
+        : ['Tes photos attendent ton compte.', s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kode dessinera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kode dessinera tes pièces aussitôt.'];
   return (
     <View style={{ flex: 1 }} testID="onb-welcome">
       <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: 20, gap: 18 }}>
@@ -1179,26 +1122,15 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
             </T>
           </T>
         </Animated.View>
-        {first ? (
-          <Animated.View entering={FadeInDown.delay(250).duration(400)} style={{ gap: 12 }}>
-            <T v="kicker" tone="ink2">
-              Ta première tenue, pour aujourd’hui
-            </T>
-            <OutfitBoard pieces={shown} width={W} />
-            <Legend pieces={shown} />
-            <T v="quote">« {first.why} »</T>
-          </Animated.View>
-        ) : (
-          <Animated.View entering={FadeInDown.delay(250).duration(400)} style={{ gap: 12 }}>
-            <View style={{ marginHorizontal: -space.gutter }}>
-              <FirstRail pieces={[]} slots={5} size={70} />
-            </View>
-            <T v="cardTitle">Ton dressing t’attend.</T>
-            <T v="body" tone="ink2">
-              Dès trois pièces ajoutées, Kode compose ta première tenue, avec la météo {draft.city ? `de ${draft.city}` : 'du jour'} et ton style.
-            </T>
-          </Animated.View>
-        )}
+        <Animated.View entering={FadeInDown.delay(250).duration(400)} style={{ gap: 12 }}>
+          <View style={{ marginHorizontal: -space.gutter }}>
+            <FirstRail pieces={[]} slots={5} size={70} />
+          </View>
+          <T v="cardTitle">{title}</T>
+          <T v="body" tone="ink2">
+            {body}
+          </T>
+        </Animated.View>
         <Animated.View entering={FadeInDown.delay(450).duration(400)}>
           <Card style={{ gap: 12 }}>
             <View className="flex-row items-center" style={{ gap: 14 }}>
