@@ -144,7 +144,7 @@ export function AddPiece() {
       <Ambient />
       <StackHeader title="Ajouter une pièce" close />
       {/* Sans compte : les photos choisies attendent ; une fois le compte créé, elles partent chez Kode. */}
-      <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => { setAccount(false); nav.goBack(); }} initial={s.pendingEmail ? 'login' : 'signup'} />
+      <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => { setAccount(false); setTimeout(() => nav.goBack(), 320); }} initial={s.pendingEmail ? 'login' : 'signup'} />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {phase === 'source' && (
           <Animated.View entering={FadeIn.duration(200)} style={{ gap: 18 }}>

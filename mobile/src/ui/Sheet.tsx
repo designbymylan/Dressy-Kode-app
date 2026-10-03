@@ -1,7 +1,7 @@
 import { createContext, Fragment, useContext, useEffect, useId, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, SlideInDown, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeIn, SlideInDown, runOnJS, useAnimatedKeyboard, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, radius, space } from '../theme/tokens';
@@ -73,14 +73,19 @@ export function Sheet({ visible, onClose, title, kicker, children, footer, testI
   useEffect(() => {
     if (visible) setShown(true);
   }, [visible]);
+  const body = shown ? (
+    <SheetBody visible={visible} onGone={() => setShown(false)} onClose={onClose} title={title} kicker={kicker} footer={footer} testID={testID}>
+      {children}
+    </SheetBody>
+  ) : null;
+  // Dans l'aperçu web, la feuille reste dans le cadre du téléphone.
+  if (Platform.OS === 'web') return <Portal>{body}</Portal>;
+  // Sur iPhone, une fenêtre à part : sinon la feuille s'ouvre sous les écrans
+  // présentés en modale (ajout d'une pièce, partage) et reste invisible.
   return (
-    <Portal>
-      {shown ? (
-        <SheetBody visible={visible} onGone={() => setShown(false)} onClose={onClose} title={title} kicker={kicker} footer={footer} testID={testID}>
-          {children}
-        </SheetBody>
-      ) : null}
-    </Portal>
+    <Modal visible={shown} transparent animationType="none" statusBarTranslucent onRequestClose={onClose} supportedOrientations={['portrait']}>
+      <GestureHandlerRootView style={{ flex: 1 }}>{body}</GestureHandlerRootView>
+    </Modal>
   );
 }
 
@@ -110,6 +115,8 @@ function SheetBody({ visible, onGone, onClose, title, kicker, children, footer, 
     });
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
   const scrim = useAnimatedStyle(() => ({ opacity: fade.value }));
+  // La feuille remonte avec le clavier : les champs restent visibles.
+  const keyboard = useAnimatedKeyboard();
   const drag = Gesture.Pan()
     .onChange((e) => {
       y.value = Math.max(0, y.value + e.changeY);
@@ -118,7 +125,7 @@ function SheetBody({ visible, onGone, onClose, title, kicker, children, footer, 
       if (y.value > 120 || e.velocityY > 900) runOnJS(onClose)();
       else y.value = withSpring(0, motion.sheet);
     });
-  const panel = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  const panel = useAnimatedStyle(() => ({ transform: [{ translateY: y.value - keyboard.height.value }] }));
 
   return (
     <View style={StyleSheet.absoluteFill} testID={visible ? testID : undefined} pointerEvents={visible ? 'auto' : 'none'}>
