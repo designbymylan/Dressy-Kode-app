@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { MagneticDock } from '@/components/MagneticDock';
 
 const TABS = [
   { href: '/accueil', label: 'Accueil', d: 'M3 11.5 12 4l9 7.5M5 10v10h14V10' },
@@ -12,17 +12,38 @@ const TABS = [
 ];
 
 /**
- * Barre d'onglets flottante en verre : Kode au centre en pastille noire,
- * l'onglet actif marqué par son icône pleine encre et un point dessous.
+ * Barre d'onglets flottante en verre, en dock magnétique : Kode au centre en
+ * pastille noire, l'onglet actif marqué par son icône pleine encre et un point
+ * dessous, les icônes qui grossissent sous le doigt ou la souris.
  */
 export function TabBar() {
   const pathname = usePathname();
   // L'atelier de tenue a sa propre barre d'action : la navigation s'efface.
   if (pathname.startsWith('/tenues/nouvelle')) return null;
 
+  const items = TABS.map((tab) => {
+    const active = pathname === tab.href || pathname.startsWith(tab.href + '/');
+    return {
+      href: tab.href,
+      label: tab.label,
+      pill: tab.pill,
+      active,
+      icon: (
+        <svg
+          width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+          style={{ transform: active ? 'scale(1.08)' : 'none', transition: 'transform 400ms cubic-bezier(.34,1.56,.64,1)' }}
+        >
+          <path d={tab.d} />
+        </svg>
+      ),
+    };
+  });
+
   return (
-    <nav
-      aria-label="Navigation principale"
+    <MagneticDock
+      label="Navigation principale"
+      items={items}
       style={{
         position: 'fixed', left: 20, right: 20, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
         maxWidth: 350, margin: '0 auto', height: 66, borderRadius: 999, zIndex: 20,
@@ -31,41 +52,6 @@ export function TabBar() {
         boxShadow: 'var(--shadow-float)', display: 'flex', alignItems: 'center',
         justifyContent: 'space-around', padding: '0 12px',
       }}
-    >
-      {TABS.map((tab) => {
-        const active = pathname === tab.href || pathname.startsWith(tab.href + '/');
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            aria-label={tab.label}
-            aria-current={active ? 'page' : undefined}
-            className="btn"
-            style={{
-              position: 'relative', padding: 0, minHeight: 0,
-              width: tab.pill ? 56 : 44, height: tab.pill ? 56 : 44, borderRadius: 999,
-              background: tab.pill ? 'var(--ink)' : 'transparent',
-              boxShadow: tab.pill ? 'var(--shadow-press)' : 'none',
-              color: tab.pill ? 'var(--on-ink)' : active ? 'var(--ink)' : 'var(--muted)',
-            }}
-          >
-            <svg
-              width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-              style={{ transform: active ? 'scale(1.08)' : 'none', transition: 'transform 400ms cubic-bezier(.34,1.56,.64,1)' }}
-            >
-              <path d={tab.d} />
-            </svg>
-            {active && !tab.pill ? (
-              <span
-                aria-hidden="true"
-                className="pop"
-                style={{ position: 'absolute', bottom: 3, width: 4, height: 4, borderRadius: 99, background: 'var(--ink)' }}
-              />
-            ) : null}
-          </Link>
-        );
-      })}
-    </nav>
+    />
   );
 }
