@@ -51,6 +51,8 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
   la « vitrine de verre » : arrondis, verre dépoli, transparence (décision du
   03/10). La même sur le web et sur le mobile.
 - Ne rajoute ni dépendance, ni skill, ni service externe sans demander.
+  (Accordés le 03/10 : `expo-updates` et le service Expo EAS Update, pour
+  essayer l'app dans Expo Go sans ordinateur.)
 - **Décision du 03/10, appliquée le jour même** : les **arrondis**, l'**effet
   de verre dépoli** et la **transparence** façon iOS (barre d'onglets, feuilles,
   cartes, boutons) sont là pour de bon, sur le web et le mobile. Une nouvelle
@@ -83,6 +85,7 @@ aussitôt, sans attendre la fin de la demande.
 cd mobile && npx tsc --noEmit                  # vérification des types
 cd mobile && npx expo start                    # Expo Go (--clear après un changement de .env)
 cd mobile && EXPO_OFFLINE=1 npx expo install <paquet>   # ajouter une dépendance compatible SDK 57
+cd mobile && npm run apercu                    # EAS Update : publie dans Expo Go (EXPO_TOKEN requis, voir mobile/README.md)
 python3 design/refonte/contraste.py            # contraste AA de la palette mobile (doit tout passer)
 
 # App web

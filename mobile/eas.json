@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 24.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "channel": "apercu",
+      "environment": "preview"
+    },
+    "production": {
+      "channel": "production",
+      "environment": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

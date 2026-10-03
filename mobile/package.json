@@ -20,6 +20,7 @@
     "expo-image-picker": "~57.0.20",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
+    "expo-updates": "~57.0.23",
     "nativewind": "^4.2.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -45,7 +46,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "apercu": "node scripts/apercu.mjs"
   },
   "private": true
 }

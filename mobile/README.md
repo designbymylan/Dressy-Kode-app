@@ -43,6 +43,22 @@ l'échelle est dans `src/theme/tokens.ts` (`type`).
 Pour l'aperçu dans un navigateur : `npx expo start --web`. Après une modification de `.env`,
 relance avec `npx expo start --clear` : les variables sont figées dans le cache.
 
+### Sans ordinateur : EAS Update dans Expo Go
+
+`npm run apercu` publie l'app sur le canal `apercu` d'EAS Update et affiche un lien fixe
+qui ouvre toujours la dernière version dans Expo Go, branchée sur Supabase.
+
+- Il faut `EXPO_TOKEN` dans l'environnement (jeton d'accès du compte Expo, créé sur
+  expo.dev > Account settings > Access tokens). Jamais dans un fichier commité.
+- Au premier passage, le script crée le projet EAS et écrit `extra.eas.projectId`,
+  `owner` et `updates.url` dans `app.json` : ce changement est à commiter.
+- Sur l'iPhone, Expo Go doit être connecté au **même compte Expo** que le projet.
+- `runtimeVersion` reste en `sdkVersion` (`exposdk:57.0.0`) : c'est ce qui permet à Expo
+  Go de charger la mise à jour. Le jour d'une vraie build (TestFlight, App Store), on
+  passera à `fingerprint` et à des builds `eas build --profile preview` (`eas.json`).
+- `npm run apercu -- "message"` pour nommer la version, `-- --android` pour publier
+  aussi pour Android.
+
 ## Où sont les choses
 
 | Dossier | Contenu |
