@@ -141,7 +141,7 @@ APP_PAIRS = [
     ('control', 'paper', L, 'contour d’un interrupteur, d’une case, d’un champ'),
     ('control', 'raised', L, 'contour de contrôle sur carte'),
     ('ink2', 'raised', L, 'icône secondaire'),
-    ('butter-ink', 'butter', N, 'bandeau de service beurre'),
+    ('butter-ink', 'butter', N, 'bandeau de service rose poudré'),
     ('tab-off', 'paper', N, 'onglet inactif sur la barre'),
     ('ink', 'stage', L, 'illustration noire sur gris studio'),
 ]

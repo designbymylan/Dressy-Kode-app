@@ -122,8 +122,9 @@ Ordre de priorité, du plus fort au plus faible :
 - **Les arrondis** (03/10) : cartes 28, vignettes 22, feuilles 32 ; tout ce
   qui se clique est en capsule (boutons, puces, sélecteurs, champs) ; boutons
   icônes et Kode en rond.
-- Une seule couleur : le **beurre** (`#faedbc`), réservé aux bandeaux de
-  service (messages de Kode, offres, informations), avec texte noir en
+- Une seule couleur : le **rose poudré pâle** (`#f8e9e4`, adouci du beurre
+  `#faedbc` le 03/10 ; le jeton garde le nom `butter`), réservé aux bandeaux
+  de service (messages de Kode, offres, informations), avec texte noir en
   clair comme en sombre. Le reste est noir, blanc et gris. Gris studio
   (`#f3f3f3`) pour les vignettes de vêtements et les champs de saisie.
 - Boutons : l'action principale en capsule noire avec son ombre, libellé en
