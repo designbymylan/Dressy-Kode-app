@@ -19,12 +19,12 @@ const SUGGESTIONS = [
 const SPARK = 'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z';
 
 const round = {
-  width: 44, height: 44, border: 'none', borderRadius: 999, background: 'var(--tile)',
+  width: 44, height: 44, border: 'none', borderRadius: 0, background: 'var(--tile)',
   display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none',
 } as const;
 
 const bubble = {
-  maxWidth: '84%', borderRadius: 22, padding: '12px 16px', fontSize: 15, lineHeight: 1.45, whiteSpace: 'pre-wrap',
+  maxWidth: '84%', borderRadius: 0, padding: '12px 16px', fontSize: 15, lineHeight: 1.45, whiteSpace: 'pre-wrap',
 } as const;
 
 export function KodeChat({
@@ -159,8 +159,8 @@ export function KodeChat({
             <h1 style={{ fontSize: 24 }}>Kode</h1>
             <span
               style={{
-                height: 20, padding: '0 8px', borderRadius: 999, background: 'var(--accent-tint)',
-                color: 'var(--accent-ink)', fontSize: 10.5, fontWeight: 500, letterSpacing: '.04em',
+                height: 20, padding: '0 8px', borderRadius: 0, background: 'var(--accent-tint)',
+                color: 'var(--accent-ink)', fontSize: 12, fontWeight: 500, letterSpacing: 0,
                 display: 'inline-flex', alignItems: 'center',
               }}
             >
@@ -181,7 +181,7 @@ export function KodeChat({
       </header>
 
       <div role="log" aria-live="polite" aria-busy={busy} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <p style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px' }}>
+        <p style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: 0 }}>
           {name ? `Salut ${name}. ` : 'Salut. '}
           Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà.
         </p>
@@ -192,14 +192,14 @@ export function KodeChat({
               key={m.id}
               style={{
                 ...bubble, alignSelf: 'flex-end', background: 'var(--ink)', color: 'var(--ground)',
-                borderRadius: '22px 22px 6px 22px',
+                borderRadius: 0,
               }}
             >
               {m.body}
             </p>
           ) : (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px' }}>
+              <p style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: 0 }}>
                 {m.body}
               </p>
               {m.outfit ? (
@@ -237,7 +237,7 @@ export function KodeChat({
         {busy ? (
           <div
             className="pop"
-            style={{ alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px', padding: '10px 16px 10px 12px' }}
+            style={{ alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: 0, padding: '10px 16px 10px 12px' }}
           >
             <KodeThinking phrases={THINKING.chat} size={24} every={1800} />
           </div>
@@ -248,15 +248,16 @@ export function KodeChat({
 
       <div
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, padding: '28px 20px 86px', zIndex: 5,
-          background: 'linear-gradient(to bottom, transparent, var(--desk) 30%)',
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 5,
+          padding: '14px 16px calc(58px + env(safe-area-inset-bottom, 0px) + 14px)',
+          background: 'var(--bg)', borderTop: '1px solid var(--rule)',
         }}
       >
         <div style={{ maxWidth: 350, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {error ? <ErrorNote>{error}</ErrorNote> : null}
 
           {tooFew ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 22, padding: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 0, padding: 16 }}>
               <p style={{ fontSize: 13.5, lineHeight: 1.45 }}>
                 Kode compose avec tes pièces : il lui en faut au moins deux pour proposer une tenue.
               </p>
@@ -265,7 +266,7 @@ export function KodeChat({
               </Link>
             </div>
           ) : left === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 22, padding: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 0, padding: 16 }}>
               <p style={{ fontSize: 13.5, lineHeight: 1.45 }}>
                 Tes {usage.quota} questions du mois sont utilisées. Elles reviennent le 1er du mois.
               </p>
@@ -283,7 +284,7 @@ export function KodeChat({
                       type="button"
                       onClick={() => send(s)}
                       style={{
-                        flex: 'none', minHeight: 38, padding: '0 15px', border: 'none', borderRadius: 999,
+                        flex: 'none', minHeight: 38, padding: '0 15px', border: 'none', borderRadius: 0,
                         background: 'var(--ground)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
                       }}
                     >
@@ -297,8 +298,8 @@ export function KodeChat({
                 onSubmit={submit}
                 data-composer
                 style={{
-                  background: 'var(--ground)', borderRadius: 24, padding: '6px 6px 6px 16px',
-                  display: 'flex', alignItems: 'flex-end', gap: 8, boxShadow: 'var(--shadow-soft)',
+                  background: 'var(--ground)', borderRadius: 0, padding: '6px 6px 6px 16px',
+                  display: 'flex', alignItems: 'flex-end', gap: 8,
                 }}
               >
                 <label htmlFor="kode-question" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}>

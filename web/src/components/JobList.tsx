@@ -188,7 +188,7 @@ export function JobList({ initial }: { initial: JobView[] }) {
                       )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: 1 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600 }}>{jobTitle(j)}</span>
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>{jobTitle(j)}</span>
                       {failed ? (
                         <>
                           <span style={{ fontSize: 12.5, lineHeight: 1.45, color: 'var(--muted)' }}>

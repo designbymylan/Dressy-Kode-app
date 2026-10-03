@@ -2,11 +2,11 @@ import type { CSSProperties } from 'react';
 import { iconFor } from '@/lib/wardrobe';
 
 const CARDS = [
-  { cat: 'vestes', kind: 'blazer', r: -18, x: -132, y: 30, tint: '#ffe3d6' },
-  { cat: 'hauts', kind: 'tshirt', r: -8, x: -68, y: 8, tint: '#e6e2ff' },
-  { cat: 'robes', kind: 'robe', r: 0, x: 0, y: 0, tint: '#ffffff' },
-  { cat: 'bijoux', kind: 'collier', r: 8, x: 68, y: 8, tint: '#dcecff' },
-  { cat: 'sacs', kind: 'bandouliere', r: 18, x: 132, y: 30, tint: '#ffe0ec' },
+  { cat: 'vestes', kind: 'blazer', r: -18, x: -132, y: 30 },
+  { cat: 'hauts', kind: 'tshirt', r: -8, x: -68, y: 8 },
+  { cat: 'robes', kind: 'robe', r: 0, x: 0, y: 0 },
+  { cat: 'bijoux', kind: 'collier', r: 8, x: 68, y: 8 },
+  { cat: 'sacs', kind: 'bandouliere', r: 18, x: 132, y: 30 },
 ];
 
 /**
@@ -34,16 +34,14 @@ export function HeroFan({ scale = 1 }: { scale?: number }) {
             className="float"
             style={{
               '--r': `${c.r}deg`, animationDelay: `${i * -1.4}s`, animationDuration: `${6.5 + i * 0.6}s`,
-              width: w, height: h, borderRadius: 28 * scale,
-              // Assez opaques pour que les pièces ne se voient pas à travers les cartes voisines.
-              background: `linear-gradient(160deg, ${c.tint}, #fbfbfd 85%)`,
-              border: '1px solid var(--glass-edge)', boxShadow: 'var(--shadow-float)',
-              backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+              width: w, height: h, borderRadius: 0,
+              // Gris studio plein, sous un filet : les cartes voisines ne se voient pas au travers.
+              background: 'var(--stage)', border: '1px solid var(--bg)', color: 'var(--ink)',
               display: 'grid', placeItems: 'center',
             } as CSSProperties}
           >
-            <svg width={52 * scale} height={52 * scale} viewBox="0 0 24 24" fill="none" stroke="#1d1f27"
-              strokeWidth={1.15} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={52 * scale} height={52 * scale} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth={1.15} strokeLinecap="square" strokeLinejoin="miter">
               <path d={iconFor(c.cat, c.kind)} />
             </svg>
           </div>
@@ -55,7 +53,7 @@ export function HeroFan({ scale = 1 }: { scale?: number }) {
 
 export function Wordmark() {
   return (
-    <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.3em', textTransform: 'uppercase', color: 'var(--ink)', paddingLeft: '.3em' }}>
+    <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--ink)' }}>
       Dresskode
     </span>
   );

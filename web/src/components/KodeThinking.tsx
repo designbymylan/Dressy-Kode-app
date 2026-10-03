@@ -4,11 +4,11 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { OrbStep } from '@/lib/jobs';
 
 /**
- * « Kode réfléchit » : l'orbe qui respire et une phrase qui change toutes
- * les deux secondes environ, comme si Kode commentait ce qu'il fait. Aucun
- * nom de modèle ni de service n'apparaît jamais à l'écran. `step` teinte
- * l'orbe selon l'étape (repérage, dessin, contrôle, rangement) : la couleur
- * glisse de l'une à l'autre, la progression se lit sans texte.
+ * « Kode réfléchit » : l'anneau noir qui tourne et une phrase qui change
+ * toutes les deux secondes environ, comme si Kode commentait ce qu'il fait.
+ * Aucun nom de modèle ni de service n'apparaît jamais à l'écran. `step`
+ * (repérage, dessin, contrôle, rangement) reste posé sur l'anneau pour les
+ * styles, la galerie ne le colore plus.
  */
 export function KodeThinking({
   phrases,
@@ -29,7 +29,7 @@ export function KodeThinking({
   const list = useRef(phrases);
   list.current = phrases;
   const key = phrases.join('|');
-  // Nouvelle étape : on repart de sa première phrase, l'orbe, lui, reste et change de couleur.
+  // Nouvelle étape : on repart de sa première phrase, l'anneau, lui, continue de tourner.
   useEffect(() => {
     setI(0);
     if (list.current.length < 2) return;
@@ -44,7 +44,7 @@ export function KodeThinking({
       style={{ justifyContent: center ? 'center' : undefined, ...style }}
     >
       <span className="kode-orb" data-step={step} style={{ '--orb': `${size}px` } as CSSProperties} aria-hidden="true" />
-      <span style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 500 }}>
+      <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>
         <span key={i} className="kode-phrase">{phrases[i % phrases.length]}</span>
         <span className="dots" aria-hidden="true"><i /><i /><i /></span>
       </span>

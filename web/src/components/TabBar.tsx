@@ -1,124 +1,100 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const DOT = 4;
-
+/**
+ * Les icônes de navigation, les mêmes que l'app mobile (mobile/src/ui/Icon.tsx) :
+ * une maison, un t-shirt, une bulle, un calendrier, une silhouette. Au trait
+ * au repos, pleines (remplissage pair-impair) quand l'onglet est actif.
+ */
 const TABS = [
-  { href: '/accueil', label: 'Accueil', d: 'M3 11.5 12 4l9 7.5M5 10v10h14V10' },
-  { href: '/dressing', label: 'Dressing', d: 'M4 7h16M4 12h16M4 17h16' },
-  { href: '/kode', label: 'Kode', d: 'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z', pill: true },
-  { href: '/calendrier', label: 'Calendrier', d: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4' },
-  { href: '/moi', label: 'Mon compte', d: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8M4 20c0-4 4-6 8-6s8 2 8 6' },
+  {
+    href: '/accueil',
+    label: 'Accueil',
+    d: 'M3.5 11 12 4l8.5 7M5.5 9.4V20h13V9.4M10 20v-5.5h4V20',
+    full: 'M12 3.4 2.9 11h2.6v9.6h13V11h2.6ZM10 20.6v-6.1h4v6.1Z',
+  },
+  {
+    href: '/dressing',
+    label: 'Dressing',
+    d: 'M8.6 4 3.5 6.6 2.4 11.4l3.4 1.1V20h12.4v-7.5l3.4-1.1-1.1-4.8L15.4 4c-.5 1.7-1.8 2.7-3.4 2.7S9.1 5.7 8.6 4Z',
+    full: 'M8.6 4 3.5 6.6 2.4 11.4l3.4 1.1V20h12.4v-7.5l3.4-1.1-1.1-4.8L15.4 4c-.5 1.7-1.8 2.7-3.4 2.7S9.1 5.7 8.6 4Z',
+  },
+  {
+    href: '/kode',
+    label: 'Kode',
+    d: 'M3.5 4.5h17v12h-10L5.5 20.5v-4h-2ZM12 7.6l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9Z',
+    full: 'M3.5 4.5h17v12h-10L5.5 20.5v-4h-2ZM12 7.6l-.9 2.4-2.4.9 2.4.9.9 2.4.9-2.4 2.4-.9-2.4-.9Z',
+    kode: true,
+  },
+  {
+    href: '/calendrier',
+    label: 'Calendrier',
+    d: 'M3.5 6h17v14.5h-17ZM3.5 10.5h17M8 3.5v4.5M16 3.5v4.5M7.5 13.5h3v3h-3Z',
+    full: 'M3.5 6h17v14.5h-17ZM5 11.5v7.5h14v-7.5ZM8 3.5h1.7V6H8ZM14.3 3.5H16V6h-1.7ZM7.5 13.5h3v3h-3Z',
+  },
+  {
+    href: '/moi',
+    label: 'Mon compte',
+    // Seul l'onglet actif écrit son nom : « Compte », contenu dans le libellé lu.
+    short: 'Compte',
+    d: 'M12 12.2a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM4.5 20.5c.6-3.9 3.6-6 7.5-6s6.9 2.1 7.5 6Z',
+    full: 'M12 12.2a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM4.5 20.5c.6-3.9 3.6-6 7.5-6s6.9 2.1 7.5 6Z',
+  },
 ];
 
+function TabIcon({ d, full, on }: { d: string; full: string; on: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      {on ? (
+        <path d={full} fill="currentColor" fillRule="evenodd" stroke="currentColor" strokeWidth="0.6" strokeLinejoin="miter" />
+      ) : (
+        <path d={d} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="square" strokeLinejoin="miter" />
+      )}
+    </svg>
+  );
+}
+
 /**
- * Barre d'onglets flottante en verre : Kode au centre en pastille noire,
- * l'onglet actif marqué par son icône pleine encre et un point dessous.
- * Le point est liquide : il s'étire vers l'onglet visé puis se resserre,
- * comme une goutte ; sous la pastille de Kode, il s'y fond.
+ * Barre d'onglets de la galerie (mobile : src/ui/TabBar.tsx) : plate, collée
+ * en bas sous un filet d'un pixel. Cinq icônes qui se comprennent sans leur
+ * nom ; l'onglet actif passe en icône pleine et affiche son nom dessous.
+ * Kode au centre, dans un rond noir. Chaque onglet garde son libellé pour les
+ * lecteurs d'écran.
  */
 export function TabBar() {
   const pathname = usePathname();
-  const links = useRef<(HTMLAnchorElement | null)[]>([]);
-  const [drop, setDrop] = useState<{ left: number; width: number; moving: boolean } | null>(null);
-  const last = useRef<number | null>(null);
-  const active = TABS.findIndex((t) => pathname === t.href || pathname.startsWith(t.href + '/'));
-  const hidden = pathname.startsWith('/tenues/nouvelle');
-
-  // Le point part de l'onglet quitté, couvre les deux, puis se resserre sur le nouveau.
-  useLayoutEffect(() => {
-    if (hidden) return;
-    const center = (i: number) => {
-      const el = links.current[i];
-      return el ? el.offsetLeft + el.offsetWidth / 2 : null;
-    };
-    const to = active >= 0 ? center(active) : null;
-    if (to === null) return;
-    const from = last.current !== null && last.current !== active ? center(last.current) : null;
-    last.current = active;
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (from === null || still) {
-      setDrop({ left: to - DOT / 2, width: DOT, moving: false });
-      return;
-    }
-    setDrop({ left: Math.min(from, to) - DOT / 2, width: Math.abs(to - from) + DOT, moving: true });
-    const t = setTimeout(() => setDrop({ left: to - DOT / 2, width: DOT, moving: true }), 180);
-    return () => clearTimeout(t);
-  }, [active, hidden]);
-
-  // La barre change de largeur avec la fenêtre : le point suit son onglet.
-  useEffect(() => {
-    const onResize = () => {
-      const el = links.current[active];
-      if (el) setDrop({ left: el.offsetLeft + el.offsetWidth / 2 - DOT / 2, width: DOT, moving: false });
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [active]);
-
   // L'atelier de tenue a sa propre barre d'action : la navigation s'efface.
-  if (hidden) return null;
+  if (pathname.startsWith('/tenues/nouvelle')) return null;
 
   return (
-    <nav
-      aria-label="Navigation principale"
-      style={{
-        position: 'fixed', left: 20, right: 20, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-        maxWidth: 350, margin: '0 auto', height: 66, borderRadius: 999, zIndex: 20,
-        background: 'var(--nav-glass)', border: '1px solid var(--glass-edge)',
-        backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
-        boxShadow: 'var(--shadow-float)', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-around', padding: '0 12px',
-      }}
-    >
-      {drop ? (
-        <span
-          aria-hidden="true"
-          className="tab-drop"
-          data-moving={drop.moving || undefined}
-          style={{ left: drop.left, width: drop.width }}
-        />
-      ) : null}
-      {TABS.map((tab, i) => {
-        const active = pathname === tab.href || pathname.startsWith(tab.href + '/');
-        return (
-          <Link
-            key={tab.href}
-            ref={(el) => {
-              links.current[i] = el;
-            }}
-            href={tab.href}
-            aria-label={tab.label}
-            aria-current={active ? 'page' : undefined}
-            className="btn"
-            style={{
-              position: 'relative', padding: 0, minHeight: 0,
-              width: tab.pill ? 56 : 44, height: tab.pill ? 56 : 44, borderRadius: 999,
-              background: tab.pill ? 'var(--ink)' : 'transparent',
-              boxShadow: tab.pill ? 'var(--shadow-press)' : 'none',
-              color: tab.pill ? 'var(--on-ink)' : active ? 'var(--ink)' : 'var(--muted)',
-            }}
-          >
-            <svg
-              width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-              style={{ transform: active ? 'scale(1.08)' : 'none', transition: 'transform 400ms cubic-bezier(.34,1.56,.64,1)' }}
+    <nav aria-label="Navigation principale" className="tabbar">
+      <div className="tabbar-inner">
+        {TABS.map((tab) => {
+          const on = pathname === tab.href || pathname.startsWith(tab.href + '/');
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              aria-label={tab.label}
+              aria-current={on ? 'page' : undefined}
+              className={tab.kode ? 'tab tab-kode' : 'tab'}
             >
-              <path d={tab.d} />
-            </svg>
-            {/* Avant la première mesure (rendu serveur), l'onglet actif porte son propre point. */}
-            {active && !tab.pill && !drop ? (
-              <span
-                aria-hidden="true"
-                style={{ position: 'absolute', bottom: 3, width: 4, height: 4, borderRadius: 99, background: 'var(--ink)' }}
-              />
-            ) : null}
-          </Link>
-        );
-      })}
+              {tab.kode ? (
+                <span className="tab-kode-disc">
+                  <TabIcon d={tab.d} full={tab.full} on={on} />
+                </span>
+              ) : (
+                <TabIcon d={tab.d} full={tab.full} on={on} />
+              )}
+              <span className="tab-name" aria-hidden="true" style={{ visibility: on ? 'visible' : 'hidden' }} key={on ? 'on' : 'off'}>
+                {tab.short ?? tab.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

@@ -86,13 +86,13 @@ export function Garment({
  */
 export function FlatLay() {
   // Teintes pastel des halos de fond : les tuiles de verre en reprennent la lumière.
-  const pieces: { shape: ShapeName; x: number; y: number; r: number; s: number; tint: string }[] = [
-    { shape: 'trench', x: 4, y: 10, r: -11, s: 104, tint: '#ffe3d6' },
-    { shape: 'chemise', x: 86, y: 0, r: 6, s: 96, tint: '#ffffff' },
-    { shape: 'blazer', x: 160, y: 14, r: 13, s: 100, tint: '#e6e2ff' },
-    { shape: 'jean', x: 44, y: 86, r: 7, s: 92, tint: '#dcecff' },
-    { shape: 'robe', x: 124, y: 92, r: -8, s: 96, tint: '#ffe0ec' },
-    { shape: 'escarpin', x: 206, y: 104, r: -4, s: 76, tint: '#ffffff' },
+  const pieces: { shape: ShapeName; x: number; y: number; r: number; s: number }[] = [
+    { shape: 'trench', x: 4, y: 10, r: -11, s: 104 },
+    { shape: 'chemise', x: 86, y: 0, r: 6, s: 96 },
+    { shape: 'blazer', x: 160, y: 14, r: 13, s: 100 },
+    { shape: 'jean', x: 44, y: 86, r: 7, s: 92 },
+    { shape: 'robe', x: 124, y: 92, r: -8, s: 96 },
+    { shape: 'escarpin', x: 206, y: 104, r: -4, s: 76 },
   ];
 
   return (
@@ -107,13 +107,12 @@ export function FlatLay() {
             className="float"
             style={{
               '--r': `${p.r}deg`, animationDelay: `${i * -1.3}s`, animationDuration: `${6.5 + i * 0.5}s`,
-              width: p.s, height: p.s, borderRadius: 26,
-              background: `linear-gradient(160deg, ${p.tint}, #fbfbfd 85%)`,
-              border: '1px solid var(--glass-edge)', boxShadow: 'var(--shadow-float)',
+              width: p.s, height: p.s, borderRadius: 0,
+              background: 'var(--stage)', border: '1px solid var(--bg)', color: 'var(--ink)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             } as React.CSSProperties}
           >
-            <Garment shape={p.shape} size={p.s * 0.72} fill="transparent" stroke="#2b2d35" />
+            <Garment shape={p.shape} size={p.s * 0.72} fill="transparent" stroke="currentColor" />
           </div>
         </div>
       ))}

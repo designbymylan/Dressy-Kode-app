@@ -101,7 +101,7 @@ export function ManualForm() {
               title={c.label}
               onClick={() => setColour(colour === c.id ? '' : c.id)}
               style={{
-                width: 34, height: 34, borderRadius: 999, background: c.hex, cursor: 'pointer',
+                width: 34, height: 34, borderRadius: 0, background: c.hex, cursor: 'pointer',
                 border: '1px solid rgba(0,0,0,.08)',
                 outline: colour === c.id ? '2px solid var(--ink)' : '2px solid transparent', outlineOffset: 3,
                 transform: colour === c.id ? 'scale(1.08)' : 'none',
@@ -250,7 +250,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
             <li
               key={item.id}
               className="pop"
-              style={{ '--i': i, position: 'relative', aspectRatio: '1', borderRadius: 20, overflow: 'hidden', background: 'var(--tile)', boxShadow: 'var(--shadow-glass)' } as CSSProperties}
+              style={{ '--i': i, position: 'relative', aspectRatio: '1', borderRadius: 0, overflow: 'hidden', background: 'var(--tile)' } as CSSProperties}
             >
               <img src={item.preview} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               {busy ? <span className="shimmer" style={{ position: 'absolute', inset: 0 }} aria-hidden="true" /> : null}
@@ -266,7 +266,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <span style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--glass-strong)', color: 'var(--ink)', display: 'grid', placeItems: 'center', backdropFilter: 'blur(10px)' }}>
+                <span style={{ width: 28, height: 28, borderRadius: 0, background: 'var(--glass-strong)', color: 'var(--ink)', display: 'grid', placeItems: 'center' }}>
                   <Icon d={ICON.close} size={13} width={2.2} />
                 </span>
               </button>

@@ -54,9 +54,9 @@ export function WearButton({
           </svg>
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <strong style={{ fontSize: 14.5, fontWeight: 600 }}>Portée aujourd&apos;hui</strong>
+          <strong style={{ fontSize: 14.5, fontWeight: 500 }}>Portée aujourd&apos;hui</strong>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-            <b className="worn-tally" style={{ color: 'var(--ink)', fontWeight: 600 }}>{total}</b> port{total > 1 ? 's' : ''} pour ces pièces
+            <b className="worn-tally" style={{ color: 'var(--ink)', fontWeight: 500 }}>{total}</b> port{total > 1 ? 's' : ''} pour ces pièces
           </span>
         </span>
       </div>

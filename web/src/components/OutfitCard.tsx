@@ -28,7 +28,7 @@ export function OutfitCard({ outfit, children, assemble }: { outfit: OutfitView;
       <div
         role="img"
         aria-label={`Tenue : ${outfit.pieces.map((p) => p.name).join(', ')}`}
-        style={{ background: 'var(--stage)', borderRadius: 22, height: 196, position: 'relative', overflow: 'hidden' }}
+        style={{ background: 'var(--stage)', borderRadius: 0, height: 196, position: 'relative', overflow: 'hidden' }}
       >
         {shown.map((p, i) => {
           const s = SPOTS[i];

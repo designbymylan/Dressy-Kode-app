@@ -15,7 +15,7 @@ function Line({ label, values }: { label: string; values: string[] }) {
   if (!values.length) return null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <dt className="eyebrow" style={{ fontSize: 11, textAlign: 'left' }}>{label}</dt>
+      <dt className="eyebrow" style={{ fontSize: 12, textAlign: 'left' }}>{label}</dt>
       <dd style={{ fontSize: 14, lineHeight: 1.4 }}>{values.join(' · ')}</dd>
     </div>
   );
@@ -86,7 +86,7 @@ export default async function Moi({
           <Line label="Ton style" values={labelsFor('styles', sp?.styles ?? [])} />
           {colours.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <dt className="eyebrow" style={{ fontSize: 11, textAlign: 'left' }}>Tes couleurs</dt>
+              <dt className="eyebrow" style={{ fontSize: 12, textAlign: 'left' }}>Tes couleurs</dt>
               <dd style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 {colours.map((id, i) => (
                   <span
@@ -94,8 +94,8 @@ export default async function Moi({
                     title={labelsFor('colours', [id])[0]}
                     className="pop"
                     style={{
-                      '--i': i, width: 24, height: 24, borderRadius: 999, background: colourHex(id),
-                      border: '2px solid var(--glass-edge)', boxShadow: 'var(--shadow-glass)',
+                      '--i': i, width: 24, height: 24, borderRadius: 0, background: colourHex(id),
+                      border: '2px solid var(--glass-edge)',
                     } as CSSProperties}
                   />
                 ))}

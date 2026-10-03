@@ -5,9 +5,10 @@ import { setTheme } from '@/app/actions';
 import type { Theme } from '@/lib/space';
 
 const OPTIONS: { value: Theme; label: string; swatch: string }[] = [
-  { value: 'light', label: 'Clair', swatch: '#EEEDEA' },
-  { value: 'dark', label: 'Sombre', swatch: '#151517' },
-  { value: 'auto', label: 'Auto', swatch: 'linear-gradient(105deg,#EEEDEA 0 50%,#151517 50%)' },
+  { value: 'light', label: 'Clair', swatch: '#FFFFFF' },
+  { value: 'dark', label: 'Sombre', swatch: '#000000' },
+  // Aperçu de thème : une moitié de chaque, coupée net.
+  { value: 'auto', label: 'Auto', swatch: 'linear-gradient(105deg,#FFFFFF 0 50%,#000000 50%)' },
 ];
 
 /**
@@ -45,13 +46,13 @@ export function ThemeChoice({ current }: { current: Theme }) {
           >
             <span
               style={{
-                width: '100%', height: 56, borderRadius: 18, background: opt.swatch,
+                width: '100%', height: 56, borderRadius: 0, background: opt.swatch,
                 border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`,
                 boxSizing: 'border-box',
                 transition: 'border-color 200ms cubic-bezier(.2,.8,.2,1)',
               }}
             />
-            <span style={{ fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? 'var(--ink)' : 'var(--muted)' }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: on ? 'var(--ink)' : 'var(--muted)' }}>
               {opt.label}
             </span>
           </button>

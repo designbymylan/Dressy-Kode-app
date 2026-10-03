@@ -29,7 +29,7 @@ function Check({ on }: { on: boolean }) {
     <span
       aria-hidden="true"
       style={{
-        position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 999,
+        position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 0,
         background: on ? 'var(--ink)' : 'transparent',
         border: on ? 'none' : '1.5px solid var(--line)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -48,10 +48,9 @@ function Check({ on }: { on: boolean }) {
 const tileStyle = (on: boolean, columns: number): CSSProperties => ({
   position: 'relative', minHeight: columns === 3 ? 108 : 112,
   borderWidth: 1.5, borderStyle: 'solid', borderColor: on ? 'var(--ink)' : 'var(--glass-edge)',
-  borderRadius: 22, background: on ? 'var(--glass-strong)' : 'var(--glass)', cursor: 'pointer',
+  borderRadius: 0, background: on ? 'var(--glass-strong)' : 'var(--glass)', cursor: 'pointer',
   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-  gap: 10, padding: '14px 8px', boxShadow: 'var(--shadow-glass)',
-  backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+  gap: 10, padding: '14px 8px',
   transition: 'border-color 200ms var(--ease), transform 300ms var(--ease-spring)',
 });
 
@@ -68,7 +67,7 @@ function Tile({
     >
       <Check on={on} />
       {option.icon ? <GlossIcon d={option.icon} tone={tone} size={46} /> : null}
-      <span style={{ fontSize: 12.5, textAlign: 'center', lineHeight: 1.25, fontWeight: on ? 600 : 500 }}>{option.label}</span>
+      <span style={{ fontSize: 12.5, textAlign: 'center', lineHeight: 1.25, fontWeight: 500 }}>{option.label}</span>
     </button>
   );
 }
@@ -87,7 +86,7 @@ function TileGrid({
 
 function GroupTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 style={{ fontSize: 12, fontWeight: 500, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)', padding: '6px 4px 0' }}>
+    <h2 style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--muted)', padding: '6px 4px 0' }}>
       {children}
     </h2>
   );
@@ -105,14 +104,13 @@ function Row({
       style={{
         minHeight: 62, width: '100%', textAlign: 'left',
         border: `1.5px solid ${on ? 'var(--ink)' : 'var(--glass-edge)'}`,
-        borderRadius: 999, background: on ? 'var(--glass-strong)' : 'var(--glass)', cursor: 'pointer',
+        borderRadius: 0, background: on ? 'var(--glass-strong)' : 'var(--glass)', cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px 0 10px',
-        boxShadow: 'var(--shadow-glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
         transition: 'border-color 200ms var(--ease)',
       }}
     >
       {option.icon ? <GlossIcon d={option.icon} tone={tone} size={40} /> : null}
-      <span style={{ flex: 1, fontSize: 14.5, fontWeight: on ? 600 : 500 }}>{option.label}</span>
+      <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{option.label}</span>
       {on ? <Icon d={ICON.check} size={18} width={2.4} /> : null}
     </button>
   );
@@ -141,8 +139,8 @@ function WearBadge({ state }: { state: Exclude<Wear, null> }) {
     <span
       aria-hidden="true"
       style={{
-        position: 'absolute', top: 7, right: 7, height: 22, padding: '0 8px', borderRadius: 999,
-        display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 600,
+        position: 'absolute', top: 7, right: 7, height: 22, padding: '0 8px', borderRadius: 0,
+        display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 500,
         background: porte ? 'var(--ink)' : 'var(--glass-strong)',
         color: porte ? 'var(--on-ink)' : 'var(--ink)',
         border: porte ? 'none' : '1px dashed var(--ink)',
@@ -238,27 +236,25 @@ function Swatches({ selected, toggle }: { selected: string[]; toggle: (id: strin
           >
             <span
               style={{
-                width: 52, height: 52, borderRadius: 999,
-                // Même relief lumineux que les icônes : reflet en haut, ombre en bas.
-                background: `radial-gradient(120% 95% at 30% 16%, rgba(255,255,255,.7) 0%, rgba(255,255,255,0) 46%), ${c.hex}`,
-                boxShadow: 'inset 0 -6px 10px -4px rgba(0,0,0,.28), 0 8px 14px -8px rgba(20,24,40,.45)',
+                width: 52, height: 52, borderRadius: 0,
+                // Une pastille plate de la couleur, à angles droits.
+                background: c.hex,
                 // Le blanc et la crème disparaîtraient sur fond clair sans ce filet.
                 border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`,
                 boxSizing: 'border-box',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transform: on ? 'scale(1.06)' : 'none',
-                transition: 'border-color 200ms var(--ease), transform 300ms var(--ease-spring)',
+                transition: 'border-color 200ms var(--ease)',
               }}
             >
               {on ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                   stroke={['blanc', 'creme', 'beige', 'ciel', 'jaune', 'argente'].includes(c.id) ? '#0D0D0E' : '#FFFFFF'}
-                  strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="m4 12 5 5 11-11" />
+                  strokeWidth="2.6" strokeLinecap="square" strokeLinejoin="miter" aria-hidden="true">
+                  <path d="M4.5 12.5l4.8 4.8L19.5 7" />
                 </svg>
               ) : null}
             </span>
-            <span style={{ fontSize: 10.5, color: 'var(--muted)', textAlign: 'center' }}>{c.label}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>{c.label}</span>
           </button>
         );
       })}
@@ -283,14 +279,13 @@ function Metals({ selected, toggle }: { selected: string[]; toggle: (id: string)
             <span
               aria-hidden="true"
               style={{
-                width: 50, height: 50, borderRadius: 999, background: m.fill, position: 'relative',
+                width: 50, height: 50, borderRadius: 0, background: m.fill, position: 'relative',
                 border: `2px solid ${on ? 'var(--ink)' : 'var(--glass-edge)'}`,
-                boxShadow: 'inset 0 2px 3px rgba(255,255,255,.8), inset 0 -6px 10px -4px rgba(0,0,0,.25), 0 8px 14px -8px rgba(20,24,40,.45)',
                 transform: on ? 'scale(1.06)' : 'none',
                 transition: 'transform 300ms var(--ease-spring), border-color 200ms var(--ease)',
               }}
             />
-            <span style={{ fontSize: 11.5, fontWeight: on ? 600 : 500 }}>{m.label}</span>
+            <span style={{ fontSize: 11.5, fontWeight: 500 }}>{m.label}</span>
           </button>
         );
       })}
@@ -316,10 +311,10 @@ function SummaryCard({
   return (
     <div
       className="glass"
-      style={{ borderRadius: 22, padding: '14px 10px 14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}
+      style={{ borderRadius: 0, padding: '14px 10px 14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)' }}>{label}</span>
+        <span style={{ fontSize: 12, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--muted)' }}>{label}</span>
         <span style={{ fontSize: 14.5, lineHeight: 1.4, color: empty ? 'var(--muted)' : 'var(--ink)' }}>
           {empty ? 'Pas encore renseigné' : children}
         </span>
@@ -368,7 +363,7 @@ function summary(a: Answers): { step: Step; label: string; value: ReactNode | nu
           <span style={{ display: 'inline-flex' }}>
             {a.colours.slice(0, 5).map((id, i) => (
               <span key={id} style={{
-                width: 20, height: 20, borderRadius: 999, background: colourHex(id),
+                width: 20, height: 20, borderRadius: 0, background: colourHex(id),
                 border: '1.5px solid var(--ground)', marginLeft: i ? -7 : 0,
               }} />
             ))}
@@ -480,7 +475,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
           <>
             <Head title={<>Faisons <em className="accent">connaissance</em></>} lead="Deux choses et on y va." />
             <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              <span style={{ fontSize: 12, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--muted)' }}>
                 Comment tu t&apos;appelles ?
               </span>
               <input
@@ -490,7 +485,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
               />
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              <span style={{ fontSize: 12, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--muted)' }}>
                 Quels vêtements je te montre ?
               </span>
               <TileGrid options={GENDERS} selected={a.gender ? [a.gender] : []} toggle={choose('gender')} single toneFrom={3} />
@@ -648,7 +643,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 5,
           maxWidth: 430, margin: '0 auto', padding: '16px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)',
-          background: 'linear-gradient(to top, var(--bg) 64%, transparent)',
+          background: 'var(--bg)', borderTop: '1px solid var(--rule)',
           display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6,
         }}
       >
