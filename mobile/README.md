@@ -53,7 +53,10 @@ qui ouvre toujours la dernière version dans Expo Go, branchée sur Supabase.
 - Le projet EAS est `7d598be6-b07e-4f0d-b7b0-2623fa014d12` (déjà dans `app.json`). Au premier
   passage, le script le relie au compte (`owner`) ; sans identifiant, il crée le projet et écrit `extra.eas.projectId`,
   `owner` et `updates.url` dans `app.json` : ce changement est à commiter.
-- Sur l'iPhone, Expo Go doit être connecté au **même compte Expo** que le projet.
+- Sur l'iPhone, Expo Go doit être connecté à un compte Expo membre de l'organisation
+  `dresskodes-team` (propriétaire du projet).
+- Lien fixe vers la dernière version (canal `apercu`) :
+  `exp://u.expo.dev/7d598be6-b07e-4f0d-b7b0-2623fa014d12?runtime-version=exposdk%3A57.0.0&channel-name=apercu`
 - `runtimeVersion` reste en `sdkVersion` (`exposdk:57.0.0`) : c'est ce qui permet à Expo
   Go de charger la mise à jour. Le jour d'une vraie build (TestFlight, App Store), on
   passera à `fingerprint` et à des builds `eas build --profile preview` (`eas.json`).
