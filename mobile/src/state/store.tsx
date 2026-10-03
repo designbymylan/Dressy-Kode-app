@@ -331,6 +331,14 @@ async function readSaved(): Promise<Partial<State> | null> {
 
 const forget = () => AsyncStorage.removeItem(SAVED).catch(() => undefined);
 
+/** Au lancement, le réseau a quelques secondes : au-delà, l'app s'ouvre sur le dernier état connu. */
+const LANCEMENT_MS = 8000;
+const aTemps = <T,>(p: Promise<T>, ms: number) =>
+  new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`pas de réponse en ${ms / 1000} s`)), ms);
+    p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+  });
+
 /* ---- Actions ---- */
 
 const OFFLINE = 'Ce changement n’a pas pu être enregistré. Vérifie ta connexion.';
@@ -619,7 +627,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const saved = await readSaved();
       if (supabase) {
         try {
-          const acc = await remote.loadAccount();
+          const acc = await aTemps(remote.loadAccount(), LANCEMENT_MS);
           if (!alive) return;
           if (acc) {
             dispatch({ t: 'account', acc });
