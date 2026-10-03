@@ -190,7 +190,9 @@ Ordre de priorité, du plus fort au plus faible :
   sortie peut rester montée, invisible, et bloquer les touches dessous
   (Reanimated #10275 ; bouton « Entrer » mort le 03/10). Une entrée animée
   suffit ; une sortie se fait à la main (`withTiming` puis démontage, voir
-  `ui/Sheet.tsx`).
+  `ui/Sheet.tsx`). Sur iPhone, les feuilles s'ouvrent dans une `Modal`
+  native (sinon elles passent sous les écrans présentés en modale) ; le
+  portail ne sert qu'à l'aperçu web.
 - **Web** : styles en ligne + `globals.css` (classes `.glass`, `.btn`,
   `.chip`, `.segment`…). Réutilise `web/src/components/ui.tsx` (`Screen`,
   `Title`, `Card`, `buttonPrimary`…). Pas de Tailwind, pas de shadcn/ui, pas
