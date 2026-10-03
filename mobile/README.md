@@ -53,6 +53,9 @@ qui ouvre toujours la dernière version dans Expo Go, branchée sur Supabase.
 - Le projet EAS est `7d598be6-b07e-4f0d-b7b0-2623fa014d12` (déjà dans `app.json`). Au premier
   passage, le script le relie au compte (`owner`) ; sans identifiant, il crée le projet et écrit `extra.eas.projectId`,
   `owner` et `updates.url` dans `app.json` : ce changement est à commiter.
+- L'adresse Supabase et la clé publishable sont des **variables EAS** (environnements
+  preview, production, development) : `eas update` ne lit pas le `.env` local. Le
+  script vérifie après chaque publication que l'app part bien branchée.
 - Sur l'iPhone, Expo Go doit être connecté à un compte Expo membre de l'organisation
   `dresskodes-team` (propriétaire du projet).
 - Lien fixe vers la dernière version (canal `apercu`) :

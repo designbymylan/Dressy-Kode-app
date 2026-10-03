@@ -76,7 +76,18 @@ const link = async (params) => {
 const always = await link({ projectId, runtimeVersion, channel: CHANNEL }).catch(() => null);
 const thisOne = groupId ? await link({ projectId, groupId }).catch(() => null) : null;
 
-console.log('\nPublié.');
+// L'app part-elle bien branchée sur Supabase ? EAS lit ses propres variables
+// (eas env, environnement « preview »), pas le .env local : on vérifie le paquet.
+const host = (fs.readFileSync(env, 'utf8').match(/^EXPO_PUBLIC_SUPABASE_URL=https?:\/\/([^\s/]+)/m) ?? [])[1];
+const bundles = path.join(ROOT, 'dist/_expo/static/js/ios');
+const branche = host && fs.existsSync(bundles) && fs.readdirSync(bundles).some((f) => fs.readFileSync(path.join(bundles, f)).includes(host));
+if (!branche) {
+  console.error(`\nAttention : cette version ne contient pas l'adresse Supabase (${host ?? 'introuvable'}), elle tournera en démonstration.`);
+  console.error('Ajoute EXPO_PUBLIC_SUPABASE_URL et EXPO_PUBLIC_SUPABASE_KEY aux variables EAS : npx eas-cli env:create --environment preview …');
+  process.exitCode = 1;
+}
+
+console.log(branche ? '\nPublié, branché sur Supabase.' : '\nPublié (en démonstration).');
 if (always) console.log(`Toujours la dernière version (à ouvrir sur l'iPhone) :\n  ${always}`);
 if (thisOne) console.log(`Cette version précise :\n  ${thisOne}`);
 console.log(`QR code : https://qr.expo.dev/eas-update?${new URLSearchParams({ projectId, runtimeVersion, channel: CHANNEL, slug: 'exp' })}`);
