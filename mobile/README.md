@@ -50,7 +50,8 @@ qui ouvre toujours la dernière version dans Expo Go, branchée sur Supabase.
 
 - Il faut `EXPO_TOKEN` dans l'environnement (jeton d'accès du compte Expo, créé sur
   expo.dev > Account settings > Access tokens). Jamais dans un fichier commité.
-- Au premier passage, le script crée le projet EAS et écrit `extra.eas.projectId`,
+- Le projet EAS est `7d598be6-b07e-4f0d-b7b0-2623fa014d12` (déjà dans `app.json`). Au premier
+  passage, le script le relie au compte (`owner`) ; sans identifiant, il crée le projet et écrit `extra.eas.projectId`,
   `owner` et `updates.url` dans `app.json` : ce changement est à commiter.
 - Sur l'iPhone, Expo Go doit être connecté au **même compte Expo** que le projet.
 - `runtimeVersion` reste en `sdkVersion` (`exposdk:57.0.0`) : c'est ce qui permet à Expo

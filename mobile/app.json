@@ -8,7 +8,8 @@
     },
     "updates": {
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/7d598be6-b07e-4f0d-b7b0-2623fa014d12"
     },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -45,6 +46,11 @@
         }
       ]
     ],
-    "backgroundColor": "#F1ECE3"
+    "backgroundColor": "#F1ECE3",
+    "extra": {
+      "eas": {
+        "projectId": "7d598be6-b07e-4f0d-b7b0-2623fa014d12"
+      }
+    }
   }
 }

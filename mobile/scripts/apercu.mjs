@@ -35,10 +35,15 @@ if (!fs.existsSync(env)) {
   console.log('.env créé depuis .env.example (adresse du projet et clé publishable).');
 }
 
-// Premier passage : le projet EAS n'existe pas encore.
-if (!readApp().expo.extra?.eas?.projectId) {
+// Premier passage : le projet EAS n'existe pas encore, ou il est connu (projectId)
+// mais pas encore relié à son compte (owner) : eas init s'en charge.
+const known = readApp().expo;
+if (!known.extra?.eas?.projectId) {
   console.log('Création du projet EAS sur ton compte Expo…');
   run(['init', '--non-interactive', '--force']);
+} else if (!known.owner) {
+  console.log('Liaison au projet EAS existant…');
+  run(['init', '--id', known.extra.eas.projectId, '--non-interactive', '--force']);
 }
 const app = readApp();
 const projectId = app.expo.extra?.eas?.projectId;
