@@ -52,7 +52,7 @@ export function States() {
       <StackHeader title="États et feuilles" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 22 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Aperçu design
           </T>
           <T v="title" accessibilityRole="header">

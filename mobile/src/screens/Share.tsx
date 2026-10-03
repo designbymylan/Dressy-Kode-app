@@ -99,7 +99,7 @@ export function ShareScreen() {
 
         {mode === 'preter' && (
           <Animated.View entering={FadeIn.duration(180)} style={{ gap: 8 }}>
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               Retour prévu
             </T>
             <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -111,7 +111,7 @@ export function ShareScreen() {
         )}
 
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             À qui ?
           </T>
           <View className="flex-row" style={{ gap: 12 }}>
@@ -127,7 +127,7 @@ export function ShareScreen() {
         </View>
 
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Ton message
           </T>
           <TextInput

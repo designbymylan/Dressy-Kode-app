@@ -215,7 +215,7 @@ function Frame({ kicker, lead, em, intro, children, footer }: { kicker?: string;
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 22, paddingBottom: 24, gap: 18 }}>
         <View style={{ gap: 8 }}>
           {kicker && (
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               {kicker}
             </T>
           )}
@@ -358,7 +358,7 @@ function Corps({ draft, set, next, W }: Ctx) {
       footer={<Button testID="onb-next" label="Continuer" onPress={() => { set({ height, weight: withWeight ? weight : null }); next(); }} />}
     >
       <Card style={{ gap: 4, paddingHorizontal: 12 }}>
-        <T v="kicker" tone="ink2" upper style={{ paddingHorizontal: 4 }}>
+        <T v="kicker" tone="ink2" style={{ paddingHorizontal: 4 }}>
           Ta taille
         </T>
         <Ruler testID="ruler-taille" value={height} onChange={setHeight} min={140} max={205} unit="cm" label="Ta taille" width={W - 24} />
@@ -366,7 +366,7 @@ function Corps({ draft, set, next, W }: Ctx) {
       <Card style={{ gap: 10, paddingHorizontal: 12 }}>
         <View className="flex-row items-center" style={{ gap: 12, paddingHorizontal: 4 }}>
           <View style={{ flex: 1 }}>
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               Ton poids
             </T>
             <T v="caption" tone="ink2">
@@ -619,7 +619,7 @@ function Mesures({ draft, set, next }: Ctx) {
                 <T v="caption" tone={on ? 'brass' : 'ink2'} style={{ ...F.s600 }}>
                   {r.label}
                 </T>
-                <T v="cardTitle" style={{ fontSize: 22 }}>
+                <T v="stat" style={{ fontSize: 22, lineHeight: 26 }}>
                   {v ? `${v} cm` : <T v="body" tone="ink2">Ajouter</T>}
                 </T>
               </Tap>
@@ -660,7 +660,7 @@ function Tailles({ draft, set, next }: Ctx) {
   const row = (key: 'haut' | 'bas' | 'pointure', title: string, list: string[], hint: string) => (
     <View style={{ gap: 8 }}>
       <View className="flex-row items-baseline justify-between">
-        <T v="kicker" tone="ink2" upper>
+        <T v="kicker" tone="ink2">
           {title}
         </T>
         <T v="small" tone="ink2">
@@ -972,7 +972,7 @@ function Pieces({ draft, pieces, setPieces, next, W }: Ctx) {
         </View>
       )}
       <View style={{ gap: 8 }}>
-        <T v="kicker" tone="ink2" upper>
+        <T v="kicker" tone="ink2">
           Photos récentes
         </T>
         <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -1181,7 +1181,7 @@ function Bienvenue({ draft, pieces, W, onEnter }: Ctx & { onEnter: () => void })
         </Animated.View>
         {first ? (
           <Animated.View entering={FadeInDown.delay(250).duration(400)} style={{ gap: 12 }}>
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               Ta première tenue, pour aujourd’hui
             </T>
             <OutfitBoard pieces={shown} width={W} />

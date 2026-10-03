@@ -52,7 +52,7 @@ export function Shop() {
       <StackHeader title="La boutique" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             La boutique
           </T>
           <T v="title" accessibilityRole="header">
@@ -103,7 +103,7 @@ export function Shop() {
 
         {!allOwned && (
           <Card className="bg-primary-bg" style={{ gap: 10 }} testID="bundle">
-            <T v="kicker" tone="primary-fg" upper style={{ opacity: 0.8 }}>
+            <T v="kicker" tone="primary-fg" style={{ opacity: 0.8 }}>
               Les cinq packs
             </T>
             <T v="cardTitle" tone="primary-fg">

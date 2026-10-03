@@ -192,7 +192,7 @@ export function AddPiece() {
                 )}
                 {live ? (
                   <View style={{ gap: 8 }}>
-                    <T v="kicker" tone="ink2" upper>
+                    <T v="kicker" tone="ink2">
                       Seulement certaines pièces ?
                     </T>
                     <TextInput
@@ -212,7 +212,7 @@ export function AddPiece() {
                   </View>
                 ) : (
                 <>
-                <T v="kicker" tone="ink2" upper>
+                <T v="kicker" tone="ink2">
                   Photos récentes
                 </T>
                 <View className="flex-row flex-wrap" style={{ gap: 10 }}>
@@ -274,7 +274,7 @@ export function AddPiece() {
               />
             </View>
             <View style={{ gap: 4 }}>
-              <T v="kicker" tone="positive" upper>
+              <T v="kicker" tone="positive">
                 Reconnue avec confiance
               </T>
               <T v="body" tone="ink2">
@@ -287,7 +287,7 @@ export function AddPiece() {
               )}
             </View>
             <View style={{ gap: 8 }}>
-              <T v="kicker" tone="ink2" upper>
+              <T v="kicker" tone="ink2">
                 Nom
               </T>
               <TextInput
@@ -300,7 +300,7 @@ export function AddPiece() {
               />
             </View>
             <View style={{ gap: 8 }}>
-              <T v="kicker" tone="ink2" upper>
+              <T v="kicker" tone="ink2">
                 Catégorie
               </T>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -310,7 +310,7 @@ export function AddPiece() {
               </View>
             </View>
             <View style={{ gap: 8 }}>
-              <T v="kicker" tone="ink2" upper>
+              <T v="kicker" tone="ink2">
                 Matière
               </T>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -320,7 +320,7 @@ export function AddPiece() {
               </View>
             </View>
             <View style={{ gap: 8 }}>
-              <T v="kicker" tone="ink2" upper>
+              <T v="kicker" tone="ink2">
                 Saison
               </T>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>

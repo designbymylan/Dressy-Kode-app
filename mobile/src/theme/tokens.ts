@@ -2,8 +2,8 @@
  * Jetons du design system Dresskode, direction « galerie » (CLAUDE.md, charte
  * d'origine dans design/charte-galerie.md) : fond blanc, texte noir, filets
  * gris d'un pixel, gris studio sous les vêtements, beurre pour les bandeaux
- * de service ; angles droits, aucune ombre ; Helvetica Neue en 13 px pour les
- * libellés. Le mode sombre en est tiré (fond noir, texte blanc, beurre gardé).
+ * de service ; angles droits, aucune ombre. Typographie : charte v1
+ * (design/charte-typographique-v1.md, polices dans fonts.ts). Le mode sombre en est tiré (fond noir, texte blanc, beurre gardé).
  * La disposition des écrans, elle, reste celle de la refonte (design/refonte/).
  * Les couleurs vivent dans palette.json : c'est le fichier que lit
  * design/refonte/contraste.py, pour que le code et la vérification AA
@@ -32,23 +32,33 @@ export const radius = { sm: 0, md: 0, tile: 0, lg: 0, card: 0, xl: 0, sheet: 0, 
 /** Taille mini d'une cible tactile (HIG) : 44 × 44 pt. */
 export const HIT = 44;
 
+/** Titres en capitales, interlettrage +0,012 em (charte typographique v1). */
+const caps = (size: number) => ({ textTransform: 'uppercase' as const, letterSpacing: Math.round(size * 0.012 * 100) / 100 });
+
 /**
- * Échelle typographique. Helvetica Neue (fonts.ts). Libellés, navigation et
- * petites capitales en 13 px, graisse moyenne, sans interlettrage ; texte
- * courant 15 px ; titres modérés, sans italique. Jamais sous 11,5 pt.
+ * Échelle de la charte typographique v1. Cormorant (titres, marque, chiffres)
+ * jamais sous 22 px, sauf la marque ; DM Mono pour les étiquettes courtes,
+ * jamais pour du texte lu ; Hanken Grotesk pour tout le reste. Rien sous
+ * 11,5 px.
  */
 export const type = {
-  masthead: { ...F.s700, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
-  kicker: { ...F.s500, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
-  hero: { ...F.s500, fontSize: 34, lineHeight: 37, letterSpacing: -0.9 },
-  title: { ...F.s500, fontSize: 28, lineHeight: 31, letterSpacing: -0.6 },
-  section: { ...F.s500, fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
-  quote: { ...F.accent, fontSize: 17, lineHeight: 24, letterSpacing: -0.1 },
-  cardTitle: { ...F.s500, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
-  numeral: { ...F.s500, fontSize: 13, lineHeight: 18 },
+  // La marque, DRESSKODE : Cormorant en capitales, interlettrage 0,24 em.
+  brand: { ...F.displayStrong, fontSize: 17, lineHeight: 20, textTransform: 'uppercase' as const, letterSpacing: 4.1 },
+  // Le mot de la page en haut à gauche (LE DRESSING, KODE…).
+  masthead: { ...F.s600, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
+  // Étiquette (« Tenue du jour », « L'étiquette ») : mono, casse normale.
+  kicker: { ...F.mono, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
+  hero: { ...F.display, fontSize: 32, lineHeight: 34, ...caps(32) },
+  title: { ...F.display, fontSize: 28, lineHeight: 30, ...caps(28) },
+  section: { ...F.display, fontSize: 22, lineHeight: 25, ...caps(22) },
+  // Grands chiffres (coût par port, compteurs, pourcentages) : Cormorant, en casse normale.
+  stat: { ...F.display, fontSize: 28, lineHeight: 31 },
+  quote: { ...F.s400, fontSize: 17, lineHeight: 24 },
+  cardTitle: { ...F.s500, fontSize: 17, lineHeight: 22, letterSpacing: -0.1 },
+  numeral: { ...F.mono, fontSize: 13, lineHeight: 18 },
   bodyL: { ...F.s400, fontSize: 17, lineHeight: 24 },
-  body: { ...F.s400, fontSize: 15, lineHeight: 21 },
-  bodyStrong: { ...F.s500, fontSize: 15, lineHeight: 21 },
+  body: { ...F.s400, fontSize: 15, lineHeight: 21.75 },
+  bodyStrong: { ...F.s500, fontSize: 15, lineHeight: 21.75 },
   button: { ...F.s500, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
   caption: { ...F.s400, fontSize: 13, lineHeight: 18 },
   small: { ...F.s400, fontSize: 12, lineHeight: 16 },

@@ -16,12 +16,12 @@ export function Rule({ strong, style }: { strong?: boolean; style?: object }) {
   return <View style={[{ height: 1 }, style]} className={strong ? 'bg-rule-strong' : 'bg-rule'} />;
 }
 
-/** L'ours d'une page : le mot de la page en capitales noires à gauche, le contexte à droite, en 13 pt. */
+/** L'ours d'une page : la marque (ou le mot de la page) à gauche, le contexte à droite. */
 export function Masthead({ kicker, meta, right }: { kicker: string; meta?: string; right?: ReactNode }) {
   return (
     <View style={{ gap: 10, paddingBottom: 2 }}>
       <View className="flex-row items-center justify-between" style={{ minHeight: 20, gap: 12 }}>
-        <T v="masthead" accessibilityRole="header">
+        <T v={kicker === 'DRESSKODE' ? 'brand' : 'masthead'} accessibilityRole="header">
           {kicker}
         </T>
         {meta ? (

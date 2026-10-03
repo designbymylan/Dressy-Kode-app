@@ -102,7 +102,7 @@ export function Compose() {
       <StackHeader title="Composer une tenue" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 6 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             La planche
           </T>
           <T v="title" accessibilityRole="header">
@@ -151,8 +151,8 @@ export function Compose() {
           <Card className="bg-sunk" style={{ gap: 10 }}>
             <View className="flex-row items-center" style={{ gap: 8 }}>
               <Icon name="kode" size={18} color={c.brass} />
-              <T v="masthead" tone="ink2">
-                KODE
+              <T v="kicker" tone="ink2">
+                Kode
               </T>
             </View>
             <T v="bodyL">{advice(chosen)}</T>
@@ -161,7 +161,7 @@ export function Compose() {
         </Animated.View>
 
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Pour quand ?
           </T>
           <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>

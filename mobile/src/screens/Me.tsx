@@ -62,7 +62,7 @@ export function Me() {
           { v: String(worn30), l: 'sorties ce mois' },
         ].map((x) => (
           <Card key={x.l} style={{ flex: 1, gap: 2, padding: 14 }}>
-            <T v="cardTitle" style={{ fontSize: 28, lineHeight: 32 }}>
+            <T v="stat">
               {x.v}
             </T>
             <T v="small" tone="ink2">
@@ -73,7 +73,7 @@ export function Me() {
       </View>
 
       <View>
-        <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+        <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
           Ton offre
         </T>
         <Group>
@@ -102,7 +102,7 @@ export function Me() {
       )}
 
       <View>
-        <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+        <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
           Toi
         </T>
         <Group>
@@ -120,7 +120,7 @@ export function Me() {
       </View>
 
       <View>
-        <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+        <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
           Aperçu design
         </T>
         <Group>

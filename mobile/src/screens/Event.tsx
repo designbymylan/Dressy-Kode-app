@@ -62,7 +62,7 @@ export function EventScreen() {
       <StackHeader title={e.title} y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Événement · {longDate(e.day)}
           </T>
           <T v="title" accessibilityRole="header">
@@ -91,7 +91,7 @@ export function EventScreen() {
         </View>
 
         <Card style={{ gap: 12 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             L’idée de Kode
           </T>
           <OutfitBoard pieces={first} width={W} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
@@ -120,7 +120,7 @@ export function EventScreen() {
               </Card>
             ))}
             <Card className="bg-sunk" style={{ gap: 8 }}>
-              <T v="kicker" tone="ink2" upper>
+              <T v="kicker" tone="ink2">
                 Check-list
               </T>
               {['Étole ou blazer pour la soirée', 'Escarpins : prévois des talonnettes, la pelouse est traîtresse', 'Pochette plutôt que cabas', 'Plan B pluie : le trench marine passe sur les trois tenues'].map((x) => (
@@ -137,7 +137,7 @@ export function EventScreen() {
           <Card testID="pack-offer" style={{ gap: 12, borderWidth: 1, borderColor: c['rule-strong'], backgroundColor: 'transparent' }}>
             <View className="flex-row items-center" style={{ gap: 8 }}>
               <Icon name="gift" size={20} color={c.brass} />
-              <T v="kicker" tone="brass" upper>
+              <T v="kicker" tone="brass">
                 Pour aller plus loin
               </T>
             </View>

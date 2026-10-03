@@ -55,9 +55,9 @@ export function Welcome() {
 
       <View style={{ paddingHorizontal: space.gutter, gap: 16 }}>
         <Animated.View entering={FadeInDown.delay(500).duration(500)} style={{ gap: 14 }}>
-          <T v="hero" style={{ fontSize: 54, lineHeight: 52 }} accessibilityRole="header">
+          <T v="hero" style={{ fontSize: 42, lineHeight: 44 }} accessibilityRole="header">
             Porte mieux,{'\n'}achète{' '}
-            <T v="hero" style={{ fontSize: 54, lineHeight: 52, ...F.accent }}>
+            <T v="hero" style={{ fontSize: 42, lineHeight: 44, ...F.accent }}>
               moins.
             </T>
           </T>

@@ -132,7 +132,7 @@ export function PieceScreen() {
 
         <View style={{ paddingHorizontal: space.gutter, paddingTop: 20, gap: 22 }}>
           <View style={{ gap: 6 }}>
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               {cat.title}
             </T>
             <T v="title" accessibilityRole="header">
@@ -165,7 +165,7 @@ export function PieceScreen() {
           )}
 
           <View style={{ gap: 12 }}>
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               L’étiquette
             </T>
             {/* Une fiche de galerie : des rangées entre deux filets. */}
@@ -195,7 +195,7 @@ export function PieceScreen() {
           </View>
 
           <View style={{ gap: 12 }}>
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               L’usage
             </T>
             <View className="flex-row" style={{ gap: 10 }}>
@@ -205,7 +205,7 @@ export function PieceScreen() {
                 { v: piece.lastWorn === null ? 'Jamais' : piece.lastWorn === 0 ? 'Auj.' : `${piece.lastWorn} j`, l: 'depuis le dernier' },
               ].map((x) => (
                 <View key={x.l} style={{ flex: 1, gap: 2 }}>
-                  <T v="cardTitle" style={{ fontSize: 26, lineHeight: 30 }} numberOfLines={1} adjustsFontSizeToFit>
+                  <T v="stat" style={{ fontSize: 26, lineHeight: 30 }} numberOfLines={1} adjustsFontSizeToFit>
                     {x.v}
                   </T>
                   <T v="small" tone="ink2">

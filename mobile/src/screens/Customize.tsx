@@ -27,7 +27,7 @@ export function Customize() {
       <StackHeader title="Personnaliser" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 26 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Personnaliser
           </T>
           <T v="title" accessibilityRole="header">
@@ -39,7 +39,7 @@ export function Customize() {
         </View>
 
         <View style={{ gap: 6 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Ton accueil
           </T>
           <T v="caption" tone="ink2">
@@ -63,7 +63,7 @@ export function Customize() {
         </View>
 
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Thème
           </T>
           <SegmentedPill
@@ -82,7 +82,7 @@ export function Customize() {
         </View>
 
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Densité de la grille
           </T>
           <SegmentedPill

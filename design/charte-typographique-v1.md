@@ -1,4 +1,4 @@
-# Dresskode — Charte typographique v1
+# Dresskode · Charte typographique v1
 
 *03/10/2026. Décision de Mylan après test sur iPhone : duo A validé (Cormorant Garamond + DM Mono), titres en majuscules, mono conservée pour les étiquettes. Remplace la typographie du brief Claude Design v0.2 (Archivo + Hanken Grotesk) et celle du prototype v0.2. Comparatif consulté : https://claude.ai/artifact/Yair1DhEddpp7qqBfXs7qx*
 

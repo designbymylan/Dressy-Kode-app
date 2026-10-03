@@ -119,7 +119,7 @@ export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; widt
         {piece.wears === 0 && (
           // Une étiquette noire compacte, comme un cartel de galerie.
           <View className="absolute bg-primary-bg" style={{ top: 0, left: 0, paddingHorizontal: 8, paddingVertical: 4 }}>
-            <T v="small" tone="primary-fg" style={{ ...F.s500 }} upper>
+            <T v="kicker" tone="primary-fg">
               {isNew(piece) ? newLabel(piece) : 'Jamais portée'}
             </T>
           </View>
@@ -208,7 +208,7 @@ export function Badge({ label, tone = 'positive', icon }: { label: string; tone?
   return (
     <View className={`flex-row items-center self-start ${bg}`} style={[{ paddingHorizontal: 8, paddingVertical: 4, gap: 5 }, tone === 'neutral' && { borderWidth: 1, borderColor: c.ink }]}>
       {icon && <Icon name={icon} size={14} color={fg} strokeWidth={1.8} />}
-      <T v="small" style={{ ...F.s500, color: fg }} upper>
+      <T v="kicker" style={{ color: fg }}>
         {label}
       </T>
     </View>

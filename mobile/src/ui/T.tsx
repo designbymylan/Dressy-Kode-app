@@ -15,7 +15,7 @@ const TONE: Record<Tone, string> = {
 };
 
 /** Les grands titres grossissent avec la taille de texte du système, mais sans casser la page. */
-const MAX_SCALE: Partial<Record<TextVariant, number>> = { hero: 1.25, title: 1.3, section: 1.4, masthead: 1.6, tab: 1.3 };
+const MAX_SCALE: Partial<Record<TextVariant, number>> = { hero: 1.25, title: 1.3, section: 1.4, stat: 1.3, brand: 1.4, masthead: 1.6, tab: 1.3 };
 
 type Props = TextProps & { v?: TextVariant; tone?: Tone; className?: string; upper?: boolean };
 

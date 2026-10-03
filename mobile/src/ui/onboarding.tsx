@@ -345,7 +345,7 @@ export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { t
       {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 0, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
       <View style={{ flex: 1, gap: 3 }}>
         {badge && (
-          <T v="small" tone="brass" style={{ ...F.s700, letterSpacing: 0.6 }} upper>
+          <T v="kicker" tone="brass">
             {badge}
           </T>
         )}

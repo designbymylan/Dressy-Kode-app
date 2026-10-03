@@ -192,7 +192,7 @@ export function Dressing() {
     >
       <View style={{ gap: 20 }}>
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Usage
           </T>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -201,7 +201,7 @@ export function Dressing() {
           </View>
         </View>
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Couleur
           </T>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -211,7 +211,7 @@ export function Dressing() {
           </View>
         </View>
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Saison
           </T>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -221,7 +221,7 @@ export function Dressing() {
           </View>
         </View>
         <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Trier
           </T>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>

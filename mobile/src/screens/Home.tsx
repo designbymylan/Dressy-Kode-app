@@ -69,7 +69,7 @@ export function Home() {
       <>
       <Animated.View key={outfit.id} entering={FadeIn.duration(320)} exiting={FadeOut.duration(120)} style={{ gap: 14 }}>
         <View style={{ gap: 6 }}>
-          <T v="kicker" tone={worn ? 'positive' : 'ink2'} upper>
+          <T v="kicker" tone={worn ? 'positive' : 'ink2'}>
             {worn ? 'Portée aujourd’hui' : 'Tenue du jour'}
           </T>
           {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
@@ -86,8 +86,8 @@ export function Home() {
         <Legend pieces={pieces} onPiece={open} />
         <View style={{ gap: 8, paddingTop: 12, borderTopWidth: 1 }} className="border-rule">
           <T v="quote">« {outfit.why} »</T>
-          <T v="masthead" tone="ink2">
-            KODE
+          <T v="kicker" tone="ink2">
+            Kode
           </T>
         </View>
       </Animated.View>
@@ -196,7 +196,7 @@ function EmptyToday() {
   return (
     <Animated.View entering={FadeIn.duration(320)} style={{ gap: 16 }} testID="home-empty">
       <View style={{ gap: 6 }}>
-        <T v="kicker" tone="ink2" upper>
+        <T v="kicker" tone="ink2">
           Ta première tenue
         </T>
         <T v="hero" accessibilityRole="header">
@@ -410,7 +410,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
           { v: String(worn30), l: 'pièces sorties ce mois-ci' },
         ].map((x) => (
           <Card key={x.l} style={{ flex: 1, gap: 4 }}>
-            <T v="title" style={{ fontSize: 36, lineHeight: 38 }}>
+            <T v="stat">
               {x.v}
             </T>
             <T v="caption" tone="ink2">

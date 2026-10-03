@@ -171,7 +171,7 @@ export function Agenda() {
         {planned && pieces.length ? (
           <Card style={{ gap: 12 }} testID="agenda-planned">
             <View className="flex-row items-center justify-between">
-              <T v="kicker" tone={todayOutfit ? 'positive' : 'ink2'} upper>
+              <T v="kicker" tone={todayOutfit ? 'positive' : 'ink2'}>
                 {todayOutfit ? 'Portée' : s.planned[day] ? 'Prévue' : 'Proposée'}
               </T>
               {s.planned[day] && !todayOutfit && (
@@ -213,7 +213,7 @@ export function Agenda() {
 
         {later.length > 0 && (
           <View style={{ gap: 4 }}>
-            <T v="kicker" tone="ink2" upper style={{ marginBottom: 4 }}>
+            <T v="kicker" tone="ink2" style={{ marginBottom: 4 }}>
               À venir
             </T>
             {later.map((e) => (

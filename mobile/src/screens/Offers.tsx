@@ -50,7 +50,7 @@ export function Offers() {
       <StackHeader title="Les offres" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Les offres
           </T>
           <T v="title" accessibilityRole="header">
@@ -66,7 +66,7 @@ export function Offers() {
 
         <Card style={{ gap: 10 }}>
           <View className="flex-row items-center justify-between">
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               Aujourd’hui
             </T>
             <Badge label={current.name} tone="neutral" />
@@ -125,7 +125,7 @@ export function Offers() {
                       </T>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                      <T v="cardTitle">{free ? '0 €' : price(p.cents[period])}</T>
+                      <T v="stat" style={{ fontSize: 24, lineHeight: 28 }}>{free ? '0 €' : price(p.cents[period])}</T>
                       <T v="small" tone="ink2">
                         {free ? 'pour toujours' : period === 'mois' ? 'par mois' : `par an, soit ${price(Math.round(p.cents.an / 12))}/mois`}
                       </T>

@@ -57,7 +57,7 @@ export function SilhouetteScreen() {
       <StackHeader title="Ma silhouette" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 22 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2" upper>
+          <T v="kicker" tone="ink2">
             Ma silhouette
           </T>
           <T v="title" accessibilityRole="header">
@@ -73,7 +73,7 @@ export function SilhouetteScreen() {
 
         <Card className="flex-row items-center" style={{ gap: 18 }}>
           <Ring value={score} size={92}>
-            <T v="cardTitle" style={{ fontSize: 25 }}>
+            <T v="stat" style={{ fontSize: 25 }}>
               {score} %
             </T>
           </Ring>
@@ -86,7 +86,7 @@ export function SilhouetteScreen() {
         </Card>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+          <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
             Ton corps
           </T>
           <Group>
@@ -103,7 +103,7 @@ export function SilhouetteScreen() {
         </View>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+          <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
             Tes mesures
           </T>
           <Group>
@@ -114,7 +114,7 @@ export function SilhouetteScreen() {
         </View>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+          <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
             Tes tailles
           </T>
           <Group>
@@ -125,7 +125,7 @@ export function SilhouetteScreen() {
         </View>
 
         <View>
-          <T v="kicker" tone="ink2" upper style={{ marginBottom: 8, marginLeft: 6 }}>
+          <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
             Ton style
           </T>
           <Group>

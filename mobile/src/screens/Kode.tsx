@@ -112,7 +112,7 @@ export function Kode() {
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
             <Card style={{ gap: 6 }}>
-              <T v="kicker" tone="ink2" upper>
+              <T v="kicker" tone="ink2">
                 Ce que Kode sait déjà
               </T>
               {w ? (
@@ -156,7 +156,7 @@ export function Kode() {
               {meteo.reelle && <Credit blocs={[s.contexte?.meteo, prochain?.bloc]} style={{ marginTop: 4 }} />}
             </Card>
             {!ready && <Button testID="kode-add" label="Ajouter mes premières pièces" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
-            <T v="kicker" tone="ink2" upper>
+            <T v="kicker" tone="ink2">
               Pour commencer
             </T>
             {starters.map((q, i) => (
@@ -231,8 +231,8 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   return (
     <Animated.View entering={FadeInDown.duration(320)} style={{ gap: 10 }} accessibilityLiveRegion="polite">
-      <T v="masthead" tone="ink2">
-        KODE
+      <T v="kicker" tone="ink2">
+        Kode
       </T>
       <T v="bodyL">{m.text}</T>
       {m.outfit && pieces.length > 0 && (
@@ -265,8 +265,8 @@ const COMPOSING = ['Kode fouille ton dressing', 'Kode assemble les couleurs', 'K
 function Typing() {
   return (
     <View style={{ gap: 8 }}>
-      <T v="masthead" tone="ink2">
-        KODE
+      <T v="kicker" tone="ink2">
+        Kode
       </T>
       <KodeThinking phrases={COMPOSING} every={2000} />
     </View>

@@ -1,6 +1,7 @@
 import './global.css';
 import './src/ui/interop';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import { useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,10 +12,14 @@ import { PortalHost } from './src/ui/Sheet';
 import { ToastHost } from './src/ui/Toast';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { PhoneFrame } from './src/web/PhoneFrame';
+import { FONT_FILES } from './src/theme/fonts';
 
 export default function App() {
-  // Rien à charger : la galerie utilise Helvetica Neue, déjà sur l'iPhone, et
-  // la pile Helvetica/Arial sur le web (src/theme/fonts.ts).
+  // Les trois polices de la charte (assets/fonts) : l'app attend leur
+  // chargement, une fraction de seconde. En cas d'échec, elle s'ouvre quand
+  // même avec la police du système plutôt que de rester bloquée.
+  const [loaded, error] = useFonts(FONT_FILES);
+  if (!loaded && !error) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

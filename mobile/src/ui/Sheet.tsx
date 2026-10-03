@@ -112,7 +112,7 @@ function SheetBody({ onClose, title, kicker, children, footer, testID }: Omit<Sh
               <View className="flex-row items-start" style={{ marginTop: 10, gap: 12 }}>
                 <View style={{ flex: 1, paddingTop: 4 }}>
                   {kicker && (
-                    <T v="kicker" tone="ink2" upper>
+                    <T v="kicker" tone="ink2">
                       {kicker}
                     </T>
                   )}
