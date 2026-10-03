@@ -230,7 +230,7 @@ function PieceSheet({
         </div>
         <div className="piece-sheet-facts">
           {eyebrow ? <p className="eyebrow" style={{ textAlign: 'left' }}>{eyebrow}</p> : null}
-          <h2 id="fiche-titre" style={{ fontSize: 26 }}>{piece.name}</h2>
+          <h2 id="fiche-titre" style={{ fontSize: 24 }}>{piece.name}</h2>
           <p className="small muted">{wornLine(stat)}</p>
           {goes > 0 ? (
             <p className="small muted">

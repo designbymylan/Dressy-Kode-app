@@ -156,7 +156,7 @@ export function KodeChat({
         </span>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <h1 style={{ fontSize: 24 }}>Kode</h1>
+            <h1 style={{ fontSize: 22 }}>Kode</h1>
             <span
               style={{
                 height: 20, padding: '0 8px', borderRadius: 0, background: 'var(--accent-tint)',

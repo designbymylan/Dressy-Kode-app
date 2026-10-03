@@ -21,7 +21,7 @@ export function Title({
   children,
   sub,
   eyebrow,
-  size = 32,
+  size = 28,
 }: {
   children: ReactNode;
   sub?: ReactNode;

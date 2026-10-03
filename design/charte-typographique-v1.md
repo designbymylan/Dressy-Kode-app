@@ -51,5 +51,6 @@ Le texte courant reste en Hanken Grotesk : c'est une troisième police, assumée
 - Réduits au latin utile au français (accents, Œ, «  », €, espaces fines, flèches) : 420 Ko pour l'app (.ttf), 125 Ko pour le web (.woff2). La version complète de Cormorant pèse 1 Mo par graisse.
 - Chiffres : la version statique de Cormorant publiée par son auteur n'a pas de réglage « lining », seule la version Google en a un. Les chiffres alignés y sont mis **par défaut dans le fichier** : un prix se lit partout, sans `lining-nums`.
 - Rangement : `mobile/assets/fonts/` et `web/public/fonts/`, rôles dans `mobile/src/theme/fonts.ts` et `web/src/app/globals.css`.
+- Tailles réduites le 03/10 à la demande de Mylan : titre XL 28 px (36 px sur l'écran de bienvenue), titre d'écran 25 px, titres de section au plancher de 22 px.
 - Écarts assumés : étiquettes mono à 12 px (le bas de la fourchette, 10,5 px, passe sous le minimum de 11,5 px de l'app) ; poids 500 gardé en mode sombre, lisible sur fond noir aux tailles de titre (600 reste chargé si le rendu sur iPhone paraît trop fin).
 

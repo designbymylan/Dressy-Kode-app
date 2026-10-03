@@ -436,7 +436,7 @@ function Saved({ onAgain }: { onAgain: () => void }) {
             <path className="check-draw" d={ICON.check} />
           </svg>
         </span>
-        <h2 id="tenue-ok" style={{ fontSize: 28 }}>Tenue <em className="accent">enregistrée</em></h2>
+        <h2 id="tenue-ok" style={{ fontSize: 25 }}>Tenue <em className="accent">enregistrée</em></h2>
         <p className="lead small">Elle t&apos;attend dans tes tenues. Tu pourras la prévoir pour un jour précis.</p>
         <Link href="/tenues" className="btn btn-primary btn-block">Voir mes tenues</Link>
         <button type="button" onClick={onAgain} className="btn btn-glass btn-block">En composer une autre</button>

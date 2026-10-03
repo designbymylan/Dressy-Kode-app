@@ -50,7 +50,7 @@ export function OffersPicker({
         padding: '28px 20px 250px', display: 'flex', flexDirection: 'column', gap: 18,
       }}
     >
-      <h1 style={{ fontSize: 32, lineHeight: 1.05 }}>Porte mieux, achète moins.</h1>
+      <h1 style={{ fontSize: 28, lineHeight: 1.05 }}>Porte mieux, achète moins.</h1>
 
       <div
         role="radiogroup"

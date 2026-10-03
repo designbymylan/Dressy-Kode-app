@@ -296,7 +296,7 @@ function Metals({ selected, toggle }: { selected: string[]; toggle: (id: string)
 function Head({ title, lead }: { title: ReactNode; lead: string }) {
   return (
     <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <h1 style={{ fontSize: 27 }}>{title}</h1>
+      <h1 style={{ fontSize: 24 }}>{title}</h1>
       <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5 }}>{lead}</p>
     </header>
   );

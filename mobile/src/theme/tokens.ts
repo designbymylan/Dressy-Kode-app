@@ -48,8 +48,8 @@ export const type = {
   masthead: { ...F.s600, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
   // Étiquette (« Tenue du jour », « L'étiquette ») : mono, casse normale.
   kicker: { ...F.mono, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
-  hero: { ...F.display, fontSize: 32, lineHeight: 34, ...caps(32) },
-  title: { ...F.display, fontSize: 28, lineHeight: 30, ...caps(28) },
+  hero: { ...F.display, fontSize: 28, lineHeight: 30, ...caps(28) },
+  title: { ...F.display, fontSize: 25, lineHeight: 27, ...caps(25) },
   section: { ...F.display, fontSize: 22, lineHeight: 25, ...caps(22) },
   // Grands chiffres (coût par port, compteurs, pourcentages) : Cormorant, en casse normale.
   stat: { ...F.display, fontSize: 28, lineHeight: 31 },
