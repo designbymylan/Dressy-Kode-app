@@ -71,9 +71,15 @@ Changements de disposition validés par l'utilisateur (29/09), à garder :
 - **Dressing web** : une vignette ouvre la fiche de la pièce, qui naît de la
   vignette, avec « Composer une tenue avec » (`DressingRails.tsx`).
 - **Barre d'onglets (web et mobile)** : une capsule de verre qui flotte en
-  bas (03/10) ; l'onglet actif montre son icône pleine et son nom dessous
-  (02/10, qui remplace le point liquide du 29/09). Kode reste au centre, en
-  rond noir.
+  bas (03/10). **Décision du 04/10 (mobile)** : retour au dessin du 02/10,
+  icônes au trait sans nom, un petit point sous l'onglet actif, Kode au
+  centre en rond noir surélevé avec son étincelle. Le web garde pour
+  l'instant l'icône pleine et son nom, à aligner.
+
+**Décision du 04/10 : le design du 02/10 revient sur le mobile** (composants,
+barre d'onglets, icônes, boutons, vignettes, toast, liens de section), avec
+la typographie v1 et les couleurs de la galerie. Seuls ces deux points
+gardent la galerie ; tout le reste suit le 02/10 (commit `76c2e5a`).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -136,13 +142,14 @@ Ordre de priorité, du plus fort au plus faible :
   de service (messages de Kode, offres, informations), avec texte noir en
   clair comme en sombre. Le reste est noir, blanc et gris. Gris studio
   (`#f3f3f3`) pour les vignettes de vêtements et les champs de saisie.
-- Boutons : l'action principale en capsule noire avec son ombre, libellé en
-  capitales ; les autres en capsule de verre ou en texte en capitales. Liens
-  de découverte : capitales + petite flèche noire.
+- Boutons (02/10, revenus le 04/10) : l'action principale en capsule noire
+  avec son ombre, libellé en casse normale ; les autres en capsule de verre,
+  en pastille ou en texte gris. Liens de section (« Tout voir »,
+  « Agenda ») : texte gris discret, sans flèche.
 - Typographie (charte v1) : **Cormorant Garamond** 500 pour les titres
   d'écran (capitales, +0,012 em, jamais sous 22 px), la marque (DRESSKODE,
   capitales espacées de 0,24 em) et les grands chiffres ; **Hanken Grotesk**
-  400/500/600 pour le texte (15 px), les boutons (13 px, capitales), les
+  400/500/600 pour le texte (15 px), les boutons (15 px, 600), les
   onglets et les formulaires ; **DM Mono** 12 px, casse normale, pour les
   étiquettes courtes (25 caractères au plus, jamais du texte lu). Polices
   appelées par rôle : `F.s400`… `F.display`, `F.mono` (mobile), variables
@@ -162,10 +169,10 @@ Ordre de priorité, du plus fort au plus faible :
 - Vêtements : illustrations vectorielles plates ou détourages de Kode, posés
   sur gris studio dans des vignettes arrondies ; jamais de photo produit, pas
   de 3D.
-- Icônes : noires et monochromes, au trait, **pleines quand actives**, des
-  formes qui se comprennent sans leur nom. Dans la barre d'onglets, seul
-  l'onglet actif affiche son nom ; tous gardent leur libellé pour les
-  lecteurs d'écran.
+- Icônes : noires et monochromes, au trait (jeu du 02/10 sur le mobile), des
+  formes qui se comprennent sans leur nom. Dans la barre d'onglets mobile,
+  l'onglet actif se signale par un point ; tous gardent leur libellé pour
+  les lecteurs d'écran.
 - Mouvement : discret (fondus, ressorts courts), jamais bloquant, coupé par
   « Réduire les animations ».
 - Accessibilité : contraste AA (`contraste.py` après toute retouche de
