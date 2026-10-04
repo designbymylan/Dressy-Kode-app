@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Platform, TextInput, View } from 'react-native';
+import { Image, Linking, Platform, TextInput, View } from 'react-native';
+import { isRunningInExpoGo } from 'expo';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CATEGORIES, GALLERY, type Found, type Piece, type Season } from '../data/wardrobe';
 import { pieceLimit, useStore } from '../state/store';
 import * as remote from '../state/remote';
+import { CAMERA_BLOCKED, cameraAccess } from '../lib/camera';
 import { groupByPhoto, isActive, isPiece, jobNote, jobPhrases, jobStep, jobTitle, scanPieces, type Box, type JobRow, type Reveal } from '../state/jobs';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
@@ -52,6 +54,8 @@ export function AddPiece() {
   const waiting = s.pendingPhotos.length;
   const [hint, setHint] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Appareil photo refusé : le message propose d'ouvrir les Réglages.
+  const [settings, setSettings] = useState(false);
   const [sent, setSent] = useState<{ picked: Picked[]; paths: string[] | null } | null>(null);
   // La galerie de la démonstration propose d'abord ce qui n'est pas déjà dans le dressing.
   const names = new Set(s.pieces.map((p) => p.name));
@@ -98,14 +102,18 @@ export function AddPiece() {
    * proposée ; dans la démonstration seule, la reconnaissance est simulée.
    */
   const fromDevice = async (camera: boolean) => {
+    setError(null);
+    setSettings(false);
+    const native = Platform.OS !== 'web';
     try {
-      if (camera && Platform.OS !== 'web') {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) return a.toast('Autorise l’appareil photo dans Réglages');
+      if (camera && native && (await cameraAccess()) === 'blocked') {
+        // Le toast passerait sous cet écran (présenté en modale) : le message reste ici.
+        setSettings(true);
+        return setError(CAMERA_BLOCKED);
       }
       const r =
-        camera && Platform.OS !== 'web'
-          ? await ImagePicker.launchCameraAsync({ quality: 0.5 })
+        camera && native
+          ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 })
           : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
       if (r.canceled || !r.assets.length) return;
       const picked = r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType, ratio: x.width && x.height ? x.width / x.height : 0.75 }));
@@ -115,8 +123,15 @@ export function AddPiece() {
         a.queuePhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })));
         setAccount(true);
       }
-    } catch {
-      // Annulé : on reste sur le choix de la source.
+    } catch (err) {
+      // Une annulation ne passe jamais par ici : c'est une vraie panne, on la dit.
+      const detail = err instanceof Error ? err.message : String(err);
+      console.warn('[ajout] appareil photo ou galerie :', detail);
+      setError(
+        camera
+          ? `L’appareil photo ne s’est pas ouvert. Réessaie, ou choisis la photo dans ta galerie.${isRunningInExpoGo() ? ` (${detail})` : ''}`
+          : `La galerie ne s’est pas ouverte. Réessaie dans un instant.${isRunningInExpoGo() ? ` (${detail})` : ''}`,
+      );
     }
   };
 
@@ -202,8 +217,9 @@ export function AddPiece() {
                   ))}
                 </View>
                 {error && (
-                  <Card className="bg-butter" style={{ gap: 6 }} testID="add-error">
+                  <Card className="bg-butter" style={{ gap: 10 }} testID="add-error">
                     <T v="body">{error}</T>
+                    {settings && <Button testID="add-settings" label="Ouvrir les Réglages" size="s" variant="secondary" onPress={() => Linking.openSettings()} />}
                   </Card>
                 )}
                 {live ? (

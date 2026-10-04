@@ -12,6 +12,7 @@ import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import { CAMERA_BLOCKED, cameraAccess } from '../lib/camera';
 import { COLOR_CHOICES } from '../data/wardrobe';
 import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision, sizeOptions, type MeasureId, type Profile, type Silhouette } from '../state/profile';
 import { useStore } from '../state/store';
@@ -390,6 +391,7 @@ function Corps({ draft, set, next, W }: Ctx) {
 const ANALYSE_STEPS = ['Repérage des épaules', 'Repérage de la taille', 'Repérage des hanches', 'Calcul des proportions'];
 
 function SilhouetteStep({ draft, set, next, W }: Ctx) {
+  const { a } = useStore();
   const { c } = useTheme();
   const [mode, setMode] = useState<'choix' | 'photos' | 'manuel'>(draft.silhouetteSource === 'choix' ? 'manuel' : 'choix');
   const [photos, setPhotos] = useState<{ face: string | null; profil: string | null; example: boolean }>({ face: null, profil: null, example: false });
@@ -416,10 +418,7 @@ function SilhouetteStep({ draft, set, next, W }: Ctx) {
     if (!which) return;
     if (from === 'example') return setPhotos({ face: null, profil: null, example: true });
     try {
-      if (from === 'camera') {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) return;
-      }
+      if (from === 'camera' && (await cameraAccess()) === 'blocked') return a.toast(CAMERA_BLOCKED, true);
       const r = from === 'camera' ? await ImagePicker.launchCameraAsync({ quality: 0.6 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
       if (!r.canceled && r.assets[0]) setPhotos((p) => ({ ...p, example: false, [which]: r.assets[0].uri }));
     } catch {
@@ -880,6 +879,7 @@ function Ville({ draft, set, next }: Ctx) {
  * le dessine pour les portants (state/store.tsx : sendPending).
  */
 function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
+  const { a } = useStore();
   const { c } = useTheme();
   const tile = (W - 3 * 8) / 4;
   const n = photos.length;
@@ -888,10 +888,7 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
   const importPhotos = async (camera: boolean) => {
     if (room <= 0) return;
     try {
-      if (camera) {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) return;
-      }
+      if (camera && (await cameraAccess()) === 'blocked') return a.toast(CAMERA_BLOCKED, true);
       const r = camera
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7 });

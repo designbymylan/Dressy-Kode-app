@@ -546,7 +546,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       moveModule: (id: HomeModule, by: -1 | 1) => dispatch({ t: 'moveModule', id, by }),
       setDensity: (value: State['density']) => dispatch({ t: 'density', value }),
       share: (share: Share) => dispatch({ t: 'share', share }),
-      toast: (text: string) => dispatch({ t: 'toast', text }),
+      toast: (text: string, warn?: boolean) => dispatch({ t: 'toast', text, warn }),
       hideToast: () => dispatch({ t: 'hideToast' }),
 
       /** Sans compte : les photos attendent sur le téléphone (10 au plus) et partent à sa création. */
