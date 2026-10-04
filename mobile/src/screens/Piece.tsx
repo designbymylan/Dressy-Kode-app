@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { CATEGORIES, MONTHS_SHORT, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
+import { CATEGORIES, MONTHS_SHORT, addedLabel, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { glassSurface } from '../ui/Glass';
@@ -17,6 +17,7 @@ import { Garment, hangOf } from '../ui/Garment';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { LabelEditor } from '../ui/LabelEditor';
 import type { Nav, Route } from '../navigation/types';
 
 /** Ce qui va avec une pièce : une règle simple et lisible, pas une boîte noire. */
@@ -97,6 +98,7 @@ export function PieceScreen() {
   const { y, onScroll } = useHeaderScroll();
   const top = useStackTop();
   const [menu, setMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
   const piece = s.pieces.find((p) => p.id === params.id);
   const grow = useGrowFrom(params.from);
 
@@ -140,13 +142,13 @@ export function PieceScreen() {
               {piece.name}
             </T>
             <T v="body" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
-              {wornLabel(piece)}
+              {cap(wornLabel(piece))}
               {piece.lastWorn !== null && piece.lastWorn > 0 ? ` · dernière fois ${sinceLabel(piece)}` : ''}
             </T>
           </View>
 
           <View className="flex-row" style={{ gap: 8 }}>
-            <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `${cap(f.le)} porter aujourd’hui`} grow disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
+            <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" grow disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
             <Button testID="piece-compose" label="Composer avec" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { with: piece.id })} />
           </View>
 
@@ -166,18 +168,23 @@ export function PieceScreen() {
           )}
 
           <View style={{ gap: 12 }}>
-            <T v="kicker" tone="ink2">
-              L’étiquette
-            </T>
+            <View className="flex-row items-baseline justify-between">
+              <T v="kicker" tone="ink2">
+                L’étiquette
+              </T>
+              <T testID="label-edit" v="caption" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 13, paddingLeft: 16 }}>
+                Modifier
+              </T>
+            </View>
             {/* Une étiquette cousue, sur une carte de verre : bord pointillé, rangées nettes. */}
             <View style={[{ borderRadius: 22, padding: 6 }, glassSurface(c, scheme)]}>
               <View style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: c['rule-strong'], borderRadius: 16, paddingHorizontal: 14 }}>
                 {[
                   ['Couleur', piece.color],
-                  ['Matière', piece.material],
-                  ['Saison', piece.season[0].toUpperCase() + piece.season.slice(1)],
-                  ['Prix', piece.price ? `${piece.price} €` : 'Non indiqué'],
-                  ['Dans ton dressing', `depuis ${Math.max(1, Math.round(piece.addedDaysAgo / 30))} mois`],
+                  ['Matière', piece.material ? cap(piece.material) : 'Non indiquée'],
+                  ['Saison', cap(piece.season)],
+                  ['Prix', piece.price != null ? `${piece.price.toFixed(2).replace('.', ',').replace(',00', '')} €` : 'Non indiqué'],
+                  ['Dans ton dressing', cap(addedLabel(piece.addedDaysAgo))],
                 ].map(([k, v], i, arr) => (
                   <View key={k} className="flex-row items-center justify-between" style={{ minHeight: 46, borderBottomWidth: i === arr.length - 1 ? 0 : 1, borderColor: c.rule, gap: 12 }}>
                     <T v="caption" tone="ink2">
@@ -248,10 +255,13 @@ export function PieceScreen() {
       </Animated.ScrollView>
 
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">
-        <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" onPress={() => { setMenu(false); a.toast('La modification arrive bientôt'); }} />
+        {/* La feuille du menu se referme d'abord : sur iPhone, deux modales ne s'ouvrent pas l'une sur l'autre. */}
+        <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
         <Row icon="share" title="Prêter ou donner à une amie" onPress={() => { setMenu(false); nav.navigate('Share', { id: piece.id }); }} />
         <Row icon="trash" title="Retirer du dressing" detail="Tu pourras annuler juste après" last onPress={() => { setMenu(false); nav.goBack(); a.removePiece(piece.id); }} testID="piece-remove" />
       </Sheet>
+
+      <LabelEditor piece={piece} visible={editing} onClose={() => setEditing(false)} onSave={(p) => { setEditing(false); a.updatePiece(p); }} />
     </View>
   );
 }

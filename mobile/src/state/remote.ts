@@ -7,7 +7,7 @@
  */
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { COLOR_CHOICES, type CategoryId, type Piece, type Season } from '../data/wardrobe';
+import { COLOR_CHOICES, COLOURS, type CategoryId, type Piece, type Season } from '../data/wardrobe';
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
 import type { Contexte } from './contexte';
@@ -102,19 +102,7 @@ type StatRow = { garment_id: string; wear_count: number | null; last_worn_on: st
 
 const GARMENT_SELECT = 'id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at, thumb_path, image_path';
 
-/**
- * Les couleurs que Kode note sur une photo (supabase/functions/dressy-agent/prompts.ts,
- * COLOUR_RGB) : leur libellé, et la teinte qui habille l'illustration de
- * secours quand la vignette détourée n'est pas encore chargée.
- */
-const KODE_COLOURS: Record<string, [string, string]> = {
-  noir: ['Noir', '#0D0D0E'], anthracite: ['Anthracite', '#3F3F44'], gris: ['Gris', '#8C8C90'], blanc: ['Blanc', '#F7F5F0'],
-  creme: ['Crème', '#F0E9DC'], beige: ['Beige', '#D9C9AE'], camel: ['Camel', '#B0833F'], marron: ['Marron', '#5C4327'],
-  bordeaux: ['Bordeaux', '#6B1F2E'], rouge: ['Rouge', '#B22B27'], orange: ['Orange', '#D2601A'], moutarde: ['Moutarde', '#C9992B'],
-  jaune: ['Jaune', '#E8C33A'], olive: ['Olive', '#5A6340'], vert: ['Vert', '#2F6B48'], marine: ['Marine', '#26334D'],
-  bleu: ['Bleu', '#4A76A8'], ciel: ['Ciel', '#A8C8E0'], violet: ['Violet', '#6B4E8C'], rose: ['Rose', '#D9959F'],
-  dore: ['Doré', '#C9A55C'], argente: ['Argenté', '#BFC3C9'],
-};
+const KODE_COLOURS: Record<string, [string, string]> = Object.fromEntries(COLOURS.map((c) => [c.id, [c.label, c.hex]]));
 
 /** Une vignette détourée reste lisible une semaine ; l'app la redemande à chaque lancement. */
 const IMAGE_TTL = 7 * 24 * 3600;
@@ -146,6 +134,7 @@ function toPiece(g: GarmentRow, st: StatRow | undefined, image?: string): Piece 
     image,
     category,
     color: kodeColour?.[0] ?? g.colors?.[0] ?? '',
+    colorId: kodeColour ? g.colors?.[0] : undefined,
     swatch: tint ?? '#A7A29A',
     material: g.material ?? '',
     season: SEASON_OF[g.season ?? ''] ?? 'toute l’année',
@@ -164,7 +153,7 @@ function garmentRow(p: Piece, spaceId: string) {
     kind: /^[a-z]{2,20}$/.test(p.kind) ? p.kind : null,
     tint: p.tint && HEX.test(p.tint) ? p.tint : null,
     season: SEASON_ID[p.season] ?? null,
-    colors: p.color ? [p.color] : [],
+    colors: p.colorId ? [p.colorId] : p.color ? [p.color] : [],
     material: p.material || null,
     source: 'photo',
     purchase_price_cents: p.price != null ? Math.round(p.price * 100) : null,
@@ -403,6 +392,27 @@ export async function addPieces(session: Session, pieces: Piece[]): Promise<stri
   const r = await db().from('garments').insert(pieces.map((p) => garmentRow(p, session.spaceId))).select('id');
   check(r, 'pièces');
   return (r.data ?? []).map((g) => g.id as string);
+}
+
+/**
+ * L'étiquette corrigée à la main (nom, catégorie, couleur, matière, saison,
+ * prix). Le type de pièce ne change qu'avec la catégorie : sinon on garde
+ * celui, plus fin, que Kode avait noté.
+ */
+export async function updatePiece(id: string, p: Piece, categoryChanged: boolean) {
+  if (!isUuid(id)) return;
+  const row: Record<string, unknown> = {
+    name: p.name.slice(0, 120),
+    category_id: categoryId(p),
+    colors: p.colorId ? [p.colorId] : [],
+    tint: p.tint && HEX.test(p.tint) ? p.tint : null,
+    material: p.material.trim() || null,
+    season: SEASON_ID[p.season] ?? null,
+    purchase_price_cents: p.price != null ? Math.round(p.price * 100) : null,
+    updated_at: new Date().toISOString(),
+  };
+  if (categoryChanged) row.kind = /^[a-z]{2,20}$/.test(p.kind) ? p.kind : null;
+  check(await db().from('garments').update(row).eq('id', id), 'pièce');
 }
 
 export async function setPieceStatus(id: string, status: 'active' | 'archived') {

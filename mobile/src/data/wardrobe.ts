@@ -18,6 +18,8 @@ export type Piece = {
   image?: string;
   category: CategoryId;
   color: string;
+  /** L'identifiant de couleur de Kode (« vert », « creme »…), pour les pièces du compte. */
+  colorId?: string;
   swatch: string;
   material: string;
   season: Season;
@@ -36,6 +38,26 @@ export const CATEGORIES: { id: CategoryId; title: string; short: string }[] = [
   { id: 'chaussures', title: 'Chaussures', short: 'Chaussures' },
   { id: 'accessoires', title: 'Sacs et accessoires', short: 'Accessoires' },
 ];
+
+/**
+ * Les couleurs que Kode note sur une photo (supabase/functions/dressy-agent/prompts.ts,
+ * COLOUR_RGB) : identifiant en base, libellé, teinte de référence.
+ */
+export const COLOURS: { id: string; label: string; hex: string }[] = [
+  { id: 'noir', label: 'Noir', hex: '#0D0D0E' }, { id: 'anthracite', label: 'Anthracite', hex: '#3F3F44' },
+  { id: 'gris', label: 'Gris', hex: '#8C8C90' }, { id: 'blanc', label: 'Blanc', hex: '#F7F5F0' },
+  { id: 'creme', label: 'Crème', hex: '#F0E9DC' }, { id: 'beige', label: 'Beige', hex: '#D9C9AE' },
+  { id: 'camel', label: 'Camel', hex: '#B0833F' }, { id: 'marron', label: 'Marron', hex: '#5C4327' },
+  { id: 'bordeaux', label: 'Bordeaux', hex: '#6B1F2E' }, { id: 'rouge', label: 'Rouge', hex: '#B22B27' },
+  { id: 'orange', label: 'Orange', hex: '#D2601A' }, { id: 'moutarde', label: 'Moutarde', hex: '#C9992B' },
+  { id: 'jaune', label: 'Jaune', hex: '#E8C33A' }, { id: 'olive', label: 'Olive', hex: '#5A6340' },
+  { id: 'vert', label: 'Vert', hex: '#2F6B48' }, { id: 'marine', label: 'Marine', hex: '#26334D' },
+  { id: 'bleu', label: 'Bleu', hex: '#4A76A8' }, { id: 'ciel', label: 'Ciel', hex: '#A8C8E0' },
+  { id: 'violet', label: 'Violet', hex: '#6B4E8C' }, { id: 'rose', label: 'Rose', hex: '#D9959F' },
+  { id: 'dore', label: 'Doré', hex: '#C9A55C' }, { id: 'argente', label: 'Argenté', hex: '#BFC3C9' },
+];
+
+export const SEASONS: Season[] = ['toute l’année', 'mi-saison', 'hiver', 'été'];
 
 const p = (
   id: string, name: string, kind: GarmentKind, category: CategoryId, color: string, swatch: string,
@@ -256,14 +278,38 @@ export function relativeDay(offset: number): string {
 const FEMININE = new Set<GarmentKind>(['chemise', 'mariniere', 'jupe', 'robe', 'veste', 'ceinture', 'baskets', 'bottines']);
 const PLURAL = new Set<GarmentKind>(['baskets', 'bottines', 'mocassins', 'escarpins']);
 
-export function agree(piece: Pick<Piece, 'kind'>): string {
-  return (FEMININE.has(piece.kind) ? 'e' : '') + (PLURAL.has(piece.kind) ? 's' : '');
+/**
+ * Le genre se lit d'abord sur le nom de la pièce : Kode range un polo parmi
+ * les chemises (illustration), mais on dit « un polo », pas « une ».
+ * f : féminin, m : masculin ; s : pluriel.
+ */
+const NOUNS: Record<string, 'm' | 'f' | 'ms' | 'fs'> = {
+  polo: 'm', short: 'm', bermuda: 'm', jean: 'm', jeans: 'm', pantalon: 'm', jogging: 'm', survêtement: 'm', legging: 'm', chino: 'm', cargo: 'm',
+  pull: 'm', sweat: 'm', hoodie: 'm', 't-shirt': 'm', tshirt: 'm', 'tee-shirt': 'm', débardeur: 'm', top: 'm', body: 'm', crop: 'm', col: 'm',
+  cardigan: 'm', gilet: 'm', blazer: 'm', blouson: 'm', manteau: 'm', trench: 'm', caban: 'm', perfecto: 'm', imperméable: 'm', kimono: 'm', poncho: 'm',
+  sac: 'm', cabas: 'm', tote: 'm', 'sac-à-dos': 'm', foulard: 'm', bandana: 'm', bonnet: 'm', chapeau: 'm', bob: 'm', collier: 'm', bracelet: 'm', jonc: 'm', pendentif: 'm', bandeau: 'm', serre: 'm',
+  mocassins: 'ms', escarpins: 'ms', sabots: 'ms', souliers: 'ms', derbies: 'ms', richelieus: 'ms', tennis: 'fs', sneakers: 'fs', boots: 'fs',
+  chemise: 'f', chemisette: 'f', blouse: 'f', tunique: 'f', marinière: 'f', robe: 'f', jupe: 'f', salopette: 'f', combinaison: 'f', veste: 'f', doudoune: 'f', parka: 'f', polaire: 'f',
+  ceinture: 'f', casquette: 'f', écharpe: 'f', étole: 'f', montre: 'f', bague: 'f', broche: 'f', pochette: 'f', besace: 'f', sacoche: 'f', banane: 'f', chaîne: 'f', pince: 'f', barrette: 'f',
+  baskets: 'fs', bottines: 'fs', bottes: 'fs', sandales: 'fs', ballerines: 'fs', chaussures: 'fs', mules: 'fs', tongs: 'fs', claquettes: 'fs', espadrilles: 'fs', chaussettes: 'fs',
+  lunettes: 'fs', créoles: 'fs', boucles: 'fs', puces: 'fs', manchettes: 'fs',
+};
+
+function gender(piece: { kind: GarmentKind; name?: string }): { fem: boolean; plural: boolean } {
+  const first = piece.name?.trim().split(/\s+/)[0]?.toLowerCase();
+  const g = first ? NOUNS[first] : undefined;
+  if (g) return { fem: g[0] === 'f', plural: g.length === 2 };
+  return { fem: FEMININE.has(piece.kind), plural: PLURAL.has(piece.kind) };
+}
+
+export function agree(piece: { kind: GarmentKind; name?: string }): string {
+  const g = gender(piece);
+  return (g.fem ? 'e' : '') + (g.plural ? 's' : '');
 }
 
 /** Pronoms et accords d'une pièce : « Elle dort », « Ils dorment », « la porter », « les porter ». */
-export function forms(piece: Pick<Piece, 'kind'>) {
-  const fem = FEMININE.has(piece.kind);
-  const plural = PLURAL.has(piece.kind);
+export function forms(piece: { kind: GarmentKind; name?: string }) {
+  const { fem, plural } = gender(piece);
   return {
     il: plural ? (fem ? 'Elles' : 'Ils') : fem ? 'Elle' : 'Il',
     le: plural ? 'les' : fem ? 'la' : 'le',
@@ -276,10 +322,20 @@ export function forms(piece: Pick<Piece, 'kind'>) {
 /** Ajoutée il y a moins de deux semaines et pas encore portée : elle est nouvelle, pas oubliée. */
 export const isNew = (piece: Piece) => piece.wears === 0 && piece.addedDaysAgo < 14;
 
-export function newLabel(piece: Pick<Piece, 'kind'>): string {
-  const fem = FEMININE.has(piece.kind);
-  const pl = PLURAL.has(piece.kind);
-  return fem ? (pl ? 'nouvelles' : 'nouvelle') : pl ? 'nouveaux' : 'nouveau';
+export function newLabel(piece: { kind: GarmentKind; name?: string }): string {
+  const { fem, plural } = gender(piece);
+  return fem ? (plural ? 'nouvelles' : 'nouvelle') : plural ? 'nouveaux' : 'nouveau';
+}
+
+/** Depuis quand la pièce est dans le dressing : « depuis aujourd'hui », « depuis 3 semaines ». */
+export function addedLabel(days: number): string {
+  if (days <= 0) return 'depuis aujourd’hui';
+  if (days === 1) return 'depuis hier';
+  if (days < 14) return `depuis ${days} jours`;
+  if (days < 60) return `depuis ${Math.round(days / 7)} semaines`;
+  if (days < 365) return `depuis ${Math.round(days / 30)} mois`;
+  const y = Math.floor(days / 365);
+  return `depuis ${y} an${y > 1 ? 's' : ''}`;
 }
 
 export function wornLabel(piece: Piece): string {

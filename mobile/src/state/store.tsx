@@ -157,6 +157,7 @@ type Action =
   | { t: 'addPiece'; piece: Piece }
   | { t: 'swapId'; from: string; to: string }
   | { t: 'removePiece'; id: string }
+  | { t: 'updatePiece'; piece: Piece }
   | { t: 'plan'; day: number; outfit: Planned }
   | { t: 'unplan'; day: number }
   | { t: 'ask'; message: KodeMessage }
@@ -249,6 +250,8 @@ function reducer(s: State, a: Action): State {
       const planned = Object.fromEntries(Object.entries(s.planned).map(([d, o]) => [d, { ...o, pieces: o.pieces.map(swap) }]));
       return { ...s, pieces: s.pieces.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)), planned, fresh: s.fresh.map(swap), undo: s.undo?.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)) ?? null };
     }
+    case 'updatePiece':
+      return { ...s, pieces: s.pieces.map((p) => (p.id === a.piece.id ? a.piece : p)), toast: { id: ++toastId, text: 'Étiquette enregistrée' } };
     case 'removePiece':
       return { ...s, undo: s.pieces, pieces: s.pieces.filter((p) => p.id !== a.id), toast: { id: ++toastId, text: 'Pièce retirée du dressing', undo: true } };
     case 'plan':
@@ -494,6 +497,13 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         dispatch({ t: 'addPiece', piece });
         const session = live();
         if (session) sync(remote.addPieces(session, [piece]).then(([id]) => id && dispatch({ t: 'swapId', from: piece.id, to: id })));
+      },
+      /** L'étiquette corrigée à la main : enregistrée aussitôt, sur le compte s'il y en a un. */
+      updatePiece: (piece: Piece) => {
+        const before = getState().pieces.find((p) => p.id === piece.id);
+        if (!before) return;
+        dispatch({ t: 'updatePiece', piece });
+        if (live()) sync(remote.updatePiece(piece.id, piece, before.category !== piece.category));
       },
       removePiece: (id: string) => {
         dispatch({ t: 'removePiece', id });
