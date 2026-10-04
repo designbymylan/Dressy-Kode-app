@@ -32,13 +32,49 @@ export function borderColour(r: Raster): Rgb {
 }
 
 /**
- * Rend transparent le fond uni autour d'une pièce, en quatre temps.
+ * Un fond d'incrustation (vert, magenta…) se reconnaît à sa couleur franche :
+ * un ou deux canaux nettement au-dessus des autres. On garde lesquels, pour
+ * mesurer ensuite à quel point un pixel « tire » vers ce fond.
+ */
+type Chroma = { high: number[]; low: number[]; strength: number };
+
+export function chromaOf(bg: Rgb): Chroma | null {
+  const max = Math.max(...bg), min = Math.min(...bg);
+  if (max - min < 90) return null; // blanc, gris, noir : fond neutre
+  const high = [0, 1, 2].filter((k) => bg[k] - min > (max - min) / 2);
+  const low = [0, 1, 2].filter((k) => !high.includes(k));
+  const c: Chroma = { high, low, strength: 0 };
+  c.strength = tilt(bg, c);
+  return c;
+}
+
+/**
+ * Combien un pixel tire vers la couleur du fond, rapporté à sa luminosité :
+ * une ombre sur fond vert reste « verte » autant que le fond, un tissu menthe
+ * beaucoup moins. 0 = aucune dominante du fond.
+ */
+export function tilt(px: ArrayLike<number>, c: Pick<Chroma, 'high' | 'low'>): number {
+  const hi = Math.min(...c.high.map((k) => px[k]));
+  const lo = Math.max(...c.low.map((k) => px[k]));
+  return Math.max(0, hi - lo) / Math.max(hi, 40);
+}
+
+export type CutoutOptions = {
+  tolerance?: number;
+  /** Les vraies teintes de la pièce : la part de « fond » qu'elles ont elles-mêmes est permise. */
+  garment?: Rgb[];
+};
+
+/**
+ * Rend transparent le fond uni autour d'une pièce, en cinq temps.
  *
  * 1. Remplissage depuis les BORDS : seuls les pixels proches du fond ET
  *    reliés au bord deviennent transparents. C'est ce qui sauve une chemise
  *    ivoire : son clair n'est pas relié au bord, il est entouré par le
  *    vêtement, donc il est conservé. Un seuil global effacerait au contraire
- *    l'intérieur des pièces claires.
+ *    l'intérieur des pièces claires. Sur un fond d'incrustation, « proche »
+ *    se mesure à la dominante de couleur et non à la distance : l'ombre
+ *    portée, plus sombre mais aussi verte que le fond, part avec lui.
  * 2. Les trous : le fond enfermé dans la pièce (anse d'un sac, intérieur
  *    d'un collier, d'une ceinture bouclée) n'est pas relié au bord. On le
  *    vide s'il est parfaitement uni et de la teinte exacte du fond ; un
@@ -48,18 +84,34 @@ export function borderColour(r: Raster): Rgb {
  * 4. Les bords : une bande de deux pixels reçoit une transparence
  *    progressive et perd la teinte du fond qui s'y mêlait, pour éviter le
  *    liseré blanc ou gris autour de la pièce.
+ * 5. Les reflets : sur un fond d'incrustation, la couleur du fond déborde
+ *    sur les bords et les franges (le vert sur un jean délavé effiloché).
+ *    Près du fond, on ramène chaque pixel à la dominante que la pièce a
+ *    vraiment, mesurée sur ses teintes.
  */
-export function cutoutBackground(r: Raster, tolerance = 26): Raster {
+export function cutoutBackground(r: Raster, opts: CutoutOptions | number = {}): Raster {
+  const { tolerance = 26, garment = [] } = typeof opts === 'number' ? { tolerance: opts } : opts;
   const { width: w, height: h, data } = r;
   const size = w * h;
   const out = new Uint8Array(data);
   const bg = borderColour(r);
   const tol = tolerance * 3;
+  const chroma = chromaOf(bg);
+  // La dominante que la pièce a d'elle-même (un tissu menthe sur fond vert).
+  const own = chroma ? Math.max(0, ...garment.map((g) => tilt(g, chroma))) : 0;
+  const room = chroma ? Math.max(0.05, chroma.strength - own) : 1;
 
   const dist = new Uint16Array(size);
   for (let p = 0; p < size; p++) {
     const i = p * 4;
-    dist[p] = Math.abs(data[i] - bg[0]) + Math.abs(data[i + 1] - bg[1]) + Math.abs(data[i + 2] - bg[2]);
+    if (chroma) {
+      // 0 sur le fond, 2 × tol (franchement pièce) dès qu'il ne tire pas plus
+      // vers le fond que la pièce elle-même : même échelle que la distance.
+      const t = Math.max(0, tilt([data[i], data[i + 1], data[i + 2]], chroma) - own) / room;
+      dist[p] = Math.round(Math.max(0, 1 - t) * tol * 2);
+    } else {
+      dist[p] = Math.abs(data[i] - bg[0]) + Math.abs(data[i + 1] - bg[1]) + Math.abs(data[i + 2] - bg[2]);
+    }
   }
 
   const clear = new Uint8Array(size); // 1 = fond, rendu transparent
@@ -111,7 +163,9 @@ export function cutoutBackground(r: Raster, tolerance = 26): Raster {
     const n = members.length;
     const meanD = sumD / n;
     const sd = Math.sqrt(Math.max(0, sumL2 / n - (sumL / n) ** 2));
-    if (n >= minHole && meanD <= 24 && sd <= 4) for (const p of members) clear[p] = 1;
+    // Sur fond d'incrustation, la dominante suffit : un trou garde l'ombre de l'anse.
+    const uniform = chroma ? meanD <= tol * 0.5 : meanD <= 24 && sd <= 4;
+    if (n >= minHole && uniform) for (const p of members) clear[p] = 1;
   }
 
   // 3. îlots de poussière
@@ -175,7 +229,45 @@ export function cutoutBackground(r: Raster, tolerance = 26): Raster {
   for (let p = 0; p < size; p++) {
     if (!clear[p] && !soft[p] && blend(p) && touches(p, (q) => soft[q] === 1)) soft[p] = 2;
   }
-  for (let p = 0; p < size; p++) if (soft[p]) soften(p);
+  // Sur fond d'incrustation, le « démélange » ci-dessus pousserait les
+  // franges vers le blanc ou le noir : le reflet est traité en 5, plus juste.
+  for (let p = 0; p < size; p++) {
+    if (!soft[p]) continue;
+    if (chroma) out[p * 4 + 3] = Math.round((255 * (dist[p] - tol)) / tol);
+    else soften(p);
+  }
+
+  // 5. reflets du fond d'incrustation, sur une bande de quelques pixels
+  if (chroma) {
+    const reach = Math.max(4, Math.round(Math.max(w, h) / 128));
+    const near = new Uint8Array(size).fill(255);
+    const queue = new Int32Array(size);
+    let head = 0, tail = 0;
+    for (let p = 0; p < size; p++) if (clear[p]) { near[p] = 0; queue[tail++] = p; }
+    while (head < tail) {
+      const p = queue[head++];
+      const d = near[p] + 1;
+      if (d > reach) continue;
+      const x = p % w;
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p >= w ? p - w : -1, p < size - w ? p + w : -1]) {
+        if (q < 0 || near[q] <= d) continue;
+        near[q] = d;
+        queue[tail++] = q;
+      }
+    }
+    for (let p = 0; p < size; p++) {
+      if (clear[p] || near[p] > reach) continue;
+      const i = p * 4;
+      const px = [out[i], out[i + 1], out[i + 2]];
+      const hi = Math.min(...chroma.high.map((k) => px[k]));
+      const lo = Math.max(...chroma.low.map((k) => px[k]));
+      // L'excès permis : celui de la pièce elle-même, à cette luminosité.
+      const allowed = own * Math.max(hi, 40) + 4;
+      const excess = hi - lo - allowed;
+      if (excess <= 0) continue;
+      for (const k of chroma.high) out[i + k] = Math.max(0, Math.round(px[k] - excess));
+    }
+  }
 
   return { width: w, height: h, data: out };
 }

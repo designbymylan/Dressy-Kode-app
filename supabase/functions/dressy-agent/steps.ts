@@ -4,7 +4,10 @@
  *
  *   Opus 5 (MODELS.prompts) : repère les pièces d'une photo et écrit la
  *     consigne de chacune ; réécrit la consigne après un essai refusé.
- *   Nano Banana (MODELS.gemini) : dessine la pièce seule, sur fond uni.
+ *   Opus 5 + recherche web : retrouve le modèle exact d'une pièce de marque
+ *     et en tire les détails de design (bandes, semelle, logo).
+ *   Nano Banana (MODELS.gemini) : dessine la pièce seule, sur fond uni ; pour
+ *     un modèle identifié, il regarde aussi ses photos (recherche Google).
  *   Sonnet 5 (MODELS.judge) : contrôle qualité, plus rapide pour un verdict.
  *
  * Rien de ce fichier n'est montré tel quel : un AgentError porte un message
@@ -17,9 +20,10 @@ import {
   MAX_PIECES, cleanTarget,
   INVENTORY_SYSTEM, INVENTORY_SCHEMA, inventoryUserText,
   REFINE_SYSTEM, REFINE_SCHEMA, refineUserText,
+  RESEARCH_SYSTEM, researchUserText, parseResearch,
   JUDGE_SYSTEM, VERDICT_SCHEMA, judgeText,
   PICK_SYSTEM, PICK_SCHEMA,
-  type Previous, type Target,
+  type Previous, type Reference, type Target,
 } from './prompts.ts';
 import { normaliseVerdict, type Verdict } from './decide.ts';
 import { sniffMime } from './codec.ts';
@@ -104,7 +108,7 @@ function httpError(who: string, status: number, text: string): AgentError {
 
 // ---------------------------------------------------------------- Nano Banana
 
-export async function generate(prompt: string, sources: Img[]): Promise<Img & { usage: Usage }> {
+export async function generate(prompt: string, sources: Img[], opts: { search?: boolean } = {}): Promise<Img & { usage: Usage; searched: boolean }> {
   const key = secret('GEMINI_API_KEY');
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}:generateContent`;
 
@@ -114,24 +118,40 @@ export async function generate(prompt: string, sources: Img[]): Promise<Img & { 
     { text: prompt },
     ...sources.map((s) => ({ inline_data: { mime_type: s.mime, data: b64(s.bytes) } })),
   ];
-  const call = (generationConfig: Record<string, unknown>) =>
+  // Recherche Google, web ET images : le générateur voit les photos du
+  // modèle identifié (googleSearch.searchTypes, SDK google-genai).
+  const search = [{ googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } }];
+  const call = (generationConfig: Record<string, unknown>, withSearch: boolean) =>
     fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       signal: AbortSignal.timeout(90_000),
-      body: JSON.stringify({ contents: [{ parts }], generationConfig }),
+      body: JSON.stringify({ contents: [{ parts }], generationConfig, ...(withSearch ? { tools: search } : {}) }),
     });
 
   const size = { aspectRatio: '1:1', imageSize: '1K' };
+  let searched = Boolean(opts.search);
   let res: Response;
   try {
-    res = await call({ responseModalities: ['IMAGE'], responseFormat: { image: size } });
-    // La documentation publie deux formes de ce réglage selon les pages et les
-    // modèles ; si la plus récente est refusée, on retente avec l'ancienne.
-    if (res.status === 400) {
+    const config = (legacy: boolean) => ({
+      // Avec la recherche, le modèle peut écrire avant de dessiner.
+      responseModalities: searched ? ['TEXT', 'IMAGE'] : ['IMAGE'],
+      ...(legacy ? { imageConfig: size } : { responseFormat: { image: size } }),
+    });
+    let legacy = false;
+    res = await call(config(legacy), searched);
+    for (let retry = 0; res.status === 400 && retry < 2; retry++) {
       const text = await res.text();
-      if (!/responseFormat|Unknown name|Invalid JSON payload/i.test(text)) throw httpError('Nano Banana', 400, text);
-      res = await call({ responseModalities: ['IMAGE'], imageConfig: size });
+      // La documentation publie deux formes du réglage d'image selon les pages
+      // et les modèles ; si la plus récente est refusée, on retente avec l'ancienne.
+      if (!legacy && /responseFormat/i.test(text)) legacy = true;
+      // Recherche refusée (modèle ou compte qui ne l'a pas) : on dessine sans.
+      else if (searched && /search|tool|grounding/i.test(text)) {
+        console.warn(`Nano Banana : recherche refusée, dessin sans (${text.replace(/\s+/g, ' ').slice(0, 160)})`);
+        searched = false;
+      } else if (!legacy && /Unknown name|Invalid JSON payload/i.test(text)) legacy = true;
+      else throw httpError('Nano Banana', 400, text);
+      res = await call(config(legacy), searched);
     }
   } catch (err) {
     if (err instanceof AgentError) throw err;
@@ -151,11 +171,20 @@ export async function generate(prompt: string, sources: Img[]): Promise<Img & { 
   type Part = { thought?: boolean; inlineData?: { data: string; mimeType?: string } };
   const images = ((candidate?.content?.parts ?? []) as Part[]).filter((p) => p.inlineData && !p.thought);
   const last = images.at(-1);
-  if (!last?.inlineData) throw new AgentError(SAY.refused, "Nano Banana n'a renvoyé aucune image");
+  if (!last?.inlineData) {
+    // Avec la recherche, le modèle répond parfois en texte seul : on redessine sans.
+    if (searched) {
+      console.warn('Nano Banana : aucune image avec la recherche, dessin sans');
+      return generate(prompt, sources, { search: false });
+    }
+    throw new AgentError(SAY.refused, "Nano Banana n'a renvoyé aucune image");
+  }
 
   const bytes = new Uint8Array(Buffer.from(last.inlineData.data, 'base64'));
   const mime = sniffMime(bytes) ?? last.inlineData.mimeType ?? 'image/png';
-  return { bytes, mime, usage: body.usageMetadata ?? null };
+  const grounding = candidate?.groundingMetadata;
+  const usage = { ...(body.usageMetadata ?? {}), recherche: grounding ? { requetes: grounding.webSearchQueries ?? grounding.imageSearchQueries ?? [] } : null };
+  return { bytes, mime, usage, searched };
 }
 
 // ---------------------------------------------------------------- Claude
@@ -254,6 +283,47 @@ export async function refine(input: { sources: Img[]; target: Target; previous: 
   const prompt = String((data as { prompt?: unknown })?.prompt ?? '').trim();
   // Faute de nouvelle consigne, on garde la précédente plutôt que d'échouer.
   return { prompt: prompt || input.previous.prompt || input.target.prompt, usage };
+}
+
+/**
+ * Opus 5, avec la recherche web, retrouve le modèle exact d'une pièce de
+ * marque et en tire ses détails de design. Rien de sûr → reference null :
+ * la pièce garde sa consigne d'origine, rien n'est perdu.
+ */
+export async function research(input: { sources: Img[]; target: Target }): Promise<{ reference: Reference | null; prompt: string | null; usage: Usage }> {
+  const tools = [
+    { type: 'web_search_20260209', name: 'web_search', max_uses: 4 },
+    { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 3, max_content_tokens: 12_000 },
+  ] as unknown as Anthropic.ToolUnion[];
+  const messages: Anthropic.MessageParam[] = [
+    { role: 'user', content: [...input.sources.map(imageBlock), { type: 'text', text: researchUserText(input.target) }] as Anthropic.ContentBlockParam[] },
+  ];
+
+  let res: Anthropic.Message | null = null;
+  try {
+    // La recherche tourne côté serveur ; une boucle trop longue revient en
+    // « pause_turn » : on renvoie la réponse telle quelle pour qu'elle reprenne.
+    for (let turn = 0; turn < 3; turn++) {
+      res = await anthropic().messages.create({
+        model: MODELS.prompts,
+        max_tokens: 12_000,
+        system: RESEARCH_SYSTEM,
+        messages,
+        tools,
+        output_config: { effort: EFFORT.prompts },
+      });
+      if (res.stop_reason !== 'pause_turn') break;
+      messages.push({ role: 'assistant', content: res.content as unknown as Anthropic.ContentBlockParam[] });
+    }
+  } catch (err) {
+    if (err instanceof APIError && typeof err.status === 'number') throw httpError(`Claude ${MODELS.prompts} (recherche)`, err.status, err.message);
+    throw new AgentError(SAY.failed, `Claude ${MODELS.prompts} (recherche) : ${err instanceof Error ? err.message : err}`);
+  }
+  if (!res || res.stop_reason === 'refusal') return { reference: null, prompt: null, usage: (res?.usage ?? null) as unknown as Usage };
+
+  const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
+  const found = parseResearch(text);
+  return { reference: found?.reference ?? null, prompt: found?.prompt || null, usage: res.usage as unknown as Usage };
 }
 
 export async function judge(input: {

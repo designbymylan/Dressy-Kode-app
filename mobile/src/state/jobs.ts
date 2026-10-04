@@ -22,7 +22,7 @@ export type JobRow = {
   retries: number;
   user_input: string;
   source_paths: string[];
-  target: { name: string; category?: string; kind?: string | null; box?: Box | null } | null;
+  target: { name: string; category?: string; kind?: string | null; box?: Box | null; recherche?: boolean; reference?: unknown } | null;
   parent_id: string | null;
   analysis: {
     name?: string;
@@ -85,6 +85,8 @@ export function jobPhrases(j: Pick<JobRow, 'status' | 'attempts' | 'target'>): s
       if (!j.target) return ['Kode regarde ta photo', 'Kode s’installe'];
       return j.attempts > 0 ? ['Kode prépare un nouvel essai'] : ['Kode sort ses crayons'];
     case 'prompting':
+      // Une pièce de marque pas encore cherchée : Kode retrouve le modèle exact.
+      if (j.target?.recherche && j.target.reference === undefined && j.attempts === 0) return ['Kode cherche ce modèle', 'Kode compare avec le vrai modèle', 'Kode note ses détails'];
       return j.target ? ['Kode affine son dessin', 'Kode corrige les détails'] : ['Kode repère chaque pièce', 'Kode regarde les couleurs', 'Kode note chaque détail'];
     case 'generating':
       return ['Kode dessine ta pièce', 'Kode soigne les couleurs', 'Kode ajuste la coupe', 'Kode peaufine les détails'];

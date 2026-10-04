@@ -6,7 +6,7 @@
  */
 import { cutoutBackground, alphaRatio, cropToContent, contentBox, downscale, type Raster } from './cutout.ts';
 import { planRun, normaliseVerdict, isValidated, bestByScore, MAX_RUNS, type Candidate } from './decide.ts';
-import { backdropFor, cleanTarget, cleanBox } from './prompts.ts';
+import { backdropFor, cleanTarget, cleanBox, deltaE, parseResearch, stripClauses, wantsResearch, wantsImageSearch, productLine } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -86,6 +86,91 @@ check('fond gris si le blanc est en second', backdropFor(['marine', 'blanc']), '
 check('fond vert pour une pièce blanche ET grise', backdropFor(['blanc', 'gris']), '#00B140');
 check('fond gris pour un bijou argenté', backdropFor(['argente']), '#808080');
 check('fond blanc si aucune couleur', backdropFor([]), '#FFFFFF');
+
+// Les vraies teintes mesurées comptent plus que l'étiquette (04/10) : un denim
+// menthe délavé n'est pas le « vert » foncé de la palette.
+check('ΔE blanc / noir ≈ 100', Math.round(deltaE([255, 255, 255], [0, 0, 0])), 100);
+check('short menthe délavé (teintes mesurées) → vert d\'incrustation', backdropFor(['vert', 'creme'], ['#A9C4B5', '#F0E9DC']), '#00B140');
+check('jean gris-écru délavé → vert d\'incrustation', backdropFor(['gris', 'creme'], ['#B4B2AA', '#E8E2D4']), '#00B140');
+check('pièce verte, blanche et grise → magenta', backdropFor(['vert', 'blanc', 'gris']), '#FF00FF');
+check('codes hex illisibles → étiquettes de couleur', backdropFor(['marine'], ['vert', '#12']), '#FFFFFF');
+
+// ---------------------------------------------------------------- fond d'incrustation
+
+/** Fond vert bruité, un jean gris-écru, ses franges et son ombre portée. */
+function jorts(): Raster {
+  const w = 120, h = 120;
+  const data = new Uint8Array(w * h * 4);
+  let seed = 7;
+  const noise = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) % 7) - 3;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      let c = [0, 177 + noise(), 64 + noise()];
+      if (x >= 30 && x < 90 && y >= 20 && y < 80) c = x === 30 ? [168, 192, 152] : [180, 178, 170]; // le jean, bord teinté de vert
+      else if (x >= 32 && x < 88 && y >= 80 && y < 92 && x % 4 === 0) c = [150, 186, 132]; // frange teintée de vert
+      else if (x >= 30 && x < 90 && y >= 92 && y < 100) c = [0, 100, 36]; // ombre portée sur le vert
+      data[i] = Math.max(0, c[0]); data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255;
+    }
+  }
+  return { width: w, height: h, data };
+}
+const j = cutoutBackground(jorts(), { garment: [[180, 178, 170], [232, 226, 212]] });
+const jA = (x: number, y: number) => j.data[(y * 120 + x) * 4 + 3];
+const jPx = (x: number, y: number) => Array.from(j.data.subarray((y * 120 + x) * 4, (y * 120 + x) * 4 + 3));
+check('incrustation : coin transparent', jA(2, 2), 0);
+check('incrustation : jean opaque, teinte intacte', [jA(60, 50), ...jPx(60, 50)], [255, 180, 178, 170]);
+check('incrustation : ombre portée verte retirée', jA(60, 96), 0);
+const fringe = jPx(84, 86);
+check('incrustation : frange sans reflet vert (ou retirée)', jA(84, 86) === 0 || fringe[1] - Math.max(fringe[0], fringe[2]) <= 6, true);
+const rim = jPx(30, 50);
+check('incrustation : bord du jean sans reflet vert', rim[1] - Math.max(rim[0], rim[2]) <= 6, true);
+
+/** Un tissu menthe sur fond vert : sa propre pointe de vert doit rester. */
+function mint(): Raster {
+  const w = 80, h = 80;
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const c = x >= 20 && x < 60 && y >= 20 && y < 60 ? [160, 196, 176] : [0, 177, 64];
+      data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255;
+    }
+  }
+  return { width: w, height: h, data };
+}
+const m = cutoutBackground(mint(), { garment: [[160, 196, 176]] });
+const mPx = (x: number, y: number) => Array.from(m.data.subarray((y * 80 + x) * 4, (y * 80 + x) * 4 + 4));
+check('menthe : intérieur opaque et vert gardé', mPx(40, 40), [160, 196, 176, 255]);
+check('menthe : près du bord, vert gardé aussi', mPx(21, 40), [160, 196, 176, 255]);
+check('menthe : fond retiré', mPx(5, 5)[3], 0);
+
+// ---------------------------------------------------------------- recherche
+
+const lu = parseResearch(`Voici :
+<produit>Marque X, Trail 2, noir/gris</produit>
+<certitude>forte</certitude>
+<details>- black mesh upper\n- three grey printed stripes</details>
+<consigne>Reproduce ONLY the black trail sneakers…</consigne>
+<sources>https://exemple.com/a https://exemple.com/b pasuneurl</sources>`);
+check('recherche lue : produit, certitude, sources', [lu?.reference.produit, lu?.reference.certitude, lu?.reference.sources.length], ['Marque X, Trail 2, noir/gris', 'forte', 2]);
+check('recherche lue : consigne', lu?.prompt.startsWith('Reproduce ONLY'), true);
+check('recherche « inconnu » → rien', parseResearch('<produit>inconnu</produit><certitude>faible</certitude><details>x</details>'), null);
+check('recherche sans balises → rien', parseResearch('Je n’ai rien trouvé.'), null);
+
+const base = { name: 'Baskets trail noires', category: 'chaussures' as const, kind: 'baskets', colors: ['noir'], material: '', where: '', description: '', prompt: 'x' };
+const idForte = { marque: 'Marque X', modele: 'Trail 2', coloris: 'noir', certitude: 'forte' as const, indices: 'bandes' };
+check('recherche voulue : marque identifiée et demandée', wantsResearch({ ...base, recherche: true, identification: idForte }), true);
+check('recherche : pas deux fois', wantsResearch({ ...base, recherche: true, identification: idForte, reference: null }), false);
+check('recherche : pas sur une certitude faible', wantsResearch({ ...base, recherche: true, identification: { ...idForte, certitude: 'faible' } }), false);
+check('recherche d\'images pour le générateur : identification forte', wantsImageSearch({ ...base, identification: idForte }), true);
+check('pas de recherche d\'images sans identification', wantsImageSearch(base), false);
+check('le produit vérifié prime sur la supposition', productLine({ identification: idForte, reference: { produit: 'Marque X Trail 2 GTX', certitude: 'moyenne', details: 'd', sources: [] } }), 'Marque X Trail 2 GTX');
+check('rappels de fin retirés avant réécriture',
+  stripClauses('Reproduce the jacket.\n\nOnly one item must appear in the output: the one described above (x).\n\nBackground: a perfectly flat, solid pure white (#FFFFFF) backdrop.\n\nExact colours of the real item: #000000.'),
+  'Reproduce the jacket.');
+check('fiche : teintes hex gardées, une par couleur', cleanTarget({ name: 'Short', category: 'bas', colors: ['vert'], hex: ['#a9c4b5', '#zzz', '#F0E9DC'], prompt: 'x' })?.hex, ['#A9C4B5']);
+check('fiche : identification sans marque ni modèle → null', cleanTarget({ name: 'Pull', category: 'hauts', prompt: 'x', identification: { marque: '', modele: '', certitude: 'forte' } })?.identification, null);
 
 // ---------------------------------------------------------------- détourage fin
 

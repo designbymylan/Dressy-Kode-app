@@ -8,7 +8,10 @@
  *     personne a nommées) et écrit la consigne de chacune ; la tâche garde
  *     la première pièce et crée une tâche fille par pièce en plus, que
  *     d'autres passages traitent en parallèle ;
- *   pièce → Nano Banana la redessine, seule, sur fond uni
+ *   pièce de marque identifiée → Opus 5 la retrouve sur le web (recherche)
+ *     et enrichit sa consigne des détails du vrai modèle ;
+ *   pièce → Nano Banana la redessine, seule, sur fond uni (en regardant
+ *     les photos du modèle s'il est bien identifié)
  *     → Sonnet 5 compare à la photo et note sur 100
  *     → validée (≥ 88) : détourage, vignette, rangement dans le dressing
  *     → sinon : Opus 5 corrige la consigne pour un second essai, puis le
@@ -23,8 +26,8 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { planRun, isValidated, bestByScore, type Candidate } from './decide.ts';
-import { backdropClause, isolationClause, type Target } from './prompts.ts';
-import { inventory, refine, generate, judge, pickBest, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img, type Usage } from './steps.ts';
+import { backdropClause, colourClause, garmentRgbs, isolationClause, searchClause, stripClauses, wantsImageSearch, wantsResearch, type Target } from './prompts.ts';
+import { inventory, refine, research, generate, judge, pickBest, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img, type Usage } from './steps.ts';
 import { cutoutBackground, alphaRatio, contentBox, crop, downscale } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
 
@@ -49,6 +52,9 @@ type Job = {
 // Un passage qui a déjà consommé ce temps remet la pièce en file plutôt que
 // d'enchaîner le jugement : la limite d'une Edge Function est de 150 s.
 const BUDGET_MS = 85_000;
+// Après une recherche web déjà longue, on dessine au passage suivant plutôt
+// que de risquer la limite de temps en pleine génération.
+const DRAW_AFTER_MS = 45_000;
 
 function serviceKey(): string {
   const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -192,11 +198,42 @@ async function survey(job: Job, sources: Img[], log: (m: string) => void): Promi
   return first;
 }
 
+// ---------------------------------------------------------------- recherche
+
+/**
+ * Le modèle exact d'une pièce de marque, retrouvé sur le web : ses détails de
+ * design entrent dans la consigne et dans ce que le contrôle vérifie. Une
+ * recherche qui échoue ne bloque jamais la pièce : elle garde sa consigne.
+ */
+async function lookup(job: Job, target: Target, sources: Img[], log: (m: string) => void): Promise<Target> {
+  await setJob(job, { status: 'prompting' });
+  let next: Target;
+  try {
+    const r = await research({ sources, target });
+    next = { ...target, reference: r.reference, prompt: r.prompt || target.prompt };
+    log(r.reference ? `Opus (recherche) → ${r.reference.produit} (${r.reference.certitude}), ${r.reference.sources.length} source(s)` : 'Opus (recherche) → rien de sûr, consigne d’origine');
+  } catch (err) {
+    log(`recherche impossible (${err instanceof AgentError ? err.detail : err instanceof Error ? err.message : err}) : consigne d’origine`);
+    next = { ...target, reference: null };
+  }
+  await setJob(job, { target: next });
+  return next;
+}
+
 // ---------------------------------------------------------------- étapes
 
 async function attempt(job: Job, n: number, previous: Candidate | null, started: number, log: (m: string) => void) {
   const sources = await loadSources(job);
-  const target = job.target ?? await survey(job, sources, log);
+  let target = job.target ?? await survey(job, sources, log);
+
+  if (!previous && wantsResearch(target)) {
+    target = await lookup(job, target, sources, log);
+    if (Date.now() - started > DRAW_AFTER_MS) {
+      log('recherche faite : dessin au passage suivant');
+      await setJob(job, { status: 'queued' });
+      return;
+    }
+  }
 
   let base = target.prompt;
   const usage: Record<string, Usage> = {};
@@ -205,14 +242,18 @@ async function attempt(job: Job, n: number, previous: Candidate | null, started:
     const r = await refine({
       sources,
       target,
-      previous: { attempt: previous.attempt, score: previous.score, ecarts: previous.ecarts, prompt: previous.prompt },
+      // Les rappels ajoutés en fin de consigne (teintes, fond…) sont remis à neuf ensuite.
+      previous: { attempt: previous.attempt, score: previous.score, ecarts: previous.ecarts, prompt: previous.prompt ? stripClauses(previous.prompt) : null },
     });
     base = r.prompt;
     usage.consigne = r.usage;
     log(`Opus (nouvelle consigne) → essai ${n}`);
   }
 
-  const prompt = `${base.trim()}\n\n${isolationClause(target)}\n\n${backdropClause(target.colors)}`;
+  const search = wantsImageSearch(target);
+  const prompt = [stripClauses(base), colourClause(target), search ? searchClause(target) : '', isolationClause(target), backdropClause(target.colors, target.hex)]
+    .filter(Boolean)
+    .join('\n\n');
   const { prompt: _p, where: _w, ...fiche } = target;
   await setJob(job, {
     status: 'generating',
@@ -222,8 +263,8 @@ async function attempt(job: Job, n: number, previous: Candidate | null, started:
     image_model: MODELS.gemini,
   });
 
-  const img = await generate(prompt, sources);
-  log(`Nano Banana → ${Math.round(img.bytes.length / 1024)} Ko (${img.mime})`);
+  const img = await generate(prompt, sources, { search });
+  log(`Nano Banana → ${Math.round(img.bytes.length / 1024)} Ko (${img.mime})${img.searched ? ', avec recherche Google' : ''}`);
 
   const ext = img.mime === 'image/jpeg' ? 'jpg' : img.mime === 'image/webp' ? 'webp' : 'png';
   const path = `${job.space_id}/${job.id}/essai-${n}.${ext}`;
@@ -305,7 +346,9 @@ async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string
   const source = img ?? await download('ai-generated', c.storage_path);
 
   const t0 = Date.now();
-  const cut = cutoutBackground(decode(source.bytes, source.mime));
+  // Les vraies teintes de la pièce : sur fond d'incrustation, leur part de
+  // « vert » est permise, le reste du vert est un reflet du fond.
+  const cut = cutoutBackground(decode(source.bytes, source.mime), { garment: garmentRgbs(t.colors, t.hex) });
   const ratio = alphaRatio(cut);
   const box = contentBox(cut) ?? { x: 0, y: 0, w: cut.width, h: cut.height };
   const framed = crop(cut, box);
@@ -331,6 +374,8 @@ async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string
       kind: t.kind ?? null,
       name: t.name,
       colors: t.colors,
+      // La teinte mesurée par Kode : la pastille de couleur de la fiche.
+      tint: t.hex?.[0] ?? null,
       material: t.material || null,
       image_path: imagePath,
       thumb_path: thumbPath,
