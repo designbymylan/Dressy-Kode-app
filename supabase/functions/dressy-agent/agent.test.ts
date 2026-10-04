@@ -6,7 +6,7 @@
  */
 import { cutoutBackground, alphaRatio, cropToContent, contentBox, downscale, type Raster } from './cutout.ts';
 import { planRun, normaliseVerdict, isValidated, bestByScore, MAX_RUNS, type Candidate } from './decide.ts';
-import { backdropFor, cleanTarget, cleanBox, deltaE, parseResearch, stripClauses, wantsResearch, wantsImageSearch, productLine } from './prompts.ts';
+import { backdropFor, cleanTarget, cleanBox, deltaE, isMetal, parseResearch, stripClauses, wantsResearch, wantsImageSearch, productLine } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -80,11 +80,15 @@ check('moyenne pondérée par l\'alpha : alpha moyen', one.data[3], 128);
 // ses rayures au détourage.
 
 check('fond blanc pour une pièce sombre', backdropFor(['marine']), '#FFFFFF');
-check('fond gris pour une pièce blanche', backdropFor(['blanc', 'noir']), '#808080');
-check('fond gris pour une pièce crème', backdropFor(['creme']), '#808080');
-check('fond gris si le blanc est en second', backdropFor(['marine', 'blanc']), '#808080');
+check('fond vert pour une pièce blanche et noire (ses ombres grises resteraient sur gris)', backdropFor(['blanc', 'noir']), '#00B140');
+check('fond vert pour une pièce crème', backdropFor(['creme']), '#00B140');
+check('fond vert si le blanc est en second', backdropFor(['marine', 'blanc']), '#00B140');
 check('fond vert pour une pièce blanche ET grise', backdropFor(['blanc', 'gris']), '#00B140');
-check('fond gris pour un bijou argenté', backdropFor(['argente']), '#808080');
+check('fond gris pour un bijou argenté (le vert s\'y refléterait)', backdropFor(['argente']), '#808080');
+check('métal reconnu à la catégorie ou à la matière', [isMetal({ category: 'bijoux', colors: ['noir'] }), isMetal({ category: 'accessoires', colors: ['noir'], material: 'métal noir' }), isMetal({ category: 'hauts', colors: ['blanc'], material: 'coton' })], [true, true, false]);
+check('jean clair délavé à déchirures blanches → vert, pas gris', backdropFor(['ciel', 'blanc'], ['#A8C0D8', '#F4F4F2']), '#00B140');
+check('jean clair sans blanc → vert (ses reflets frôlent le blanc)', backdropFor(['ciel'], ['#B8CCE0']), '#00B140');
+check('camel → blanc', backdropFor(['camel'], ['#B0833F']), '#FFFFFF');
 check('fond blanc si aucune couleur', backdropFor([]), '#FFFFFF');
 
 // Les vraies teintes mesurées comptent plus que l'étiquette (04/10) : un denim

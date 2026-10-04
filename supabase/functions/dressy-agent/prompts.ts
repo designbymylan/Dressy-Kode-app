@@ -311,31 +311,36 @@ export function isolationClause(target: Pick<Target, 'name' | 'where'>): string 
  * Nano Banana ne produit pas de vraie transparence : on lui impose un fond
  * uni que l'agent retire ensuite. Le fond doit être le plus éloigné possible
  * de TOUTES les teintes de la pièce, sinon le détourage mange ses bords.
- * Blanc d'abord (le rendu produit le plus naturel), puis gris moyen, puis
- * vert d'incrustation, puis magenta quand la pièce a déjà du vert.
+ * Blanc d'abord (le rendu produit le plus naturel), puis vert d'incrustation,
+ * puis magenta quand la pièce a déjà du vert ; gris moyen en dernier.
  *
- * L'écart se mesure en distance perceptive (CIELAB), sur les vraies teintes
- * mesurées par Opus quand il les donne : avec la seule étiquette « vert »,
- * un denim menthe délavé passait pour un vert foncé et partait sur fond gris,
- * trop proche de lui (04/10).
+ * L'écart se mesure sur les vraies teintes mesurées par Opus quand il les
+ * donne : avec la seule étiquette « vert », un denim menthe délavé passait
+ * pour un vert foncé et partait sur fond gris, trop proche de lui (04/10).
+ *
+ * Le gris ne sert plus qu'aux bijoux et métaux : les ombres d'un vêtement
+ * clair (revers d'un jean, plis d'une chemise) passent par le gris moyen et
+ * s'y faisaient découper (essai du 04/10). Sur fond vert, le détourage lit la
+ * couleur et non la clarté : l'ombre bleutée d'un denim reste à sa place.
+ * Un métal, lui, refléterait le vert : il garde le gris.
  */
-const BACKDROPS = [
-  { hex: '#FFFFFF', name: 'pure white', rgb: [255, 255, 255] },
-  { hex: '#808080', name: 'neutral mid-grey', rgb: [128, 128, 128] },
-  { hex: '#00B140', name: 'chroma-key green', rgb: [0, 177, 64] },
-  { hex: '#FF00FF', name: 'pure magenta', rgb: [255, 0, 255] },
-] as const;
+const WHITE = { hex: '#FFFFFF', name: 'pure white', rgb: [255, 255, 255] } as const;
+const GREY = { hex: '#808080', name: 'neutral mid-grey', rgb: [128, 128, 128] } as const;
+const GREEN = { hex: '#00B140', name: 'chroma-key green', rgb: [0, 177, 64] } as const;
+const MAGENTA = { hex: '#FF00FF', name: 'pure magenta', rgb: [255, 0, 255] } as const;
+const BACKDROPS = [WHITE, GREY, GREEN, MAGENTA];
 
 /**
  * Assez loin, selon le fond :
  * - neutre (blanc, gris) : le détourage mesure la distance brute (somme des
- *   trois canaux) ; 180 garde des bords nets, comme avant ;
+ *   trois canaux) ; 240 pour le blanc (les reflets clairs d'une pièce s'en
+ *   approchent), 180 pour le gris ;
  * - incrustation (vert, magenta) : il mesure la dominante de couleur ; la
  *   pièce doit en avoir peu (40 % au plus de celle du fond) et rester
  *   perceptivement loin (ΔE ≥ 40).
  * Un métal brillant reste sur fond neutre : il refléterait le vert partout.
  */
-const NEUTRAL_FAR = 180;
+const NEUTRAL_FAR = { white: 240, grey: 180 };
 const CHROMA_FAR = 40;
 const CHROMA_TILT = 0.4;
 
@@ -345,7 +350,7 @@ const rgbDist = (a: readonly number[], b: readonly number[]) =>
 /** Marge d'un fond pour une teinte : 1 ou plus, assez loin ; en dessous, la part du chemin faite. */
 function margin(bg: readonly number[], c: readonly number[]): number {
   const chroma = chromaOf(bg as [number, number, number]);
-  if (!chroma) return rgbDist(bg, c) / NEUTRAL_FAR;
+  if (!chroma) return rgbDist(bg, c) / (bg[0] > 200 ? NEUTRAL_FAR.white : NEUTRAL_FAR.grey);
   const room = (CHROMA_TILT * chroma.strength) / Math.max(tilt(c, chroma), 1e-3);
   return Math.min(deltaE(bg, c) / CHROMA_FAR, room);
 }
@@ -382,19 +387,25 @@ export function garmentRgbs(colors: readonly string[], hex: readonly string[] = 
   return colors.map((c) => COLOUR_RGB[c as keyof typeof COLOUR_RGB]).filter(Boolean) as [number, number, number][];
 }
 
-export function backdropFor(colors: readonly string[], hex: readonly string[] = []): string {
-  const rgbs = garmentRgbs(colors, hex);
-  if (!rgbs.length) return '#FFFFFF';
-  // Le premier fond assez éloigné de chaque teinte gagne ; faute de mieux,
-  // celui qui s'en éloigne le plus.
-  const margins = BACKDROPS.map((b) => Math.min(...rgbs.map((c) => margin(b.rgb, c))));
-  const first = margins.findIndex((m) => m >= 1);
-  const best = first >= 0 ? first : margins.indexOf(Math.max(...margins));
-  return BACKDROPS[best].hex;
+/** Bijou, métal brillant : il refléterait un fond de couleur. */
+export function isMetal(t: { category?: string; colors: readonly string[]; material?: string }): boolean {
+  return t.category === 'bijoux' || t.colors.some((c) => c === 'argente' || c === 'dore') || /m[ée]tal|argent|acier|laiton|chrom|plaqu[ée] or/i.test(t.material ?? '');
 }
 
-export function backdropClause(colors: readonly string[], hex: readonly string[] = []): string {
-  const bg = backdropFor(colors, hex);
+export function backdropFor(colors: readonly string[], hex: readonly string[] = [], metal = colors.some((c) => c === 'argente' || c === 'dore')): string {
+  const rgbs = garmentRgbs(colors, hex);
+  if (!rgbs.length) return WHITE.hex;
+  const order = metal ? [WHITE, GREY, GREEN, MAGENTA] : [WHITE, GREEN, MAGENTA, GREY];
+  // Le premier fond assez éloigné de chaque teinte gagne ; faute de mieux,
+  // celui qui s'en éloigne le plus.
+  const margins = order.map((b) => Math.min(...rgbs.map((c) => margin(b.rgb, c))));
+  const first = margins.findIndex((m) => m >= 1);
+  const best = first >= 0 ? first : margins.indexOf(Math.max(...margins));
+  return order[best].hex;
+}
+
+export function backdropClause(colors: readonly string[], hex: readonly string[] = [], metal?: boolean): string {
+  const bg = backdropFor(colors, hex, metal);
   const name = BACKDROPS.find((b) => b.hex === bg)!.name;
   return `Background: a perfectly flat, solid ${name} (${bg}) backdrop filling the whole frame edge to edge, with no shadow, no gradient, no vignette, no floor and no texture. The item must not cast any shadow, and its edges meet the backdrop directly: no white outline, no halo, no sticker border, no leftover patch of the original photo.`;
 }
@@ -424,7 +435,7 @@ export const RESEARCH_SYSTEM = `Tu es le documentaliste de Dresskode, une garde-
 Ton travail :
 1. Retrouve le produit exact sur le web : cherche marque + modèle + coloris, puis des variantes si besoin. Préfère le site de la marque, les grands revendeurs, les bases spécialisées. 2 à 4 recherches suffisent ; lis 1 à 3 pages au plus.
 2. Compare avec la photo : ne garde que ce qui est cohérent avec ce qui se voit. Si le produit trouvé ne correspond pas (autre coloris, autre modèle), dis-le et ne garde que ce qui est sûr. La photo de la personne gagne toujours.
-3. Réécris la consigne du générateur, en anglais, en y intégrant les détails confirmés. Elle garde toutes les exigences de la consigne précédente (désigner la pièce et son emplacement sur la photo, la reproduire à l'identique, présentation produit, pièce seule, aucun arrière-plan, sans donner la couleur du fond). Les marquages de la pièce (bandes, logo) sont reproduits fidèlement, jamais retirés.
+3. Réécris la consigne du générateur, en anglais, en y intégrant les détails confirmés. Elle garde toutes les exigences de la consigne précédente (désigner la pièce et son emplacement sur la photo, la reproduire à l'identique, même présentation produit, pièce seule, aucun arrière-plan, sans donner la couleur du fond). Pour des chaussures : la paire, vue de trois quarts, pour qu'on voie le côté et le talon. Les marquages de la pièce (bandes, logo) sont reproduits fidèlement, jamais retirés.
 
 Rends EXACTEMENT ces balises, dans cet ordre, sans rien autour :
 <produit>marque, modèle, coloris ; ou « inconnu »</produit>

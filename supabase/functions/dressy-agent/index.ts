@@ -26,7 +26,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { planRun, isValidated, bestByScore, type Candidate } from './decide.ts';
-import { backdropClause, colourClause, garmentRgbs, isolationClause, searchClause, stripClauses, wantsImageSearch, wantsResearch, type Target } from './prompts.ts';
+import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, searchClause, stripClauses, wantsImageSearch, wantsResearch, type Target } from './prompts.ts';
 import { inventory, refine, research, generate, judge, pickBest, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img, type Usage } from './steps.ts';
 import { cutoutBackground, alphaRatio, contentBox, crop, downscale } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
@@ -251,7 +251,7 @@ async function attempt(job: Job, n: number, previous: Candidate | null, started:
   }
 
   const search = wantsImageSearch(target);
-  const prompt = [stripClauses(base), colourClause(target), search ? searchClause(target) : '', isolationClause(target), backdropClause(target.colors, target.hex)]
+  const prompt = [stripClauses(base), colourClause(target), search ? searchClause(target) : '', isolationClause(target), backdropClause(target.colors, target.hex, isMetal(target))]
     .filter(Boolean)
     .join('\n\n');
   const { prompt: _p, where: _w, ...fiche } = target;
