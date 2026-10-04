@@ -34,6 +34,19 @@ Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur 
   pièce) : la vitesse compte autant que la ressemblance.
 - Chaque pièce arrive dans le dressing **sans fond** (PNG transparent,
   détouré par `cutout.ts`), jamais avec le fond de la photo ou du générateur.
+- **Fidélité avant tout** (04/10) : Opus 5 relève les vraies teintes (`hex`)
+  et les marquages visibles (logos, bandes, textes), qui sont reproduits tels
+  quels sur le dessin. Le fond du dessin s'éloigne des teintes de la pièce :
+  blanc, vert ou magenta (détourage par chrominance, sans liseré) ; le gris
+  est réservé aux métaux. La teinte mesurée devient celle de la pièce.
+- **Recherche du modèle** (04/10) : quand Opus 5 reconnaît une marque ou un
+  modèle (certitude moyenne ou forte, jamais sur une simple supposition) et
+  juge qu'une recherche aidera, Claude cherche le vrai modèle sur le web
+  (`web_search`, `web_fetch`) avant la consigne, et le générateur s'appuie
+  sur une recherche Google d'images. La marque sert au dessin, jamais au nom
+  de la pièce ni à l'écran. Recherche payée à la requête : quatre au plus.
+- **L'étiquette se corrige** dans la fiche pièce (`ui/LabelEditor.tsx`) :
+  nom, catégorie, couleur, matière, saison, prix.
 - **Aucune pièce d'exemple dans un espace utilisateur** (décision du 03/10) :
   un nouvel espace est vide, avec sa structure (portants, catégories, appel à
   ajouter). Seul le compte de démonstration (Alice) a des pièces dessinées.
