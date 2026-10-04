@@ -8,8 +8,7 @@ import { space } from '../theme/tokens';
 import { T } from './T';
 import { IconButton } from './Button';
 import { Glass } from './Glass';
-import { Icon, type IconName } from './Icon';
-import { Tap } from './Tap';
+import type { IconName } from './Icon';
 
 /** Filet éditorial. */
 export function Rule({ strong, style }: { strong?: boolean; style?: object }) {
@@ -36,14 +35,10 @@ export function Masthead({ kicker, meta, right }: { kicker: string; meta?: strin
   );
 }
 
-/**
- * Titre de section numéroté : « 01 Manteaux … 9 pièces ». L'action est un
- * lien de découverte : capitales noires et petite flèche, sans fond.
- */
+/** Titre de section numéroté : « 01 Manteaux … Tout voir ». */
 export function SectionHead({ n, title, action, onAction, testID }: { n?: string; title: string; action?: string; onAction?: () => void; testID?: string }) {
-  const { c } = useTheme();
   return (
-    <View className="flex-row items-center" style={{ gap: 10 }}>
+    <View className="flex-row items-baseline" style={{ gap: 10 }}>
       {n && (
         <T v="numeral" tone="ink2" accessibilityElementsHidden importantForAccessibility="no">
           {n}
@@ -53,12 +48,9 @@ export function SectionHead({ n, title, action, onAction, testID }: { n?: string
         {title}
       </T>
       {action && onAction && (
-        <Tap testID={testID} onPress={onAction} accessibilityRole="link" accessibilityLabel={action} scaleTo={1} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingLeft: 8, gap: 4 }}>
-          <T v="button" upper>
-            {action}
-          </T>
-          <Icon name="arrow" size={14} color={c.ink} strokeWidth={1.8} />
-        </Tap>
+        <T testID={testID} v="caption" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 13, paddingLeft: 8 }}>
+          {action}
+        </T>
       )}
     </View>
   );

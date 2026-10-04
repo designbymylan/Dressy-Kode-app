@@ -5,6 +5,7 @@ import { Icon, type IconName } from './Icon';
 import { Glass } from './Glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { HIT, material } from '../theme/tokens';
+import { F } from '../theme/fonts';
 
 type Variant = 'primary' | 'secondary' | 'quiet' | 'plain';
 type Size = 'l' | 'm' | 's';
@@ -26,16 +27,16 @@ type Props = {
 };
 
 /**
- * Les boutons (décision du 03/10) : toujours en capsule, libellé en capitales
- * (Hanken Grotesk 13 pt). Principal en noir plein avec son ombre portée, une
- * seule action par écran ; secondaire en verre clair bordé d'un filet ;
- * discret en pastille grise ; simple en texte souligné. Toujours ≥ 44 pt de
+ * Les boutons du 02/10 (revenus le 04/10) : toujours en capsule, libellé en
+ * casse normale (Hanken Grotesk 600). Principal en noir plein avec son ombre
+ * portée, une seule action par écran ; secondaire en verre clair bordé d'un
+ * filet ; discret en pastille ; simple en texte gris. Toujours ≥ 44 pt de
  * zone tactile.
  */
 export function Button({ label, onPress, variant = 'primary', size = 'l', icon, iconRight, grow, disabled, loading, hint, feedback, testID }: Props) {
   const { c, scheme } = useTheme();
   const h = HEIGHT[size];
-  const fg = variant === 'primary' ? c['primary-fg'] : c.ink;
+  const fg = variant === 'primary' ? c['primary-fg'] : variant === 'plain' ? c.ink2 : c.ink;
   const surface =
     variant === 'primary'
       ? { backgroundColor: c['primary-bg'], ...material.press[scheme] }
@@ -61,12 +62,17 @@ export function Button({ label, onPress, variant = 'primary', size = 'l', icon, 
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : (
-        <View className="flex-row items-center" style={{ gap: 8 }}>
-          {icon && <Icon name={icon} size={17} color={fg} strokeWidth={1.8} />}
-          <T v="button" tone={variant === 'primary' ? 'primary-fg' : 'ink'} upper numberOfLines={1} style={variant === 'plain' && { textDecorationLine: 'underline' }}>
+        <View className="flex-row items-center" style={{ gap: 9 }}>
+          {icon && <Icon name={icon} size={size === 's' ? 17 : 19} color={fg} strokeWidth={1.9} />}
+          <T
+            v={size === 's' ? 'caption' : 'button'}
+            tone={variant === 'primary' ? 'primary-fg' : variant === 'plain' ? 'ink2' : 'ink'}
+            style={[size === 's' && { ...F.s600, fontSize: 13.5 }, variant === 'plain' && F.s500]}
+            numberOfLines={1}
+          >
             {label}
           </T>
-          {iconRight && <Icon name={iconRight} size={16} color={fg} strokeWidth={1.8} />}
+          {iconRight && <Icon name={iconRight} size={17} color={fg} strokeWidth={1.9} />}
         </View>
       )}
     </Tap>
@@ -94,8 +100,8 @@ export function IconButton({ icon, label, onPress, variant = 'outline', size = H
   const fg = variant === 'solid' ? c['primary-fg'] : c.ink;
   const body = (
     <View style={{ width: size, height: size }} className="items-center justify-center">
-      <Icon name={icon} size={Math.round(size * 0.46)} color={fg} strokeWidth={1.8} />
-      {badge && <View className="absolute bg-ink" style={{ top: size * 0.2, right: size * 0.2, width: 8, height: 8, borderRadius: 4 }} />}
+      <Icon name={icon} size={Math.round(size * 0.44)} color={fg} strokeWidth={variant === 'solid' ? 2.1 : 1.8} />
+      {badge && <View className="absolute bg-brass" style={{ top: size * 0.2, right: size * 0.2, width: 8, height: 8, borderRadius: 4 }} />}
     </View>
   );
   const surface =

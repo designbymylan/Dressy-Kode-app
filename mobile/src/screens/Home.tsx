@@ -151,8 +151,8 @@ function WornToday({ pieces }: { pieces: Piece[] }) {
     <View className="flex-row items-center" style={{ gap: 12 }} accessibilityLiveRegion="polite">
       <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
         {!reduced && colours.length > 0 && Array.from({ length: 12 }, (_, i) => <Spark key={i} i={i} colour={colours[i % colours.length]} />)}
-        <Animated.View style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }, check]}>
-          <Icon name="check" size={22} color={c['primary-fg']} strokeWidth={2.2} />
+        <Animated.View style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c['positive-soft'], alignItems: 'center', justifyContent: 'center' }, check]}>
+          <Icon name="check" size={22} color={c.positive} strokeWidth={2.6} />
         </Animated.View>
       </View>
       <View style={{ flex: 1, gap: 2 }}>

@@ -72,9 +72,9 @@ function Numeral({ delay, assemble, children }: { delay: number; assemble: boole
 }
 
 /** La planche d'une tenue : les pièces posées, numérotées dans l'ordre de la légende. */
-function OutfitBoardBase({ pieces, width: outer, numbered = true, onPiece, assemble = false, frame = true }: Props) {
+function OutfitBoardBase({ pieces, width: outer, numbered = true, onPiece, assemble = false, frame = false }: Props) {
   const { scheme } = useTheme();
-  // La tenue est posée sur une scène gris studio, aux angles arrondis.
+  // La tenue est posée sur le fond (02/10) ; frame la pose sur une scène gris studio.
   const pad = frame ? Math.round(outer * 0.05) : 0;
   const width = outer - pad * 2;
   const slots = assign(pieces);
@@ -112,7 +112,7 @@ function OutfitBoardBase({ pieces, width: outer, numbered = true, onPiece, assem
           placed.map(({ p, x, y }) => (
             <View key={`n-${p.id}`} pointerEvents="none" style={{ position: 'absolute', left: x - 2, top: y - 8 }}>
               <Numeral delay={assembleDelay(placed.length) - 200} assemble={assemble}>
-                <T v="numeral" tone="brass" style={{ fontSize: Math.max(14, width * 0.054) }} accessibilityElementsHidden importantForAccessibility="no">
+                <T v="numeral" tone="ink2" style={{ fontSize: Math.max(13, width * 0.046) }} accessibilityElementsHidden importantForAccessibility="no">
                   {String(order(p)).padStart(2, '0')}
                 </T>
               </Numeral>

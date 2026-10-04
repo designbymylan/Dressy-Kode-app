@@ -1,11 +1,12 @@
 /**
- * Jetons du design system Dresskode, direction « galerie » (CLAUDE.md, charte
- * d'origine dans design/charte-galerie.md) : fond blanc, texte noir, filets
- * gris d'un pixel, gris studio sous les vêtements, beurre pour les bandeaux
- * de service ; arrondis, verre dépoli et transparence façon iOS (décision du
- * 03/10), sur des halos crème très discrets. Typographie : charte v1
- * (design/charte-typographique-v1.md, polices dans fonts.ts). Le mode sombre en est tiré (fond noir, texte blanc, beurre gardé).
- * La disposition des écrans, elle, reste celle de la refonte (design/refonte/).
+ * Jetons du design system Dresskode. Les formes et les composants sont ceux
+ * du 02/10 (revenus le 04/10 à la demande de Mylan) : verre dépoli, arrondis,
+ * capsules, boutons en casse normale. Les couleurs restent celles de la
+ * « galerie » (fond blanc, texte noir, gris studio sous les vêtements, rose
+ * poudré pour les bandeaux de service, halos crème, noirs en sombre) et la
+ * typographie celle de la charte v1 (design/charte-typographique-v1.md,
+ * polices dans fonts.ts). La disposition des écrans reste celle de la
+ * refonte (design/refonte/).
  * Les couleurs vivent dans palette.json : c'est le fichier que lit
  * design/refonte/contraste.py, pour que le code et la vérification AA
  * ne puissent pas diverger.
@@ -20,8 +21,8 @@ export type Colors = Record<ColorName, string>;
 
 export const colors: Record<Scheme, Colors> = palette;
 
-/** Grille de 4 pt ; marge de page de 16 pt, sections espacées de 40. */
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 40, gutter: 16 } as const;
+/** Grille de 4 pt ; marge de page de 20 pt, sections espacées de 40. */
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 40, gutter: 20 } as const;
 
 /**
  * Rayons (décision du 03/10) : cartes de verre 28, vignettes 22, feuilles 32
@@ -44,8 +45,8 @@ const caps = (size: number) => ({ textTransform: 'uppercase' as const, letterSpa
 export const type = {
   // La marque, DRESSKODE : Cormorant en capitales, interlettrage 0,24 em.
   brand: { ...F.displayStrong, fontSize: 17, lineHeight: 20, textTransform: 'uppercase' as const, letterSpacing: 4.1 },
-  // Le mot de la page en haut à gauche (LE DRESSING, KODE…).
-  masthead: { ...F.s600, fontSize: 13, letterSpacing: 0, lineHeight: 18 },
+  // Le mot de la page en haut à gauche (LE DRESSING, KODE…), en capitales espacées.
+  masthead: { ...F.s600, fontSize: 12, letterSpacing: 3.6, lineHeight: 16, textTransform: 'uppercase' as const },
   // Étiquette (« Tenue du jour », « L'étiquette ») : mono, casse normale.
   kicker: { ...F.mono, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
   hero: { ...F.display, fontSize: 28, lineHeight: 30, ...caps(28) },
@@ -59,7 +60,7 @@ export const type = {
   bodyL: { ...F.s400, fontSize: 17, lineHeight: 24 },
   body: { ...F.s400, fontSize: 15, lineHeight: 21.75 },
   bodyStrong: { ...F.s500, fontSize: 15, lineHeight: 21.75 },
-  button: { ...F.s500, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
+  button: { ...F.s600, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
   caption: { ...F.s400, fontSize: 13, lineHeight: 18 },
   small: { ...F.s400, fontSize: 12, lineHeight: 16 },
   tab: { ...F.s500, fontSize: 12, lineHeight: 15 },

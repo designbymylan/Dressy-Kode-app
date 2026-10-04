@@ -112,7 +112,7 @@ export function Offers() {
                   disabled={mine}
                   scaleTo={0.99}
                   accessibilityLabel={`${p.name}, ${free ? 'gratuit' : `${price(p.cents[period])} par ${period}`}${mine ? ', ton offre actuelle' : ''}`}
-                  style={{ borderRadius: 24, padding: 18, gap: 10, borderWidth: mine || p.flagged ? 1.5 : 1, borderColor: mine ? c.ink : p.flagged ? c.brass : c.rule }}
+                  style={{ backgroundColor: mine ? c.raised : undefined, borderRadius: 24, padding: 18, gap: 10, borderWidth: mine || p.flagged ? 1.5 : 1, borderColor: mine ? c.ink : p.flagged ? c.brass : c.rule }}
                 >
                   <View className="flex-row items-start justify-between" style={{ gap: 10 }}>
                     <View style={{ flex: 1, gap: 2 }}>

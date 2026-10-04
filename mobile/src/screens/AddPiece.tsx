@@ -15,6 +15,7 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { StackHeader, useStackTop } from '../ui/layout';
+import { glassSurface } from '../ui/Glass';
 import { Card, Gauge, Skeleton } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
@@ -189,7 +190,7 @@ export function AddPiece() {
                     { icon: 'camera' as const, label: 'Prendre une photo', note: 'Sur un cintre ou à plat' },
                     { icon: 'image' as const, label: 'Depuis la galerie', note: demo ? 'Une photo à la fois' : 'Jusqu’à 10 à la fois' },
                   ].map((o) => (
-                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} style={{ backgroundColor: c.stage, borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }}>
+                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} style={[glassSurface(c, scheme), { borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }]}>
                       <Icon name={o.icon} size={28} color={c.ink} />
                       <View style={{ gap: 2 }}>
                         <T v="bodyStrong">{o.label}</T>
@@ -239,7 +240,7 @@ export function AddPiece() {
                 ) : (
                 <>
                 <T v="kicker" tone="ink2">
-                  Photos d’exemple de la démonstration
+                  Photos d’exemple
                 </T>
                 <View className="flex-row flex-wrap" style={{ gap: 10 }}>
                   {gallery.slice(0, 9).map((g, i) => (

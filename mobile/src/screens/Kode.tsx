@@ -24,6 +24,8 @@ import { KodeThinking } from '../ui/KodeThinking';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
+const ucFirst = (t: string) => (t ? t[0].toUpperCase() + t.slice(1) : t);
+
 export function Kode() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -134,7 +136,7 @@ export function Kode() {
               {tomorrow && (
                 <View className="flex-row items-center" style={{ gap: 8 }}>
                   <Icon name="calendar" size={18} color={c.ink2} />
-                  <T v="body">
+                  <T v="body" style={{ flex: 1 }}>
                     Demain, {lcFirst(tomorrow.title)} à {tomorrow.time}
                   </T>
                 </View>
@@ -143,7 +145,7 @@ export function Kode() {
                 <View className="flex-row items-center" style={{ gap: 8 }}>
                   <Icon name="person" size={18} color={c.ink2} />
                   <T v="body" style={{ flex: 1 }}>
-                    {[p.silhouette && p.silhouette !== 'inconnue' ? `Silhouette en ${p.silhouette}` : '', p.styles.length ? `style ${p.styles.join(', ').toLowerCase()}` : ''].filter(Boolean).join(', ')}
+                    {ucFirst([p.silhouette && p.silhouette !== 'inconnue' ? `silhouette en ${p.silhouette}` : '', p.styles.length ? `style ${p.styles.join(', ').toLowerCase()}` : ''].filter(Boolean).join(', '))}
                   </T>
                 </View>
               ) : null}

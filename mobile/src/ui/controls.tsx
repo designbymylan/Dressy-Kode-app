@@ -33,7 +33,7 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
         </View>
       )}
       {dot && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: dot, marginRight: 7, borderWidth: 1, borderColor: on ? c['primary-fg'] : c.rule }} />}
-      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={{ ...F.s500 }}>
+      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={[F.s500, { fontSize: 13.5 }]}>
         {label}
       </T>
       {count !== undefined && (
@@ -92,7 +92,7 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
                 <Icon name={o.icon} size={16} color={on ? c['primary-fg'] : c.ink2} />
               </View>
             )}
-            <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={{ ...F.s500 }} upper>
+            <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={[on ? F.s600 : F.s500, { fontSize: 14 }]}>
               {o.label}
             </T>
           </Tap>

@@ -47,8 +47,8 @@ export function ShareScreen() {
     return (
       <View className="bg-paper items-center justify-center" style={{ flex: 1, padding: space.gutter, gap: 14 }} testID="share-sent">
       <Ambient />
-        <Animated.View entering={ZoomIn.springify().damping(14)} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="check" size={40} color={c['primary-fg']} strokeWidth={2.2} />
+        <Animated.View entering={ZoomIn.springify().damping(14)} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: c['positive-soft'], alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="check" size={40} color={c.positive} strokeWidth={2.2} />
         </Animated.View>
         <T v="title" style={{ textAlign: 'center' }}>
           Envoyé à {name}.

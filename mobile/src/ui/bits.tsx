@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import type { Piece, Weather } from '../data/wardrobe';
-import { isNew, newLabel, wornLabel } from '../data/wardrobe';
+import { agree, isNew, newLabel, wornLabel } from '../data/wardrobe';
 import { LightScope, useTheme } from '../theme/ThemeProvider';
 import { Garment } from './Garment';
 import { glassSurface } from './Glass';
@@ -114,21 +114,20 @@ export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; widt
   const frame = useRef<View>(null);
   return (
     <Tap testID={`tile-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" style={{ width }} scaleTo={0.97}>
-      {/* La pièce sur gris studio, dans une vignette arrondie. */}
-      <View ref={frame} className="items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.08), borderRadius: dense ? 18 : 22, backgroundColor: c.stage }}>
+      {/* La pièce sur gris studio, dans une vignette de verre arrondie. */}
+      <View ref={frame} className="items-center justify-center" style={[{ height: width * (dense ? 1.05 : 1.08), borderRadius: dense ? 18 : 22 }, glassSurface(c, scheme), { backgroundColor: c.stage }]}>
         <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} dark={scheme === 'dark'} label={piece.name} />
         {piece.wears === 0 && (
-          // Une pastille noire compacte, comme un cartel de galerie.
-          <View className="absolute bg-primary-bg" style={{ top: 8, left: 8, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-            <T v="kicker" tone="primary-fg">
-              {isNew(piece) ? newLabel(piece) : 'Jamais portée'}
+          <View className={`absolute ${isNew(piece) ? 'bg-positive-soft' : 'bg-caution-soft'}`} style={{ top: 8, left: 8, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
+            <T v="small" tone={isNew(piece) ? 'positive' : 'caution'} style={F.s600}>
+              {isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : `Jamais porté${agree(piece)}`}
             </T>
           </View>
         )}
       </View>
       {!dense && (
         <View style={{ paddingTop: 8, paddingHorizontal: 2, gap: 1 }}>
-          <T v="caption" style={{ ...F.s500 }} numberOfLines={1}>
+          <T v="caption" style={F.s600} numberOfLines={1}>
             {piece.name}
           </T>
           <T v="small" tone="ink2" numberOfLines={1}>
@@ -151,7 +150,9 @@ export function Row({ icon, title, detail, onPress, right, testID, last }: { ico
         </View>
       )}
       <View style={{ flex: 1, paddingVertical: 10 }}>
-        <T v="body">{title}</T>
+        <T v="body" style={F.s500}>
+          {title}
+        </T>
         {detail && (
           <T v="caption" tone="ink2">
             {detail}
@@ -203,13 +204,12 @@ export function Group({ children, testID }: { children: ReactNode; testID?: stri
 /** Pastille d'état (« Portée aujourd'hui », « Ton offre »). */
 export function Badge({ label, tone = 'positive', icon }: { label: string; tone?: 'positive' | 'caution' | 'neutral'; icon?: IconName }) {
   const { c } = useTheme();
-  // Une pastille noire (état acquis), beurre (à surveiller) ou au filet.
-  const bg = tone === 'positive' ? 'bg-primary-bg' : tone === 'caution' ? 'bg-butter' : '';
-  const fg = tone === 'positive' ? c['primary-fg'] : tone === 'caution' ? c['butter-ink'] : c.ink;
+  const bg = tone === 'positive' ? 'bg-positive-soft' : tone === 'caution' ? 'bg-caution-soft' : 'bg-pill';
+  const fg = tone === 'positive' ? c.positive : tone === 'caution' ? c.caution : c.ink;
   return (
-    <View className={`flex-row items-center self-start ${bg}`} style={[{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 4, gap: 5 }, tone === 'neutral' && { borderWidth: 1, borderColor: c.ink }]}>
-      {icon && <Icon name={icon} size={14} color={fg} strokeWidth={1.8} />}
-      <T v="kicker" style={{ color: fg }}>
+    <View className={`flex-row items-center self-start ${bg}`} style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5, gap: 5 }}>
+      {icon && <Icon name={icon} size={14} color={fg} strokeWidth={2} />}
+      <T v="small" style={[F.s600, { color: fg }]}>
         {label}
       </T>
     </View>
