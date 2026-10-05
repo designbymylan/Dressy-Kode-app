@@ -11,7 +11,7 @@ import * as remote from '../state/remote';
 import { CAMERA_BLOCKED, cameraAccess } from '../lib/camera';
 import { groupByPhoto, isActive, isPiece, jobNote, jobPhrases, jobStep, jobTitle, scanPieces, type Box, type JobRow, type Reveal } from '../state/jobs';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { material, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
@@ -169,20 +169,15 @@ export function AddPiece() {
                 Une photo suffit.
               </T>
               <T v="body" tone="ink2">
-                Kode détoure ta pièce, la reconnaît et la dessine pour tes portants. Tu vérifies, c’est rangé.
+                Kode la détoure, la reconnaît et la range.
               </T>
             </View>
 
             {limit !== null && (
               <View style={{ gap: 6 }}>
-                <View className="flex-row justify-between">
-                  <T v="caption" tone="ink2">
-                    Places utilisées
-                  </T>
-                  <T v="caption" tone={full ? 'caution' : 'ink2'}>
-                    {s.pieces.length} sur {limit}
-                  </T>
-                </View>
+                <T v="kicker" tone={full ? 'caution' : 'ink2'}>
+                  {`${s.pieces.length} / ${limit} places`}
+                </T>
                 <Gauge value={s.pieces.length} max={limit} label="Places utilisées dans le dressing" />
               </View>
             )}
@@ -191,7 +186,7 @@ export function AddPiece() {
               <Card className="bg-butter" style={{ gap: 10 }} testID="add-full">
                 <T v="cardTitle">Ton dressing est plein.</T>
                 <T v="body" tone="ink2">
-                  Tu pourrais ajouter 30 places pour 4,99 €, une seule fois, ou passer à Atelier, jusqu’à 200 pièces.
+                  Tu pourrais ajouter 30 places, ou passer à Atelier : 200 pièces.
                 </T>
                 <View className="flex-row" style={{ gap: 8 }}>
                   <Button label="+30 places · 4,99 €" size="m" grow onPress={a.buyPlaces} />
@@ -202,19 +197,23 @@ export function AddPiece() {
               <>
                 <View className="flex-row" style={{ gap: 10 }}>
                   {[
-                    { icon: 'camera' as const, label: 'Prendre une photo', note: 'Sur un cintre ou à plat' },
-                    { icon: 'image' as const, label: 'Depuis la galerie', note: demo ? 'Une photo à la fois' : 'Jusqu’à 10 à la fois' },
-                  ].map((o) => (
-                    <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(o.icon === 'camera')} accessibilityLabel={o.label} outerStyle={{ flex: 1 }} style={[glassSurface(c, scheme), { borderRadius: 22, padding: 16, gap: 18, minHeight: 128 }]}>
-                      <Icon name={o.icon} size={28} color={c.ink} />
-                      <View style={{ gap: 2 }}>
-                        <T v="bodyStrong">{o.label}</T>
-                        <T v="small" tone="ink2">
-                          {o.note}
-                        </T>
-                      </View>
-                    </Tap>
-                  ))}
+                    { icon: 'camera' as const, label: 'Photo', note: 'cintre ou à plat', hint: 'Prendre une photo' },
+                    { icon: 'image' as const, label: 'Galerie', note: demo ? '1 photo à la fois' : '10 photos max', hint: 'Depuis la galerie' },
+                  ].map((o) => {
+                    // La photo est l'action principale (noire) ; la galerie, en gris studio (05/10).
+                    const main = o.icon === 'camera';
+                    return (
+                      <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(main)} accessibilityLabel={o.hint} outerStyle={{ flex: 1 }} style={[{ borderRadius: 28, padding: 16, gap: 12, minHeight: 150, alignItems: 'center', justifyContent: 'center', backgroundColor: main ? c['primary-bg'] : c.stage }, main && material.press[scheme]]}>
+                        <Icon name={o.icon} size={30} color={main ? c['primary-fg'] : c.ink} />
+                        <View style={{ gap: 2, alignItems: 'center' }}>
+                          <T v="bodyStrong" tone={main ? 'primary-fg' : 'ink'}>{o.label}</T>
+                          <T v="kicker" tone={main ? 'primary-fg' : 'ink2'}>
+                            {o.note}
+                          </T>
+                        </View>
+                      </Tap>
+                    );
+                  })}
                 </View>
                 {error && (
                   <Card className="bg-butter" style={{ gap: 10 }} testID="add-error">
@@ -239,7 +238,7 @@ export function AddPiece() {
                       style={{ minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
                     />
                     <T v="small" tone="ink2">
-                      Sinon, Kode dessine toutes les pièces qu’il voit : vêtements, chaussures, sacs et bijoux.
+                      Sinon, Kode dessine tout ce qu’il voit.
                     </T>
                   </View>
                 ) : !demo ? (
@@ -248,8 +247,8 @@ export function AddPiece() {
                     <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kode dessine tes pièces avec ton compte.'}</T>
                     <T v="body" tone="ink2">
                       {remote.online
-                        ? 'Crée ton compte, gratuit et en une minute : Kode repère chaque vêtement de tes photos et le range sur tes portants, sans fond.'
-                        : 'Dans cet aperçu, Kode ne reçoit pas les photos. Dans l’app, avec ton compte, il repère chaque vêtement et le range sur tes portants.'}
+                        ? 'Gratuit, en une minute : Kode range chaque vêtement de tes photos.'
+                        : 'Dans cet aperçu, Kode ne reçoit pas les photos.'}
                     </T>
                     {remote.online && <Button testID="add-create-account" label="Créer mon compte" size="m" onPress={() => setAccount(true)} />}
                   </Card>

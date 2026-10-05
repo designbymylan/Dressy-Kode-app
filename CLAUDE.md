@@ -94,6 +94,32 @@ barre d'onglets, icônes, boutons, vignettes, toast, liens de section), avec
 la typographie v1 et les couleurs de la galerie. Seuls ces deux points
 gardent la galerie ; tout le reste suit le 02/10 (commit `76c2e5a`).
 
+**Décision du 05/10 : la « version cartes » sur le mobile** (canevas
+https://claude.ai/artifact/UT4Lmsxi88ummsePw9a3qM, validé par l'utilisateur,
+commit `6767f94`). Elle remplace la disposition de la refonte là où elles
+diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
+
+- **En-tête en capsule** : une capsule de verre flotte en haut de chaque
+  écran (`TabHeader` pour les onglets, `StackHeader` pour les écrans
+  empilés, `ui/layout.tsx`) : le mot de la page en Cormorant ou la marque,
+  un compteur en DM Mono, des actions rondes.
+- **Cartes à étiquette** : chaque bloc est une carte de verre ouverte par
+  une étiquette à point (`Tag`, `ui/bits.tsx`) ; les informations courtes
+  passent en puces à point (`DotChip`) ; les vues se basculent par des
+  onglets soulignés (`UnderlineTabs`, `ui/controls.tsx`).
+- **Garde-robe** (inspirée des apps de garde-robe) : catégories en ronds,
+  grille par défaut, vignettes à étiquette (« Nouveau », « Jamais portée »)
+  et ports en DM Mono ; « Habille-moi » en rangées par emplacement, avec
+  cadenas et « Mélanger ».
+- **Fiche pièce** : la pièce sur une scène gris studio, un panneau de verre
+  posé dessus (nom, ports, coût par port, flèche « Composer avec »).
+- **Kode** répond dans un bandeau rose poudré ; ses suggestions sont des
+  puces. **Bienvenue** et **Offres** suivent une page de vente : grand
+  titre, deux boutons empilés, cartes.
+- **Moins de texte** : un titre, des chiffres, un ou deux boutons ; plus de
+  sur-titre en capitales espacées ni de phrase d'explication sous un titre.
+- **Kode reste au centre de la barre d'onglets** (confirmé le 05/10).
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 
@@ -196,8 +222,9 @@ Ordre de priorité, du plus fort au plus faible :
 
 - **Mobile** : NativeWind (classes branchées sur les jetons de
   `palette.json`), Reanimated, react-native-svg. Réutilise `mobile/src/ui/`
-  (`Glass` (verre flouté), `Button`, `IconButton`, `Card`, `Group`, `Row`,
-  `Chip`, `Segmented`, `Sheet`, `TabBar`, `T`…) avant de créer un composant.
+  (`Glass` (verre flouté), `TabHeader`, `StackHeader`, `Button`,
+  `IconButton`, `Card`, `Tag`, `DotChip`, `Group`, `Row`, `Chip`,
+  `UnderlineTabs`, `Sheet`, `TabBar`, `T`…) avant de créer un composant.
   Les icônes sont les SVG de `ui/Icon.tsx`. L'état est dans
   `state/store.tsx`, le pont Supabase dans `state/remote.ts`.
   **Jamais de `className` sur un composant animé** (`Animated.View`,

@@ -6,6 +6,7 @@ import { MODULE_LABELS, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
+import { Tag } from '../ui/bits';
 import { IconButton, Button } from '../ui/Button';
 import { SegmentedPill, Toggle } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
@@ -27,9 +28,7 @@ export function Customize() {
       <StackHeader title="Personnaliser" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 26 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2">
-            Personnaliser
-          </T>
+          <Tag label="Personnaliser" />
           <T v="title" accessibilityRole="header">
             Ton app,{'\n'}
             <T v="title" style={{ ...F.accent }}>
@@ -43,7 +42,7 @@ export function Customize() {
             Ton accueil
           </T>
           <T v="caption" tone="ink2">
-            La tenue du jour reste en haut. Le reste, tu choisis l’ordre et ce qui s’affiche.
+            La tenue du jour reste en haut.
           </T>
           <View style={{ marginTop: 6 }}>
             {s.modules.map((m, i) => (

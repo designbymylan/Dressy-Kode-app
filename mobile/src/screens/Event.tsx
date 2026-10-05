@@ -10,7 +10,7 @@ import { space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Button } from '../ui/Button';
 import { StackHeader, useHeaderScroll, useStackTop, Rule } from '../ui/layout';
-import { Badge, Card, WeatherIcon } from '../ui/bits';
+import { Badge, Card, WeatherIcon, Tag } from '../ui/bits';
 import { OutfitBoard, Legend } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
@@ -62,9 +62,7 @@ export function EventScreen() {
       <StackHeader title={e.title} y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2">
-            Événement · {longDate(e.day)}
-          </T>
+          <Tag label={`Événement · ${longDate(e.day)}`} />
           <T v="title" accessibilityRole="header">
             {e.title}
           </T>

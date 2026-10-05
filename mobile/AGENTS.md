@@ -1,5 +1,6 @@
 Application mobile Dresskode : Expo SDK 57 (React Native 0.86), iOS d'abord.
-Disposition validée : B « Éditorial », voir `../design/refonte/02-design-system.md`.
+Disposition : « version cartes » du 05/10 (voir `../CLAUDE.md`), sur la base B « Éditorial »
+(`../design/refonte/02-design-system.md`).
 Apparence : couleurs de la « galerie » et typographie v1, sur les arrondis et
 le verre (règles visuelles dans `../CLAUDE.md`).
 

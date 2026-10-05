@@ -14,9 +14,9 @@ import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
-import { Masthead, Rule, ScrollEdge, useTabScroll } from '../ui/layout';
-import { Badge, Card, WeatherIcon } from '../ui/bits';
-import { OutfitBoard, Legend } from '../ui/outfit';
+import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
+import { Badge, Card, Tag, WeatherIcon } from '../ui/bits';
+import { OutfitBoard } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
@@ -34,6 +34,7 @@ export function Agenda() {
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
   const [day, setDay] = useState(0);
+  const top = useTabTop();
 
   useEffect(() => {
     if (route.params?.day !== undefined) setDay(route.params.day);
@@ -80,9 +81,9 @@ export function Agenda() {
     <View style={{ flex: 1 }} className="bg-paper">
       <Ambient />
     <ScrollEdge y={edge} />
-    <Animated.ScrollView testID="screen-agenda" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}>
-      <View style={{ paddingHorizontal: space.gutter, gap: 12 }}>
-        <Masthead kicker="L’AGENDA" meta={cap(range)} />
+    <TabHeader title="Agenda" meta={cap(range)} />
+    <Animated.ScrollView testID="screen-agenda" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 16 }}>
+      <View style={{ paddingHorizontal: space.gutter }}>
         <T v="title" accessibilityRole="header">
           {relativeDay(day)}
         </T>
@@ -95,15 +96,15 @@ export function Agenda() {
           const ferieI = ferieDu(ctx, i);
           const busy = all.some((e) => e.day === i) || !!ferieI;
           return (
-            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ backgroundColor: on ? c['primary-bg'] : undefined, width: 50, paddingVertical: 10, borderRadius: 25, alignItems: 'center', gap: 4 }}>
-              <T v="small" tone={on ? 'primary-fg' : 'ink2'}>
+            <Tap key={i} testID={`agenda-day-${i}`} onPress={() => setDay(i)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${cap(longDate(i))}${ferieI ? `, férié, ${ferieI.nom}` : busy ? ', un événement' : ''}`} style={{ backgroundColor: on ? c['primary-bg'] : c.pill, width: 50, height: 92, justifyContent: 'center', borderRadius: 22, alignItems: 'center', gap: 4 }}>
+              <T v="kicker" tone={on ? 'primary-fg' : 'ink'}>
                 {DAYS_LETTER[d.getDay()]}
               </T>
               <T v="bodyStrong" tone={on ? 'primary-fg' : 'ink'} style={{ fontSize: 17 }}>
                 {d.getDate()}
               </T>
-              {meteo.jours[i] ? <WeatherIcon w={meteo.jours[i]!} size={16} color={on ? c['primary-fg'] : c.ink2} /> : <View style={{ height: 16 }} />}
-              <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: busy ? (on ? c['primary-fg'] : c.brass) : 'transparent' }} />
+              {meteo.jours[i] ? <WeatherIcon w={meteo.jours[i]!} size={16} color={on ? c['primary-fg'] : c.ink} /> : <View style={{ height: 16 }} />}
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: busy ? (on ? c['primary-fg'] : c.ink) : 'transparent' }} />
             </Tap>
           );
         })}
@@ -138,7 +139,7 @@ export function Agenda() {
               <View style={{ flex: 1, gap: 2 }}>
                 <T v="bodyStrong">Relier ton agenda</T>
                 <T v="caption" tone="ink2">
-                  Réunions, dîners, mariages : Kode prépare les jours chargés. Tu choisis les agendas.
+                  Kode prépare les jours chargés.
                 </T>
               </View>
               <Toggle testID="agenda-link-toggle" value={false} onChange={() => { a.setProfile({ agenda: true }); a.toast('Agenda relié'); }} label="Relier mon agenda" />
@@ -169,38 +170,36 @@ export function Agenda() {
         </View>
 
         {planned && pieces.length ? (
-          <Card style={{ gap: 12 }} testID="agenda-planned">
+          <Card style={{ gap: 12, padding: 14 }} testID="agenda-planned">
             <View className="flex-row items-center justify-between">
-              <T v="kicker" tone={todayOutfit ? 'positive' : 'ink2'}>
-                {todayOutfit ? 'Portée' : s.planned[day] ? 'Prévue' : 'Proposée'}
-              </T>
+              <Tag label={todayOutfit ? 'Portée' : s.planned[day] ? 'Prévue' : 'Proposée'} />
               {s.planned[day] && !todayOutfit && (
                 <T testID="agenda-unplan" v="caption" tone="ink2" onPress={() => a.unplan(day)} accessibilityRole="button" style={{ paddingVertical: 10, paddingLeft: 10 }}>
                   Retirer
                 </T>
               )}
             </View>
-            <OutfitBoard pieces={pieces} width={width - space.gutter * 2 - 32} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
-            <Legend pieces={pieces} />
-            <Rule />
-            <T v="cardTitle">{planned.title}</T>
-            {!todayOutfit && <Button testID="agenda-change" label="Changer la tenue" variant="secondary" size="m" icon="layers" onPress={() => nav.navigate('Compose', { day, pieces: planned.pieces })} />}
+            <View style={{ backgroundColor: c.stage, borderRadius: 22, padding: 12 }}>
+              <OutfitBoard pieces={pieces} width={width - space.gutter * 2 - 28 - 24} numbered={false} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
+            </View>
+            <T v="cardTitle" style={{ paddingHorizontal: 4 }}>{planned.title}</T>
+            {!todayOutfit && <Button testID="agenda-change" label="Changer la tenue" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { day, pieces: planned.pieces })} />}
           </Card>
         ) : (
-          <Card style={{ gap: 12 }} testID="agenda-empty">
+          <Card style={{ gap: 12, padding: 14 }} testID="agenda-empty">
             {!ready ? (
               <>
-                <T v="cardTitle">Pas encore de tenue à proposer.</T>
+                <Tag label="Pas encore de tenue" />
                 <T v="body" tone="ink2">
-                  Dès trois pièces dans ton dressing, Kode prépare une tenue pour chaque jour, selon la météo{events.length ? ' et tes rendez-vous' : ''}.
+                  Dès trois pièces, Kode prépare chaque jour.
                 </T>
                 <Button testID="agenda-add" label="Ajouter des pièces" size="m" icon="plus" onPress={() => nav.navigate('AddPiece')} />
               </>
             ) : (
             <>
-            <T v="cardTitle">Rien de prévu pour l’instant.</T>
+            <Tag label="Rien de prévu" />
             <T v="body" tone="ink2">
-              {events.length ? `Tu pourrais préparer une tenue pour « ${events[0].title} ».` : 'Tu pourrais préparer ta tenue la veille : le matin, tu gagnes dix minutes.'}
+              {events.length ? `Tu pourrais préparer « ${events[0].title} ».` : 'Tu pourrais préparer ta tenue la veille.'}
             </T>
             <View className="flex-row" style={{ gap: 8 }}>
               <Button testID="agenda-compose" label="Composer" size="m" grow onPress={() => nav.navigate('Compose', { day })} />
@@ -212,10 +211,8 @@ export function Agenda() {
         )}
 
         {later.length > 0 && (
-          <View style={{ gap: 4 }}>
-            <T v="kicker" tone="ink2" style={{ marginBottom: 4 }}>
-              À venir
-            </T>
+          <Card style={{ gap: 4, padding: 14 }}>
+            <Tag label="À venir" />
             {later.map((e) => (
               <Tap key={e.id} testID={`later-${e.id}`} onPress={() => (e.occasion ? nav.navigate('Event', { id: e.id }) : setDay(e.day))} scaleTo={0.99} accessibilityLabel={`${shortDate(e.day)}, ${e.title}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: 14, borderBottomWidth: 1, borderColor: c.rule }}>
                 <T v="caption" tone="ink2" style={{ width: 86 }}>
@@ -228,7 +225,7 @@ export function Agenda() {
                 <Icon name="chevron" size={16} color={c.ink2} />
               </Tap>
             ))}
-          </View>
+          </Card>
         )}
       </Animated.View>
     </Animated.ScrollView>

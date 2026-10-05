@@ -12,7 +12,7 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip, Stepper } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Card, Group, Ring, Row } from '../ui/bits';
+import { Card, Group, Ring, Row, Tag } from '../ui/bits';
 import { Sheet } from '../ui/Sheet';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
 import { ColorChoice, MeasureFigure, Ruler } from '../ui/onboarding';
@@ -57,9 +57,7 @@ export function SilhouetteScreen() {
       <StackHeader title="Ma silhouette" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 22 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2">
-            Ma silhouette
-          </T>
+          <Tag label="Ma silhouette" />
           <T v="title" accessibilityRole="header">
             Ce qui aide Kode{'\n'}
             <T v="title" style={{ ...F.accent }}>
@@ -67,7 +65,7 @@ export function SilhouetteScreen() {
             </T>
           </T>
           <T v="body" tone="ink2">
-            Tout est facultatif et reste sur ton compte : rien n’est partagé, rien n’est jugé.
+            Tout est facultatif, rien n’est partagé.
           </T>
         </View>
 

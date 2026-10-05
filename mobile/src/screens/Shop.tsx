@@ -10,7 +10,7 @@ import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Badge, Card, Gauge } from '../ui/bits';
+import { Badge, Card, Gauge, Tag } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
@@ -49,20 +49,15 @@ export function Shop() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-shop">
       <Ambient />
-      <StackHeader title="La boutique" y={y} />
+      <StackHeader title="La boutique" />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2">
-            La boutique
-          </T>
+          <Tag label="Achat unique" />
           <T v="title" accessibilityRole="header">
             À l’unité,{'\n'}
             <T v="title" style={{ ...F.accent }}>
               quand tu en as besoin.
             </T>
-          </T>
-          <T v="body" tone="ink2">
-            Pas d’abonnement : tu paies une fois, c’est à toi.
           </T>
         </View>
 
