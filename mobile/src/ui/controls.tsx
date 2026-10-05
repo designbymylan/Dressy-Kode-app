@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Tap } from './Tap';
@@ -98,6 +98,42 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
           </Tap>
         );
       })}
+    </View>
+  );
+}
+
+/**
+ * Onglets soulignés (version cartes, 05/10) : le libellé actif en encre, un
+ * trait sous lui ; les autres en gris. `right` accueille une action (filtres).
+ */
+export function UnderlineTabs<V extends string>({ options, value, onChange, label, right }: { options: { value: V; label: string }[]; value: V; onChange: (v: V) => void; label: string; right?: ReactNode }) {
+  const { c } = useTheme();
+  return (
+    <View className="flex-row items-center justify-between" style={{ borderBottomWidth: 1, borderColor: c.rule }}>
+      <View accessibilityRole="tablist" accessibilityLabel={label} className="flex-row" style={{ gap: 22 }}>
+        {options.map((o) => {
+          const on = o.value === value;
+          return (
+            <Tap
+              key={o.value}
+              testID={`seg-${o.value}`}
+              onPress={() => onChange(o.value)}
+              feedback="select"
+              scaleTo={1}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={o.label}
+              style={{ height: 44, justifyContent: 'center', paddingHorizontal: 2 }}
+            >
+              <T v="body" tone={on ? 'ink' : 'ink2'} style={on ? F.s600 : F.s400}>
+                {o.label}
+              </T>
+              <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, borderRadius: 1, backgroundColor: on ? c.ink : 'transparent' }} />
+            </Tap>
+          );
+        })}
+      </View>
+      {right}
     </View>
   );
 }

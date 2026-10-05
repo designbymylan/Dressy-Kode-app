@@ -10,9 +10,9 @@ import { space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
-import { SegmentedPill } from '../ui/controls';
+import { UnderlineTabs } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Badge, Card, Gauge } from '../ui/bits';
+import { DotChip, Tag } from '../ui/bits';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
@@ -44,65 +44,41 @@ export function Offers() {
   const target = PLANS.find((p) => p.id === choice);
   const rank = (id: PlanId) => PLANS.findIndex((p) => p.id === id);
 
+  const flagged = PLANS.find((p) => p.flagged)!;
+  const pick = choice ?? (s.plan === flagged.id ? null : flagged.id);
+  const picked = PLANS.find((p) => p.id === pick);
+
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-offers">
       <Ambient />
-      <StackHeader title="Les offres" y={y} />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
-        <View style={{ gap: 8 }}>
-          <T v="kicker" tone="ink2">
-            Les offres
+      <StackHeader title="Les offres" brand />
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 120, gap: 16 }}>
+        <View className="items-center" style={{ gap: 14 }}>
+          <Tag label={`Ton offre : ${current.name}`} tone="butter" />
+          <T v="hero" style={{ fontSize: 40, lineHeight: 40, textAlign: 'center' }} accessibilityRole="header">
+            Choisis ton dressing.
           </T>
-          <T v="title" accessibilityRole="header">
-            Porte mieux,{'\n'}
-            <T v="title" style={{ ...F.accent }}>
-              paie juste.
-            </T>
-          </T>
-          <T v="body" tone="ink2">
-            Sans publicité, sans engagement. Tu changes ou tu arrêtes quand tu veux, depuis Moi.
-          </T>
+          <View className="flex-row flex-wrap justify-center" style={{ gap: 6 }}>
+            {limit !== null && <DotChip label={`${s.pieces.length} / ${limit} places`} />}
+            <DotChip label={left === null ? 'Kode sans limite' : `${left} / ${LIMITS[s.plan].questions} questions`} />
+          </View>
         </View>
 
-        <Card style={{ gap: 10 }}>
-          <View className="flex-row items-center justify-between">
-            <T v="kicker" tone="ink2">
-              Aujourd’hui
-            </T>
-            <Badge label={current.name} tone="neutral" />
-          </View>
-          {limit !== null && (
-            <>
-              <View className="flex-row justify-between">
-                <T v="caption">Places du dressing</T>
-                <T v="caption" tone="ink2">
-                  {s.pieces.length} sur {limit}
-                </T>
-              </View>
-              <Gauge value={s.pieces.length} max={limit} label="Places du dressing" />
-            </>
-          )}
-          <View className="flex-row justify-between">
-            <T v="caption">Questions à Kode ce mois-ci</T>
-            <T v="caption" tone="ink2">
-              {left === null ? 'sans limite' : `${left} restantes sur ${LIMITS[s.plan].questions}`}
-            </T>
-          </View>
-        </Card>
-
-        <SegmentedPill
+        <UnderlineTabs
           label="Période de paiement"
           value={period}
           onChange={setPeriod}
           options={[
-            { value: 'mois', label: 'Mensuel' },
-            { value: 'an', label: 'Annuel · 1 mois offert' },
+            { value: 'mois', label: 'Mois' },
+            { value: 'an', label: 'Année' },
           ]}
+          right={period === 'an' ? <Tag label="1 mois offert" /> : undefined}
         />
 
-        <View style={{ gap: 12 }}>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Offres" style={{ gap: 8 }}>
           {PLANS.map((p) => {
             const mine = p.id === s.plan;
+            const on = p.id === pick;
             const free = p.cents.mois === 0;
             return (
               <Animated.View key={p.id} layout={LinearTransition}>
@@ -111,53 +87,45 @@ export function Offers() {
                   onPress={() => (mine ? undefined : setChoice(p.id))}
                   disabled={mine}
                   scaleTo={0.99}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on, disabled: mine }}
                   accessibilityLabel={`${p.name}, ${free ? 'gratuit' : `${price(p.cents[period])} par ${period}`}${mine ? ', ton offre actuelle' : ''}`}
-                  style={{ backgroundColor: mine ? c.raised : undefined, borderRadius: 24, padding: 18, gap: 10, borderWidth: mine || p.flagged ? 1.5 : 1, borderColor: mine ? c.ink : p.flagged ? c.brass : c.rule }}
+                  style={{ backgroundColor: c.card, borderRadius: 28, paddingVertical: 16, paddingHorizontal: 20, gap: 8, borderWidth: on || mine ? 1.5 : 1, borderColor: on ? c.ink : mine ? c['rule-strong'] : c['card-edge'] }}
                 >
-                  <View className="flex-row items-start justify-between" style={{ gap: 10 }}>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <View className="flex-row items-center" style={{ gap: 8 }}>
-                        <T v="cardTitle">{p.name}</T>
-                        {mine ? <Badge label="Ton offre" tone="positive" /> : p.flagged ? <Badge label="La plus choisie" tone="neutral" /> : null}
+                  <View className="flex-row items-center justify-between" style={{ gap: 10 }}>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <View className="flex-row items-center flex-wrap" style={{ gap: 8 }}>
+                        <T v="cardTitle" style={{ ...F.s600 }}>{p.name}</T>
+                        {mine ? <Tag label="La tienne" /> : p.flagged ? <Tag label="La plus choisie" tone="butter" dot={false} /> : null}
                       </View>
-                      <T v="caption" tone="ink2">
-                        {p.note}
+                      <T v="kicker" tone="ink2">
+                        {p.features.filter((f) => !f.soon).slice(0, 2).map((f) => f.label.replace('Jusqu’à ', '').replace(' à Kode par mois', '')).join(' · ')}
                       </T>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                      <T v="stat" style={{ fontSize: 24, lineHeight: 28 }}>{free ? '0 €' : price(p.cents[period])}</T>
-                      <T v="small" tone="ink2">
-                        {free ? 'pour toujours' : period === 'mois' ? 'par mois' : `par an, soit ${price(Math.round(p.cents.an / 12))}/mois`}
+                      <T v="stat" style={{ fontSize: 26, lineHeight: 28 }}>{free ? '0 €' : price(p.cents[period])}</T>
+                      <T v="kicker" tone="ink2">
+                        {free ? 'pour toujours' : period === 'mois' ? 'par mois' : `soit ${price(Math.round(p.cents.an / 12))}/mois`}
                       </T>
                     </View>
                   </View>
-                  <View style={{ gap: 6 }}>
-                    {p.features.map((f) => (
-                      <View key={f.label} className="flex-row items-center" style={{ gap: 8 }}>
-                        <Icon name="check" size={16} color={f.soon ? c.ink2 : c.ink} strokeWidth={2} />
-                        <T v="caption" tone={f.soon ? 'ink2' : 'ink'} style={{ flex: 1 }}>
-                          {f.label}
-                          {f.soon ? ' · bientôt' : ''}
-                        </T>
-                      </View>
-                    ))}
-                  </View>
-                  {!mine && (
-                    <T v="bodyStrong" style={{ marginTop: 2 }}>
-                      {rank(p.id) > rank(s.plan) ? `Passer à ${p.name}` : `Revenir à ${p.name}`} →
-                    </T>
-                  )}
                 </Tap>
               </Animated.View>
             );
           })}
         </View>
 
-        <Button testID="offers-shop" label="Achats à l’unité : la boutique" variant="secondary" iconRight="chevron" onPress={() => nav.navigate('Shop')} />
+        <Button testID="offers-shop" label="Achats à l’unité : la boutique" variant="quiet" iconRight="chevron" onPress={() => nav.navigate('Shop')} />
         <T v="small" tone="ink2" style={{ textAlign: 'center' }}>
-          Prix TTC. L’essai d’un mois s’applique à la première souscription annuelle.
+          Prix TTC, sans engagement. Le mois offert vaut pour la première souscription annuelle.
         </T>
       </Animated.ScrollView>
+
+      {picked && (
+        <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16 }}>
+          <Button testID="offers-cta" label={picked.cents.mois === 0 ? `Revenir à ${picked.name}` : `${rank(picked.id) > rank(s.plan) ? 'Passer à' : 'Revenir à'} ${picked.name} · ${price(picked.cents[period])}`} onPress={() => setChoice(picked.id)} />
+        </View>
+      )}
 
       <Sheet
         visible={!!target}

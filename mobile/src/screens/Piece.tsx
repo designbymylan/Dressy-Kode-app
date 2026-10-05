@@ -6,13 +6,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { CATEGORIES, MONTHS_SHORT, addedLabel, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
-import { glassSurface } from '../ui/Glass';
+import { Glass } from '../ui/Glass';
 import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
+import { IconButton } from '../ui/Button';
 import { Button } from '../ui/Button';
-import { StackHeader, useHeaderScroll, useStackTop, Rule } from '../ui/layout';
-import { Bars, Card, EmptyState, Row } from '../ui/bits';
+import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
+import { Bars, Card, DotChip, EmptyState, Row, Tag } from '../ui/bits';
 import { Garment, hangOf } from '../ui/Garment';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
@@ -121,127 +122,104 @@ export function PieceScreen() {
   const { labels, values } = history(piece);
   const wornToday = piece.lastWorn === 0;
 
+  const stageH = Math.min(440, Math.round(width * 1.1));
+  const art = Math.min(220, width * 0.56);
+  const tag = wornToday ? `Porté${f.e} aujourd’hui` : piece.wears === 0 ? (isNew(piece) ? 'Nouveau' : `Jamais porté${f.e}`) : cat.short;
+  const usage = [`${piece.wears} port${piece.wears > 1 ? 's' : ''}`, cpw ? `${cpw} par port` : null].filter(Boolean).join(' · ');
+  const priceTxt = piece.price != null ? `${piece.price.toFixed(2).replace('.', ',').replace(',00', '')} €` : null;
+
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-piece">
       <Ambient />
-      <StackHeader title={piece.name} y={y} right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
-        <View className="bg-stage items-center justify-end" style={{ height: top + 300, paddingBottom: 18 }}>
-          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: top + 6, height: 1.5, backgroundColor: hangOf(piece.kind) === 'none' ? 'transparent' : c.rod }} />
-          <Animated.View ref={grow.ref} onLayout={grow.onLayout} style={grow.style}>
-            <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={Math.min(236, width * 0.6)} hanger={hangOf(piece.kind) !== 'none'} hangerColor={c.rod} dark={scheme === 'dark'} label={piece.name} />
+      <StackHeader title={piece.name} brand right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
+        {/* La scène : la pièce sur gris studio, un panneau de verre posé dessus (05/10). */}
+        <View style={{ height: stageH, borderRadius: 28, backgroundColor: c.stage, overflow: 'hidden', alignItems: 'center' }}>
+          {hangOf(piece.kind) !== 'none' && <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 22, height: 1.5, backgroundColor: c.rod }} />}
+          <Animated.View ref={grow.ref} onLayout={grow.onLayout} style={[{ marginTop: 22 }, grow.style]}>
+            <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} hanger={hangOf(piece.kind) !== 'none'} hangerColor={c.rod} dark={scheme === 'dark'} label={piece.name} />
           </Animated.View>
-        </View>
-
-        <View style={{ paddingHorizontal: space.gutter, paddingTop: 20, gap: 22 }}>
-          <View style={{ gap: 6 }}>
-            <T v="kicker" tone="ink2">
-              {cat.title}
-            </T>
-            <T v="title" accessibilityRole="header">
-              {piece.name}
-            </T>
-            <T v="body" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
-              {cap(wornLabel(piece))}
-              {piece.lastWorn !== null && piece.lastWorn > 0 ? ` · dernière fois ${sinceLabel(piece)}` : ''}
-            </T>
-          </View>
-
-          <View className="flex-row" style={{ gap: 8 }}>
-            <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" grow disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
-            <Button testID="piece-compose" label="Composer avec" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { with: piece.id })} />
-          </View>
-
-          {dormant && (
-            <Card className="bg-butter" style={{ gap: 10 }}>
-              <T v="cardTitle">
-                {piece.lastWorn === null ? `Jamais porté${f.e}, pour l’instant.` : `${f.il} ${f.v('dort', 'dorment')} depuis ${sinceLabel(piece).replace('il y a ', '')}.`}
-              </T>
-              <T v="body" tone="ink2">
-                {`Tu pourrais ${f.le} remettre en jeu demain, ou ${f.le} proposer à une amie qui ${f.le} portera.`}
-              </T>
-              <View className="flex-row" style={{ gap: 8 }}>
-                <Button testID="dormant-plan" label="Prévoir demain" size="m" grow onPress={() => nav.navigate('Compose', { with: piece.id, day: 1 })} />
-                <Button label="À une amie" size="m" variant="secondary" grow onPress={() => nav.navigate('Share', { id: piece.id })} />
-              </View>
-            </Card>
-          )}
-
-          <View style={{ gap: 12 }}>
-            <View className="flex-row items-baseline justify-between">
-              <T v="kicker" tone="ink2">
-                L’étiquette
-              </T>
-              <T testID="label-edit" v="caption" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 13, paddingLeft: 16 }}>
-                Modifier
-              </T>
-            </View>
-            {/* Une étiquette cousue, sur une carte de verre : bord pointillé, rangées nettes. */}
-            <View style={[{ borderRadius: 22, padding: 6 }, glassSurface(c, scheme)]}>
-              <View style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: c['rule-strong'], borderRadius: 16, paddingHorizontal: 14 }}>
-                {[
-                  ['Couleur', piece.color],
-                  ['Matière', piece.material ? cap(piece.material) : 'Non indiquée'],
-                  ['Saison', cap(piece.season)],
-                  ['Prix', piece.price != null ? `${piece.price.toFixed(2).replace('.', ',').replace(',00', '')} €` : 'Non indiqué'],
-                  ['Dans ton dressing', cap(addedLabel(piece.addedDaysAgo))],
-                ].map(([k, v], i, arr) => (
-                  <View key={k} className="flex-row items-center justify-between" style={{ minHeight: 46, borderBottomWidth: i === arr.length - 1 ? 0 : 1, borderColor: c.rule, gap: 12 }}>
-                    <T v="caption" tone="ink2">
-                      {k}
-                    </T>
-                    <View className="flex-row items-center" style={{ gap: 8, flexShrink: 1 }}>
-                      {k === 'Couleur' && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: piece.swatch, borderWidth: 1, borderColor: c.rule }} />}
-                      <T v="bodyStrong" numberOfLines={1}>
-                        {v}
-                      </T>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          <View style={{ gap: 12 }}>
-            <T v="kicker" tone="ink2">
-              L’usage
-            </T>
-            <View className="flex-row" style={{ gap: 10 }}>
-              {[
-                { v: String(piece.wears), l: piece.wears > 1 ? 'ports' : 'port' },
-                { v: cpw ?? 'À venir', l: 'par port' },
-                { v: piece.lastWorn === null ? 'Jamais' : piece.lastWorn === 0 ? 'Auj.' : `${piece.lastWorn} j`, l: 'depuis le dernier' },
-              ].map((x) => (
-                <View key={x.l} style={{ flex: 1, gap: 2 }}>
-                  <T v="stat" style={{ fontSize: 26, lineHeight: 30 }} numberOfLines={1} adjustsFontSizeToFit>
-                    {x.v}
+          <View style={{ position: 'absolute', left: 10, right: 10, bottom: 10 }}>
+            <Glass radius={22} shadow={false}>
+              <View className="flex-row items-end" style={{ padding: 16, gap: 12 }}>
+                <View style={{ flex: 1, gap: 8 }}>
+                  <Tag label={tag} tone="glass" />
+                  <T v="title" accessibilityRole="header">
+                    {piece.name}
                   </T>
-                  <T v="small" tone="ink2">
-                    {x.l}
+                  <T v="kicker" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
+                    {usage}
                   </T>
                 </View>
-              ))}
-            </View>
-            <Bars values={values} labels={labels} />
-            {cpw && piece.price && (
-              <T v="caption" tone="ink2">
-                Chaque port fait baisser son coût : à {piece.wears + 5} ports, {f.il.toLowerCase()} ne te {f.v('coûtera', 'coûteront')} plus que {(piece.price / (piece.wears + 5)).toFixed(2).replace('.', ',')} € la sortie.
-              </T>
-            )}
+                <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={48} onPress={() => nav.navigate('Compose', { with: piece.id })} />
+              </View>
+            </Glass>
           </View>
+        </View>
 
-          <View style={{ gap: 12 }}>
-            <Rule />
-            <View className="flex-row items-baseline justify-between">
-              <T v="section">{`${f.il} ${f.v('va', 'vont')} avec`}</T>
-              <T v="caption" tone="ink2">
-                {matches(piece, s.pieces).length} pièces
+        <View style={{ gap: 10 }}>
+          <View className="flex-row items-center justify-between">
+            <T v="bodyStrong" style={{ fontSize: 15 }} accessibilityRole="header">
+              L’étiquette
+            </T>
+            <T testID="label-edit" v="caption" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 16 }}>
+              Modifier
+            </T>
+          </View>
+          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+            <DotChip label={piece.color} swatch={piece.swatch} />
+            {piece.material ? <DotChip label={cap(piece.material)} /> : null}
+            <DotChip label={cap(piece.season)} />
+            {priceTxt && <DotChip label={priceTxt} />}
+            <DotChip label={cap(addedLabel(piece.addedDaysAgo))} />
+          </View>
+        </View>
+
+        <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
+
+        {dormant && (
+          <Card className="bg-butter" style={{ gap: 12, padding: 14 }}>
+            <Tag label={piece.lastWorn === null ? `Jamais porté${f.e}` : `${f.il} ${f.v('dort', 'dorment')} depuis ${sinceLabel(piece).replace('il y a ', '')}`} tone="butter" />
+            <View className="flex-row" style={{ gap: 8 }}>
+              <Button testID="dormant-plan" label="Prévoir demain" size="m" grow onPress={() => nav.navigate('Compose', { with: piece.id, day: 1 })} />
+              <Button label="À une amie" size="m" variant="secondary" grow onPress={() => nav.navigate('Share', { id: piece.id })} />
+            </View>
+          </Card>
+        )}
+
+        <Card style={{ gap: 12, padding: 14 }}>
+          <Tag label="L’usage" />
+          <View className="flex-row" style={{ gap: 10 }}>
+            {[
+              { v: String(piece.wears), l: piece.wears > 1 ? 'ports' : 'port' },
+              { v: cpw ?? 'À venir', l: 'par port' },
+              { v: piece.lastWorn === null ? 'Jamais' : piece.lastWorn === 0 ? 'Auj.' : `${piece.lastWorn} j`, l: 'depuis le dernier' },
+            ].map((x) => (
+              <View key={x.l} style={{ flex: 1, gap: 2 }}>
+                <T v="stat" style={{ fontSize: 26, lineHeight: 30 }} numberOfLines={1} adjustsFontSizeToFit>
+                  {x.v}
+                </T>
+                <T v="kicker" tone="ink2">
+                  {x.l}
+                </T>
+              </View>
+            ))}
+          </View>
+          <Bars values={values} labels={labels} />
+        </Card>
+
+        {goes.length > 0 && (
+          <Card style={{ gap: 12, padding: 14 }}>
+            <View className="flex-row items-center justify-between">
+              <Tag label={`${f.il} ${f.v('va', 'vont')} avec`} />
+              <T v="kicker" tone="ink2">
+                {`${matches(piece, s.pieces).length} pièces`}
               </T>
             </View>
-            <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+            <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
               {goes.map((g) => (
                 <Tap key={g.id} testID={`goes-${g.id}`} onPress={() => nav.navigate('Compose', { pieces: [piece.id, g.id] })} accessibilityLabel={`Composer avec ${g.name}`} style={{ width: 96 }}>
-                  <View className="bg-stage items-center justify-center" style={{ height: 112, borderRadius: 18 }}>
+                  <View className="bg-stage items-center justify-center" style={{ height: 112, borderRadius: 22 }}>
                     <Garment kind={g.kind} tint={g.tint} image={g.image} size={64} dark={scheme === 'dark'} label={g.name} />
                   </View>
                   <T v="small" style={{ marginTop: 5 }} numberOfLines={1}>
@@ -250,8 +228,8 @@ export function PieceScreen() {
                 </Tap>
               ))}
             </Animated.ScrollView>
-          </View>
-        </View>
+          </Card>
+        )}
       </Animated.ScrollView>
 
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">

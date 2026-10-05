@@ -107,32 +107,36 @@ export function measureOrigin(view: View | null, then: (from?: Origin) => void) 
   view.measureInWindow((x, y, w, h) => then(w && h ? { x, y, w, h } : undefined));
 }
 
-/** Vignette de la grille du dressing. */
+/**
+ * Vignette de la grille du dressing (05/10) : la pièce sur gris studio, son
+ * étiquette à point en haut à gauche quand elle est neuve ou jamais portée,
+ * puis son nom et ses ports en DM Mono.
+ */
 export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean }) {
   const { scheme, c } = useTheme();
   const art = width * (dense ? 0.62 : 0.56);
   const frame = useRef<View>(null);
+  const tag = piece.wears === 0 ? (isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : `Jamais porté${agree(piece)}`) : null;
   return (
     <Tap testID={`tile-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" style={{ width }} scaleTo={0.97}>
-      {/* La pièce sur gris studio, dans une vignette de verre arrondie. */}
-      <View ref={frame} className="items-center justify-center" style={[{ height: width * (dense ? 1.05 : 1.08), borderRadius: dense ? 18 : 22 }, glassSurface(c, scheme), { backgroundColor: c.stage }]}>
+      <View ref={frame} className="items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.12), borderRadius: dense ? 18 : 22, backgroundColor: c.stage }}>
         <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} dark={scheme === 'dark'} label={piece.name} />
-        {piece.wears === 0 && (
-          <View className={`absolute ${isNew(piece) ? 'bg-positive-soft' : 'bg-caution-soft'}`} style={{ top: 8, left: 8, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-            <T v="small" tone={isNew(piece) ? 'positive' : 'caution'} style={F.s600}>
-              {isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : `Jamais porté${agree(piece)}`}
-            </T>
+        {tag && !dense && (
+          <View style={{ position: 'absolute', top: 10, left: 10, right: 10 }}>
+            <Tag label={tag} tone="glass" />
           </View>
         )}
       </View>
       {!dense && (
-        <View style={{ paddingTop: 8, paddingHorizontal: 2, gap: 1 }}>
-          <T v="caption" style={F.s600} numberOfLines={1}>
+        <View className="flex-row items-baseline" style={{ paddingTop: 8, paddingHorizontal: 4, gap: 8 }}>
+          <T v="caption" style={[F.s500, { flex: 1 }]} numberOfLines={1}>
             {piece.name}
           </T>
-          <T v="small" tone="ink2" numberOfLines={1}>
-            {wornLabel(piece)}
-          </T>
+          {piece.wears > 0 && (
+            <T v="kicker" tone="ink2">
+              {`${piece.wears}×`}
+            </T>
+          )}
         </View>
       )}
     </Tap>
@@ -213,5 +217,61 @@ export function Badge({ label, tone = 'positive', icon }: { label: string; tone?
         {label}
       </T>
     </View>
+  );
+}
+
+/**
+ * Étiquette à point (version cartes, 05/10) : un point et un ou deux mots en
+ * DM Mono, sur une pastille. Elle ouvre une carte (« Tenue du jour ») ou
+ * marque une vignette (« Nouveau »). `tone` : gris studio, verre (posée sur
+ * une image) ou rose poudré (service de Kode, texte noir en clair comme en
+ * sombre). `swatch` remplace le point par une pastille de couleur.
+ */
+export function Tag({ label, tone = 'sunk', icon, swatch, dot = true, testID }: { label: string; tone?: 'sunk' | 'glass' | 'butter'; icon?: IconName; swatch?: string; dot?: boolean; testID?: string }) {
+  const { c } = useTheme();
+  const bg = tone === 'butter' ? c.butter : tone === 'glass' ? c['glass-strong'] : c.pill;
+  const fg = tone === 'butter' ? c['butter-ink'] : c.ink;
+  return (
+    <View testID={testID} className="flex-row items-center self-start" style={{ backgroundColor: bg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, gap: 6 }}>
+      {icon ? (
+        <Icon name={icon} size={13} color={fg} strokeWidth={2} />
+      ) : swatch ? (
+        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} />
+      ) : dot ? (
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: fg }} />
+      ) : null}
+      <T v="kicker" style={{ color: fg }} numberOfLines={1}>
+        {label}
+      </T>
+    </View>
+  );
+}
+
+/**
+ * Puce à point (05/10) : un mot ou deux en DM Mono, précédés d'un point ou
+ * d'une pastille de couleur. Sans `onPress`, elle se lit (l'étiquette d'une
+ * pièce) ; avec, elle se touche (les suggestions de Kode).
+ */
+export function DotChip({ label, onPress, swatch, testID, disabled }: { label: string; onPress?: () => void; swatch?: string; testID?: string; disabled?: boolean }) {
+  const { c } = useTheme();
+  const body = (
+    <>
+      {swatch ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} /> : <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c.ink }} />}
+      <T v="kicker" numberOfLines={1} style={{ flexShrink: 1 }}>
+        {label}
+      </T>
+    </>
+  );
+  const style = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 7, height: 36, paddingHorizontal: 13, borderRadius: 18, backgroundColor: c.pill, opacity: disabled ? 0.5 : 1 };
+  if (!onPress)
+    return (
+      <View testID={testID} style={style} accessible accessibilityLabel={label}>
+        {body}
+      </View>
+    );
+  return (
+    <Tap testID={testID} onPress={onPress} disabled={disabled} feedback="select" hitSlop={4} accessibilityRole="button" accessibilityLabel={label} scaleTo={0.97} style={style}>
+      {body}
+    </Tap>
   );
 }

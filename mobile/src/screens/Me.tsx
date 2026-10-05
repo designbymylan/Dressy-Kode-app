@@ -3,13 +3,15 @@ import { View } from 'react-native';
 import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FRIENDS } from '../data/wardrobe';
+import { FRIENDS, euros } from '../data/wardrobe';
 import { LIMITS, pieceLimit, precision, questionsLeft, usageRate, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
+import { Garment } from '../ui/Garment';
+import { Tap } from '../ui/Tap';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
-import { Masthead, ScrollEdge, useTabScroll } from '../ui/layout';
-import { Avatar, Card, EmptyState, Group, Row } from '../ui/bits';
+import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
+import { Avatar, Card, EmptyState, Gauge, Group, Row, Tag } from '../ui/bits';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { PLANS } from './Offers';
@@ -22,7 +24,6 @@ export function Me() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { pref } = useTheme();
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
   const plan = PLANS.find((p) => p.id === s.plan)!;
@@ -36,57 +37,75 @@ export function Me() {
   const [sharesOpen, setSharesOpen] = useState(false);
   const MODE = { montrer: 'Partage avec', preter: 'Prêt à', donner: 'Don proposé à' } as const;
 
+  const top = useTabTop();
+  const { c, scheme } = useTheme();
+  // Le coût moyen d'un port, sur les pièces dont on connaît le prix.
+  const priced = s.pieces.filter((p) => p.price && p.wears > 0);
+  const cpw = priced.length ? priced.reduce((n, p) => n + (p.price ?? 0), 0) / priced.reduce((n, p) => n + p.wears, 0) : null;
+  const most = [...s.pieces].filter((p) => p.wears > 0).sort((x, z) => z.wears - x.wears).slice(0, 3);
+
   return (
     <View style={{ flex: 1 }} className="bg-paper">
       <Ambient />
     <ScrollEdge y={edge} />
-    <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
-      <Masthead kicker="MOI" meta={`${plan.name}${limit !== null ? ` · ${limit - s.pieces.length} places libres` : ''}`} />
+    <TabHeader
+      title={s.profile.name || 'Moi'}
+      lead={<Avatar name={s.profile.name || '?'} size={44} on />}
+      meta={plan.name}
+      actions={[{ icon: 'sliders', label: 'Personnaliser', onPress: () => nav.navigate('Customize'), testID: 'me-customize' }]}
+    />
+    <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 12 }}>
+      <T v="kicker" tone="ink2" style={{ textAlign: 'center' }} numberOfLines={1}>
+        {`${who} · depuis ${s.profile.since}`}
+      </T>
 
-      <View className="flex-row items-center" style={{ gap: 16 }}>
-        <Avatar name={s.profile.name || '?'} size={64} />
-        <View style={{ flex: 1 }}>
-          <T v="title" accessibilityRole="header">
-            {s.profile.name}
-          </T>
-          <T v="caption" tone="ink2">
-            {who} · depuis {s.profile.since}
-          </T>
-        </View>
-      </View>
-
-      <View className="flex-row" style={{ gap: 10 }}>
+      {/* Les grands chiffres : ce que tu portes vraiment, et ce que coûte un port. */}
+      <View className="flex-row" style={{ gap: 8 }}>
         {[
-          { v: String(s.pieces.length), l: 'pièces' },
-          s.pieces.some((p) => p.wears > 0) ? { v: `${usageRate(s.pieces)} %`, l: 'portées en 3 mois' } : { v: 'À venir', l: 'portées : ça commence' },
-          { v: String(worn30), l: 'sorties ce mois' },
+          s.pieces.some((p) => p.wears > 0) ? { v: `${usageRate(s.pieces)} %`, l: 'du dressing porté' } : { v: String(s.pieces.length), l: s.pieces.length > 1 ? 'pièces' : 'pièce' },
+          cpw !== null ? { v: euros(cpw), l: 'par port' } : { v: String(worn30), l: 'sorties ce mois' },
         ].map((x) => (
-          <Card key={x.l} style={{ flex: 1, gap: 2, padding: 14 }}>
-            <T v="stat">
+          <Card key={x.l} style={{ flex: 1, gap: 6, padding: 16 }}>
+            <T v="stat" style={{ fontSize: 40, lineHeight: 42 }} numberOfLines={1} adjustsFontSizeToFit>
               {x.v}
             </T>
-            <T v="small" tone="ink2">
+            <T v="kicker" tone="ink2">
               {x.l}
             </T>
           </Card>
         ))}
       </View>
 
-      <View>
-        <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
-          Ton offre
+      {most.length > 0 && (
+        <Card style={{ padding: 14, gap: 12 }}>
+          <Tag label="Le plus porté" />
+          <View className="flex-row" style={{ gap: 8 }}>
+            {most.map((p) => (
+              <Tap key={p.id} testID={`most-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${p.wears} ports`} outerStyle={{ flex: 1 }} style={{ height: 112, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={62} dark={scheme === 'dark'} label={p.name} />
+                <View style={{ position: 'absolute', top: 8, left: 8 }}>
+                  <Tag label={`${p.wears}×`} tone="glass" dot={false} />
+                </View>
+              </Tap>
+            ))}
+          </View>
+        </Card>
+      )}
+
+      <Card style={{ padding: 16, gap: 10 }}>
+        <View className="flex-row items-center justify-between">
+          <T v="kicker" tone="ink2">
+            {limit === null ? 'Places sans limite' : `${s.pieces.length} / ${limit} places`}
+          </T>
+          <T testID="me-offer" v="caption" tone="ink2" onPress={() => nav.navigate('Offers')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10, paddingLeft: 12 }}>
+            Les offres
+          </T>
+        </View>
+        {limit !== null && <Gauge value={s.pieces.length} max={limit} label="Places du dressing" />}
+        <T v="kicker" tone="ink2">
+          {left === null ? 'Kode sans limite' : `${left} / ${LIMITS[s.plan].questions} questions ce mois`}
         </T>
-        <Group>
-        <Row
-          testID="me-offer"
-          icon="layers"
-          title={plan.name}
-          detail={left === null ? 'Kode sans limite' : `${left} questions à Kode sur ${LIMITS[s.plan].questions} ce mois-ci`}
-          onPress={() => nav.navigate('Offers')}
-        />
-        <Row testID="me-shop" icon="bag" title="La boutique" detail="Packs à l’unité, places en plus" onPress={() => nav.navigate('Shop')} last />
-        </Group>
-      </View>
+      </Card>
 
       {online && s.account === 'nouveau' && (
         <Group>
@@ -94,42 +113,27 @@ export function Me() {
           testID="me-account"
           icon="lock"
           title={s.pendingEmail ? 'J’ai confirmé mon e-mail : me connecter' : 'Créer mon compte ou me connecter'}
-          detail="Pour retrouver ton espace sur tous tes appareils"
           onPress={() => setAccount(true)}
           last
         />
         </Group>
       )}
 
-      <View>
-        <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
-          Toi
-        </T>
-        <Group>
+      <Group>
         <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Précision de Kode : ${precision(s.profile)} %`} onPress={() => nav.navigate('Silhouette')} />
-        <Row testID="me-customize" icon="sliders" title="Personnaliser" detail={`Accueil, thème ${pref === 'auto' ? 'automatique' : pref === 'light' ? 'clair' : 'sombre'}, densité`} onPress={() => nav.navigate('Customize')} />
+        <Row testID="me-shop" icon="bag" title="La boutique" onPress={() => nav.navigate('Shop')} />
         <Row
           testID="me-loans"
           icon="share"
           title="Prêts et partages"
-          detail={loans.length ? `${loans.length} prêt${loans.length > 1 ? 's' : ''} en cours` : s.account === 'demo' ? `Avec ${FRIENDS.slice(0, 3).map((f) => f.name).join(', ')}…` : 'Montrer, prêter, donner à tes amies'}
+          detail={loans.length ? `${loans.length} prêt${loans.length > 1 ? 's' : ''} en cours` : s.account === 'demo' ? `Avec ${FRIENDS.slice(0, 3).map((f) => f.name).join(', ')}…` : undefined}
           onPress={() => setSharesOpen(true)}
-          last
         />
-        </Group>
-      </View>
-
-      <View>
-        <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
-          Aperçu design
-        </T>
-        <Group>
-        <Row testID="me-states" icon="eye" title="Feuilles, états vides et chargements" detail="Pour la revue du design" onPress={() => nav.navigate('States')} />
-        <Row icon="help" title="Aide" detail="Questions fréquentes et contact" onPress={() => a.toast('L’aide arrive bientôt')} last={s.account === 'nouveau'} />
+        <Row testID="me-states" icon="eye" title="Aperçu du design" onPress={() => nav.navigate('States')} />
+        <Row icon="help" title="Aide" onPress={() => a.toast('L’aide arrive bientôt')} last={s.account === 'nouveau'} />
         {s.account === 'connecte' && <Row testID="me-logout" icon="logout" title="Se déconnecter" detail={s.profile.email ?? undefined} onPress={a.logout} last />}
         {s.account === 'demo' && <Row testID="me-logout" icon="logout" title="Quitter la démonstration" onPress={a.restart} last />}
-        </Group>
-      </View>
+      </Group>
       <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => setAccount(false)} initial={s.pendingEmail ? 'login' : 'signup'} />
       <Sheet visible={sharesOpen} onClose={() => setSharesOpen(false)} title="Prêts et partages" testID="shares-sheet">
         {s.shares.length === 0 ? (

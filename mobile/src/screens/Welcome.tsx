@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -8,22 +8,28 @@ import { useTheme } from '../theme/ThemeProvider';
 import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Button } from '../ui/Button';
-import { Masthead } from '../ui/layout';
+import { Glass } from '../ui/Glass';
+import { DotChip, Tag } from '../ui/bits';
 import { AccountSheet } from '../ui/account';
 import { Garment, type GarmentKind } from '../ui/Garment';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
-import { F } from '../theme/fonts';
 
 const RAIL: { kind: GarmentKind; tint?: string }[] = [
   { kind: 'trench' },
   { kind: 'mariniere' },
-  { kind: 'robe', tint: '#B5603A' },
   { kind: 'pull' },
   { kind: 'jean' },
 ];
 
+const CHIPS = ['détourage', 'tenue du jour', 'météo', 'agenda', 'coût par port'];
+
+/**
+ * L'accueil avant le compte (version cartes, 05/10) : la capsule en haut, un
+ * grand titre, deux boutons empilés, le portant en carte, ce que fait Kode
+ * en puces. Peu de mots : le portant parle.
+ */
 export function Welcome() {
   const { a } = useStore();
   const nav = useNavigation<Nav>();
@@ -31,56 +37,60 @@ export function Welcome() {
   const insets = useSafeAreaInsets();
   const { c, scheme } = useTheme();
   const { width } = useScreen();
-  const size = Math.round(width * 0.27);
+  const size = Math.round((width - space.gutter * 2) * 0.24);
 
   return (
-    <View className="bg-paper" style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }} testID="screen-welcome">
+    <View className="bg-paper" style={{ flex: 1 }} testID="screen-welcome">
       <Ambient />
-      <View style={{ paddingHorizontal: space.gutter }}>
-        <Masthead kicker="DRESSKODE" meta="Ta garde-robe, mieux portée" />
-      </View>
-
-      <View style={{ flex: 1, justifyContent: 'center', overflow: 'hidden' }}>
-        <View style={{ height: size * 1.25 + 20 }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, top: 2, height: 1.5, backgroundColor: c.rod }} />
-        <View className="flex-row" style={{ paddingHorizontal: space.gutter, gap: 2, width: size * RAIL.length + 60 }}>
-          {RAIL.map((g, i) => (
-            <Drop key={g.kind + i} i={i}>
-              <Garment kind={g.kind} tint={g.tint} size={size} hanger hangerColor={c.rod} dark={scheme === 'dark'} />
-            </Drop>
-          ))}
-        </View>
-        </View>
-      </View>
-
-      <View style={{ paddingHorizontal: space.gutter, gap: 16 }}>
-        <Animated.View entering={FadeInDown.delay(500).duration(500)} style={{ gap: 14 }}>
-          <T v="hero" style={{ fontSize: 36, lineHeight: 38 }} accessibilityRole="header">
-            Porte mieux,{'\n'}achète{' '}
-            <T v="hero" style={{ fontSize: 36, lineHeight: 38, ...F.accent }}>
-              moins.
+      <View style={{ position: 'absolute', top: insets.top + 6, left: space.lg, right: space.lg, zIndex: 10 }}>
+        <Glass radius={28} style={{ height: 56 }}>
+          <View className="flex-row items-center justify-between" style={{ flex: 1, paddingLeft: 20, paddingRight: 6 }}>
+            <T v="brand" accessibilityRole="header">
+              DRESSKODE
             </T>
+            <Button testID="welcome-login" label="Connexion" variant="quiet" size="m" onPress={() => setLogin(true)} />
+          </View>
+        </Glass>
+      </View>
+
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6 + 56 + 36, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 24, gap: 16, alignItems: 'center' }}>
+        <Animated.View entering={FadeInDown.delay(200).duration(500)} style={{ gap: 12, alignItems: 'center' }}>
+          <T v="hero" style={{ fontSize: 46, lineHeight: 44, textAlign: 'center' }} accessibilityRole="header">
+            Porte mieux ce que tu as.
           </T>
-          <T v="bodyL" tone="ink2">
-            Ton dressing en illustrations, et Kode, un styliste qui compose avec ce que tu as déjà, selon la météo et ton agenda.
+          <T v="body" tone="ink2" style={{ textAlign: 'center' }}>
+            Une photo, et Kode range ta pièce.
           </T>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(700).duration(500)} style={{ gap: 6, marginTop: 8 }}>
+
+        <Animated.View entering={FadeInDown.delay(350).duration(500)} style={{ alignSelf: 'stretch', gap: 8, paddingTop: 6 }}>
           {/* Le questionnaire remplace l'accueil au lieu de s'empiler dessus : sur
               iPhone, la pile native peut figer l'écran quand on retire
               plusieurs écrans d'un coup en entrant dans l'app. */}
           <Button testID="welcome-start" label="Commencer" onPress={() => nav.dispatch(StackActions.replace('Onboarding'))} />
-          <Button
-            testID="welcome-login"
-            label="J’ai déjà un compte"
-            variant="plain"
-            onPress={() => setLogin(true)}
-          />
-          <T v="small" tone="ink2" style={{ textAlign: 'center' }}>
-            Environ deux minutes. Seuls ton prénom et ton rayon sont demandés.
-          </T>
+          <Button testID="welcome-demo" label="Voir la démo" variant="secondary" onPress={a.loginDemo} />
         </Animated.View>
-      </View>
+
+        <View style={[{ alignSelf: 'stretch', borderRadius: 28, backgroundColor: c.stage, overflow: 'hidden', paddingTop: 44, paddingBottom: 18, marginTop: 8 }]}>
+          <View style={{ position: 'absolute', top: 14, left: 14 }}>
+            <Tag label="Ton portant" tone="glass" />
+          </View>
+          <View style={{ position: 'absolute', left: 0, right: 0, top: 46, height: 1.5, backgroundColor: c.rod }} />
+          <View className="flex-row justify-center" style={{ gap: 2 }}>
+            {RAIL.map((g, i) => (
+              <Drop key={g.kind + i} i={i}>
+                <Garment kind={g.kind} tint={g.tint} size={size} hanger hangerColor={c.rod} dark={scheme === 'dark'} />
+              </Drop>
+            ))}
+          </View>
+        </View>
+
+        <View className="flex-row flex-wrap justify-center" style={{ gap: 6 }}>
+          {CHIPS.map((x) => (
+            <DotChip key={x} label={x} />
+          ))}
+        </View>
+      </ScrollView>
 
       <AccountSheet
         visible={login}

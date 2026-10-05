@@ -14,9 +14,9 @@ import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
-import { Masthead, Rule } from '../ui/layout';
-import { Card, WeatherIcon } from '../ui/bits';
-import { OutfitBoard, Legend, assembleDelay } from '../ui/outfit';
+import { TabHeader, useTabTop } from '../ui/layout';
+import { Card, DotChip, Tag } from '../ui/bits';
+import { OutfitBoard, assembleDelay } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
@@ -36,7 +36,7 @@ export function Kode() {
   const [keyboard, setKeyboard] = useState(false);
   const list = useRef<ScrollView>(null);
   // Les réponses déjà là à l'ouverture se relisent ; seules les nouvelles tenues s'assemblent.
-  const known = useRef(new Set(s.messages.map((m) => m.id)));
+  const known_ = useRef(new Set(s.messages.map((m) => m.id)));
   const left = questionsLeft(s);
   const quota = LIMITS[s.plan].questions;
   const out = left === 0;
@@ -90,99 +90,57 @@ export function Kode() {
       ? { text: `Férié : ${ferie.nom}, le ${dateLongue(ferie.date)}`, bloc: ctx?.feries }
       : null;
 
+  const top = useTabTop();
+  // Ce que Kode sait déjà, en puces : la météo, la prochaine date qui compte, demain, le dressing.
+  const known: { label: string; swatch?: string }[] = [
+    w ? { label: `${p.city ? `${p.city} · ` : ''}${w.low}° à ${w.t}°, ${w.label}` } : null,
+    prochain ? { label: prochain.text } : null,
+    tomorrow ? { label: `Demain, ${lcFirst(tomorrow.title)} à ${tomorrow.time}` } : null,
+    p.styles.length ? { label: `Style ${p.styles.join(', ').toLowerCase()}` } : null,
+    { label: s.pieces.length ? `${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}` : 'Dressing vide' },
+  ].filter(Boolean) as { label: string }[];
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-kode">
       <Ambient />
-      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, gap: 12 }}>
-        <Masthead kicker="KODE" meta={quota === null ? 'Sans limite' : `${left} question${left === 1 ? '' : 's'} sur ${quota} ce mois-ci`} />
-      </View>
-      <Animated.ScrollView ref={list as never} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 16, paddingBottom: 24, gap: 18 }}>
-        <View style={{ gap: 8 }}>
-          <T v="title" accessibilityRole="header">
-            Ton styliste,{'\n'}
-            <T v="title" style={{ ...F.accent }}>
-              avec ce que tu as.
-            </T>
-          </T>
-          <T v="body" tone="ink2">
-            {s.pieces.length
-              ? `Kode compose à partir de tes ${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}, de la météo et de ton agenda. Il te dit toujours pourquoi.`
-              : 'Kode compose avec tes pièces à toi, la météo et ton agenda. Il te dit toujours pourquoi.'}
-          </T>
-        </View>
-
+      <TabHeader title="Kode" meta={quota === null ? 'sans limite' : `${left} / ${quota}`} />
+      <Animated.ScrollView ref={list as never} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
-            <Card style={{ gap: 6 }}>
-              <T v="kicker" tone="ink2">
-                Ce que Kode sait déjà
+            <Card style={{ padding: 16, gap: 12 }}>
+              <Tag label="Kode" icon="kode" />
+              <T v="cardTitle" style={{ fontSize: 22, lineHeight: 27 }} accessibilityRole="header">
+                Une question, une tenue.
               </T>
-              {w ? (
-                <View className="flex-row items-center" style={{ gap: 8 }}>
-                  <WeatherIcon w={w} size={18} color={c.ink2} />
-                  <T v="body" style={{ flex: 1 }}>
-                    Aujourd’hui{p.city ? ` à ${p.city}` : ''}, {w.low}° à {w.t}°, {w.label}
-                  </T>
-                </View>
-              ) : null}
-              {prochain && (
-                <View className="flex-row items-center" style={{ gap: 8 }}>
-                  <Icon name="calendar" size={18} color={c.ink2} />
-                  <T v="body" style={{ flex: 1 }}>
-                    {prochain.text}
-                  </T>
-                </View>
-              )}
-              {tomorrow && (
-                <View className="flex-row items-center" style={{ gap: 8 }}>
-                  <Icon name="calendar" size={18} color={c.ink2} />
-                  <T v="body" style={{ flex: 1 }}>
-                    Demain, {lcFirst(tomorrow.title)} à {tomorrow.time}
-                  </T>
-                </View>
-              )}
-              {(p.silhouette && p.silhouette !== 'inconnue') || p.styles.length ? (
-                <View className="flex-row items-center" style={{ gap: 8 }}>
-                  <Icon name="person" size={18} color={c.ink2} />
-                  <T v="body" style={{ flex: 1 }}>
-                    {ucFirst([p.silhouette && p.silhouette !== 'inconnue' ? `silhouette en ${p.silhouette}` : '', p.styles.length ? `style ${p.styles.join(', ').toLowerCase()}` : ''].filter(Boolean).join(', '))}
-                  </T>
-                </View>
-              ) : null}
-              <View className="flex-row items-center" style={{ gap: 8 }}>
-                <Icon name="hanger" size={18} color={ready ? c.ink2 : c.caution} />
-                <T v="body" tone={ready ? 'ink' : 'caution'} style={{ flex: 1 }}>
-                  {s.pieces.length ? `${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''} dans ton dressing${ready ? '' : ' : il en faut un peu plus'}` : 'Ton dressing est vide pour l’instant'}
-                </T>
+              <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                {starters.map((q, i) => (
+                  <DotChip key={q} testID={`starter-${i}`} label={q} onPress={() => send(q)} disabled={out} />
+                ))}
               </View>
-              {meteo.reelle && <Credit blocs={[s.contexte?.meteo, prochain?.bloc]} style={{ marginTop: 4 }} />}
             </Card>
+            <View style={{ gap: 8, paddingHorizontal: 4 }}>
+              <T v="kicker" tone="ink2">
+                Ce que Kode sait
+              </T>
+              <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+                {known.map((k) => (
+                  <DotChip key={k.label} label={k.label} />
+                ))}
+              </View>
+              {meteo.reelle && <Credit blocs={[s.contexte?.meteo, prochain?.bloc]} />}
+            </View>
             {!ready && <Button testID="kode-add" label="Ajouter mes premières pièces" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
-            <T v="kicker" tone="ink2">
-              Pour commencer
-            </T>
-            {starters.map((q, i) => (
-              <Tap key={q} testID={`starter-${i}`} onPress={() => send(q)} disabled={out} accessibilityLabel={q} scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: 1, borderColor: c.rule, gap: 12 }}>
-                <T v="numeral" tone="brass" style={{ fontSize: 17 }}>
-                  {String(i + 1).padStart(2, '0')}
-                </T>
-                <T v="bodyL" style={{ flex: 1 }}>
-                  {q}
-                </T>
-                <Icon name="chevron" size={18} color={c.ink2} />
-              </Tap>
-            ))}
           </Animated.View>
         )}
 
-        {s.messages.map((m) => (m.from === 'me' ? <Mine key={m.id} m={m} /> : <FromKode key={m.id} m={m} fresh={!known.current.has(m.id)} />))}
+        {s.messages.map((m) => (m.from === 'me' ? <Mine key={m.id} m={m} /> : <FromKode key={m.id} m={m} fresh={!known_.current.has(m.id)} />))}
         {s.kodeTyping && <Typing />}
 
         {out && (
-          <Card testID="kode-quota" style={{ gap: 10 }}>
-            <T v="cardTitle">Tes {quota} questions du mois sont posées.</T>
+          <Card testID="kode-quota" style={{ gap: 10, padding: 14 }}>
+            <Tag label={`${quota} questions posées`} />
             <T v="body" tone="ink2">
-              Elles reviennent le 1er du mois. Si tu veux continuer maintenant, Atelier rend Kode sans limite.
+              Elles reviennent le 1er du mois. Atelier rend Kode sans limite.
             </T>
             <Button label="Voir les offres" variant="secondary" size="m" onPress={() => nav.navigate('Offers')} />
           </Card>
@@ -196,7 +154,7 @@ export function Kode() {
             value={text}
             onChangeText={setText}
             editable={!out}
-            placeholder={out ? 'Plus de questions ce mois-ci' : 'Demande une tenue, un conseil…'}
+            placeholder={out ? 'Plus de questions ce mois-ci' : 'Pose ta question'}
             placeholderTextColor={c.ink2}
             multiline
             onSubmitEditing={() => send(text)}
@@ -232,31 +190,31 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const pieces = (m.outfit?.pieces ?? []).map((id) => byId.get(id)).filter(Boolean) as Piece[];
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   return (
-    <Animated.View entering={FadeInDown.duration(320)} style={{ gap: 10 }} accessibilityLiveRegion="polite">
-      <T v="kicker" tone="ink2">
-        Kode
-      </T>
-      <T v="bodyL">{m.text}</T>
-      {m.outfit && pieces.length > 0 && (
-        <Card style={{ gap: 12, paddingTop: 18 }}>
-          <OutfitBoard pieces={pieces} width={width - space.gutter * 2 - 32} onPiece={open} assemble={fresh} />
-          <Legend pieces={pieces} onPiece={open} />
-          <Rule />
-          <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length)).duration(520) : undefined} style={{ gap: 12 }}>
-            <T v="cardTitle">{m.outfit.title}</T>
-            <T v="body" tone="ink2">
-              {m.outfit.why}
-            </T>
-          </Animated.View>
-          <View className="flex-row" style={{ gap: 8 }}>
-            <Button testID={`kode-plan-${m.id}`} label="Prévoir demain" size="m" grow onPress={() => { a.plan(1, { title: m.outfit!.title, pieces: m.outfit!.pieces }); a.toast('Prévue pour demain, dans ton agenda'); }} />
-            <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces })} />
-          </View>
-        </Card>
-      )}
-      {m.link && (
-        <Button label={m.link.label} variant="secondary" size="m" iconRight="chevron" onPress={() => (nav.navigate as (route: string, params?: object) => void)(m.link!.route, m.link!.params)} />
-      )}
+    <Animated.View entering={FadeInDown.duration(320)} style={{ alignSelf: 'flex-start', width: '94%' }} accessibilityLiveRegion="polite">
+      {/* La réponse de Kode : un bandeau de service rose poudré, texte noir en clair comme en sombre. */}
+      <Card className="bg-butter" style={{ padding: 14, gap: 12, borderBottomLeftRadius: 8 }}>
+        <T v="body">{m.text}</T>
+        {m.outfit && pieces.length > 0 && (
+          <>
+            <View className="bg-paper" style={{ borderRadius: 18, padding: 10 }}>
+              <OutfitBoard pieces={pieces} width={width * 0.94 - space.gutter * 2 - 28 - 20} onPiece={open} assemble={fresh} numbered={false} />
+            </View>
+            <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length)).duration(520) : undefined} style={{ gap: 4 }}>
+              <T v="cardTitle">{m.outfit.title}</T>
+              <T v="caption">
+                {m.outfit.why}
+              </T>
+            </Animated.View>
+            <View className="flex-row" style={{ gap: 8 }}>
+              <Button testID={`kode-plan-${m.id}`} label="Prévoir demain" size="m" grow onPress={() => { a.plan(1, { title: m.outfit!.title, pieces: m.outfit!.pieces }); a.toast('Prévue pour demain, dans ton agenda'); }} />
+              <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces })} />
+            </View>
+          </>
+        )}
+        {m.link && (
+          <Button label={m.link.label} variant="secondary" size="m" iconRight="chevron" onPress={() => (nav.navigate as (route: string, params?: object) => void)(m.link!.route, m.link!.params)} />
+        )}
+      </Card>
     </Animated.View>
   );
 }

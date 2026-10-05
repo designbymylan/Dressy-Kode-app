@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { interpolate, useAnimatedStyle, useReducedMotion, withSpring, withTiming, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, useAnimatedStyle, useReducedMotion, withSpring, withTiming, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme/ThemeProvider';
@@ -54,7 +54,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       <Animated.View style={bar}>
         <Glass radius={999} style={{ flex: 1 }}>
           <View accessibilityRole="tablist" className="flex-row items-center" style={{ flex: 1, paddingHorizontal: 12, justifyContent: 'space-around' }}>
-            <Drop index={state.index} centers={centers} color={c.ink} />
+            <Drop index={state.index} centers={centers} color={c.ink} compact={compact} />
             {state.routes.map((route, i) => {
               const on = state.index === i;
               const tab = TABS[route.name];
@@ -117,7 +117,7 @@ const LEAD = { damping: 18, stiffness: 420, mass: 0.6 };
 const TRAIL = { damping: 20, stiffness: 150, mass: 0.9 };
 
 /** Le point de l'onglet actif, commun à toute la barre. */
-function Drop({ index, centers, color }: { index: number; centers: number[]; color: string }) {
+function Drop({ index, centers, color, compact }: { index: number; centers: number[]; color: string; compact: SharedValue<number> | null }) {
   const reduced = useReducedMotion();
   const left = useSharedValue(0);
   const right = useSharedValue(0);
@@ -141,6 +141,7 @@ function Drop({ index, centers, color }: { index: number; centers: number[]; col
     left.value = withSpring(l, goingRight ? TRAIL : LEAD);
     right.value = withSpring(r, goingRight ? LEAD : TRAIL);
   }, [cx, index, reduced, left, right, seen]);
-  const style = useAnimatedStyle(() => ({ opacity: seen.value, left: left.value, width: Math.max(DOT, right.value - left.value) }));
+  // Barre resserrée : les onglets se rapprochent, le point s'efface le temps qu'elle revienne.
+  const style = useAnimatedStyle(() => ({ opacity: seen.value * (1 - (compact?.value ?? 0)), left: left.value, width: Math.max(DOT, right.value - left.value) }));
   return <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: '50%', marginTop: 15, height: DOT, borderRadius: DOT / 2, backgroundColor: color }, style]} />;
 }

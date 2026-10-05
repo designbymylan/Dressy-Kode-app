@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, TextInput, View } from 'react-native';
+import { ScrollView, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -9,11 +9,11 @@ import { useTheme } from '../theme/ThemeProvider';
 import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap, haptic } from '../ui/Tap';
-import { Button, IconButton } from '../ui/Button';
-import { Chip, Segmented } from '../ui/controls';
-import { Masthead, ScrollEdge, SectionHead, useTabScroll } from '../ui/layout';
+import { Button } from '../ui/Button';
+import { Chip, UnderlineTabs } from '../ui/controls';
+import { ScrollEdge, SectionHead, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { EmptyState, PieceTile, measureOrigin, type Origin } from '../ui/bits';
-import { Garment, hangOf } from '../ui/Garment';
+import { Garment, hangOf, type GarmentKind } from '../ui/Garment';
 import { FirstRail } from '../ui/onboarding';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
@@ -38,7 +38,7 @@ export function Dressing() {
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
   const { width } = useScreen();
-  const [view, setView] = useState<'portants' | 'grille'>('portants');
+  const [view, setView] = useState<'portants' | 'grille'>('grille');
   const [category, setCategory] = useState<CategoryId | null>(null);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [draft, setDraft] = useState<Filters>(NO_FILTERS);
@@ -54,6 +54,7 @@ export function Dressing() {
   }, [route.params]);
 
   const limit = pieceLimit(s);
+  const top = useTabTop();
   const active = (filters.color ? 1 : 0) + (filters.season ? 1 : 0) + (filters.usage ? 1 : 0);
 
   const apply = (f: Filters, cat: CategoryId | null, q: string) => {
@@ -87,10 +88,20 @@ export function Dressing() {
     setQuery('');
   };
 
+  const capsule = (
+    <TabHeader
+      title="Dressing"
+      meta={limit === null ? `${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}` : `${s.pieces.length} / ${limit}`}
+      actions={[
+        { icon: 'search', label: 'Rechercher une pièce', onPress: () => { setSearching(true); setView('grille'); }, testID: 'dressing-search' },
+        { icon: 'plus', label: 'Ajouter une pièce', onPress: () => nav.navigate('AddPiece'), testID: 'dressing-add', solid: true },
+      ]}
+    />
+  );
+
   const header = (
-    <View style={{ gap: 12, paddingHorizontal: space.gutter }}>
-      <Masthead kicker="LE DRESSING" meta={`${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}${limit === null ? '' : ` sur ${limit}`}`} />
-      {searching ? (
+    <View style={{ gap: 14, paddingHorizontal: space.gutter }}>
+      {searching && (
         <Animated.View entering={FadeIn.duration(180)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View className="flex-row items-center bg-sunk" style={{ flex: 1, height: 44, borderRadius: 22, paddingHorizontal: 14, gap: 8 }}>
             <Icon name="search" size={18} color={c.ink2} />
@@ -99,7 +110,7 @@ export function Dressing() {
               autoFocus
               value={query}
               onChangeText={setQuery}
-              placeholder="Une pièce, une couleur, une matière"
+              placeholder="Une pièce, une couleur"
               placeholderTextColor={c.ink2}
               returnKeyType="search"
               accessibilityLabel="Rechercher dans le dressing"
@@ -119,50 +130,25 @@ export function Dressing() {
             Annuler
           </T>
         </Animated.View>
-      ) : (
-        <View className="flex-row items-center justify-between" style={{ gap: 12 }}>
-          <T v="title" accessibilityRole="header">
-            {view === 'portants' ? 'Tes portants' : 'Toutes tes pièces'}
-          </T>
-          <View className="flex-row" style={{ gap: 8 }}>
-            <IconButton
-              testID="dressing-search"
-              icon="search"
-              label="Rechercher une pièce"
-              onPress={() => {
-                setSearching(true);
-                setView('grille');
-              }}
-            />
-            <IconButton testID="dressing-add" icon="plus" label="Ajouter une pièce" variant="solid" onPress={() => nav.navigate('AddPiece')} />
-          </View>
-        </View>
       )}
-      <View className="flex-row items-center justify-between">
-        <Segmented
-          label="Vue du dressing"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'portants', label: 'Portants' },
-            { value: 'grille', label: 'Grille' },
-          ]}
-        />
-        <Tap testID="open-filters" onPress={openFilters} accessibilityLabel={active ? `Filtres, ${active} actifs` : 'Filtres'} scaleTo={1} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: 6 }}>
-          <Icon name="filter" size={18} color={c.ink} />
-          <T v="bodyStrong" style={{ fontSize: 14.5, ...F.s500 }}>
-            Filtres{active ? ` · ${active}` : ''}
-          </T>
-        </Tap>
-      </View>
-      {view === 'grille' && (
-        <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
-          <Chip label="Tout" on={!category} onPress={() => setCategory(null)} count={s.pieces.length} testID="cat-all" />
-          {CATEGORIES.map((cat) => (
-            <Chip key={cat.id} testID={`cat-${cat.id}`} label={cat.short} on={category === cat.id} onPress={() => setCategory(category === cat.id ? null : cat.id)} count={s.pieces.filter((p) => p.category === cat.id).length} />
-          ))}
-        </Animated.ScrollView>
-      )}
+      <Circles value={category} onChange={setCategory} />
+      <UnderlineTabs
+        label="Vue du dressing"
+        value={view}
+        onChange={setView}
+        options={[
+          { value: 'grille', label: 'Grille' },
+          { value: 'portants', label: 'Portants' },
+        ]}
+        right={
+          <Tap testID="open-filters" onPress={openFilters} accessibilityLabel={active ? `Filtres, ${active} actifs` : 'Filtres'} scaleTo={1} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, minWidth: 44, justifyContent: 'flex-end', gap: 6 }}>
+            <Icon name="filter" size={20} color={c.ink} />
+            {active > 0 && (
+              <T v="kicker">{String(active)}</T>
+            )}
+          </Tap>
+        }
+      />
     </View>
   );
 
@@ -256,7 +242,7 @@ export function Dressing() {
           onScroll={onScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}
+          contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}
           columnWrapperStyle={{ gap, paddingHorizontal: space.gutter }}
           ListHeaderComponent={header}
           ListEmptyComponent={
@@ -275,6 +261,7 @@ export function Dressing() {
           }
           renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} onPress={(from) => nav.navigate('Piece', { id: item.id, from })} />}
         />
+        {capsule}
         {filterSheet}
       </View>
     );
@@ -285,7 +272,7 @@ export function Dressing() {
     <View className="bg-paper" style={{ flex: 1 }}>
       <Ambient />
       <ScrollEdge y={edge} />
-      <Animated.ScrollView testID="screen-dressing" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
+      <Animated.ScrollView testID="screen-dressing" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
         {header}
         {s.pieces.length === 0 ? (
           <View style={{ paddingHorizontal: space.gutter }}>
@@ -294,12 +281,11 @@ export function Dressing() {
         ) : (
           byCat.length === 0 && <EmptyState title="Rien ne correspond" body="Tu pourrais retirer un filtre pour élargir." action={<Button label="Tout afficher" variant="secondary" size="m" onPress={reset} />} />
         )}
-        {byCat.map(({ cat, pieces }, i) => (
+        {byCat.map(({ cat, pieces }) => (
           <View key={cat.id} style={{ gap: 4 }} accessibilityLabel={cat.title}>
             <View style={{ paddingHorizontal: space.gutter }}>
               <SectionHead
-                n={String(i + 1).padStart(2, '0')}
-                title={cat.title}
+                title={cat.short}
                 action={`${pieces.length} pièce${pieces.length > 1 ? 's' : ''}`}
                 testID={`rail-${cat.id}-all`}
                 onAction={() => {
@@ -312,6 +298,7 @@ export function Dressing() {
           </View>
         ))}
       </Animated.ScrollView>
+      {capsule}
       {filterSheet}
     </View>
   );
@@ -320,33 +307,71 @@ export function Dressing() {
 /** Un dressing vide : le portant attend, et on dit par quoi commencer. */
 function EmptyWardrobe() {
   const nav = useNavigation<Nav>();
-  const { c } = useTheme();
   return (
-    <View style={{ gap: 16 }} testID="dressing-empty">
+    <View style={{ gap: 14 }} testID="dressing-empty">
       <View style={{ marginHorizontal: -space.gutter }}>
         <FirstRail pieces={[]} slots={5} size={70} />
       </View>
       <T v="section">Tes portants sont vides.</T>
       <T v="body" tone="ink2">
-        Commence par ce que tu portes le plus : ton jean, un haut, tes baskets. Chaque photo devient une illustration rangée ici, par catégorie.
+        Une photo suffit : Kode la dessine et la range ici.
       </T>
       <Button testID="dressing-empty-add" label="Ajouter ma première pièce" icon="plus" onPress={() => nav.navigate('AddPiece')} />
-      <View style={{ gap: 0 }}>
-        {CATEGORIES.map((cat, i) => (
-          <View key={cat.id} className="flex-row items-center" style={{ minHeight: 46, gap: 12, borderBottomWidth: i === CATEGORIES.length - 1 ? 0 : 1, borderColor: c.rule }}>
-            <T v="numeral" tone="brass" style={{ fontSize: 16, width: 24 }}>
-              {String(i + 1).padStart(2, '0')}
-            </T>
-            <T v="body" style={{ flex: 1 }}>
-              {cat.title}
-            </T>
-            <T v="caption" tone="ink2">
-              vide
-            </T>
-          </View>
-        ))}
-      </View>
     </View>
+  );
+}
+
+/** Le pictogramme d'une catégorie encore vide : une silhouette grise, jamais une fausse pièce. */
+const KIND_FOR: Record<CategoryId, GarmentKind> = { manteaux: 'trench', hauts: 'tshirt', bas: 'jean', robes: 'robe', chaussures: 'baskets', accessoires: 'sac' };
+
+/**
+ * Les catégories en ronds (05/10, inspirées des apps de garde-robe) : chaque
+ * rond montre une pièce du dressing ; « Tout » montre le cintre.
+ */
+function Circles({ value, onChange }: { value: CategoryId | null; onChange: (v: CategoryId | null) => void }) {
+  const { s } = useStore();
+  const { c, scheme } = useTheme();
+  const items: { id: CategoryId | null; label: string; count: number; piece?: Piece }[] = [
+    { id: null, label: 'Tout', count: s.pieces.length },
+    ...CATEGORIES.map((cat) => {
+      const mine = s.pieces.filter((p) => p.category === cat.id);
+      return { id: cat.id, label: cat.short, count: mine.length, piece: mine[0] };
+    }),
+  ];
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter - 4, gap: 4, paddingVertical: 2 }} accessibilityRole="tablist">
+      {items.map((it) => {
+        const on = value === it.id;
+        return (
+          <Tap
+            key={it.id ?? 'all'}
+            testID={`cat-${it.id ?? 'all'}`}
+            onPress={() => onChange(on && it.id ? null : it.id)}
+            feedback="select"
+            scaleTo={0.95}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={`${it.label}, ${it.count} pièce${it.count > 1 ? 's' : ''}`}
+            style={{ width: 76, alignItems: 'center', gap: 7 }}
+          >
+            <View style={{ width: 62, height: 62, borderRadius: 31, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: on ? 1.5 : 0, borderColor: c.ink }}>
+              {it.id === null ? (
+                <Icon name="hanger" size={26} color={c.ink} />
+              ) : it.piece ? (
+                <Garment kind={it.piece.kind} tint={it.piece.tint} image={it.piece.image} size={40} dark={scheme === 'dark'} label={it.piece.name} />
+              ) : (
+                <View style={{ opacity: 0.35 }}>
+                  <Garment kind={KIND_FOR[it.id]} tint={c.faint} size={38} dark={scheme === 'dark'} />
+                </View>
+              )}
+            </View>
+            <T v="small" style={on ? F.s600 : F.s400} numberOfLines={1}>
+              {it.label}
+            </T>
+          </Tap>
+        );
+      })}
+    </ScrollView>
   );
 }
 

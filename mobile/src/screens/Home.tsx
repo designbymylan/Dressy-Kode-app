@@ -15,10 +15,10 @@ import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
-import { Masthead, Rule, ScrollEdge, SectionHead, useTabScroll } from '../ui/layout';
-import { OutfitBoard, Legend, assembleDelay } from '../ui/outfit';
+import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
+import { OutfitBoard, assembleDelay } from '../ui/outfit';
 import { motion } from '../theme/tokens';
-import { Card, WeatherIcon } from '../ui/bits';
+import { Card, DotChip, Tag, WeatherIcon } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -53,72 +53,59 @@ export function Home() {
   const W = width - space.gutter * 2;
   const { c } = useTheme();
 
+  const top = useTabTop();
+  const inner = W - 28;
+
   return (
     <View style={{ flex: 1 }} className="bg-paper">
       <Ambient weather={now?.kind} />
-    <ScrollEdge y={edge} />
-    <Animated.ScrollView
-      testID="screen-home"
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}
-    >
-      <Masthead kicker="DRESSKODE" meta={meta} />
-
-      {!outfit ? (
-        <EmptyToday />
-      ) : (
-      <>
-      <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ gap: 14 }}>
-        <View style={{ gap: 6 }}>
-          <T v="kicker" tone={worn ? 'positive' : 'ink2'}>
-            {worn ? 'Portée aujourd’hui' : 'Tenue du jour'}
-          </T>
-          {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
-          <Animated.View entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)}>
-            <T v="hero" accessibilityRole="header">
-              {outfit.lead}
-              <T v="hero" style={{ ...F.accent }}>
-                {outfit.em}
-              </T>
-            </T>
-          </Animated.View>
-        </View>
-        <OutfitBoard pieces={pieces} width={W} onPiece={open} assemble />
-        <Legend pieces={pieces} onPiece={open} />
-        <View style={{ gap: 8, paddingTop: 12, borderTopWidth: 1 }} className="border-rule">
-          <T v="quote">« {outfit.why} »</T>
-          <T v="kicker" tone="ink2">
-            Kode
-          </T>
-        </View>
-      </Animated.View>
-
-      {worn ? (
-        <WornToday pieces={pieces} />
-      ) : (
-        <View className="flex-row" style={{ gap: 8 }}>
-          <Button testID="wear-today" label="Je la porte" grow feedback="success" onPress={() => a.wear(outfit.pieces, 'Notée dans ton journal')} />
-          <Button testID="another-outfit" label="Une autre" variant="secondary" icon="refresh" grow disabled={outfits.length < 2} onPress={a.nextOutfit} />
-        </View>
-      )}
-      </>
-      )}
-
-      {s.modules.filter((m) => m.on).map((m) => (
-        <Module key={m.id} id={m.id} W={W} />
-      ))}
-
-      {/* La météo de l'en-tête est créditée dans « Ta semaine » ; module masqué, elle l'est ici. */}
-      {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
-
-      <Tap testID="customize-home" onPress={() => nav.navigate('Customize')} scaleTo={1} accessibilityLabel="Personnaliser l’accueil" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44 }}>
-        <Icon name="sliders" size={18} color={c.ink2} />
-        <T v="caption" tone="ink2" style={{ marginLeft: 8 }}>
-          Personnaliser l’accueil
+      <ScrollEdge y={edge} />
+      <TabHeader title="Dresskode" brand actions={[{ icon: 'sliders', label: 'Personnaliser l’accueil', onPress: () => nav.navigate('Customize'), testID: 'customize-home' }]} />
+      <Animated.ScrollView
+        testID="screen-home"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 12 }}
+      >
+        <T v="kicker" tone="ink2" style={{ textAlign: 'center' }} numberOfLines={1}>
+          {meta}
         </T>
-      </Tap>
-    </Animated.ScrollView>
+
+        {!outfit ? (
+          <EmptyToday />
+        ) : (
+          <Card style={{ padding: 14, gap: 12 }} testID="home-outfit">
+            <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+            <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, padding: 12 }}>
+              <OutfitBoard pieces={pieces} width={inner - 24} onPiece={open} assemble numbered={false} />
+            </Animated.View>
+            {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
+            <Animated.View key={`t-${outfit.id}`} entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)} style={{ gap: 4, paddingHorizontal: 4 }}>
+              <T v="cardTitle" style={{ fontSize: 20, lineHeight: 25 }} accessibilityRole="header">
+                {`${outfit.lead}${outfit.em}`.replace(/\s+/g, ' ')}
+              </T>
+              <T v="caption" tone="ink2" numberOfLines={2}>
+                {outfit.why}
+              </T>
+            </Animated.View>
+            {worn ? (
+              <WornToday pieces={pieces} />
+            ) : (
+              <View style={{ gap: 8 }}>
+                <Button testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(outfit.pieces, 'Notée dans ton journal')} />
+                <Button testID="another-outfit" label="Une autre" variant="quiet" icon="refresh" disabled={outfits.length < 2} onPress={a.nextOutfit} />
+              </View>
+            )}
+          </Card>
+        )}
+
+        {s.modules.filter((m) => m.on).map((m) => (
+          <Module key={m.id} id={m.id} W={W} />
+        ))}
+
+        {/* La météo de l'en-tête est créditée dans « Ta semaine » ; module masqué, elle l'est ici. */}
+        {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -272,12 +259,18 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
   const nav = useNavigation<Nav>();
   const { c, scheme } = useTheme();
   const title = MODULE_LABELS[id].title;
-  const head = (action?: string, onAction?: () => void) => (
-    <View style={{ gap: 10 }}>
-      <Rule />
-      <SectionHead title={title} action={action} onAction={onAction} testID={`module-${id}-action`} />
+  // Chaque module est une carte ouverte par son étiquette à point, avec son lien à droite.
+  const head = (action?: string, onAction?: () => void, icon?: 'kode') => (
+    <View className="flex-row items-center justify-between" style={{ minHeight: 28 }}>
+      <Tag label={title} icon={icon} />
+      {action && onAction && (
+        <T testID={`module-${id}-action`} v="caption" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12 }}>
+          {action}
+        </T>
+      )}
     </View>
   );
+  const card = { padding: 14, gap: 12 };
 
   if (id === 'kode') {
     const tomorrow = eventsOf(s.profile).find((e) => e.day === 1);
@@ -287,26 +280,26 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
       s.pieces.length >= 8 ? 'Qu’est-ce que je ne porte jamais ?' : 'Qu’est-ce qui va avec mon jean ?',
     ];
     return (
-      <View style={{ gap: 12 }}>
-        {head()}
+      <Card style={card}>
+        {head(undefined, undefined, 'kode')}
         <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c.sunk, height: 50, borderRadius: 25, paddingHorizontal: 18, gap: 10 }}>
-          <Icon name="kode" size={20} color={c.brass} />
+          <Icon name="kode" size={20} color={c.ink} />
           <T v="body" tone="ink2">
-            Pose ta question à Kode…
+            Pose ta question
           </T>
         </Tap>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
           {asks.map((q) => (
-            <Chip key={q} label={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} />
+            <DotChip key={q} label={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} />
           ))}
-        </ScrollView>
-      </View>
+        </View>
+      </Card>
     );
   }
 
   if (id === 'semaine') {
     return (
-      <View style={{ gap: 12 }}>
+      <Card style={card}>
         {head('Agenda', () => nav.navigate('Tabs', { screen: 'Agenda' }))}
         <View className="flex-row" style={{ gap: 4 }}>
           {Array.from({ length: 7 }, (_, i) => {
@@ -315,23 +308,24 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             const ferie = ferieDu(s.contexte, i);
             const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i] || !!ferie;
             const label = [i === 0 ? 'Aujourd’hui' : shortDate(i), w ? `${w.t} degrés, ${w.label}` : null, ferie ? `férié, ${ferie.nom}` : null, busy && !ferie ? 'un événement' : null];
+            const today = i === 0;
+            const fg = today ? c['primary-fg'] : c.ink;
             return (
-              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ backgroundColor: i === 0 ? c.pill : undefined, alignItems: 'center', gap: 5, paddingVertical: 8, borderRadius: 18 }}>
-                <T v="small" tone="ink2">
+              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ backgroundColor: today ? c['primary-bg'] : c.pill, alignItems: 'center', justifyContent: 'center', gap: 5, height: 88, borderRadius: 22 }}>
+                <T v="kicker" style={{ color: fg }}>
                   {DAYS_LETTER[d.getDay()]}
                 </T>
-                <T v="bodyStrong">{d.getDate()}</T>
-                {w ? <WeatherIcon w={w} size={18} color={c.ink2} /> : <View style={{ height: 18 }} />}
-                <T v="small" tone="ink2">
-                  {w ? `${w.t}°` : ' '}
+                {w ? <WeatherIcon w={w} size={17} color={fg} /> : <View style={{ height: 17 }} />}
+                <T v="kicker" style={{ color: fg }}>
+                  {w ? `${w.t}°` : String(d.getDate())}
                 </T>
-                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: busy ? c.brass : 'transparent' }} />
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: busy ? fg : 'transparent' }} />
               </Tap>
             );
           })}
         </View>
         {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
-      </View>
+      </Card>
     );
   }
 
@@ -339,27 +333,24 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     const list = sleeping(s.pieces).slice(0, 5);
     if (!list.length) return null;
     return (
-      <View style={{ gap: 12 }}>
+      <Card style={card}>
         {head('Tout voir', () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } }))}
-        <T v="body" tone="ink2">
-          Elles dorment depuis des semaines. Tu pourrais en remettre une en jeu cette semaine.
-        </T>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
           {list.map((p) => (
-            <Tap key={p.id} testID={`sleeping-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${sinceLabel(p)}`} style={{ width: 118 }}>
-              <View className="bg-stage items-center justify-center" style={{ height: 140, borderRadius: 20 }}>
-                <Garment kind={p.kind} tint={p.tint} image={p.image} size={78} dark={scheme === 'dark'} label={p.name} />
+            <Tap key={p.id} testID={`sleeping-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${sinceLabel(p)}`} style={{ width: 108 }}>
+              <View className="bg-stage items-center justify-center" style={{ height: 128, borderRadius: 22 }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={72} dark={scheme === 'dark'} label={p.name} />
               </View>
               <T v="caption" style={{ marginTop: 6, ...F.s600 }} numberOfLines={1}>
                 {p.name}
               </T>
-              <T v="small" tone="caution">
+              <T v="kicker" tone="ink2" numberOfLines={1}>
                 {capital(sinceLabel(p))}
               </T>
             </Tap>
           ))}
         </ScrollView>
-      </View>
+      </Card>
     );
   }
 
@@ -368,77 +359,70 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     const top = tendancesChezToi(s.contexte, s.pieces)[0];
     if (!top) return null;
     const { t, pieces: owned } = top;
-    const rare = owned.filter((p) => p.wears < 5).length;
-    const thumb = (W - 32 - 16) / 5;
+    const thumb = (W - 28 - 16) / 5;
     return (
-      <View style={{ gap: 12 }}>
+      <Card style={card}>
         {head()}
-        <Card style={{ gap: 12 }}>
-          <T v="cardTitle">{t.variation !== null ? `${t.libelle} : +${t.variation} % d’intérêt cette semaine.` : `${t.libelle} : une pièce de saison.`}</T>
-          <T v="body" tone="ink2">
-            {`Pas besoin d’acheter : tu en as déjà ${owned.length > 1 ? `${owned.length} dans ton dressing` : 'une dans ton dressing'}${!rare ? '' : rare === owned.length ? `, presque jamais portée${rare > 1 ? 's' : ''}` : `, dont ${rare} presque jamais portée${rare > 1 ? 's' : ''}`}.`}
-          </T>
-          <View className="flex-row" style={{ gap: 4 }}>
-            {owned.slice(0, 5).map((p) => (
-              <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: thumb, alignItems: 'center' }}>
-                <Garment kind={p.kind} tint={p.tint} image={p.image} size={thumb - 4} dark={scheme === 'dark'} label={p.name} />
-              </Tap>
-            ))}
-          </View>
-          <Button testID="trend-compose" label="Composer une tenue avec" variant="secondary" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, 1).map((p) => p.id) })} />
-          <Credit blocs={[s.contexte?.tendances]} />
-        </Card>
-      </View>
+        <T v="cardTitle">{t.variation !== null ? `${t.libelle} : +${t.variation} % cette semaine.` : `${t.libelle} : de saison.`}</T>
+        <T v="kicker" tone="ink2">
+          {`Déjà ${owned.length > 1 ? `${owned.length} chez toi` : 'une chez toi'}`}
+        </T>
+        <View className="flex-row" style={{ gap: 4 }}>
+          {owned.slice(0, 5).map((p) => (
+            <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: thumb, alignItems: 'center' }}>
+              <Garment kind={p.kind} tint={p.tint} image={p.image} size={thumb - 4} dark={scheme === 'dark'} label={p.name} />
+            </Tap>
+          ))}
+        </View>
+        <Button testID="trend-compose" label="Composer avec" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, 1).map((p) => p.id) })} />
+        <Credit blocs={[s.contexte?.tendances]} />
+      </Card>
     );
   }
 
   if (id === 'tendance') {
     const camel = s.pieces.filter((p) => ['Camel', 'Cognac', 'Camel et crème'].includes(p.color));
     if (camel.length < 2) return null;
+    const thumb = (W - 28 - 16) / 5;
     return (
-      <View style={{ gap: 12 }}>
+      <Card style={card}>
         {head()}
-        <Card style={{ gap: 12 }}>
-          <T v="cardTitle">Le camel revient partout cette saison.</T>
-          <T v="body" tone="ink2">
-            {(() => {
-              const rare = camel.filter((p) => p.wears < 5).length;
-              return `Pas besoin d’acheter : tu en as déjà ${camel.length} pièces${rare ? `, dont ${rare} presque jamais portée${rare > 1 ? 's' : ''}` : ''}.`;
-            })()}
-          </T>
-          <View className="flex-row" style={{ gap: 4 }}>
-            {camel.slice(0, 5).map((p) => (
-              <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: (W - 32 - 16) / 5, alignItems: 'center' }}>
-                <Garment kind={p.kind} tint={p.tint} image={p.image} size={(W - 32 - 16) / 5 - 4} dark={scheme === 'dark'} label={p.name} />
-              </Tap>
-            ))}
-          </View>
-          <Button testID="trend-compose" label="Composer avec le camel" variant="secondary" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: camel.slice(0, 3).map((p) => p.id) })} />
-        </Card>
-      </View>
+        <T v="cardTitle">Le camel revient cette saison.</T>
+        <T v="kicker" tone="ink2">
+          {`Déjà ${camel.length} pièces chez toi`}
+        </T>
+        <View className="flex-row" style={{ gap: 4 }}>
+          {camel.slice(0, 5).map((p) => (
+            <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: thumb, alignItems: 'center' }}>
+              <Garment kind={p.kind} tint={p.tint} image={p.image} size={thumb - 4} dark={scheme === 'dark'} label={p.name} />
+            </Tap>
+          ))}
+        </View>
+        <Button testID="trend-compose" label="Composer avec le camel" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: camel.slice(0, 3).map((p) => p.id) })} />
+      </Card>
     );
   }
 
   // bilan
   const worn30 = s.pieces.filter((p) => p.lastWorn !== null && p.lastWorn <= 30).length;
   return (
-    <View style={{ gap: 12 }}>
+    <Card style={card}>
       {head()}
-      <View className="flex-row" style={{ gap: 10 }}>
+      <View className="flex-row" style={{ gap: 8 }}>
         {[
-          { v: `${usageRate(s.pieces)} %`, l: 'de ton dressing porté en 3 mois' },
-          { v: String(worn30), l: 'pièces sorties ce mois-ci' },
+          { v: `${usageRate(s.pieces)} %`, l: 'porté en 3 mois' },
+          { v: String(worn30), l: 'sorties ce mois' },
         ].map((x) => (
-          <Card key={x.l} style={{ flex: 1, gap: 4 }}>
-            <T v="stat">
+          <View key={x.l} className="bg-stage" style={{ flex: 1, gap: 4, borderRadius: 22, padding: 14 }}>
+            <T v="stat" style={{ fontSize: 34, lineHeight: 36 }}>
               {x.v}
             </T>
-            <T v="caption" tone="ink2">
+            <T v="kicker" tone="ink2">
               {x.l}
             </T>
-          </Card>
+          </View>
         ))}
       </View>
-    </View>
+    </Card>
   );
 }

@@ -144,6 +144,7 @@ APP_PAIRS = [
     ('butter-ink', 'butter', N, 'bandeau de service rose poudré'),
     ('tab-off', 'paper', N, 'onglet inactif sur la barre'),
     ('ink', 'stage', L, 'illustration noire sur gris studio'),
+    ('ink', 'glass-strong', N, 'étiquette à point posée sur une image (05/10)'),
 ]
 APP_GLASS = [
     ('ink', 'onglet actif et texte sur verre'),

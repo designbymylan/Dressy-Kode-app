@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { relativeDay, type CategoryId, type Piece } from '../data/wardrobe';
@@ -12,15 +12,13 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Card, EmptyState } from '../ui/bits';
-import { OutfitBoard, Legend, boardHeight } from '../ui/outfit';
+import { EmptyState } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
-import { F } from '../theme/fonts';
 
 type SlotId = 'veste' | 'haut' | 'bas' | 'chaussures' | 'sac';
 const SLOTS: { id: SlotId; label: string; cats: CategoryId[] }[] = [
@@ -46,6 +44,15 @@ function advice(chosen: Piece[]): string {
   return `${colors.length} couleurs : tu pourrais garder un seul accent pour que l’ensemble respire.`;
 }
 
+/** La rotation : d'abord ce qui dort le plus longtemps, pour faire tourner le dressing. */
+const byRest = (a: Piece, b: Piece) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999);
+
+/**
+ * « Habille-moi » (05/10, inspiré des apps de garde-robe) : une rangée par
+ * emplacement, la pièce choisie au centre, ses voisines de part et d'autre.
+ * On touche une voisine pour la prendre, le cadenas garde une pièce, et
+ * « Mélanger » laisse Kode changer tout ce qui n'est pas gardé.
+ */
 export function Compose() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -53,38 +60,52 @@ export function Compose() {
   const insets = useSafeAreaInsets();
   const { c, scheme } = useTheme();
   const { width } = useScreen();
-  const { y, onScroll } = useHeaderScroll();
+  const { onScroll } = useHeaderScroll();
   const top = useStackTop();
   const byId = useMemo(() => new Map(s.pieces.map((p) => [p.id, p])), [s.pieces]);
+  const pools = useMemo(() => Object.fromEntries(SLOTS.map((sl) => [sl.id, s.pieces.filter((p) => sl.cats.includes(p.category)).sort(byRest)])) as Record<SlotId, Piece[]>, [s.pieces]);
 
+  const given = [...(params?.pieces ?? []), ...(params?.with ? [params.with] : [])];
   const [slots, setSlots] = useState<Record<SlotId, string | null>>(() => {
     const start: Record<SlotId, string | null> = { veste: null, haut: null, bas: null, chaussures: null, sac: null };
-    const ids = [...(params?.pieces ?? []), ...(params?.with ? [params.with] : [])];
-    for (const id of ids) {
+    for (const id of given) {
       const p = byId.get(id);
       if (p && !start[slotOf(p)]) start[slotOf(p)] = p.id;
     }
+    // Kode complète la base autour des pièces données : bas, haut (sauf avec une robe), chaussures.
+    if (!start.bas) start.bas = pools.bas.find((p) => p.category === 'bas')?.id ?? pools.bas[0]?.id ?? null;
+    const dress = start.bas ? byId.get(start.bas)?.category === 'robes' : false;
+    if (!start.haut && !dress) start.haut = pools.haut[0]?.id ?? null;
+    if (!start.chaussures) start.chaussures = pools.chaussures[0]?.id ?? null;
     return start;
   });
+  // Les pièces de départ sont gardées : « Mélanger » ne les touche pas.
+  const [locked, setLocked] = useState<Set<SlotId>>(() => new Set(given.map((id) => byId.get(id)).filter(Boolean).map((p) => slotOf(p as Piece))));
   const [day, setDay] = useState(params?.day ?? 1);
   const [picking, setPicking] = useState<SlotId | null>(null);
   const chosen = SLOTS.map((sl) => (slots[sl.id] ? byId.get(slots[sl.id]!) : undefined)).filter(Boolean) as Piece[];
-  const W = width - space.gutter * 2;
-  const tile = (W - 4 * 8) / 5;
 
-  const complete = () => {
+  const step = (id: SlotId, dir: -1 | 1) => {
+    // La rangée tourne sur ses pièces, avec une case « sans » pour laisser l'emplacement vide.
+    const seq = [null, ...pools[id].map((p) => p.id)];
+    const i = seq.indexOf(slots[id]);
+    const next = seq[(i + dir + seq.length) % seq.length];
+    setSlots({ ...slots, [id]: next, ...(id === 'bas' && next && byId.get(next)?.category === 'robes' ? { haut: null } : {}) });
+  };
+
+  const shuffle = () => {
     const next = { ...slots };
-    const dress = chosen.some((p) => p.category === 'robes');
+    const dress = chosen.some((p) => p.category === 'robes' && locked.has('bas'));
     for (const sl of SLOTS) {
-      if (next[sl.id]) continue;
+      if (locked.has(sl.id)) continue;
       if (sl.id === 'haut' && dress) continue;
-      // La pièce la moins portée de l'emplacement : Kode fait tourner le dressing.
-      const pool = s.pieces.filter((p) => sl.cats.includes(p.category) && (sl.id !== 'bas' || p.category === 'bas' || !next.haut));
-      const pick = [...pool].sort((x, z) => (z.lastWorn ?? 999) - (x.lastWorn ?? 999))[Math.min(1, pool.length - 1)];
-      if (pick) next[sl.id] = pick.id;
+      const pool = pools[sl.id].filter((p) => p.id !== slots[sl.id] && (sl.id !== 'bas' || p.category === 'bas' || !next.haut));
+      // Parmi les trois qui dorment le plus, une au hasard : Kode varie sans oublier la rotation.
+      const pick = pool.slice(0, 3)[Math.floor(Math.random() * Math.min(3, pool.length))];
+      if (pick && (sl.id !== 'veste' && sl.id !== 'sac' ? true : Math.random() < 0.6)) next[sl.id] = pick.id;
     }
     setSlots(next);
-    a.toast('Kode a complété la tenue');
+    a.toast('Kode a mélangé la tenue');
   };
 
   const save = () => {
@@ -94,96 +115,104 @@ export function Compose() {
   };
 
   const slot = SLOTS.find((x) => x.id === picking);
-  const options = slot ? s.pieces.filter((p) => slot.cats.includes(p.category)) : [];
+  const options = slot ? pools[slot.id] : [];
+  const W = width - space.gutter * 2;
+  const big = Math.min(150, Math.round(W * 0.42));
+  const side = Math.round((W - big - 20) / 2);
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-compose">
       <Ambient />
-      <StackHeader title="Composer une tenue" y={y} />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
-        <View style={{ gap: 6 }}>
-          <T v="kicker" tone="ink2">
-            La planche
-          </T>
-          <T v="title" accessibilityRole="header">
-            Compose,{'\n'}
-            <T v="title" style={{ ...F.accent }}>
-              Kode ajuste.
-            </T>
-          </T>
-        </View>
-
-        <Animated.View layout={LinearTransition.springify().damping(20)} style={{ backgroundColor: c.stage, borderRadius: 28, padding: 16, gap: 12 }}>
-          {chosen.length ? (
-            <>
-              <OutfitBoard pieces={chosen} width={W - 32} frame={false} onPiece={(p) => setPicking(slotOf(p))} />
-              <Legend pieces={chosen} />
-            </>
-          ) : (
-            <View style={{ height: boardHeight(W - 32) * 0.6 }} className="items-center justify-center">
-              <T v="body" tone="ink2" style={{ textAlign: 'center' }}>
-                Ta planche est vide.{'\n'}Touche un emplacement pour commencer.
-              </T>
-            </View>
-          )}
-        </Animated.View>
-
-        <View className="flex-row" style={{ gap: 8 }}>
-          {SLOTS.map((sl) => {
-            const p = slots[sl.id] ? byId.get(slots[sl.id]!) : undefined;
+      <StackHeader title="Habille-moi" />
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 12 }}>
+        {SLOTS.map((sl) => {
+          const seq = [null, ...pools[sl.id].map((p) => p.id)];
+          const i = Math.max(0, seq.indexOf(slots[sl.id]));
+          const prev = seq.length > 1 ? seq[(i - 1 + seq.length) % seq.length] : undefined;
+          const next = seq.length > 1 ? seq[(i + 1) % seq.length] : undefined;
+          const cur = slots[sl.id] ? byId.get(slots[sl.id]!) : undefined;
+          const keep = locked.has(sl.id);
+          const neighbour = (id: string | null | undefined, dir: -1 | 1) => {
+            if (id === undefined) return <View style={{ width: side }} />;
+            const p = id ? byId.get(id) : undefined;
             return (
-              <Tap key={sl.id} testID={`slot-${sl.id}`} onPress={() => setPicking(sl.id)} accessibilityLabel={p ? `${sl.label} : ${p.name}. Changer` : `${sl.label} : vide. Choisir`} style={{ width: tile, gap: 6, alignItems: 'center' }}>
-                <View
-                  style={{ width: tile, height: tile * 1.2, borderRadius: 16, borderWidth: p ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: p ? c.raised : 'transparent' }}
-                  className="items-center justify-center"
-                >
-                  {p ? <Garment kind={p.kind} tint={p.tint} image={p.image} size={tile * 0.78} dark={scheme === 'dark'} label={p.name} /> : <Icon name="plus" size={20} color={c.ink2} />}
-                </View>
-                <T v="small" tone={p ? 'ink' : 'ink2'} numberOfLines={1} style={{ textAlign: 'center' }}>
-                  {sl.label}
-                </T>
+              <Tap testID={`slot-${sl.id}-${dir > 0 ? 'next' : 'prev'}`} onPress={() => step(sl.id, dir)} accessibilityLabel={p ? `${sl.label} : prendre ${p.name}` : `${sl.label} : sans`} scaleTo={0.95} style={{ width: side, height: 104, borderRadius: 22, backgroundColor: c.stage, opacity: 0.5, alignItems: 'center', justifyContent: 'center' }}>
+                {p ? <Garment kind={p.kind} tint={p.tint} image={p.image} size={side * 0.56} dark={scheme === 'dark'} label={p.name} /> : <T v="kicker" tone="ink2">sans</T>}
               </Tap>
             );
-          })}
-        </View>
-
-        <Animated.View key={advice(chosen)} entering={FadeIn.duration(220)}>
-          <Card className="bg-sunk" style={{ gap: 10 }}>
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              <Icon name="kode" size={18} color={c.brass} />
-              <T v="kicker" tone="ink2">
-                Kode
-              </T>
+          };
+          return (
+            <View key={sl.id} accessibilityLabel={sl.label} className="flex-row items-center justify-between" style={{ height: 132 }}>
+              {neighbour(prev, -1)}
+              <Tap
+                testID={`slot-${sl.id}`}
+                onPress={() => setPicking(sl.id)}
+                accessibilityLabel={cur ? `${sl.label} : ${cur.name}. Changer` : `${sl.label} : vide. Choisir`}
+                scaleTo={0.97}
+                style={{ width: big, height: 132, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', borderWidth: keep ? 1.5 : 0, borderColor: c.ink }}
+              >
+                {cur ? (
+                  <Garment kind={cur.kind} tint={cur.tint} image={cur.image} size={big * 0.6} dark={scheme === 'dark'} label={cur.name} />
+                ) : pools[sl.id].length ? (
+                  <T v="kicker" tone="ink2">{`Sans ${sl.label.toLowerCase()}`}</T>
+                ) : (
+                  <View className="items-center" style={{ gap: 6 }}>
+                    <Icon name="plus" size={20} color={c.ink2} />
+                    <T v="kicker" tone="ink2">{sl.label}</T>
+                  </View>
+                )}
+                {cur && (
+                  <View style={{ position: 'absolute', top: 0, right: 0 }}>
+                    <Tap
+                      testID={`lock-${sl.id}`}
+                      onPress={() => setLocked((prevSet) => { const n = new Set(prevSet); if (n.has(sl.id)) n.delete(sl.id); else n.add(sl.id); return n; })}
+                      feedback="select"
+                      accessibilityRole="switch"
+                      accessibilityState={{ checked: keep }}
+                      accessibilityLabel={keep ? `Libérer : ${cur.name}` : `Garder : ${cur.name}`}
+                      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }}>
+                        <Icon name="lock" size={14} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
+                      </View>
+                    </Tap>
+                  </View>
+                )}
+              </Tap>
+              {neighbour(next, 1)}
             </View>
-            <T v="bodyL">{advice(chosen)}</T>
-            {chosen.length < 5 && <Button testID="compose-complete" label="Compléter avec Kode" variant="secondary" size="m" icon="kode" onPress={complete} />}
-          </Card>
+          );
+        })}
+
+        <Animated.View key={advice(chosen)} entering={FadeIn.duration(220)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, paddingTop: 4 }}>
+          <Icon name="kode" size={16} color={c.ink} />
+          <T v="caption" tone="ink2" style={{ flex: 1 }}>
+            {advice(chosen)}
+          </T>
         </Animated.View>
 
-        <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2">
-            Pour quand ?
+        <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
+          {Array.from({ length: 7 }, (_, i) => (
+            <Chip key={i} testID={`day-${i}`} label={relativeDay(i)} on={day === i} onPress={() => setDay(i)} />
+          ))}
+        </Animated.ScrollView>
+        {s.planned[day] && (
+          <T v="caption" tone="caution">
+            Elle remplacera « {s.planned[day].title} ».
           </T>
-          <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
-            {Array.from({ length: 7 }, (_, i) => (
-              <Chip key={i} testID={`day-${i}`} label={relativeDay(i)} on={day === i} onPress={() => setDay(i)} />
-            ))}
-          </Animated.ScrollView>
-          {s.planned[day] && (
-            <T v="caption" tone="caution">
-              Elle remplacera « {s.planned[day].title} », déjà prévue ce jour-là.
-            </T>
-          )}
-        </View>
+        )}
 
-        <Button testID="compose-save" label={chosen.length < 2 ? 'Choisis au moins deux pièces' : `Prévoir pour ${relativeDay(day).toLowerCase()}`} disabled={chosen.length < 2} onPress={save} />
+        <View style={{ gap: 8, paddingTop: 4 }}>
+          <Button testID="compose-save" label={chosen.length < 2 ? 'Choisis au moins deux pièces' : `Prévoir pour ${relativeDay(day).toLowerCase()}`} disabled={chosen.length < 2} onPress={save} />
+          <Button testID="compose-complete" label="Mélanger" variant="secondary" icon="kode" onPress={shuffle} />
+        </View>
       </Animated.ScrollView>
 
       <Sheet visible={!!slot} onClose={() => setPicking(null)} kicker="Emplacement" title={slot?.label ?? ''} testID="slot-sheet">
         {options.length === 0 && (
           <EmptyState
             title="Rien ici pour l’instant"
-            body="Ajoute une pièce de cette catégorie : elle apparaîtra dans cet emplacement."
+            body="Ajoute une pièce de cette catégorie : elle apparaîtra ici."
             action={<Button testID="slot-add" label="Ajouter une pièce" size="m" icon="plus" onPress={() => { setPicking(null); nav.navigate('AddPiece'); }} />}
           />
         )}
@@ -203,7 +232,7 @@ export function Compose() {
                 accessibilityState={{ selected: !!on }}
                 style={{ width: w }}
               >
-                <View className="items-center justify-center" style={{ height: w * 1.1, borderRadius: 16, backgroundColor: c.paper, borderWidth: on ? 2 : 0, borderColor: c.ink }}>
+                <View className="items-center justify-center" style={{ height: w * 1.1, borderRadius: 18, backgroundColor: c.stage, borderWidth: on ? 2 : 0, borderColor: c.ink }}>
                   <Garment kind={p.kind} tint={p.tint} image={p.image} size={w * 0.66} dark={scheme === 'dark'} label={p.name} />
                 </View>
                 <T v="small" numberOfLines={1} style={{ marginTop: 4 }}>
