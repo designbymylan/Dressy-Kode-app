@@ -91,6 +91,7 @@ export function Dressing() {
   const capsule = (
     <TabHeader
       title="Dressing"
+      y={edge}
       meta={limit === null ? `${s.pieces.length} pièce${s.pieces.length > 1 ? 's' : ''}` : `${s.pieces.length} / ${limit}`}
       actions={[
         { icon: 'search', label: 'Rechercher une pièce', onPress: () => { setSearching(true); setView('grille'); }, testID: 'dressing-search' },

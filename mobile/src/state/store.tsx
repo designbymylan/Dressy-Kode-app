@@ -22,7 +22,7 @@ import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './con
 
 export type { PlanId, Period, Planned, Session };
 export type { Silhouette, MeasureId, Profile } from './profile';
-export type HomeModule = 'kode' | 'semaine' | 'oubliees' | 'tendance' | 'bilan';
+export type HomeModule = 'kode' | 'semaine' | 'prevues' | 'oubliees' | 'nouveautes' | 'porte' | 'tendance' | 'prets' | 'bilan';
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
 export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
 
@@ -40,7 +40,32 @@ export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> 
   oubliees: { title: 'À redécouvrir', note: 'Les pièces qui dorment' },
   tendance: { title: 'Tendance, déjà chez toi', note: 'Ce qui se porte, dans ton dressing' },
   bilan: { title: 'Ton mois', note: 'Ce que tu portes vraiment' },
+  prevues: { title: 'Tes tenues prévues', note: 'Les prochains jours, déjà prêts' },
+  nouveautes: { title: 'Nouveautés', note: 'Tes dernières pièces' },
+  porte: { title: 'Le plus porté', note: 'Tes pièces fétiches' },
+  prets: { title: 'Prêts en cours', note: 'Ce que tes amies ont' },
 };
+
+/** L'ordre et l'état des sections d'un nouvel espace. */
+export const DEFAULT_MODULES: { id: HomeModule; on: boolean }[] = [
+  { id: 'semaine', on: true },
+  { id: 'kode', on: true },
+  { id: 'prevues', on: true },
+  { id: 'oubliees', on: true },
+  { id: 'tendance', on: true },
+  { id: 'nouveautes', on: false },
+  { id: 'porte', on: false },
+  { id: 'prets', on: false },
+  { id: 'bilan', on: false },
+];
+
+/** Garde l'ordre choisi, ajoute à la fin (masquées) les sections nées depuis, retire celles qui n'existent plus. */
+export function normalizeModules(list: { id: HomeModule; on: boolean }[] | undefined) {
+  const known = new Set(DEFAULT_MODULES.map((m) => m.id));
+  const kept = (list ?? []).filter((m, i, all) => known.has(m.id) && all.findIndex((x) => x.id === m.id) === i);
+  const have = new Set(kept.map((m) => m.id));
+  return [...kept, ...DEFAULT_MODULES.filter((m) => !have.has(m.id)).map((m) => ({ ...m, on: list ? false : m.on }))];
+}
 
 type State = {
   /** Le temps, au lancement, de relire la session et l'état gardé. */
@@ -107,13 +132,7 @@ const initial: State = {
   period: 'mois',
   extraPlaces: 0,
   packs: [],
-  modules: [
-    { id: 'kode', on: true },
-    { id: 'semaine', on: true },
-    { id: 'oubliees', on: true },
-    { id: 'tendance', on: true },
-    { id: 'bilan', on: false },
-  ],
+  modules: DEFAULT_MODULES,
   density: 'aeree',
   shares: [],
   toast: null,
@@ -185,7 +204,7 @@ let lastJobsRead = 0;
 function reducer(s: State, a: Action): State {
   switch (a.t) {
     case 'hydrate':
-      return { ...s, ...a.patch, booting: false };
+      return { ...s, ...a.patch, ...(a.patch.modules ? { modules: normalizeModules(a.patch.modules) } : {}), booting: false };
     case 'account': {
       const { acc } = a;
       // Questionnaire pas encore rempli : on garde la session et on repart de l'onboarding.

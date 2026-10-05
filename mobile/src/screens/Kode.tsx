@@ -14,7 +14,7 @@ import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
-import { TabHeader, useTabTop } from '../ui/layout';
+import { TabHeader, useHeaderScroll, useTabTop } from '../ui/layout';
 import { Card, DotChip, Tag } from '../ui/bits';
 import { OutfitBoard, assembleDelay } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
@@ -91,6 +91,7 @@ export function Kode() {
       : null;
 
   const top = useTabTop();
+  const { y: scrollY, onScroll } = useHeaderScroll();
   // Ce que Kode sait déjà, en puces : la météo, la prochaine date qui compte, demain, le dressing.
   const known: { label: string; swatch?: string }[] = [
     w ? { label: `${p.city ? `${p.city} · ` : ''}${w.low}° à ${w.t}°, ${w.label}` } : null,
@@ -103,8 +104,8 @@ export function Kode() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-kode">
       <Ambient />
-      <TabHeader title="Kode" meta={quota === null ? 'sans limite' : `${left} / ${quota}`} />
-      <Animated.ScrollView ref={list as never} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
+      <TabHeader title="Kode" y={scrollY} meta={quota === null ? 'sans limite' : `${left} / ${quota}`} />
+      <Animated.ScrollView ref={list as never} onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
             <Card style={{ padding: 16, gap: 12 }}>

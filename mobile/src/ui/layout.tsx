@@ -4,9 +4,10 @@ import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useS
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { material, space } from '../theme/tokens';
 import { T } from './T';
 import { IconButton } from './Button';
+import { BlurView } from 'expo-blur';
 import { Glass } from './Glass';
 import type { IconName } from './Icon';
 
@@ -108,6 +109,30 @@ export function ScrollEdge({ y }: { y: SharedValue<number> }) {
 /** Hauteur de la capsule d'en-tête. */
 export const CAPSULE = 56;
 
+const FILL = { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } as const;
+
+/**
+ * L'encadrant de la capsule (06/10, sur le modèle de celle de Moi) : un verre
+ * dense et bien visible au repos, bordé d'un filet clair. Quand on descend,
+ * sa teinte s'allège et le flou laisse deviner la page dessous ; en
+ * remontant, elle reprend sa couleur. Le flou est toujours là : rien ne
+ * se superpose en net sous le titre. « Verre plus opaque » la garde pleine.
+ */
+export function HeaderShell({ y, children }: { y?: SharedValue<number>; children: ReactNode }) {
+  const { c, scheme, solidGlass } = useTheme();
+  const fill = useAnimatedStyle(() => ({ opacity: y && !solidGlass ? interpolate(y.value, [0, 90], [1, 0.7], 'clamp') : 1 }));
+  return (
+    <View style={[{ height: CAPSULE, borderRadius: CAPSULE / 2 }, material.card[scheme]]}>
+      <View pointerEvents="none" style={[FILL, { borderRadius: CAPSULE / 2, overflow: 'hidden' }]}>
+        {!solidGlass && <BlurView intensity={56} tint={scheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />}
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: solidGlass ? c.raised : c['glass-strong'] }, fill]} />
+      </View>
+      <View pointerEvents="none" style={[FILL, { borderRadius: CAPSULE / 2, borderWidth: 1, borderColor: solidGlass ? c.rule : c['glass-border'] }]} />
+      {children}
+    </View>
+  );
+}
+
 type Action = { icon: IconName; label: string; onPress: () => void; testID?: string; solid?: boolean };
 
 /** Ce qui s'affiche au centre ou à gauche d'une capsule : la marque, un titre court en Cormorant, ou un titre long en Hanken. */
@@ -142,11 +167,11 @@ function Actions({ list }: { list: Action[] }) {
  * gauche, un compteur discret en DM Mono, ses actions rondes à droite ; à
  * gauche, `lead` peut porter un avatar.
  */
-export function TabHeader({ title, brand, meta, lead, actions = [] }: { title: string; brand?: boolean; meta?: string; lead?: ReactNode; actions?: Action[] }) {
+export function TabHeader({ title, brand, meta, lead, actions = [], y }: { title: string; brand?: boolean; meta?: string; lead?: ReactNode; actions?: Action[]; y?: SharedValue<number> }) {
   const insets = useSafeAreaInsets();
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top + 6, left: space.lg, right: space.lg, zIndex: 10 }}>
-      <Glass radius={CAPSULE / 2} style={{ height: CAPSULE }}>
+      <HeaderShell y={y}>
         <View className="flex-row items-center" style={{ flex: 1, paddingLeft: lead ? 6 : 20, paddingRight: 6, gap: 12 }}>
           {lead}
           <View className="flex-row items-baseline" style={{ flex: 1, gap: 10, minWidth: 0 }}>
@@ -159,7 +184,7 @@ export function TabHeader({ title, brand, meta, lead, actions = [] }: { title: s
           </View>
           <Actions list={actions} />
         </View>
-      </Glass>
+      </HeaderShell>
     </View>
   );
 }
@@ -180,7 +205,7 @@ export function useHeaderScroll() {
 
 type HeaderProps = {
   title: string;
-  /** Gardé pour les écrans qui le passent encore : la capsule est toujours là, elle ne dépend plus du défilement. */
+  /** Le défilement de l'écran : la capsule s'allège quand on descend. */
   y?: SharedValue<number>;
   right?: Action[];
   /** Pour une feuille modale : une croix plutôt qu'une flèche. */
@@ -195,14 +220,14 @@ type HeaderProps = {
  * (ou la marque) au centre, les actions à droite. Elle flotte au-dessus du
  * contenu, qui défile dessous.
  */
-export function StackHeader({ title, right = [], close, brand, onBack }: HeaderProps) {
+export function StackHeader({ title, right = [], close, brand, onBack, y }: HeaderProps) {
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
   const top = close ? 12 : insets.top + 6;
   const side = Math.max(1, right.length) * 44 + Math.max(0, right.length - 1) * 6;
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', top, left: space.lg, right: space.lg, zIndex: 10 }}>
-      <Glass radius={CAPSULE / 2} style={{ height: CAPSULE }}>
+      <HeaderShell y={y}>
         <View className="flex-row items-center" style={{ flex: 1, paddingHorizontal: 6, gap: 8 }}>
           <View style={{ width: side, alignItems: 'flex-start' }}>
             <IconButton testID="header-back" icon={close ? 'close' : 'back'} label={close ? 'Fermer' : 'Retour'} variant="quiet" onPress={onBack ?? (() => nav.goBack())} />
@@ -214,7 +239,7 @@ export function StackHeader({ title, right = [], close, brand, onBack }: HeaderP
             <Actions list={right} />
           </View>
         </View>
-      </Glass>
+      </HeaderShell>
     </View>
   );
 }

@@ -60,7 +60,7 @@ export function Compose() {
   const insets = useSafeAreaInsets();
   const { c, scheme } = useTheme();
   const { width } = useScreen();
-  const { onScroll } = useHeaderScroll();
+  const { y, onScroll } = useHeaderScroll();
   const top = useStackTop();
   const byId = useMemo(() => new Map(s.pieces.map((p) => [p.id, p])), [s.pieces]);
   const pools = useMemo(() => Object.fromEntries(SLOTS.map((sl) => [sl.id, s.pieces.filter((p) => sl.cats.includes(p.category)).sort(byRest)])) as Record<SlotId, Piece[]>, [s.pieces]);
@@ -123,7 +123,7 @@ export function Compose() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-compose">
       <Ambient />
-      <StackHeader title="Habille-moi" />
+      <StackHeader title="Habille-moi" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 12 }}>
         {SLOTS.map((sl) => {
           const seq = [null, ...pools[sl.id].map((p) => p.id)];

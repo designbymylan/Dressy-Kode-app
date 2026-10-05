@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +16,7 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
-import { OutfitBoard, assembleDelay } from '../ui/outfit';
+import { DressRows, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { motion } from '../theme/tokens';
 import { Card, DotChip, Tag, WeatherIcon } from '../ui/bits';
 import { Garment } from '../ui/Garment';
@@ -55,12 +55,35 @@ export function Home() {
 
   const top = useTabTop();
   const inner = W - 28;
+  // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
+  const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
+  const [pinned, setPinned] = useState<Set<RowId>>(new Set());
+  const base = worn ? (s.wornToday!.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : pieces;
+  const shown = (() => {
+    const out = base.map((p) => {
+      const id = swapped[rowOf(p)];
+      return id && byId.get(id) ? byId.get(id)! : p;
+    });
+    // Une pièce gardée d'une tenue à l'autre s'ajoute si la nouvelle n'a pas cette rangée.
+    for (const [r, id] of Object.entries(swapped)) if (id && !out.some((p) => rowOf(p) === r) && byId.get(id)) out.push(byId.get(id)!);
+    return headToToe(out.filter((p, i, all) => all.findIndex((x) => x.id === p.id) === i));
+  })();
+  const another = () => {
+    // Les rangées verrouillées passent à la tenue suivante ; le reste change.
+    const keep: Partial<Record<RowId, string>> = {};
+    for (const r of pinned) {
+      const p = shown.find((x) => rowOf(x) === r);
+      if (p) keep[r] = p.id;
+    }
+    setSwapped(keep);
+    a.nextOutfit();
+  };
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
       <Ambient weather={now?.kind} />
       <ScrollEdge y={edge} />
-      <TabHeader title="Dresskode" brand actions={[{ icon: 'sliders', label: 'Personnaliser l’accueil', onPress: () => nav.navigate('Customize'), testID: 'customize-home' }]} />
+      <TabHeader title="Dresskode" brand y={edge} actions={[{ icon: 'sliders', label: 'Personnaliser l’accueil', onPress: () => nav.navigate('Customize'), testID: 'customize-home' }]} />
       <Animated.ScrollView
         testID="screen-home"
         onScroll={onScroll}
@@ -76,8 +99,17 @@ export function Home() {
         ) : (
           <Card style={{ padding: 14, gap: 12 }} testID="home-outfit">
             <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
-            <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, padding: 12 }}>
-              <OutfitBoard pieces={pieces} width={inner - 24} onPiece={open} assemble numbered={false} />
+            {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. */}
+            <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, paddingVertical: 12, overflow: 'hidden' }}>
+              <DressRows
+                pieces={shown}
+                pool={worn ? [] : s.pieces}
+                width={inner}
+                pinned={pinned}
+                onTogglePin={(r) => setPinned((prev) => { const n = new Set(prev); if (n.has(r)) n.delete(r); else n.add(r); return n; })}
+                onSwap={(r, to) => setSwapped((prev) => ({ ...prev, [r]: to.id }))}
+                onPiece={open}
+              />
             </Animated.View>
             {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
             <Animated.View key={`t-${outfit.id}`} entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)} style={{ gap: 4, paddingHorizontal: 4 }}>
@@ -89,11 +121,11 @@ export function Home() {
               </T>
             </Animated.View>
             {worn ? (
-              <WornToday pieces={pieces} />
+              <WornToday pieces={shown} />
             ) : (
               <View style={{ gap: 8 }}>
-                <Button testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(outfit.pieces, 'Notée dans ton journal')} />
-                <Button testID="another-outfit" label="Une autre" variant="quiet" icon="refresh" disabled={outfits.length < 2} onPress={a.nextOutfit} />
+                <Button testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
+                <Button testID="another-outfit" label="Une autre" variant="quiet" icon="refresh" disabled={outfits.length < 2} onPress={another} />
               </View>
             )}
           </Card>
@@ -331,7 +363,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'oubliees') {
     const list = sleeping(s.pieces).slice(0, 5);
-    if (!list.length) return null;
+    if (!list.length) return <Quiet head={head()} text="Rien ne dort : tout ton dressing tourne." />;
     return (
       <Card style={card}>
         {head('Tout voir', () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } }))}
@@ -357,7 +389,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
   if (id === 'tendance' && meteo.reelle) {
     // Compte connecté : la pièce dont l'intérêt monte le plus cette semaine, et que le dressing a déjà.
     const top = tendancesChezToi(s.contexte, s.pieces)[0];
-    if (!top) return null;
+    if (!top) return <Quiet head={head()} text="Aucune tendance de la semaine dans ton dressing." />;
     const { t, pieces: owned } = top;
     const thumb = (W - 28 - 16) / 5;
     return (
@@ -382,7 +414,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'tendance') {
     const camel = s.pieces.filter((p) => ['Camel', 'Cognac', 'Camel et crème'].includes(p.color));
-    if (camel.length < 2) return null;
+    if (camel.length < 2) return <Quiet head={head()} text="Aucune tendance de la saison dans ton dressing." />;
     const thumb = (W - 28 - 16) / 5;
     return (
       <Card style={card}>
@@ -399,6 +431,92 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
           ))}
         </View>
         <Button testID="trend-compose" label="Composer avec le camel" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: camel.slice(0, 3).map((p) => p.id) })} />
+      </Card>
+    );
+  }
+
+  if (id === 'prevues') {
+    const days = Object.keys(s.planned).map(Number).filter((d) => d >= 1 && d <= 13).sort((x, z) => x - z).slice(0, 4);
+    if (!days.length)
+      return <Quiet head={head()} text="Rien de prévu ces prochains jours." action={<Button testID="module-prevues-compose" label="Prévoir demain" size="m" variant="quiet" icon="layers" onPress={() => nav.navigate('Compose', { day: 1 })} />} />;
+    return (
+      <Card style={card}>
+        {head('Agenda', () => nav.navigate('Tabs', { screen: 'Agenda' }))}
+        {days.map((d) => {
+          const o = s.planned[d];
+          const ps = o.pieces.map((pid) => s.pieces.find((p) => p.id === pid)).filter(Boolean) as Piece[];
+          return (
+            <Tap key={d} testID={`planned-${d}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: d } })} scaleTo={0.99} accessibilityLabel={`${shortDate(d)}, ${o.title}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64 }}>
+              <View style={{ width: 64, gap: 2 }}>
+                <T v="kicker" tone="ink2">{capital(shortDate(d))}</T>
+              </View>
+              <View className="flex-row" style={{ flex: 1, gap: 4 }}>
+                {headToToe(ps).slice(0, 4).map((p) => (
+                  <View key={p.id} style={{ width: 46, height: 56, borderRadius: 14, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
+                    <Garment kind={p.kind} tint={p.tint} image={p.image} size={34} dark={scheme === 'dark'} label={p.name} />
+                  </View>
+                ))}
+              </View>
+              <Icon name="chevron" size={16} color={c.ink2} />
+            </Tap>
+          );
+        })}
+      </Card>
+    );
+  }
+
+  if (id === 'nouveautes' || id === 'porte') {
+    const list = id === 'nouveautes'
+      ? [...s.pieces].filter((p) => p.addedDaysAgo <= 21).sort((x, z) => x.addedDaysAgo - z.addedDaysAgo).slice(0, 6)
+      : [...s.pieces].filter((p) => p.wears > 0).sort((x, z) => z.wears - x.wears).slice(0, 6);
+    if (!list.length)
+      return id === 'nouveautes'
+        ? <Quiet head={head()} text="Rien de neuf ces trois dernières semaines." action={<Button label="Ajouter une pièce" size="m" variant="quiet" icon="plus" onPress={() => nav.navigate('AddPiece')} />} />
+        : <Quiet head={head()} text="Porte une tenue : le classement commence." />;
+    return (
+      <Card style={card}>
+        {head('Tout voir', () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } }))}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
+          {list.map((p) => (
+            <Tap key={p.id} testID={`${id}-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={id === 'porte' ? `${p.name}, ${p.wears} ports` : p.name} style={{ width: 108 }}>
+              <View className="bg-stage items-center justify-center" style={{ height: 128, borderRadius: 22 }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={72} dark={scheme === 'dark'} label={p.name} />
+                {id === 'porte' && (
+                  <View style={{ position: 'absolute', top: 8, left: 8 }}>
+                    <Tag label={`${p.wears}×`} tone="glass" dot={false} />
+                  </View>
+                )}
+              </View>
+              <T v="caption" style={{ marginTop: 6, ...F.s600 }} numberOfLines={1}>
+                {p.name}
+              </T>
+            </Tap>
+          ))}
+        </ScrollView>
+      </Card>
+    );
+  }
+
+  if (id === 'prets') {
+    const loans = s.shares.filter((x) => x.mode !== 'montrer');
+    if (!loans.length) return <Quiet head={head()} text="Aucun prêt ni don en cours." />;
+    return (
+      <Card style={card}>
+        {head()}
+        {loans.slice(0, 4).map((x) => {
+          const p = s.pieces.find((q) => q.id === x.pieceId);
+          return (
+            <Tap key={x.id} onPress={() => p && nav.navigate('Piece', { id: p.id })} scaleTo={0.99} accessibilityLabel={`${p?.name ?? 'Pièce'}, ${x.mode === 'preter' ? 'prêtée à' : 'donnée à'} ${x.friend}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 }}>
+              <View style={{ width: 46, height: 52, borderRadius: 14, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
+                {p && <Garment kind={p.kind} tint={p.tint} image={p.image} size={32} dark={scheme === 'dark'} label={p.name} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <T v="bodyStrong" numberOfLines={1}>{p?.name ?? 'Pièce'}</T>
+                <T v="kicker" tone="ink2">{`${x.mode === 'preter' ? 'Chez' : 'Donnée à'} ${x.friend}`}</T>
+              </View>
+            </Tap>
+          );
+        })}
       </Card>
     );
   }
@@ -423,6 +541,19 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
           </View>
         ))}
       </View>
+    </Card>
+  );
+}
+
+/** Une section sans rien à montrer reste à sa place, en une ligne : on voit qu'elle est là et où. */
+function Quiet({ head, text, action }: { head: ReactNode; text: string; action?: ReactNode }) {
+  return (
+    <Card style={{ padding: 14, gap: 10 }}>
+      {head}
+      <T v="caption" tone="ink2" style={{ paddingHorizontal: 2 }}>
+        {text}
+      </T>
+      {action}
     </Card>
   );
 }

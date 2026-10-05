@@ -50,6 +50,7 @@ export function Me() {
     <ScrollEdge y={edge} />
     <TabHeader
       title={s.profile.name || 'Moi'}
+      y={edge}
       lead={<Avatar name={s.profile.name || '?'} size={44} on />}
       meta={plan.name}
       actions={[{ icon: 'sliders', label: 'Personnaliser', onPress: () => nav.navigate('Customize'), testID: 'me-customize' }]}

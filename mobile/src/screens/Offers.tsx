@@ -51,7 +51,7 @@ export function Offers() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-offers">
       <Ambient />
-      <StackHeader title="Les offres" brand />
+      <StackHeader title="Les offres" brand y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 120, gap: 16 }}>
         <View className="items-center" style={{ gap: 14 }}>
           <Tag label={`Ton offre : ${current.name}`} tone="butter" />

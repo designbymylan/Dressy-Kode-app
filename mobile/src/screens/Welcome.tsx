@@ -8,7 +8,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Button } from '../ui/Button';
-import { Glass } from '../ui/Glass';
+import { HeaderShell } from '../ui/layout';
 import { DotChip, Tag } from '../ui/bits';
 import { AccountSheet } from '../ui/account';
 import { Garment, type GarmentKind } from '../ui/Garment';
@@ -43,14 +43,14 @@ export function Welcome() {
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-welcome">
       <Ambient />
       <View style={{ position: 'absolute', top: insets.top + 6, left: space.lg, right: space.lg, zIndex: 10 }}>
-        <Glass radius={28} style={{ height: 56 }}>
+        <HeaderShell>
           <View className="flex-row items-center justify-between" style={{ flex: 1, paddingLeft: 20, paddingRight: 6 }}>
             <T v="brand" accessibilityRole="header">
               DRESSKODE
             </T>
             <Button testID="welcome-login" label="Connexion" variant="quiet" size="m" onPress={() => setLogin(true)} />
           </View>
-        </Glass>
+        </HeaderShell>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6 + 56 + 36, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 24, gap: 16, alignItems: 'center' }}>

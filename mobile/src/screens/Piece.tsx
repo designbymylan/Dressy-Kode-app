@@ -131,7 +131,7 @@ export function PieceScreen() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-piece">
       <Ambient />
-      <StackHeader title={piece.name} brand right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
+      <StackHeader title={piece.name} brand y={y} right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {/* La scène : la pièce sur gris studio, un panneau de verre posé dessus (05/10). */}
         <View style={{ height: stageH, borderRadius: 28, backgroundColor: c.stage, overflow: 'hidden', alignItems: 'center' }}>

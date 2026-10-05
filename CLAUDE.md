@@ -120,6 +120,26 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   sur-titre en capitales espacées ni de phrase d'explication sous un titre.
 - **Kode reste au centre de la barre d'onglets** (confirmé le 05/10).
 
+**Retouches du 06/10, demandées par l'utilisateur :**
+
+- **Capsule d'en-tête** : un encadrant bien visible au repos (verre dense,
+  filet clair, sur le modèle de celle de Moi), qui s'allège quand on
+  descend et reprend sa couleur en remontant (`HeaderShell`,
+  `ui/layout.tsx`). Toujours floutée : rien ne se superpose en net sous un
+  titre.
+- **Tenue du jour en rangées, de la tête aux pieds** (sur le modèle
+  « Dress me ») : visage et cou (lunettes, boucles, collier, foulard),
+  veste, haut, bas, chaussures, sac ; la pièce au centre, ses voisines
+  coupées par le bord ; toucher une voisine la prend, le cadenas la garde
+  pour « Une autre » (`DressRows`, `ui/outfit.tsx`).
+- **Agenda** : le calendrier de la semaine est l'élément central (date,
+  météo, températures, rendez-vous), une carte par sujet dessous.
+- **Accueil personnalisable** : une section sans contenu reste à sa place
+  avec une ligne (on voit qu'on l'a déplacée) ; nouvelles sections
+  « Tes tenues prévues », « Nouveautés », « Le plus porté », « Prêts en
+  cours ». L'ordre enregistré est complété par les sections nées depuis
+  (`normalizeModules`, `state/store.tsx`).
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 

@@ -1,12 +1,13 @@
 import { memo, useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { motion } from '../theme/tokens';
 import type { Piece } from '../data/wardrobe';
 import { useTheme } from '../theme/ThemeProvider';
-import { Garment } from './Garment';
+import { Garment, type GarmentKind } from './Garment';
 import { T } from './T';
 import { Tap } from './Tap';
+import { Icon } from './Icon';
 
 type Slot = 'outer' | 'top' | 'bottom' | 'shoes' | 'acc';
 
@@ -150,6 +151,125 @@ export function Legend({ pieces, onPiece }: { pieces: Piece[]; onPiece?: (p: Pie
           </T>
         </Tap>
       ))}
+    </View>
+  );
+}
+
+/* ---- La tenue en rangées, de la tête aux pieds (06/10) ---- */
+
+export type RowId = 'tete' | 'veste' | 'haut' | 'bas' | 'pieds' | 'main';
+export const ROW_ORDER: RowId[] = ['tete', 'veste', 'haut', 'bas', 'pieds', 'main'];
+const ROW_H: Record<RowId, number> = { tete: 62, veste: 126, haut: 126, bas: 148, pieds: 86, main: 82 };
+/** Largeur du dessin par rangée : les chaussures et les sacs sont dessinés dans le bas de leur cadre, on les agrandit et on les recentre. */
+const ROW_ART: Record<RowId, number> = { tete: 88, veste: 100, haut: 100, bas: 116, pieds: 116, main: 100 };
+/** Où se trouve le dessin dans son cadre (0 en haut, 1 en bas), pour le centrer dans sa rangée. */
+const DRAWN_AT: Partial<Record<GarmentKind, number>> = { baskets: 0.66, mocassins: 0.68, escarpins: 0.68, bottines: 0.55, sac: 0.64, foulard: 0.55, ceinture: 0.6 };
+const ROW_NAME: Record<RowId, string> = { tete: 'Visage et cou', veste: 'Veste', haut: 'Haut', bas: 'Bas', pieds: 'Chaussures', main: 'Sac et accessoires' };
+
+const plain = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+/** Ce qui se porte sur la tête, le visage ou le cou : en haut de la tenue. */
+const HEAD = /lunette|boucle|oreille|collier|chapeau|bonnet|casquette|beret|foulard|echarpe|bandeau|barrette|serre-tete|pendentif|chaine|ras de cou/;
+
+/** La rangée d'une pièce : la hiérarchie se lit de la tête aux pieds. */
+export function rowOf(p: Piece): RowId {
+  if (p.category === 'chaussures') return 'pieds';
+  if (p.category === 'bas' || p.category === 'robes') return 'bas';
+  if (p.category === 'manteaux' || p.kind === 'cardigan') return 'veste';
+  if (p.category === 'hauts') return 'haut';
+  return p.kind === 'foulard' || HEAD.test(plain(p.name)) ? 'tete' : 'main';
+}
+
+/** Les pièces dans l'ordre de la tête aux pieds. */
+export function headToToe(pieces: Piece[]) {
+  return [...pieces].sort((a, b) => ROW_ORDER.indexOf(rowOf(a)) - ROW_ORDER.indexOf(rowOf(b)));
+}
+
+/** Rotation : d'abord ce qui dort le plus longtemps. */
+const rest = (a: Piece, b: Piece) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999);
+
+type DressProps = {
+  pieces: Piece[];
+  /** Tout le dressing : les voisines de chaque rangée viennent de là. */
+  pool: Piece[];
+  width: number;
+  pinned: Set<RowId>;
+  onTogglePin: (r: RowId) => void;
+  onSwap: (r: RowId, to: Piece) => void;
+  onPiece: (p: Piece) => void;
+};
+
+/**
+ * La tenue du jour en rangées (06/10, sur le modèle « Dress me » des apps de
+ * garde-robe) : une rangée par niveau, de la tête aux pieds, la pièce au
+ * centre et ses voisines coupées par le bord. Toucher une voisine la prend ;
+ * le cadenas garde la pièce quand Kode propose une autre tenue.
+ */
+export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, onPiece }: DressProps) {
+  const { c, scheme } = useTheme();
+  const rows = ROW_ORDER.map((r) => ({ r, items: pieces.filter((p) => rowOf(p) === r) })).filter((x) => x.items.length);
+  const inOutfit = new Set(pieces.map((p) => p.id));
+  /** Une pièce cadrée dans sa rangée : on n'en garde que la hauteur de la rangée, dessin au centre. */
+  const framed = (p: Piece, h: number, w: number) => {
+    const artH = w * 1.25;
+    const at = p.image ? 0.5 : DRAWN_AT[p.kind] ?? 0.5;
+    return (
+      <View style={{ width: w, height: h, overflow: 'hidden', alignItems: 'center' }}>
+        <View style={{ marginTop: h / 2 - at * artH }}>
+          <Garment kind={p.kind} tint={p.tint} image={p.image} size={w} dark={scheme === 'dark'} label={p.name} />
+        </View>
+      </View>
+    );
+  };
+  return (
+    <View style={{ gap: 6 }}>
+      {rows.map(({ r, items }, i) => {
+        const h = ROW_H[r];
+        const w = Math.round(ROW_ART[r] * (items.length > 1 ? 0.78 : 1));
+        const side = Math.round(ROW_ART[r] * 0.86);
+        const alts = pool.filter((p) => rowOf(p) === r && !inOutfit.has(p.id)).sort(rest);
+        const keep = pinned.has(r);
+        const groupW = items.length * w + (items.length - 1) * 8;
+        const neighbour = (p: Piece | undefined, edge: 'left' | 'right') =>
+          p ? (
+            <View key={edge} style={{ position: 'absolute', top: 0, [edge]: -Math.round(side * 0.38), opacity: 0.38 }}>
+              <Tap testID={`row-${r}-${edge}`} onPress={() => onSwap(r, p)} scaleTo={0.95} accessibilityLabel={`${ROW_NAME[r]} : prendre ${p.name}`}>
+                {framed(p, h, side)}
+              </Tap>
+            </View>
+          ) : null;
+        return (
+          <Animated.View key={r} entering={FadeInDown.delay(80 + i * 90).duration(380)} style={{ height: h, width, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={ROW_NAME[r]}>
+            {neighbour(alts[0], 'left')}
+            {neighbour(alts[1], 'right')}
+            <View className="flex-row items-center" style={{ gap: 8 }}>
+              {items.map((p) => (
+                <Animated.View key={p.id} entering={FadeIn.duration(260)}>
+                  <Tap onPress={() => onPiece(p)} scaleTo={0.96} accessibilityLabel={p.name} accessibilityHint="Ouvre la fiche de la pièce">
+                    {framed(p, h, w)}
+                  </Tap>
+                </Animated.View>
+              ))}
+            </View>
+            {alts.length > 0 && (
+              <View style={{ position: 'absolute', top: 0, left: width / 2 + groupW / 2 - 6 }}>
+                <Tap
+                  testID={`row-${r}-pin`}
+                  onPress={() => onTogglePin(r)}
+                  feedback="select"
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: keep }}
+                  accessibilityLabel={keep ? `${ROW_NAME[r]} : ne plus garder` : `${ROW_NAME[r]} : garder pour la prochaine tenue`}
+                  style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }}>
+                    <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
+                  </View>
+                </Tap>
+              </View>
+            )}
+          </Animated.View>
+        );
+      })}
     </View>
   );
 }
