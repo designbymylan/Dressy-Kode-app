@@ -8,7 +8,6 @@ import { material, space } from '../theme/tokens';
 import { T } from './T';
 import { IconButton } from './Button';
 import { BlurView } from 'expo-blur';
-import { Glass } from './Glass';
 import type { IconName } from './Icon';
 
 /** Filet éditorial. */
@@ -95,11 +94,14 @@ export function useTabScroll(edge?: SharedValue<number>) {
 /** Le voile de verre sous la barre d'état, qui n'apparaît qu'au défilement (effet de bord d'iOS 26). */
 export function ScrollEdge({ y }: { y: SharedValue<number> }) {
   const insets = useSafeAreaInsets();
+  const { c, scheme, solidGlass } = useTheme();
   const style = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [0, 28], [0, 1], 'clamp') }));
   if (!insets.top) return null;
+  // Un flou et la couleur du fond (06/10) : le verre natif seul restait invisible sur iPhone, l'heure se lisait sur la page.
   return (
-    <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 4, zIndex: 5 }, style]}>
-      <Glass edge="none" shadow={false} style={StyleSheet.absoluteFill} />
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 6, zIndex: 5, overflow: 'hidden' }, style]}>
+      {!solidGlass && <BlurView intensity={40} tint={scheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.paper, opacity: solidGlass ? 1 : 0.86 }]} />
     </Animated.View>
   );
 }

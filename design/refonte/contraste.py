@@ -142,6 +142,7 @@ APP_PAIRS = [
     ('control', 'raised', L, 'contour de contrôle sur carte'),
     ('ink2', 'raised', L, 'icône secondaire'),
     ('butter-ink', 'butter', N, 'bandeau de service rose poudré'),
+    ('butter-ink', 'butter-field', N, 'champ et suggestions dans la bulle de Kode (06/10)'),
     ('tab-off', 'paper', N, 'onglet inactif sur la barre'),
     ('ink', 'stage', L, 'illustration noire sur gris studio'),
     ('ink', 'glass-strong', N, 'étiquette à point posée sur une image (05/10)'),

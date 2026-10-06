@@ -3,22 +3,20 @@ import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { WEATHER_WORD, DAYS_LETTER, dayDate, euros, lcFirst, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
+import { WEATHER_WORD, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, lcFirst, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
 import { MODULE_LABELS, eventsOf, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
 import { ferieDu, tendancesChezToi } from '../state/contexte';
 import { Credit } from '../ui/Credit';
-import { missingForOutfit } from '../state/outfits';
+import { canCompose, missingForOutfit, suggestOutfits } from '../state/outfits';
 import { FirstRail } from '../ui/onboarding';
 import { useTheme } from '../theme/ThemeProvider';
-import { space, TAB_CLEARANCE } from '../theme/tokens';
+import { material, motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
-import { Chip } from '../ui/controls';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { DressRows, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
-import { motion } from '../theme/tokens';
-import { Card, DotChip, Tag, WeatherIcon } from '../ui/bits';
+import { Card, Tag, WeatherIcon } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -30,30 +28,71 @@ import { F } from '../theme/fonts';
 
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 
+/**
+ * L'accueil (06/10) : chaque section a sa forme, dans l'ordre choisi dans
+ * Personnaliser, la tenue du jour comprise. Rangées de la tête aux pieds,
+ * cartes de la semaine, bulle de Kode, arches, page de magazine,
+ * classement, mosaïque, tickets, bloc plein (canevas
+ * https://claude.ai/artifact/D6Y93CiR4UXrrp6djzxXcc). Couleurs, polices,
+ * verre et arrondis restent ceux de la charte.
+ */
 export function Home() {
-  const { s, a } = useStore();
+  const { s } = useStore();
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { width } = useScreen();
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
-  const byId = new Map(s.pieces.map((p) => [p.id, p]));
   const outfits = useTodayOutfits();
-  const outfit = outfits.length ? outfits[s.outfitIndex % outfits.length] : null;
-  const pieces = outfit ? (outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];
-  const worn = !!s.wornToday;
   const meteo = useMeteo();
   const now = meteo.now;
   const city = s.profile.city;
-  // « Ven. 2 oct. · Lyon, 15°, nuageux » ; sans météo connue, la date et la ville seulement.
+  // « Mar. 6 oct. · Lyon, 15°, nuageux » ; sans météo connue, la date et la ville seulement.
   const meteoTxt = now ? `${now.t}°, ${now.mot ?? (city ? WEATHER_WORD[now.kind] : (meteo.jours[0]?.label ?? WEATHER_WORD[now.kind]))}` : null;
   const meta = [capital(shortDate(0)), [city, meteoTxt].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   const semaineVisible = s.modules.some((m) => m.id === 'semaine' && m.on);
-  const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   const W = width - space.gutter * 2;
-  const { c } = useTheme();
-
   const top = useTabTop();
+
+  return (
+    <View style={{ flex: 1 }} className="bg-paper">
+      <Ambient weather={now?.kind} />
+      <ScrollEdge y={edge} />
+      <TabHeader title="Dresskode" brand y={edge} actions={[{ icon: 'sliders', label: 'Personnaliser l’accueil', onPress: () => nav.navigate('Customize'), testID: 'customize-home' }]} />
+      <Animated.ScrollView
+        testID="screen-home"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 28 }}
+      >
+        <T v="kicker" tone="ink2" style={{ textAlign: 'center', marginBottom: -14 }} numberOfLines={1}>
+          {meta}
+        </T>
+
+        {/* Un dressing pas encore prêt : l'appel à ajouter reste en tête, quel que soit l'ordre choisi. */}
+        {!outfits.length && <EmptyToday />}
+
+        {s.modules
+          .filter((m) => m.on)
+          .map((m) => (m.id === 'tenue' ? outfits.length ? <TodayCard key="tenue" W={W} /> : null : <Module key={m.id} id={m.id} W={W} />))}
+
+        {/* La météo de l'en-tête est créditée dans « Ta semaine » ; section masquée, elle l'est ici. */}
+        {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
+      </Animated.ScrollView>
+    </View>
+  );
+}
+
+/** La tenue du jour : de la tête aux pieds, voisines à toucher, cadenas pour « Une autre ». */
+function TodayCard({ W }: { W: number }) {
+  const { s, a } = useStore();
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  const outfits = useTodayOutfits();
+  const byId = new Map(s.pieces.map((p) => [p.id, p]));
+  const outfit = outfits[s.outfitIndex % outfits.length];
+  const pieces = outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[];
+  const worn = !!s.wornToday;
   const inner = W - 28;
   // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
@@ -80,65 +119,38 @@ export function Home() {
   };
 
   return (
-    <View style={{ flex: 1 }} className="bg-paper">
-      <Ambient weather={now?.kind} />
-      <ScrollEdge y={edge} />
-      <TabHeader title="Dresskode" brand y={edge} actions={[{ icon: 'sliders', label: 'Personnaliser l’accueil', onPress: () => nav.navigate('Customize'), testID: 'customize-home' }]} />
-      <Animated.ScrollView
-        testID="screen-home"
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 12 }}
-      >
-        <T v="kicker" tone="ink2" style={{ textAlign: 'center' }} numberOfLines={1}>
-          {meta}
+    <Card style={{ padding: 14, gap: 12 }} testID="home-outfit">
+      <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+      {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. */}
+      <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, paddingVertical: 12, overflow: 'hidden' }}>
+        <DressRows
+          pieces={shown}
+          pool={worn ? [] : s.pieces}
+          width={inner}
+          pinned={pinned}
+          onTogglePin={(r) => setPinned((prev) => { const n = new Set(prev); if (n.has(r)) n.delete(r); else n.add(r); return n; })}
+          onSwap={(r, to) => setSwapped((prev) => ({ ...prev, [r]: to.id }))}
+          onPiece={(p) => nav.navigate('Piece', { id: p.id })}
+        />
+      </Animated.View>
+      {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
+      <Animated.View key={`t-${outfit.id}`} entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)} style={{ gap: 4, paddingHorizontal: 4 }}>
+        <T v="cardTitle" style={{ fontSize: 20, lineHeight: 25 }} accessibilityRole="header">
+          {`${outfit.lead}${outfit.em}`.replace(/\s+/g, ' ')}
         </T>
-
-        {!outfit ? (
-          <EmptyToday />
-        ) : (
-          <Card style={{ padding: 14, gap: 12 }} testID="home-outfit">
-            <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
-            {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. */}
-            <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, paddingVertical: 12, overflow: 'hidden' }}>
-              <DressRows
-                pieces={shown}
-                pool={worn ? [] : s.pieces}
-                width={inner}
-                pinned={pinned}
-                onTogglePin={(r) => setPinned((prev) => { const n = new Set(prev); if (n.has(r)) n.delete(r); else n.add(r); return n; })}
-                onSwap={(r, to) => setSwapped((prev) => ({ ...prev, [r]: to.id }))}
-                onPiece={open}
-              />
-            </Animated.View>
-            {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
-            <Animated.View key={`t-${outfit.id}`} entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)} style={{ gap: 4, paddingHorizontal: 4 }}>
-              <T v="cardTitle" style={{ fontSize: 20, lineHeight: 25 }} accessibilityRole="header">
-                {`${outfit.lead}${outfit.em}`.replace(/\s+/g, ' ')}
-              </T>
-              <T v="caption" tone="ink2" numberOfLines={2}>
-                {outfit.why}
-              </T>
-            </Animated.View>
-            {worn ? (
-              <WornToday pieces={shown} />
-            ) : (
-              <View style={{ gap: 8 }}>
-                <Button testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
-                <Button testID="another-outfit" label="Une autre" variant="quiet" icon="refresh" disabled={outfits.length < 2} onPress={another} />
-              </View>
-            )}
-          </Card>
-        )}
-
-        {s.modules.filter((m) => m.on).map((m) => (
-          <Module key={m.id} id={m.id} W={W} />
-        ))}
-
-        {/* La météo de l'en-tête est créditée dans « Ta semaine » ; module masqué, elle l'est ici. */}
-        {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
-      </Animated.ScrollView>
-    </View>
+        <T v="caption" tone="ink2" numberOfLines={2}>
+          {outfit.why}
+        </T>
+      </Animated.View>
+      {worn ? (
+        <WornToday pieces={shown} />
+      ) : (
+        <View className="flex-row" style={{ gap: 8 }}>
+          <Button grow testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
+          <Button testID="another-outfit" label="Une autre" variant="quiet" icon="refresh" disabled={outfits.length < 2} onPress={another} />
+        </View>
+      )}
+    </Card>
   );
 }
 
@@ -285,16 +297,178 @@ function EmptyToday() {
   );
 }
 
+/** Une petite ligne à point : un mot ou deux en DM Mono. */
+function DotLine({ text }: { text: string }) {
+  const { c } = useTheme();
+  return (
+    <View className="flex-row items-center" style={{ gap: 6 }}>
+      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c.ink }} />
+      <T v="kicker" numberOfLines={1} style={{ flexShrink: 1 }}>
+        {text}
+      </T>
+    </View>
+  );
+}
+
+/** Une tenue posée à plat : le haut à gauche, le bas qui le chevauche, les chaussures devant. */
+function FlatLay({ pieces, w, h }: { pieces: Piece[]; w: number; h: number }) {
+  const { c, scheme } = useTheme();
+  const find = (rows: RowId[]) => pieces.find((p) => rows.includes(rowOf(p)));
+  const top = find(['haut', 'veste']);
+  const bottom = find(['bas']);
+  const feet = find(['pieds']);
+  const put = (p: Piece | undefined, size: number, at: object) =>
+    p ? (
+      <View style={[{ position: 'absolute' }, at]}>
+        <Garment kind={p.kind} tint={p.tint} image={p.image} size={size} dark={scheme === 'dark'} label={p.name} />
+      </View>
+    ) : null;
+  return (
+    <View style={{ width: w, height: h, borderRadius: 22, backgroundColor: c.stage, overflow: 'hidden' }}>
+      {top ? put(bottom, w * 0.64, { right: -2, top: h * 0.18 }) : put(bottom, w * 0.78, { left: w * 0.11, top: 0 })}
+      {put(top, w * 0.52, { left: 0, top: 0 })}
+      {put(feet, w * 0.56, { left: -2, top: h * 0.42 })}
+    </View>
+  );
+}
+
+/** Un jour de la semaine : sa tenue posée à plat, ou une carte en pointillés pour la prévoir. */
+function DayCard({ d }: { d: number }) {
+  const { s } = useStore();
+  const meteo = useMeteo();
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  const w = meteo.jours[d];
+  const o = s.planned[d];
+  const ev = eventsOf(s.profile).find((e) => e.day === d);
+  const ferie = ferieDu(s.contexte, d);
+  const label = d === 1 ? 'Demain' : capital(DAYS_SHORT[dayDate(d).getDay()]);
+  const date = String(dayDate(d).getDate()).padStart(2, '0');
+  const pieces = o ? (o.pieces.map((id) => s.pieces.find((p) => p.id === id)).filter(Boolean) as Piece[]) : [];
+  const note = ev?.title ?? ferie?.nom ?? o?.title ?? null;
+  const said = [relativeDay(d), shortDate(d), w ? `${w.t} degrés, ${w.label}` : null, note].filter(Boolean).join(', ');
+  const shell = { width: 150, borderRadius: 28, padding: 12, gap: 8 };
+  const top = (
+    <>
+      <View className="flex-row items-center justify-between">
+        <T v="kicker">{label}</T>
+        {w ? (
+          <View className="flex-row items-center" style={{ gap: 3 }}>
+            <WeatherIcon w={w} size={15} color={c.ink} />
+            <T v="kicker">{`${w.t}°`}</T>
+          </View>
+        ) : null}
+      </View>
+      <T v="stat" style={{ fontSize: 44, lineHeight: 46 }}>
+        {date}
+      </T>
+    </>
+  );
+  if (!o)
+    return (
+      <Tap testID={`week-plan-${d}`} onPress={() => nav.navigate('Compose', { day: d })} accessibilityLabel={`Prévoir une tenue : ${said}`} scaleTo={0.98} style={[shell, { borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.faint }]}>
+        {top}
+        <View style={{ height: 132, alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: c.pill, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="plus" size={22} color={c.ink} />
+          </View>
+          <T v="bodyStrong" style={{ fontSize: 14, ...F.s600 }}>
+            Prévoir
+          </T>
+        </View>
+        <View style={{ height: 16 }}>{note ? <DotLine text={note} /> : null}</View>
+      </Tap>
+    );
+  return (
+    <Tap testID={`planned-${d}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: d } })} accessibilityLabel={`Tenue prévue : ${said}`} scaleTo={0.98} style={[shell, { backgroundColor: c.card, borderWidth: d === 1 ? 1.5 : 1, borderColor: d === 1 ? c.ink : c['card-edge'] }]}>
+      {top}
+      <FlatLay pieces={pieces} w={126} h={132} />
+      <View style={{ height: 16 }}>
+        <DotLine text={note ?? 'Prête'} />
+      </View>
+    </Tap>
+  );
+}
+
+/**
+ * Ta semaine (06/10) : les tenues prévues et la météo réunies, en grand.
+ * Une barre de sept jours dit ce qui est prêt ; chaque jour est une carte ;
+ * Kode peut compléter les jours vides avec tes pièces.
+ */
+function Week() {
+  const { s, a } = useStore();
+  const meteo = useMeteo();
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  const outfits = useTodayOutfits();
+  const ready = (i: number) => (i === 0 ? outfits.length > 0 || !!s.wornToday : !!s.planned[i]);
+  const count = Array.from({ length: 7 }, (_, i) => ready(i)).filter(Boolean).length;
+  const empty = [1, 2, 3, 4, 5, 6].filter((d) => !s.planned[d]);
+  const fill = () => {
+    let n = 0;
+    empty.forEach((d, k) => {
+      // Une tenue par jour vide, selon sa météo, en évitant de répéter la veille.
+      const opts = suggestOutfits(s.pieces, meteo.jours[d] ?? null);
+      const o = opts[(d + k) % Math.max(1, opts.length)];
+      if (!o) return;
+      a.plan(d, { title: 'Par Kode', pieces: o.pieces });
+      n++;
+    });
+    if (n) a.toast(n > 1 ? `${n} tenues prévues` : 'Une tenue prévue');
+  };
+  return (
+    <View style={{ gap: 14 }} testID="home-week">
+      <View className="flex-row items-end justify-between" style={{ paddingHorizontal: 4 }}>
+        <T v="hero" accessibilityRole="header" style={{ fontSize: 34, lineHeight: 36 }}>
+          Ta semaine
+        </T>
+        <T testID="module-semaine-action" v="caption" tone="ink2" onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12, marginVertical: -12 }}>
+          Agenda
+        </T>
+      </View>
+      {/* Sept jours : le trait se remplit quand la tenue est prête. */}
+      <View className="flex-row items-end" style={{ gap: 6, paddingHorizontal: 4 }} accessible accessibilityLabel={`${count} jours sur 7 ont leur tenue`}>
+        {Array.from({ length: 7 }, (_, i) => (
+          <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+            <View style={{ alignSelf: 'stretch', height: 6, borderRadius: 3, backgroundColor: ready(i) ? c.ink : c.rule }} />
+            <T v="kicker" tone={i === 0 ? 'ink' : 'ink2'}>
+              {DAYS_LETTER[dayDate(i).getDay()]}
+            </T>
+          </View>
+        ))}
+        <T v="kicker" style={{ paddingLeft: 8 }}>{`${count}/7`}</T>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 10, gap: 10 }}>
+        {[1, 2, 3, 4, 5, 6].map((d) => (
+          <DayCard key={d} d={d} />
+        ))}
+      </ScrollView>
+      {empty.length > 0 && canCompose(s.pieces) && <Button testID="week-fill" label="Compléter avec Kode" variant="secondary" icon="kode" onPress={fill} />}
+      {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
+    </View>
+  );
+}
+
+/** « Aujourd'hui », « Hier », le jour de la semaine, puis « Il y a 12 j ». */
+function addedLabel(p: Piece) {
+  const n = p.addedDaysAgo;
+  if (n <= 0) return 'Aujourd’hui';
+  if (n === 1) return 'Hier';
+  if (n < 7) return capital(DAYS_SHORT[dayDate(-n).getDay()]);
+  return `Il y a ${n} j`;
+}
+
 function Module({ id, W }: { id: HomeModule; W: number }) {
   const { s } = useStore();
   const meteo = useMeteo();
   const nav = useNavigation<Nav>();
   const { c, scheme } = useTheme();
+  const dark = scheme === 'dark';
   const title = MODULE_LABELS[id].title;
-  // Chaque module est une carte ouverte par son étiquette à point, avec son lien à droite.
-  const head = (action?: string, onAction?: () => void, icon?: 'kode') => (
+  // L'étiquette à point de la section, avec son lien à droite.
+  const head = (action?: string, onAction?: () => void) => (
     <View className="flex-row items-center justify-between" style={{ minHeight: 28 }}>
-      <Tag label={title} icon={icon} />
+      <Tag label={title} />
       {action && onAction && (
         <T testID={`module-${id}-action`} v="caption" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12 }}>
           {action}
@@ -302,246 +476,277 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
       )}
     </View>
   );
-  const card = { padding: 14, gap: 12 };
+  const allPieces = () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } });
 
+  if (id === 'semaine') return <Week />;
+
+  // Kode : une bulle de message rose poudré, son coin bas presque droit.
   if (id === 'kode') {
     const tomorrow = eventsOf(s.profile).find((e) => e.day === 1);
     const asks = [
-      tomorrow ? `Pour ${lcFirst(tomorrow.title)}, demain` : 'Une tenue pour demain',
-      s.profile.occasions.includes('Bureau') ? 'Une tenue de bureau' : 'Une tenue pour ce soir',
-      s.pieces.length >= 8 ? 'Qu’est-ce que je ne porte jamais ?' : 'Qu’est-ce qui va avec mon jean ?',
+      tomorrow ? `${capital(lcFirst(tomorrow.title))}, demain` : 'Une tenue pour demain',
+      s.profile.occasions.includes('Bureau') ? 'Tenue de bureau' : 'Une tenue pour ce soir',
+      s.pieces.length >= 8 ? 'Ce que je ne porte jamais' : 'Ce qui va avec mon jean',
     ];
+    const ink = c['butter-ink'];
     return (
-      <Card style={card}>
-        {head(undefined, undefined, 'kode')}
-        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c.sunk, height: 50, borderRadius: 25, paddingHorizontal: 18, gap: 10 }}>
-          <Icon name="kode" size={20} color={c.ink} />
-          <T v="body" tone="ink2">
-            Pose ta question
+      <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="home-kode">
+        <View className="flex-row items-center" style={{ gap: 10 }}>
+          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: ink, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="kode" size={18} color={c.butter} />
+          </View>
+          <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
+            {title}
+          </T>
+        </View>
+        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 50, borderRadius: 25, paddingHorizontal: 18 }}>
+          <T v="body" style={{ color: ink }}>
+            Une tenue pour…
           </T>
         </Tap>
         <View className="flex-row flex-wrap" style={{ gap: 8 }}>
           {asks.map((q) => (
-            <DotChip key={q} label={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} />
+            <Tap key={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} accessibilityLabel={`Demander à Kode : ${q}`} style={{ height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: c['butter-field'], justifyContent: 'center' }}>
+              <T v="caption" style={{ color: ink, ...F.s500, fontSize: 14 }}>
+                {q}
+              </T>
+            </Tap>
           ))}
         </View>
       </Card>
     );
   }
 
-  if (id === 'semaine') {
-    return (
-      <Card style={card}>
-        {head('Agenda', () => nav.navigate('Tabs', { screen: 'Agenda' }))}
-        <View className="flex-row" style={{ gap: 4 }}>
-          {Array.from({ length: 7 }, (_, i) => {
-            const d = dayDate(i);
-            const w = meteo.jours[i];
-            const ferie = ferieDu(s.contexte, i);
-            const busy = eventsOf(s.profile).some((e) => e.day === i) || !!s.planned[i] || !!ferie;
-            const label = [i === 0 ? 'Aujourd’hui' : shortDate(i), w ? `${w.t} degrés, ${w.label}` : null, ferie ? `férié, ${ferie.nom}` : null, busy && !ferie ? 'un événement' : null];
-            const today = i === 0;
-            const fg = today ? c['primary-fg'] : c.ink;
-            return (
-              <Tap key={i} testID={`week-${i}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: i } })} accessibilityLabel={label.filter(Boolean).join(', ')} outerStyle={{ flex: 1 }} style={{ backgroundColor: today ? c['primary-bg'] : c.pill, alignItems: 'center', justifyContent: 'center', gap: 5, height: 88, borderRadius: 22 }}>
-                <T v="kicker" style={{ color: fg }}>
-                  {DAYS_LETTER[d.getDay()]}
-                </T>
-                {w ? <WeatherIcon w={w} size={17} color={fg} /> : <View style={{ height: 17 }} />}
-                <T v="kicker" style={{ color: fg }}>
-                  {w ? `${w.t}°` : String(d.getDate())}
-                </T>
-                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: busy ? fg : 'transparent' }} />
-              </Tap>
-            );
-          })}
-        </View>
-        {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
-      </Card>
-    );
-  }
-
+  // À redécouvrir : chaque pièce dans une arche, le nombre de jours en grand.
   if (id === 'oubliees') {
-    const list = sleeping(s.pieces).slice(0, 5);
+    const list = sleeping(s.pieces).slice(0, 3);
     if (!list.length) return <Quiet head={head()} text="Rien ne dort : tout ton dressing tourne." />;
+    const aw = (W - 32 - 20) / 3;
     return (
-      <Card style={card}>
-        {head('Tout voir', () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } }))}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
+      <Card style={{ padding: 16, gap: 14 }} testID="home-sleeping">
+        {head('Tout voir', allPieces)}
+        <View className="flex-row" style={{ gap: 10 }}>
           {list.map((p) => (
-            <Tap key={p.id} testID={`sleeping-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${sinceLabel(p)}`} style={{ width: 108 }}>
-              <View className="bg-stage items-center justify-center" style={{ height: 128, borderRadius: 22 }}>
-                <Garment kind={p.kind} tint={p.tint} image={p.image} size={72} dark={scheme === 'dark'} label={p.name} />
+            <Tap key={p.id} testID={`sleeping-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${sinceLabel(p)}`} style={{ width: aw, alignItems: 'center', gap: 8 }}>
+              <View style={{ width: aw, height: 138, borderTopLeftRadius: aw / 2, borderTopRightRadius: aw / 2, borderBottomLeftRadius: 22, borderBottomRightRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 8 }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={aw * 0.78} dark={dark} label={p.name} />
               </View>
-              <T v="caption" style={{ marginTop: 6, ...F.s600 }} numberOfLines={1}>
-                {p.name}
-              </T>
-              <T v="kicker" tone="ink2" numberOfLines={1}>
-                {capital(sinceLabel(p))}
-              </T>
-            </Tap>
-          ))}
-        </ScrollView>
-      </Card>
-    );
-  }
-
-  if (id === 'tendance' && meteo.reelle) {
-    // Compte connecté : la pièce dont l'intérêt monte le plus cette semaine, et que le dressing a déjà.
-    const top = tendancesChezToi(s.contexte, s.pieces)[0];
-    if (!top) return <Quiet head={head()} text="Aucune tendance de la semaine dans ton dressing." />;
-    const { t, pieces: owned } = top;
-    const thumb = (W - 28 - 16) / 5;
-    return (
-      <Card style={card}>
-        {head()}
-        <T v="cardTitle">{t.variation !== null ? `${t.libelle} : +${t.variation} % cette semaine.` : `${t.libelle} : de saison.`}</T>
-        <T v="kicker" tone="ink2">
-          {`Déjà ${owned.length > 1 ? `${owned.length} chez toi` : 'une chez toi'}`}
-        </T>
-        <View className="flex-row" style={{ gap: 4 }}>
-          {owned.slice(0, 5).map((p) => (
-            <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: thumb, alignItems: 'center' }}>
-              <Garment kind={p.kind} tint={p.tint} image={p.image} size={thumb - 4} dark={scheme === 'dark'} label={p.name} />
+              <View className="flex-row items-baseline" style={{ gap: 4 }}>
+                <T v="stat" style={{ fontSize: 30, lineHeight: 32 }}>
+                  {String(p.lastWorn ?? p.addedDaysAgo)}
+                </T>
+                <T v="kicker" tone="ink2">
+                  jours
+                </T>
+              </View>
             </Tap>
           ))}
         </View>
-        <Button testID="trend-compose" label="Composer avec" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, 1).map((p) => p.id) })} />
-        <Credit blocs={[s.contexte?.tendances]} />
       </Card>
     );
   }
 
+  // Tendance : une page de magazine, le nom en grand, les pièces dans des ronds qui se chevauchent.
   if (id === 'tendance') {
-    const camel = s.pieces.filter((p) => ['Camel', 'Cognac', 'Camel et crème'].includes(p.color));
-    if (camel.length < 2) return <Quiet head={head()} text="Aucune tendance de la saison dans ton dressing." />;
-    const thumb = (W - 28 - 16) / 5;
+    let name: string;
+    let line: string;
+    let owned: Piece[];
+    if (meteo.reelle) {
+      // Compte connecté : la pièce dont l'intérêt monte le plus cette semaine, et que le dressing a déjà.
+      const top = tendancesChezToi(s.contexte, s.pieces)[0];
+      if (!top) return <Quiet head={head()} text="Aucune tendance de la semaine dans ton dressing." />;
+      name = top.t.libelle;
+      owned = top.pieces;
+      line = top.t.variation !== null ? `+${top.t.variation} % cette semaine` : 'De saison';
+    } else {
+      owned = s.pieces.filter((p) => ['Camel', 'Cognac', 'Camel et crème'].includes(p.color));
+      if (owned.length < 2) return <Quiet head={head()} text="Aucune tendance de la saison dans ton dressing." />;
+      name = 'Le camel';
+      line = 'De saison';
+    }
+    const n = owned.length;
+    const R = Math.min(120, Math.floor((W - 48) / 2.56));
+    const step = R * 0.78;
+    const circles = owned.slice(0, 3);
     return (
-      <Card style={card}>
-        {head()}
-        <T v="cardTitle">Le camel revient cette saison.</T>
-        <T v="kicker" tone="ink2">
-          {`Déjà ${camel.length} pièces chez toi`}
+      <View style={{ gap: 12, paddingHorizontal: 4 }} testID="home-trend">
+        <Tag label={title} />
+        <T v="hero" accessibilityRole="header" numberOfLines={2} adjustsFontSizeToFit style={{ fontSize: 50, lineHeight: 52 }}>
+          {name}
         </T>
-        <View className="flex-row" style={{ gap: 4 }}>
-          {camel.slice(0, 5).map((p) => (
-            <Tap key={p.id} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: thumb, alignItems: 'center' }}>
-              <Garment kind={p.kind} tint={p.tint} image={p.image} size={thumb - 4} dark={scheme === 'dark'} label={p.name} />
+        <T v="body" tone="ink2">
+          {`${line} · ${n > 1 ? `${n} pièces chez toi` : 'une pièce chez toi'}`}
+        </T>
+        <View style={{ height: R + 4 }}>
+          {circles.map((p, k) => (
+            <View key={p.id} style={{ position: 'absolute', left: k * step, top: 0 }}>
+              <Tap onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={p.name} style={{ width: R, height: R, borderRadius: R / 2, backgroundColor: c.stage, borderWidth: 4, borderColor: c.paper, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={R * 0.62} dark={dark} label={p.name} />
+              </Tap>
+            </View>
+          ))}
+          <View style={{ position: 'absolute', left: (circles.length - 1) * step + R - 20, top: R / 2 - 28 }}>
+            <Tap testID="trend-compose" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, meteo.reelle ? 1 : 3).map((p) => p.id) })} accessibilityLabel={`Composer une tenue : ${name.toLowerCase()}`} style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }, material.press[scheme]]}>
+              <Icon name="kode" size={22} color={c['primary-fg']} />
+            </Tap>
+          </View>
+        </View>
+        {meteo.reelle && <Credit blocs={[s.contexte?.tendances]} />}
+      </View>
+    );
+  }
+
+  // Le plus porté : un classement, une barre par pièce.
+  if (id === 'porte') {
+    const list = [...s.pieces].filter((p) => p.wears > 0).sort((x, z) => z.wears - x.wears).slice(0, 3);
+    if (!list.length) return <Quiet head={head()} text="Porte une tenue : le classement commence." />;
+    const max = list[0].wears;
+    return (
+      <Card style={{ padding: 16, gap: 14 }} testID="home-most-worn">
+        {head('Tout voir', allPieces)}
+        <View style={{ gap: 12 }}>
+          {list.map((p, k) => (
+            <Tap key={p.id} testID={`porte-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${k + 1}, ${p.name}, ${p.wears} ports`} scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72 }}>
+              <T v="stat" style={{ width: 22, textAlign: 'center', fontSize: 36, lineHeight: 38 }}>
+                {String(k + 1)}
+              </T>
+              <View style={{ width: 68, height: 68, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <Garment kind={p.kind} tint={p.tint} image={p.image} size={50} dark={dark} label={p.name} />
+              </View>
+              <View style={{ flex: 1, gap: 9 }}>
+                <View className="flex-row items-baseline justify-between" style={{ gap: 8 }}>
+                  <T v="bodyStrong" numberOfLines={1} style={{ flexShrink: 1 }}>
+                    {p.name}
+                  </T>
+                  <T v="kicker">{`${p.wears}×`}</T>
+                </View>
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: c.rule }}>
+                  <View style={{ width: `${Math.round((p.wears / max) * 100)}%`, height: 6, borderRadius: 3, backgroundColor: c.ink }} />
+                </View>
+              </View>
             </Tap>
           ))}
         </View>
-        <Button testID="trend-compose" label="Composer avec le camel" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { pieces: camel.slice(0, 3).map((p) => p.id) })} />
       </Card>
     );
   }
 
-  if (id === 'prevues') {
-    const days = Object.keys(s.planned).map(Number).filter((d) => d >= 1 && d <= 13).sort((x, z) => x - z).slice(0, 4);
-    if (!days.length)
-      return <Quiet head={head()} text="Rien de prévu ces prochains jours." action={<Button testID="module-prevues-compose" label="Prévoir demain" size="m" variant="quiet" icon="layers" onPress={() => nav.navigate('Compose', { day: 1 })} />} />;
+  // Nouveautés : une mosaïque, une grande vignette et deux petites.
+  if (id === 'nouveautes') {
+    const list = [...s.pieces].filter((p) => p.addedDaysAgo <= 21).sort((x, z) => x.addedDaysAgo - z.addedDaysAgo).slice(0, 3);
+    if (!list.length) return <Quiet head={head()} text="Rien de neuf ces trois dernières semaines." action={<Button label="Ajouter une pièce" size="m" variant="quiet" icon="plus" onPress={() => nav.navigate('AddPiece')} />} />;
+    const half = (W - 10) / 2;
+    const tile = (p: Piece, w: number, h: number, size: number) => (
+      <Tap key={p.id} testID={`nouveautes-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${p.name}, ${addedLabel(p).toLowerCase()}`} style={{ width: w, height: h, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <Garment kind={p.kind} tint={p.tint} image={p.image} size={size} dark={dark} label={p.name} />
+        <View style={{ position: 'absolute', top: 10, left: 10 }}>
+          <Tag label={addedLabel(p)} tone="glass" />
+        </View>
+      </Tap>
+    );
     return (
-      <Card style={card}>
-        {head('Agenda', () => nav.navigate('Tabs', { screen: 'Agenda' }))}
-        {days.map((d) => {
-          const o = s.planned[d];
-          const ps = o.pieces.map((pid) => s.pieces.find((p) => p.id === pid)).filter(Boolean) as Piece[];
-          return (
-            <Tap key={d} testID={`planned-${d}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: d } })} scaleTo={0.99} accessibilityLabel={`${shortDate(d)}, ${o.title}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64 }}>
-              <View style={{ width: 64, gap: 2 }}>
-                <T v="kicker" tone="ink2">{capital(shortDate(d))}</T>
-              </View>
-              <View className="flex-row" style={{ flex: 1, gap: 4 }}>
-                {headToToe(ps).slice(0, 4).map((p) => (
-                  <View key={p.id} style={{ width: 46, height: 56, borderRadius: 14, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
-                    <Garment kind={p.kind} tint={p.tint} image={p.image} size={34} dark={scheme === 'dark'} label={p.name} />
-                  </View>
-                ))}
-              </View>
-              <Icon name="chevron" size={16} color={c.ink2} />
-            </Tap>
-          );
-        })}
-      </Card>
+      <View style={{ gap: 12 }} testID="home-new">
+        <View style={{ paddingHorizontal: 4 }}>{head('Dressing', allPieces)}</View>
+        {list.length === 1 ? (
+          tile(list[0], W, 220, 130)
+        ) : list.length === 2 ? (
+          <View className="flex-row" style={{ gap: 10 }}>
+            {tile(list[0], half, 220, half * 0.7)}
+            {tile(list[1], half, 220, half * 0.7)}
+          </View>
+        ) : (
+          <View className="flex-row" style={{ gap: 10 }}>
+            {tile(list[0], half, 268, half * 0.8)}
+            <View style={{ gap: 10 }}>
+              {tile(list[1], half, 129, 82)}
+              {tile(list[2], half, 129, 82)}
+            </View>
+          </View>
+        )}
+      </View>
     );
   }
 
-  if (id === 'nouveautes' || id === 'porte') {
-    const list = id === 'nouveautes'
-      ? [...s.pieces].filter((p) => p.addedDaysAgo <= 21).sort((x, z) => x.addedDaysAgo - z.addedDaysAgo).slice(0, 6)
-      : [...s.pieces].filter((p) => p.wears > 0).sort((x, z) => z.wears - x.wears).slice(0, 6);
-    if (!list.length)
-      return id === 'nouveautes'
-        ? <Quiet head={head()} text="Rien de neuf ces trois dernières semaines." action={<Button label="Ajouter une pièce" size="m" variant="quiet" icon="plus" onPress={() => nav.navigate('AddPiece')} />} />
-        : <Quiet head={head()} text="Porte une tenue : le classement commence." />;
-    return (
-      <Card style={card}>
-        {head('Tout voir', () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } }))}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}>
-          {list.map((p) => (
-            <Tap key={p.id} testID={`${id}-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={id === 'porte' ? `${p.name}, ${p.wears} ports` : p.name} style={{ width: 108 }}>
-              <View className="bg-stage items-center justify-center" style={{ height: 128, borderRadius: 22 }}>
-                <Garment kind={p.kind} tint={p.tint} image={p.image} size={72} dark={scheme === 'dark'} label={p.name} />
-                {id === 'porte' && (
-                  <View style={{ position: 'absolute', top: 8, left: 8 }}>
-                    <Tag label={`${p.wears}×`} tone="glass" dot={false} />
-                  </View>
-                )}
-              </View>
-              <T v="caption" style={{ marginTop: 6, ...F.s600 }} numberOfLines={1}>
-                {p.name}
-              </T>
-            </Tap>
-          ))}
-        </ScrollView>
-      </Card>
-    );
-  }
-
+  // Prêts en cours : des tickets à talon, la pièce d'un côté, l'amie de l'autre.
   if (id === 'prets') {
-    const loans = s.shares.filter((x) => x.mode !== 'montrer');
+    const loans = s.shares.filter((x) => x.mode !== 'montrer').slice(0, 3);
     if (!loans.length) return <Quiet head={head()} text="Aucun prêt ni don en cours." />;
     return (
-      <Card style={card}>
-        {head()}
-        {loans.slice(0, 4).map((x) => {
+      <View style={{ gap: 12 }} testID="home-loans">
+        <View style={{ paddingHorizontal: 4 }}>{head()}</View>
+        {loans.map((x) => {
           const p = s.pieces.find((q) => q.id === x.pieceId);
+          const lent = x.mode === 'preter';
           return (
-            <Tap key={x.id} onPress={() => p && nav.navigate('Piece', { id: p.id })} scaleTo={0.99} accessibilityLabel={`${p?.name ?? 'Pièce'}, ${x.mode === 'preter' ? 'prêtée à' : 'donnée à'} ${x.friend}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 }}>
-              <View style={{ width: 46, height: 52, borderRadius: 14, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
-                {p && <Garment kind={p.kind} tint={p.tint} image={p.image} size={32} dark={scheme === 'dark'} label={p.name} />}
+            <Tap key={x.id} onPress={() => p && nav.navigate('Piece', { id: p.id })} scaleTo={0.99} accessibilityLabel={`${p?.name ?? 'Pièce'}, ${lent ? 'prêtée à' : 'donnée à'} ${x.friend}`} style={{ height: 96, borderRadius: 22, backgroundColor: c.card, borderWidth: 1, borderColor: c['card-edge'], flexDirection: 'row', alignItems: 'center', overflow: 'hidden' }}>
+              <View style={{ width: 96, height: 96, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {p && <Garment kind={p.kind} tint={p.tint} image={p.image} size={62} dark={dark} label={p.name} />}
               </View>
-              <View style={{ flex: 1 }}>
-                <T v="bodyStrong" numberOfLines={1}>{p?.name ?? 'Pièce'}</T>
-                <T v="kicker" tone="ink2">{`${x.mode === 'preter' ? 'Chez' : 'Donnée à'} ${x.friend}`}</T>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 96, top: 12, bottom: 12, borderLeftWidth: 1.5, borderStyle: 'dashed', borderColor: c.faint }} />
+              {/* Les encoches du talon : deux demi-ronds découpés dans le bord. */}
+              <View pointerEvents="none" style={{ position: 'absolute', left: 87, top: -10, width: 18, height: 18, borderRadius: 9, backgroundColor: c.paper, borderWidth: 1, borderColor: c['card-edge'] }} />
+              <View pointerEvents="none" style={{ position: 'absolute', left: 87, bottom: -10, width: 18, height: 18, borderRadius: 9, backgroundColor: c.paper, borderWidth: 1, borderColor: c['card-edge'] }} />
+              <View style={{ flex: 1, paddingLeft: 18, paddingRight: 8, gap: 6 }}>
+                <View className="flex-row items-center" style={{ gap: 8 }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }}>
+                    <T v="stat" style={{ fontSize: 16, lineHeight: 18, color: c['primary-fg'] }}>
+                      {(x.friend[0] ?? '?').toUpperCase()}
+                    </T>
+                  </View>
+                  <T v="bodyStrong" numberOfLines={1} style={{ flexShrink: 1 }}>
+                    {x.friend}
+                  </T>
+                </View>
+                <T v="caption" tone="ink2" numberOfLines={1}>
+                  {p?.name ?? 'Pièce'}
+                </T>
+              </View>
+              <View style={{ marginRight: 14 }}>
+                <Tag label={lent ? 'Prêtée' : 'Donnée'} dot={false} />
               </View>
             </Tap>
           );
         })}
-      </Card>
+      </View>
     );
   }
 
-  // bilan
+  // Ton mois : un bloc plein (noir en clair, blanc en sombre), trois grands chiffres.
   const worn30 = s.pieces.filter((p) => p.lastWorn !== null && p.lastWorn <= 30).length;
+  const priced = s.pieces.filter((p) => p.price && p.wears > 0);
+  const cpw = priced.length ? priced.reduce((n, p) => n + (p.price ?? 0), 0) / priced.reduce((n, p) => n + p.wears, 0) : null;
+  const stats = [
+    { v: String(worn30), l: 'pièces sorties' },
+    { v: `${usageRate(s.pieces)} %`, l: 'du dressing porté' },
+    ...(cpw !== null ? [{ v: euros(cpw), l: 'par port' }] : []),
+  ];
+  const fg = c['primary-fg'];
   return (
-    <Card style={card}>
-      {head()}
-      <View className="flex-row" style={{ gap: 8 }}>
-        {[
-          { v: `${usageRate(s.pieces)} %`, l: 'porté en 3 mois' },
-          { v: String(worn30), l: 'sorties ce mois' },
-        ].map((x) => (
-          <View key={x.l} className="bg-stage" style={{ flex: 1, gap: 4, borderRadius: 22, padding: 14 }}>
-            <T v="stat" style={{ fontSize: 34, lineHeight: 36 }}>
+    <View testID="home-month" style={[{ borderRadius: 28, backgroundColor: c['primary-bg'], padding: 20, gap: 18 }, material.card[scheme]]}>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center" style={{ gap: 6 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: fg }} />
+          <T v="kicker" accessibilityRole="header" style={{ color: fg }}>
+            {title}
+          </T>
+        </View>
+        <T v="kicker" style={{ color: fg }}>
+          {capital(MONTHS[new Date().getMonth()])}
+        </T>
+      </View>
+      <View className="flex-row" style={{ gap: 10 }}>
+        {stats.map((x) => (
+          <View key={x.l} style={{ flex: 1, gap: 6 }}>
+            <T v="stat" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 40, lineHeight: 42, color: fg }}>
               {x.v}
             </T>
-            <T v="kicker" tone="ink2">
+            <T v="caption" style={{ color: fg }}>
               {x.l}
             </T>
           </View>
         ))}
       </View>
-    </Card>
+    </View>
   );
 }
 

@@ -22,7 +22,7 @@ import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './con
 
 export type { PlanId, Period, Planned, Session };
 export type { Silhouette, MeasureId, Profile } from './profile';
-export type HomeModule = 'kode' | 'semaine' | 'prevues' | 'oubliees' | 'nouveautes' | 'porte' | 'tendance' | 'prets' | 'bilan';
+export type HomeModule = 'tenue' | 'semaine' | 'kode' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
 export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
 
@@ -35,36 +35,51 @@ export const LIMITS: Record<PlanId, { pieces: number | null; questions: number |
 };
 
 export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> = {
-  kode: { title: 'Demander à Kode', note: 'Des questions prêtes, selon ta journée' },
-  semaine: { title: 'Ta semaine', note: 'Météo et événements, jour par jour' },
+  tenue: { title: 'Tenue du jour', note: 'Ta tenue, de la tête aux pieds' },
+  semaine: { title: 'Ta semaine', note: 'Tes tenues prévues, jour par jour, avec la météo' },
+  kode: { title: 'Demande à Kode', note: 'Des questions prêtes, selon ta journée' },
   oubliees: { title: 'À redécouvrir', note: 'Les pièces qui dorment' },
-  tendance: { title: 'Tendance, déjà chez toi', note: 'Ce qui se porte, dans ton dressing' },
-  bilan: { title: 'Ton mois', note: 'Ce que tu portes vraiment' },
-  prevues: { title: 'Tes tenues prévues', note: 'Les prochains jours, déjà prêts' },
-  nouveautes: { title: 'Nouveautés', note: 'Tes dernières pièces' },
+  tendance: { title: 'Tendance', note: 'Ce qui se porte, déjà dans ton dressing' },
   porte: { title: 'Le plus porté', note: 'Tes pièces fétiches' },
+  nouveautes: { title: 'Nouveautés', note: 'Tes dernières pièces' },
   prets: { title: 'Prêts en cours', note: 'Ce que tes amies ont' },
+  bilan: { title: 'Ton mois', note: 'Ce que tu portes vraiment' },
 };
 
-/** L'ordre et l'état des sections d'un nouvel espace. */
-export const DEFAULT_MODULES: { id: HomeModule; on: boolean }[] = [
+type ModuleState = { id: HomeModule; on: boolean };
+
+/** L'ordre et l'état des sections d'un nouvel espace : la tenue du jour en tête, puis la semaine. */
+export const DEFAULT_MODULES: ModuleState[] = [
+  { id: 'tenue', on: true },
   { id: 'semaine', on: true },
   { id: 'kode', on: true },
-  { id: 'prevues', on: true },
   { id: 'oubliees', on: true },
   { id: 'tendance', on: true },
-  { id: 'nouveautes', on: false },
   { id: 'porte', on: false },
+  { id: 'nouveautes', on: false },
   { id: 'prets', on: false },
   { id: 'bilan', on: false },
 ];
 
-/** Garde l'ordre choisi, ajoute à la fin (masquées) les sections nées depuis, retire celles qui n'existent plus. */
-export function normalizeModules(list: { id: HomeModule; on: boolean }[] | undefined) {
-  const known = new Set(DEFAULT_MODULES.map((m) => m.id));
-  const kept = (list ?? []).filter((m, i, all) => known.has(m.id) && all.findIndex((x) => x.id === m.id) === i);
+/** Les sections affichées d'abord, dans leur ordre, puis les masquées : chaque flèche change l'accueil. */
+const shownFirst = (list: ModuleState[]) => [...list.filter((m) => m.on), ...list.filter((m) => !m.on)];
+
+/**
+ * L'ordre enregistré, remis d'aplomb : la tenue du jour (devenue une section
+ * le 06/10) reprend la tête si elle manque, « Tes tenues prévues » se fond
+ * dans « Ta semaine », les sections nées depuis arrivent masquées, celles
+ * qui n'existent plus partent.
+ */
+export function normalizeModules(list: { id: string; on: boolean }[] | undefined): ModuleState[] {
+  if (!list) return DEFAULT_MODULES;
+  const known = new Set<string>(DEFAULT_MODULES.map((m) => m.id));
+  const prevues = list.find((m) => m.id === 'prevues')?.on;
+  let kept = list
+    .filter((m, i, all) => known.has(m.id) && all.findIndex((x) => x.id === m.id) === i)
+    .map((m) => ({ id: m.id as HomeModule, on: m.id === 'semaine' && prevues ? true : m.on }));
+  if (!kept.some((m) => m.id === 'tenue')) kept = [{ id: 'tenue', on: true }, ...kept];
   const have = new Set(kept.map((m) => m.id));
-  return [...kept, ...DEFAULT_MODULES.filter((m) => !have.has(m.id)).map((m) => ({ ...m, on: list ? false : m.on }))];
+  return shownFirst([...kept, ...DEFAULT_MODULES.filter((m) => !have.has(m.id)).map((m) => ({ ...m, on: false }))]);
 }
 
 type State = {
@@ -92,7 +107,7 @@ type State = {
   period: Period;
   extraPlaces: number;
   packs: string[];
-  modules: { id: HomeModule; on: boolean }[];
+  modules: ModuleState[];
   density: 'aeree' | 'dense';
   shares: Share[];
   toast: Toast | null;
@@ -187,6 +202,7 @@ type Action =
   | { t: 'buyPlaces' }
   | { t: 'toggleModule'; id: HomeModule }
   | { t: 'moveModule'; id: HomeModule; by: -1 | 1 }
+  | { t: 'resetModules' }
   | { t: 'density'; value: State['density'] }
   | { t: 'share'; share: Share }
   | { t: 'toast'; text: string; undo?: boolean; warn?: boolean }
@@ -294,16 +310,24 @@ function reducer(s: State, a: Action): State {
       return s.packs.includes(a.id) ? s : { ...s, packs: [...s.packs, a.id], toast: { id: ++toastId, text: 'Achat confirmé, c’est débloqué' } };
     case 'buyPlaces':
       return { ...s, extraPlaces: s.extraPlaces + 1, toast: { id: ++toastId, text: '+30 places ajoutées à ton dressing' } };
-    case 'toggleModule':
-      return { ...s, modules: s.modules.map((m) => (m.id === a.id ? { ...m, on: !m.on } : m)) };
+    case 'toggleModule': {
+      // Affichée ou masquée, la section se range à la frontière des deux groupes.
+      const m = s.modules.find((x) => x.id === a.id);
+      if (!m) return s;
+      const rest = s.modules.filter((x) => x.id !== a.id);
+      return { ...s, modules: [...rest.filter((x) => x.on), { ...m, on: !m.on }, ...rest.filter((x) => !x.on)] };
+    }
     case 'moveModule': {
+      // On ne passe que par-dessus une section du même groupe : le déplacement se voit toujours à l'accueil.
       const i = s.modules.findIndex((m) => m.id === a.id);
       const j = i + a.by;
-      if (i < 0 || j < 0 || j >= s.modules.length) return s;
+      if (i < 0 || j < 0 || j >= s.modules.length || s.modules[j].on !== s.modules[i].on) return s;
       const modules = [...s.modules];
       [modules[i], modules[j]] = [modules[j], modules[i]];
       return { ...s, modules };
     }
+    case 'resetModules':
+      return { ...s, modules: DEFAULT_MODULES };
     case 'density':
       return { ...s, density: a.value };
     case 'share':
@@ -573,6 +597,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       buyPlaces: () => (live() ? dispatch({ t: 'toast', text: 'Les achats à l’unité arrivent bientôt' }) : dispatch({ t: 'buyPlaces' })),
       toggleModule: (id: HomeModule) => dispatch({ t: 'toggleModule', id }),
       moveModule: (id: HomeModule, by: -1 | 1) => dispatch({ t: 'moveModule', id, by }),
+      resetModules: () => dispatch({ t: 'resetModules' }),
       setDensity: (value: State['density']) => dispatch({ t: 'density', value }),
       share: (share: Share) => dispatch({ t: 'share', share }),
       toast: (text: string, warn?: boolean) => dispatch({ t: 'toast', text, warn }),

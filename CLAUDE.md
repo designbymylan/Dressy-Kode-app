@@ -134,11 +134,23 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   pour « Une autre » (`DressRows`, `ui/outfit.tsx`).
 - **Agenda** : le calendrier de la semaine est l'élément central (date,
   météo, températures, rendez-vous), une carte par sujet dessous.
-- **Accueil personnalisable** : une section sans contenu reste à sa place
-  avec une ligne (on voit qu'on l'a déplacée) ; nouvelles sections
-  « Tes tenues prévues », « Nouveautés », « Le plus porté », « Prêts en
-  cours ». L'ordre enregistré est complété par les sections nées depuis
+- **Accueil, une forme par section** (canevas
+  https://claude.ai/artifact/D6Y93CiR4UXrrp6djzxXcc, validé le 06/10) :
+  la tenue du jour est une section comme les autres, qu'on monte, descend
+  ou masque dans Personnaliser. « Ta semaine » réunit météo et tenues
+  prévues, en grand (titre Cormorant, barre de 7 jours, une carte par
+  jour, pointillés pour « Prévoir », « Compléter avec Kode ») ; Kode est une
+  bulle rose poudré ; À redécouvrir, des arches ; Tendance, une page de
+  magazine aux ronds chevauchés ; Le plus porté, un classement à barres ;
+  Nouveautés, une mosaïque ; Prêts en cours, des tickets à talon ; Ton
+  mois, un bloc plein. Couleurs, polices, verre et arrondis ne changent
+  pas. Dans Personnaliser, chaque section a son pictogramme ; les
+  affichées passent avant les masquées et une flèche ne saute jamais une
+  section masquée, pour que chaque geste se voie à l'accueil
   (`normalizeModules`, `state/store.tsx`).
+- **Bande derrière l'heure** : sur les onglets, une bande floutée de la
+  couleur du fond (`ScrollEdge`) cache la page qui passe sous la barre
+  d'état.
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
