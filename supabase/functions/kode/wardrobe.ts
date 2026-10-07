@@ -108,3 +108,29 @@ export function normaliseHistory(turns: Turn[]): Turn[] {
   }
   return out;
 }
+
+export type PlannedDay = { date: string; titre: string; pourquoi: string; pieces: Picked[] };
+
+/**
+ * Ce qu'on garde d'une planification : seulement les jours demandés, une
+ * fois chacun, chacun avec des pièces qui existent (même règle que
+ * `pickPieces`). Un jour sans tenue valable revient avec une liste vide.
+ */
+export function pickPlan(proposed: unknown, refs: Map<string, Garment>, days: string[]): PlannedDay[] {
+  const list = Array.isArray(proposed) ? proposed : [];
+  const wanted = new Set(days);
+  const out: PlannedDay[] = [];
+  for (const raw of list) {
+    const j = (raw ?? {}) as { date?: unknown; titre?: unknown; pourquoi?: unknown; pieces?: unknown };
+    const date = String(j.date ?? '').trim();
+    if (!wanted.has(date)) continue;
+    wanted.delete(date);
+    out.push({
+      date,
+      titre: String(j.titre ?? '').trim().slice(0, 80),
+      pourquoi: String(j.pourquoi ?? '').trim().slice(0, 400),
+      pieces: pickPieces(j.pieces, refs),
+    });
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}

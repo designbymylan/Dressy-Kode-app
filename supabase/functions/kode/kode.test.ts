@@ -4,8 +4,8 @@
  * Ne teste que les modules sans dépendance (dressing, historique, consigne) :
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
-import { withRefs, wardrobeText, pickPieces, normaliseHistory, type Garment } from './wardrobe.ts';
-import { profileText, agendaText, ANSWER_SCHEMA } from './prompt.ts';
+import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
+import { profileText, agendaText, eventText, hourText, planDaysText, voyageText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -95,6 +95,49 @@ check('agenda trié par jour', agendaText([
 check('agenda vide', agendaText([]), 'Rien de noté dans son agenda Dresskode.');
 check('schéma strict : tout est requis', [ANSWER_SCHEMA.required, ANSWER_SCHEMA.properties.tenue.required],
   [['reponse', 'tenue'], ['titre', 'pourquoi', 'pieces']]);
+
+// ---------------------------------------------------------------- plusieurs jours (07/10)
+
+const ev = (extra: Partial<EventRow>): EventRow => ({
+  day: '2026-10-09', starts_at: null, title: 'Dîner', slot: null, kind: null, dress_code: null, stake: null,
+  impressions: [], place: null, setting: null, flags: [], note: null, ...extra,
+});
+
+check('heure lisible', [hourText('19:30:00'), hourText('09:00:00'), hourText('08:15')], ['19 h 30', '9 h', '8 h 15']);
+check('rendez-vous complet en une ligne', eventText(ev({
+  starts_at: '19:30:00', title: 'Dîner chez Léa', kind: 'Repas de famille', dress_code: 'Casual chic', stake: 'Important',
+  impressions: ['Chaleur', 'Élégance'], place: 'Chez Léa', setting: 'Intérieur', flags: ['Beaucoup marcher'], note: 'Sa grand-mère sera là',
+})), 'à 19 h 30, « Dîner chez Léa » (Repas de famille ; tenue voulue : casual chic ; importance : important ; veut dégager : chaleur, élégance ; lieu : Chez Léa ; à l’intérieur ; contraintes : beaucoup marcher ; sa note : « Sa grand-mère sera là »)');
+check('rendez-vous minimal, moment sans heure', eventText(ev({ slot: 'Soir', title: 'Ciné' })), 'soir, « Ciné »');
+
+const daysText = planDaysText([
+  { date: '2026-10-09', label: 'jeudi 9 octobre', meteo: '12° à 18°, averses', before: null,
+    events: [ev({ starts_at: '19:00:00', title: 'Dîner' }), ev({ starts_at: '09:00:00', title: 'Entretien', kind: 'Entretien d’embauche' })] },
+  { date: '2026-10-10', label: 'vendredi 10 octobre', meteo: null, events: [], before: 'Jean brut, Chemise blanche' },
+]);
+check('jours à prévoir : rendez-vous dans l’ordre de l’heure', daysText.split('\n')[0],
+  '- 2026-10-09 (jeudi 9 octobre) : météo : 12° à 18°, averses ; rendez-vous : à 9 h, « Entretien » (Entretien d’embauche) ; puis à 19 h, « Dîner »');
+check('jour sans météo ni rendez-vous, tenue à renouveler', daysText.split('\n')[1],
+  '- 2026-10-10 (vendredi 10 octobre) : météo : pas encore connue, pense à la saison ; aucun rendez-vous ; tenue prévue jusqu’ici, à renouveler : Jean brut, Chemise blanche');
+check('voyage', voyageText({ destination: 'Tokyo', pays: 'Japon', motif: 'Plaisir', activites: ['Visites', 'Restaurants'] }, 'lundi 12 octobre', 'dimanche 18 octobre'),
+  'Voyage : Tokyo (Japon), du lundi 12 octobre au dimanche 18 octobre. Motif : plaisir. Activités prévues : visites, restaurants.');
+
+const plan = pickPlan([
+  { date: '2026-10-10', titre: 'Doux et net', pourquoi: 'Parce que.', pieces: ['p1', 'p2', 'p3'] },
+  { date: '2026-10-09', titre: 'Entretien', pourquoi: 'Structure.', pieces: ['p4', 'p1', 'p2'] },
+  { date: '2026-10-09', titre: 'Doublon', pourquoi: '', pieces: ['p1', 'p2'] },
+  { date: '2026-12-25', titre: 'Pas demandé', pourquoi: '', pieces: ['p1', 'p2'] },
+  { date: '2026-10-11', titre: 'Bancal', pourquoi: '', pieces: ['p99'] },
+  null,
+], refs, ['2026-10-09', '2026-10-10', '2026-10-11']);
+check('planification : jours demandés seulement, une fois, dans l’ordre', plan.map((p) => p.date), ['2026-10-09', '2026-10-10', '2026-10-11']);
+check('planification : la première proposition d’un jour l’emporte', plan[0].titre, 'Entretien');
+check('planification : pièces vérifiées, jour bancal laissé vide', plan.map((p) => p.pieces.map((x) => x.garment.id).join('')), ['dab', 'abc', '']);
+check('planification : réponse mal formée', pickPlan('rien', refs, ['2026-10-09']), []);
+check('schéma de planification strict', [PLAN_SCHEMA.required, PLAN_SCHEMA.properties.jours.items.required],
+  [['message', 'jours'], ['date', 'titre', 'pourquoi', 'pieces']]);
+check('la culture de styliste est dans les règles', ['Couleurs', 'Coupes et proportions', 'Dress codes', 'Mariage (invité)', 'Entretien'].every((x) => RULES.includes(x)), true);
+check('aucun tiret cadratin dans la consigne', /—/.test(RULES + PLAN_RULES), false);
 
 console.log(fails ? `\n${fails} échec(s)` : '\ntout est bon');
 if (fails) process.exit(1);

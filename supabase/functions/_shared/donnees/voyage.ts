@@ -70,7 +70,7 @@ const nominatimMonde: Source<string, Lieu[]> = {
   },
 };
 
-const cleTexte = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+const cleTexte = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
 
 export function chercherLieux(cache: Cache, q: string): Promise<Bloc<Lieu[]>> {
   return obtenir(cache, { cle: `lieux:${cleTexte(q)}`, duree: 30 * JOUR, quoi: 'Lieu', sources: [geo, nominatimMonde], params: q });
