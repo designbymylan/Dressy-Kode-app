@@ -48,7 +48,7 @@ export function jourIso(offset: number): string {
  * Le ciel du serveur en sept mots, ramené aux quatre icônes de l'app. Le
  * libellé, lui, garde le mot juste (« neige », « orages »).
  */
-const KIND: Record<Ciel, Weather['kind']> = { soleil: 'soleil', nuages: 'nuages', brouillard: 'nuages', pluie: 'pluie', neige: 'pluie', averses: 'averses', orage: 'averses' };
+export const KIND: Record<Ciel, Weather['kind']> = { soleil: 'soleil', nuages: 'nuages', brouillard: 'nuages', pluie: 'pluie', neige: 'pluie', averses: 'averses', orage: 'averses' };
 
 /**
  * La météo des 14 prochains jours au format de l'app, rangée par jour

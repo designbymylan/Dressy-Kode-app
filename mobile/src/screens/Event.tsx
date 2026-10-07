@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { EVENTS, longDate, type Piece } from '../data/wardrobe';
 import { useMeteo, useStore } from '../state/store';
+import { isoOf } from '../state/planning';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -52,7 +53,7 @@ export function EventScreen() {
   const first = resolve(['r2', 'm3', 'c4', 'a3']);
   const W = width - space.gutter * 2 - 32;
   const planIt = (title: string, pieces: string[]) => {
-    a.plan(e.day, { title, pieces });
+    a.plan(isoOf(e.day), { title, pieces });
     a.toast(`Prévue pour le ${longDate(e.day).split(' ').slice(1).join(' ')}`);
   };
 

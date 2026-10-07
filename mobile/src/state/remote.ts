@@ -10,13 +10,16 @@ import { supabase } from '../lib/supabase';
 import { COLOR_CHOICES, COLOURS, type CategoryId, type Piece, type Season } from '../data/wardrobe';
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
-import type { Contexte } from './contexte';
+import type { Bloc, Contexte, JourMeteo } from './contexte';
 import type { KodeLink, KodeMessage } from './kode';
 import { JOB_SELECT, type JobRow, type Reveal } from './jobs';
+import { slotOf as momentOf, type Iso, type RdvEvent, type Setting, type Stake, type Trip, type TripPurpose } from './planning';
 
 export type PlanId = 'decouverte' | 'capsule' | 'atelier' | 'couture';
 export type Period = 'mois' | 'an';
-export type Planned = { title: string; pieces: string[] };
+export type Planned = { title: string; pieces: string[]; tripId?: string | null };
+/** Ce que la personne accepte de recevoir (07/10) : tout, seulement ses tenues prévues, ou rien. */
+export type NotifChoice = 'tout' | 'planning' | 'non';
 export type Session = { userId: string; email: string; spaceId: string };
 
 export type Account = {
@@ -25,7 +28,11 @@ export type Account = {
   onboarded: boolean;
   profile: Profile;
   pieces: Piece[];
-  planned: Record<number, Planned>;
+  /** Les tenues prévues, par date (AAAA-MM-JJ). */
+  planned: Record<Iso, Planned>;
+  events: RdvEvent[];
+  trips: Trip[];
+  notifs: NotifChoice | null;
   messages: KodeMessage[];
   kodeUsed: number;
   plan: PlanId;
@@ -259,28 +266,31 @@ export async function loadAccount(): Promise<Account | null> {
   if (space.error) throw new Error(`espace : ${space.error.message}`);
   const spaceId = space.data.id as string;
 
-  const [profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages] = await Promise.all([
+  const [profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages, events, trips] = await Promise.all([
     sb.from('profiles').select('display_name, age_range, onboarded_at, created_at').eq('id', user.id).single(),
     sb.from('style_profile').select('gender, styles, colours, avoid_colours, occasions').eq('space_id', spaceId).single(),
     sb.from('silhouettes').select('shape, shape_source, height_cm, weight_kg, measurements, usual_sizes').eq('space_id', spaceId).single(),
-    sb.from('settings').select('city, agenda_linked').eq('space_id', spaceId).single(),
+    sb.from('settings').select('city, agenda_linked, notifications').eq('space_id', spaceId).single(),
     sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').order('created_at', { ascending: false }),
     sb.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),
     sb.from('subscriptions').select('plan, period, status').eq('space_id', spaceId).in('status', ['active', 'trialing', 'past_due']),
     sb.rpc('kode_usage', { target: spaceId }),
+    // Le calendrier montre le mois passé et les mois à venir.
     sb.from('planned_days')
-      .select('day, outfits(name, outfit_items(garment_id))')
+      .select('day, trip_id, outfits(name, outfit_items(garment_id))')
       .eq('space_id', spaceId)
-      .gte('day', isoDay(0))
-      .lte('day', isoDay(14)),
+      .gte('day', isoDay(-31))
+      .lte('day', isoDay(400)),
     sb.from('kode_messages')
       .select('id, author, body, meta, outfits(name, outfit_items(garment_id))')
       .eq('space_id', spaceId)
       .eq('archived', false)
       .order('created_at', { ascending: false })
       .limit(40),
+    sb.from('events').select(EVENT_SELECT).eq('space_id', spaceId).gte('day', isoDay(-31)).order('day'),
+    sb.from('trips').select(TRIP_SELECT).eq('space_id', spaceId).gte('ends_on', isoDay(-31)).order('starts_on'),
   ]);
-  for (const [what, r] of Object.entries({ profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages })) {
+  for (const [what, r] of Object.entries({ profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages, events, trips })) {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
 
@@ -297,11 +307,12 @@ export async function loadAccount(): Promise<Account | null> {
   const rank = { couture: 3, atelier: 2, capsule: 1 } as Record<string, number>;
   const best = ((subs.data ?? []) as { plan: PlanId; period: Period }[]).sort((a, b) => (rank[b.plan] ?? 0) - (rank[a.plan] ?? 0))[0];
 
-  const plannedDays: Record<number, Planned> = {};
-  for (const d of (planned.data ?? []) as unknown as { day: string; outfits: OutfitEmbed }[]) {
+  const plannedDays: Record<Iso, Planned> = {};
+  for (const d of (planned.data ?? []) as unknown as { day: string; trip_id: string | null; outfits: OutfitEmbed }[]) {
     const ids = (d.outfits?.outfit_items ?? []).map((i) => i.garment_id);
-    if (ids.length) plannedDays[dayOffset(d.day)] = { title: d.outfits?.name || 'Ma tenue', pieces: ids };
+    if (ids.length) plannedDays[d.day.slice(0, 10)] = { title: d.outfits?.name || 'Ma tenue', pieces: ids, tripId: d.trip_id };
   }
+  const notif = (se.notifications as { choix?: NotifChoice } | null)?.choix ?? null;
 
   return {
     session: { userId: user.id, email: user.email ?? '', spaceId },
@@ -328,6 +339,9 @@ export async function loadAccount(): Promise<Account | null> {
     },
     pieces,
     planned: plannedDays,
+    events: ((events.data ?? []) as unknown as EventRow[]).map(toEvent),
+    trips: ((trips.data ?? []) as unknown as TripRow[]).map(toTrip),
+    notifs: notif === 'tout' || notif === 'planning' || notif === 'non' ? notif : null,
     messages: ((messages.data ?? []) as unknown as MessageRow[]).reverse().map(toMessage),
     kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
     plan: best?.plan ?? 'decouverte',
@@ -433,8 +447,8 @@ export async function unwear(ids: string[]) {
   check(await db().from('wears').delete().in('garment_id', list).eq('worn_on', isoDay(0)), 'port');
 }
 
-/** Une tenue prévue pour un jour : la tenue, ses pièces, puis le jour. */
-export async function plan(session: Session, day: number, outfit: Planned, pieces: Piece[], source: 'user' | 'kode' = 'user') {
+/** Une tenue prévue pour un jour : la tenue, ses pièces, puis le jour (et son voyage). */
+export async function plan(session: Session, date: Iso, outfit: Planned, pieces: Piece[], source: 'user' | 'kode' = 'user') {
   const sb = db();
   const byId = new Map(pieces.map((p) => [p.id, p]));
   const chosen = outfit.pieces.map((id) => byId.get(id)).filter((p): p is Piece => !!p && isUuid(p.id));
@@ -443,11 +457,106 @@ export async function plan(session: Session, day: number, outfit: Planned, piece
   check(created, 'tenue');
   const outfitId = created.data!.id as string;
   check(await sb.from('outfit_items').insert(chosen.map((p) => ({ outfit_id: outfitId, garment_id: p.id, slot: slotOf(p) }))), 'pièces de la tenue');
-  check(await sb.from('planned_days').upsert({ space_id: session.spaceId, day: isoDay(day), outfit_id: outfitId, worn: false }, { onConflict: 'space_id,day' }), 'agenda');
+  const trip_id = outfit.tripId && isUuid(outfit.tripId) ? outfit.tripId : null;
+  check(await sb.from('planned_days').upsert({ space_id: session.spaceId, day: date, outfit_id: outfitId, worn: false, trip_id }, { onConflict: 'space_id,day' }), 'agenda');
 }
 
-export async function unplan(session: Session, day: number) {
-  check(await db().from('planned_days').delete().eq('space_id', session.spaceId).eq('day', isoDay(day)), 'agenda');
+export async function unplan(session: Session, date: Iso) {
+  check(await db().from('planned_days').delete().eq('space_id', session.spaceId).eq('day', date), 'agenda');
+}
+
+/* ---- Rendez-vous et voyages (07/10) ---- */
+
+const EVENT_SELECT = 'id, day, starts_at, title, kind, dress_code, stake, impressions, place, setting, flags, note';
+type EventRow = {
+  id: string; day: string; starts_at: string | null; title: string; kind: string | null; dress_code: string | null; stake: Stake | null;
+  impressions: string[] | null; place: string | null; setting: Setting | null; flags: string[] | null; note: string | null;
+};
+const toEvent = (r: EventRow): RdvEvent => ({
+  id: r.id,
+  date: r.day.slice(0, 10),
+  time: r.starts_at ? r.starts_at.slice(0, 5) : null,
+  title: r.title,
+  kind: r.kind,
+  dressCode: r.dress_code,
+  stake: r.stake,
+  impressions: r.impressions ?? [],
+  place: r.place,
+  setting: r.setting,
+  constraints: r.flags ?? [],
+  note: r.note,
+});
+
+export async function saveEvent(session: Session, e: RdvEvent) {
+  check(
+    await db().from('events').upsert({
+      id: e.id,
+      space_id: session.spaceId,
+      day: e.date,
+      starts_at: e.time,
+      slot: momentOf(e.time),
+      title: e.title.slice(0, 120),
+      kind: e.kind,
+      dress_code: e.dressCode,
+      stake: e.stake,
+      impressions: e.impressions,
+      place: e.place,
+      setting: e.setting,
+      flags: e.constraints,
+      note: e.note,
+    }),
+    'rendez-vous',
+  );
+}
+
+export async function removeEvent(id: string) {
+  check(await db().from('events').delete().eq('id', id), 'rendez-vous');
+}
+
+const TRIP_SELECT = 'id, destination, country, latitude, longitude, starts_on, ends_on, purpose, activities, image';
+type TripRow = {
+  id: string; destination: string; country: string | null; latitude: number | null; longitude: number | null;
+  starts_on: string; ends_on: string; purpose: TripPurpose | null; activities: string[] | null; image: Trip['image'];
+};
+const toTrip = (r: TripRow): Trip => ({
+  id: r.id,
+  destination: r.destination,
+  country: r.country,
+  lat: r.latitude,
+  lon: r.longitude,
+  start: r.starts_on.slice(0, 10),
+  end: r.ends_on.slice(0, 10),
+  purpose: r.purpose ?? 'Plaisir',
+  activities: r.activities ?? [],
+  image: r.image ?? null,
+});
+
+export async function saveTrip(session: Session, t: Trip) {
+  check(
+    await db().from('trips').upsert({
+      id: t.id,
+      space_id: session.spaceId,
+      destination: t.destination,
+      country: t.country,
+      latitude: t.lat,
+      longitude: t.lon,
+      starts_on: t.start,
+      ends_on: t.end,
+      purpose: t.purpose,
+      activities: t.activities,
+      image: t.image,
+    }),
+    'voyage',
+  );
+}
+
+/** Le voyage part, et ses tenues avec lui (planned_days.trip_id en cascade). */
+export async function removeTrip(id: string) {
+  check(await db().from('trips').delete().eq('id', id), 'voyage');
+}
+
+export async function saveNotifs(session: Session, choix: NotifChoice) {
+  check(await db().from('settings').update({ notifications: { choix } }).eq('space_id', session.spaceId), 'notifications');
 }
 
 /* ---- Kode et paiement : les Edge Functions ---- */
@@ -494,6 +603,42 @@ export async function loadContexte(ville?: string | null): Promise<Contexte | nu
     return null;
   }
   return data;
+}
+
+/* ---- Voyages : lieu, photo et météo, par la fonction `donnees` (07/10) ---- */
+
+export type Lieu = { nom: string; pays: string | null; region: string | null; lat: number; lon: number };
+export type JourVoyage = { date: string; max: number; min: number; ciel: JourMeteo['ciel']; libelle: string; nature: 'prevision' | 'saison' };
+export type InfosVoyage = { photo: Bloc<{ url: string; credit: string; page: string | null }>; prevision: Bloc<JourVoyage[]> | null; saison: Bloc<JourVoyage[]> | null };
+
+/** Les lieux du monde qui portent ce nom. */
+export async function lieux(q: string): Promise<Result<{ lieux: Lieu[] }>> {
+  const { data, error } = await db().functions.invoke<{ lieux: Bloc<Lieu[]> }>('donnees', { body: { action: 'lieux', q } });
+  if (error || !data) return { ok: false, ...(await functionError(error, 'La recherche ne répond pas. Réessaie dans un instant.')) };
+  return { ok: true, lieux: data.lieux.valeur ?? [] };
+}
+
+/** La photo du lieu et sa météo, jour par jour. */
+export async function infosVoyage(nom: string, lat: number, lon: number, debut: string, fin: string): Promise<InfosVoyage | null> {
+  const { data, error } = await db().functions.invoke<InfosVoyage>('donnees', { body: { action: 'voyage', nom, lat, lon, debut, fin } });
+  if (error || !data) {
+    console.warn('[supabase] voyage :', (await functionError(error, 'sans réponse')).message);
+    return null;
+  }
+  return data;
+}
+
+/**
+ * Kode prévoit plusieurs jours d'un coup (fonction `kode`, action `planifier`) :
+ * une tenue par jour, avec les rendez-vous, la météo et le voyage s'il y en a un.
+ * Les pièces reviennent avec leurs identifiants ; une question est comptée.
+ */
+export async function planifier(dates: Iso[], trip: Trip | null, consigne: string): Promise<Record<Iso, Planned>> {
+  type Jour = { date: string; titre: string; pourquoi: string; pieces: string[] };
+  const voyage = trip ? { destination: trip.destination, pays: trip.country, motif: trip.purpose, activites: trip.activities, lat: trip.lat, lon: trip.lon } : null;
+  const { data, error } = await db().functions.invoke<{ jours: Jour[] }>('kode', { body: { action: 'planifier', jours: dates, voyage, consigne } });
+  if (error || !data?.jours) throw new Error((await functionError(error, 'Kode ne répond pas')).message);
+  return Object.fromEntries(data.jours.filter((j) => j.pieces.length).map((j) => [j.date, { title: j.titre || 'Par Kode', pieces: j.pieces, tripId: trip?.id ?? null }]));
 }
 
 /** Ouvre le paiement Stripe (ou le portail pour changer d'offre) : rend l'adresse à ouvrir. */

@@ -14,6 +14,9 @@ import { PieceScreen } from '../screens/Piece';
 import { AddPiece } from '../screens/AddPiece';
 import { Compose } from '../screens/Compose';
 import { EventScreen } from '../screens/Event';
+import { Planning } from '../screens/Planning';
+import { EventEdit } from '../screens/EventEdit';
+import { TripScreen } from '../screens/TripScreen';
 import { SilhouetteScreen } from '../screens/Silhouette';
 import { Customize } from '../screens/Customize';
 import { ShareScreen } from '../screens/Share';
@@ -63,6 +66,9 @@ export function RootNavigator() {
           <Stack.Screen name="Piece" component={PieceScreen} options={({ route }) => (route.params?.from ? fadeOptions : cardOptions)} />
           <Stack.Screen name="Compose" component={Compose} />
           <Stack.Screen name="Event" component={EventScreen} />
+          <Stack.Screen name="Planning" component={Planning} />
+          <Stack.Screen name="EventEdit" component={EventEdit} />
+          <Stack.Screen name="Trip" component={TripScreen} />
           <Stack.Screen name="Silhouette" component={SilhouetteScreen} />
           <Stack.Screen name="Customize" component={Customize} />
           <Stack.Screen name="Offers" component={Offers} />

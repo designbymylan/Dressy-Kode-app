@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { relativeDay, type CategoryId, type Piece } from '../data/wardrobe';
+import { type CategoryId, type Piece } from '../data/wardrobe';
+import { dayName, isoOf, offsetOf, type Iso } from '../state/planning';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
@@ -81,7 +82,9 @@ export function Compose() {
   });
   // Les pièces de départ sont gardées : « Mélanger » ne les touche pas.
   const [locked, setLocked] = useState<Set<SlotId>>(() => new Set(given.map((id) => byId.get(id)).filter(Boolean).map((p) => slotOf(p as Piece))));
-  const [day, setDay] = useState(params?.day ?? 1);
+  const [date, setDate] = useState<Iso>(params?.date ?? isoOf(params?.day ?? 1));
+  // Les sept prochains jours, plus la date demandée si elle est plus loin (calendrier, voyage).
+  const dates = [...new Set([...Array.from({ length: 7 }, (_, i) => isoOf(i)), date])].sort();
   const [picking, setPicking] = useState<SlotId | null>(null);
   const chosen = SLOTS.map((sl) => (slots[sl.id] ? byId.get(slots[sl.id]!) : undefined)).filter(Boolean) as Piece[];
 
@@ -109,8 +112,8 @@ export function Compose() {
   };
 
   const save = () => {
-    a.plan(day, { title: chosen.length ? `Avec ${chosen[0].name.toLowerCase()}` : 'Ma tenue', pieces: chosen.map((p) => p.id) });
-    a.toast(`Tenue prévue ${day === 0 ? 'pour aujourd’hui' : day === 1 ? 'pour demain' : `pour ${relativeDay(day).toLowerCase()}`}`);
+    a.plan(date, { title: chosen.length ? `Avec ${chosen[0].name.toLowerCase()}` : 'Ma tenue', pieces: chosen.map((p) => p.id), tripId: s.planned[date]?.tripId ?? null });
+    a.toast(`Tenue prévue ${offsetOf(date) === 0 ? 'pour aujourd’hui' : `pour ${dayName(date).toLowerCase()}`}`);
     nav.goBack();
   };
 
@@ -192,18 +195,18 @@ export function Compose() {
         </Animated.View>
 
         <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
-          {Array.from({ length: 7 }, (_, i) => (
-            <Chip key={i} testID={`day-${i}`} label={relativeDay(i)} on={day === i} onPress={() => setDay(i)} />
+          {dates.map((d) => (
+            <Chip key={d} testID={`day-${offsetOf(d)}`} label={dayName(d)} on={date === d} onPress={() => setDate(d)} />
           ))}
         </Animated.ScrollView>
-        {s.planned[day] && (
+        {s.planned[date] && (
           <T v="caption" tone="caution">
-            Elle remplacera « {s.planned[day].title} ».
+            Elle remplacera « {s.planned[date].title} ».
           </T>
         )}
 
         <View style={{ gap: 8, paddingTop: 4 }}>
-          <Button testID="compose-save" label={chosen.length < 2 ? 'Choisis au moins deux pièces' : `Prévoir pour ${relativeDay(day).toLowerCase()}`} disabled={chosen.length < 2} onPress={save} />
+          <Button testID="compose-save" label={chosen.length < 2 ? 'Choisis au moins deux pièces' : `Prévoir pour ${dayName(date).toLowerCase()}`} disabled={chosen.length < 2} onPress={save} />
           <Button testID="compose-complete" label="Mélanger" variant="secondary" icon="kode" onPress={shuffle} />
         </View>
       </Animated.ScrollView>

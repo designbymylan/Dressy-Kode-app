@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { lcFirst, type Piece } from '../data/wardrobe';
 import { kodeStarters, type KodeMessage } from '../state/kode';
-import { LIMITS, eventsOf, questionsLeft, useMeteo, useStore } from '../state/store';
+import { LIMITS, eventsOn, questionsLeft, useMeteo, useStore } from '../state/store';
+import { isoOf } from '../state/planning';
 import { dateLongue, jourIso, periode } from '../state/contexte';
 import { Credit } from '../ui/Credit';
 import { canCompose } from '../state/outfits';
@@ -73,7 +74,7 @@ export function Kode() {
     if (a.askKode(v)) setText('');
   };
 
-  const tomorrow = eventsOf(s.profile).find((e) => e.day === 1);
+  const tomorrow = eventsOn(s.events, isoOf(1))[0];
   const p = s.profile;
   const starters = kodeStarters(p, s.pieces);
   const ready = canCompose(s.pieces);
@@ -207,7 +208,7 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
               </T>
             </Animated.View>
             <View className="flex-row" style={{ gap: 8 }}>
-              <Button testID={`kode-plan-${m.id}`} label="Prévoir demain" size="m" grow onPress={() => { a.plan(1, { title: m.outfit!.title, pieces: m.outfit!.pieces }); a.toast('Prévue pour demain, dans ton agenda'); }} />
+              <Button testID={`kode-plan-${m.id}`} label="Prévoir demain" size="m" grow onPress={() => { a.plan(isoOf(1), { title: m.outfit!.title, pieces: m.outfit!.pieces }); a.toast('Prévue pour demain, dans ton agenda'); }} />
               <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces })} />
             </View>
           </>

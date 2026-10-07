@@ -3,10 +3,10 @@ import { View } from 'react-native';
 import Animated, { FadeIn, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { DAYS_LETTER, MONTHS, dayDate, longDate, relativeDay, shortDate, type Piece } from '../data/wardrobe';
+import { DAYS_LETTER, MONTHS, dayDate, longDate, relativeDay, type Piece } from '../data/wardrobe';
+import { dayName, isoOf, offsetOf, timeLabel, type RdvEvent } from '../state/planning';
 import { canCompose } from '../state/outfits';
-import { Toggle } from '../ui/controls';
-import { eventsOf, useMeteo, useStore, useTodayOutfits } from '../state/store';
+import { eventsOn, useMeteo, useStore, useTodayOutfits } from '../state/store';
 import { ferieDu, periode, pontDu, vacancesDu } from '../state/contexte';
 import { Credit } from '../ui/Credit';
 import { useTheme } from '../theme/ThemeProvider';
@@ -69,15 +69,18 @@ export function Agenda() {
     soleil && `Soleil de ${hhmm(soleil.lever)} à ${hhmm(soleil.coucher)}`,
     airNote,
   ].filter((x): x is string => !!x);
-  const all = eventsOf(s.profile);
-  const events = all.filter((e) => e.day === day);
+  const iso = isoOf(day);
+  const events = eventsOn(s.events, iso);
+  // Le mariage du compte de démonstration ouvre sa fiche Occasion (Pack Occasion) ; les autres, le formulaire.
+  const occasion = (e: RdvEvent) => s.account === 'demo' && e.id === 'e5';
+  const openEvent = (e: RdvEvent) => (occasion(e) ? nav.navigate('Event', { id: e.id }) : nav.navigate('EventEdit', { id: e.id }));
   const outfits = useTodayOutfits();
   const ready = canCompose(s.pieces);
   const todayOutfit = day === 0 && s.wornToday ? { title: 'Portée aujourd’hui', pieces: s.wornToday } : null;
   const proposed = day === 0 && outfits.length ? { title: 'Tenue du jour, proposée par Kode', pieces: outfits[s.outfitIndex % outfits.length].pieces } : null;
-  const planned = todayOutfit ?? s.planned[day] ?? proposed;
+  const planned = todayOutfit ?? s.planned[iso] ?? proposed;
   const pieces = planned ? (planned.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];
-  const later = all.filter((e) => e.day > day).slice(0, 4);
+  const later = s.events.filter((e) => e.date > iso).slice(0, 4);
   const first = dayDate(0);
   const last = dayDate(13);
   const range = first.getMonth() === last.getMonth() ? MONTHS[first.getMonth()] : `${MONTHS[first.getMonth()]} – ${MONTHS[last.getMonth()]}`;
@@ -124,7 +127,7 @@ export function Agenda() {
               const today = i === 0;
               const wi = meteo.jours[i];
               const ferieI = ferieDu(ctx, i);
-              const busy = all.some((e) => e.day === i) || !!ferieI || !!s.planned[i];
+              const busy = eventsOn(s.events, isoOf(i)).length > 0 || !!ferieI || !!s.planned[isoOf(i)];
               const fg = on ? c['primary-fg'] : c.ink;
               return (
                 <Tap
@@ -176,48 +179,38 @@ export function Agenda() {
           </Animated.View>
         </Card>
 
-        {/* Ce jour-là, dans ton agenda. */}
-        {!s.profile.agenda ? (
-          <Card className="flex-row items-center" style={{ gap: 14, padding: 14 }} testID="agenda-link">
-            <Icon name="calendar" size={24} color={c.ink} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <T v="bodyStrong">Relier ton agenda</T>
-              <T v="caption" tone="ink2">
-                Kode prépare les jours chargés.
+        {/* Ce jour-là : ses rendez-vous, qu'on ajoute ou corrige ici. */}
+        <Card style={{ padding: 14, gap: 4 }} testID="agenda-events">
+          <Tag label={events.length ? `${cap(relativeDay(day))} · ${events.length} rendez-vous` : `${cap(relativeDay(day))} · rien de prévu`} />
+          {events.map((e) => (
+            <Tap key={e.id} testID={`event-${e.id}`} onPress={() => openEvent(e)} scaleTo={0.99} accessibilityLabel={`${timeLabel(e.time) ?? 'Dans la journée'}, ${e.title}${e.place ? `, ${e.place}` : ''}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: 14, borderBottomWidth: 1, borderColor: c.rule }}>
+              <T v="bodyStrong" style={{ width: 62 }}>
+                {timeLabel(e.time) ?? 'Journée'}
               </T>
-            </View>
-            <Toggle testID="agenda-link-toggle" value={false} onChange={() => { a.setProfile({ agenda: true }); a.toast('Agenda relié'); }} label="Relier mon agenda" />
-          </Card>
-        ) : (
-          <Card style={{ padding: 14, gap: 4 }} testID="agenda-events">
-            <Tag label={events.length ? `${cap(relativeDay(day))} · ${events.length} rendez-vous` : `${cap(relativeDay(day))} · rien de prévu`} />
-            {events.map((e, k) => (
-              <Tap key={e.id} testID={`event-${e.id}`} disabled={!e.occasion} onPress={() => nav.navigate('Event', { id: e.id })} scaleTo={e.occasion ? 0.99 : 1} feedback={e.occasion ? 'light' : 'none'} accessibilityRole={e.occasion ? 'button' : 'text'} accessibilityLabel={`${e.time}, ${e.title}${e.place ? `, ${e.place}` : ''}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: 14, borderBottomWidth: k === events.length - 1 ? 0 : 1, borderColor: c.rule }}>
-                <T v="bodyStrong" style={{ width: 56 }}>
-                  {e.time}
-                </T>
-                <View style={{ flex: 1, gap: 2, paddingVertical: 8 }}>
-                  <T v="bodyStrong">{e.title}</T>
-                  {e.place && (
-                    <T v="kicker" tone="ink2">
-                      {e.place}
-                    </T>
-                  )}
-                  {e.occasion && <Badge label={`Occasion · ${e.occasion.dressCode}`} tone="neutral" icon="gift" />}
-                </View>
-                {e.occasion && <Icon name="chevron" size={18} color={c.ink2} />}
-              </Tap>
-            ))}
-          </Card>
-        )}
+              <View style={{ flex: 1, gap: 4, paddingVertical: 8 }}>
+                <T v="bodyStrong">{e.title}</T>
+                {(e.place || e.kind || e.dressCode) && (
+                  <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+                    {[e.kind, e.dressCode, e.place].filter((x): x is string => !!x).slice(0, 3).map((x) => (
+                      <DotChip key={x} label={x} />
+                    ))}
+                  </View>
+                )}
+                {occasion(e) && <Badge label={`Occasion · ${e.dressCode ?? 'chic'}`} tone="neutral" icon="gift" />}
+              </View>
+              <Icon name="chevron" size={18} color={c.ink2} />
+            </Tap>
+          ))}
+          <Button testID="agenda-add-event" label="Ajouter un rendez-vous" variant="plain" size="m" icon="plus" onPress={() => nav.navigate('EventEdit', { date: iso })} />
+        </Card>
 
         {/* La tenue du jour choisi. */}
         {planned && pieces.length ? (
           <Card style={{ gap: 12, padding: 14 }} testID="agenda-planned">
             <View className="flex-row items-center justify-between">
-              <Tag label={todayOutfit ? 'Portée' : s.planned[day] ? 'Prévue' : 'Proposée'} />
-              {s.planned[day] && !todayOutfit && (
-                <T testID="agenda-unplan" v="caption" tone="ink2" onPress={() => a.unplan(day)} accessibilityRole="button" style={{ paddingVertical: 10, paddingLeft: 10 }}>
+              <Tag label={todayOutfit ? 'Portée' : s.planned[iso] ? 'Prévue' : 'Proposée'} />
+              {s.planned[iso] && !todayOutfit && (
+                <T testID="agenda-unplan" v="caption" tone="ink2" onPress={() => a.unplan(iso)} accessibilityRole="button" style={{ paddingVertical: 10, paddingLeft: 10 }}>
                   Retirer
                 </T>
               )}
@@ -226,7 +219,7 @@ export function Agenda() {
               <OutfitBoard pieces={pieces} width={W - 28 - 24} numbered={false} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
             </View>
             <T v="cardTitle" style={{ paddingHorizontal: 4 }}>{planned.title}</T>
-            {!todayOutfit && <Button testID="agenda-change" label="Changer la tenue" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { day, pieces: planned.pieces })} />}
+            {!todayOutfit && <Button testID="agenda-change" label="Changer la tenue" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { date: iso, pieces: planned.pieces })} />}
           </Card>
         ) : (
           <Card style={{ gap: 12, padding: 14 }} testID="agenda-empty">
@@ -245,7 +238,7 @@ export function Agenda() {
                   {events.length ? `Tu pourrais préparer « ${events[0].title} ».` : 'Tu pourrais préparer ta tenue la veille.'}
                 </T>
                 <View style={{ gap: 8 }}>
-                  <Button testID="agenda-compose" label="Composer" icon="layers" onPress={() => nav.navigate('Compose', { day })} />
+                  <Button testID="agenda-compose" label="Composer" icon="layers" onPress={() => nav.navigate('Compose', { date: iso })} />
                   <Button testID="agenda-ask" label="Demander à Kode" variant="quiet" icon="kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: events[0] ? `Une tenue pour « ${events[0].title} »` : `Une tenue pour ${relativeDay(day).toLowerCase()}`, nonce: Date.now() } })} />
                 </View>
               </>
@@ -257,21 +250,29 @@ export function Agenda() {
           <Card style={{ gap: 4, padding: 14 }}>
             <Tag label="À venir" />
             {later.map((e, k) => (
-              <Tap key={e.id} testID={`later-${e.id}`} onPress={() => (e.occasion ? nav.navigate('Event', { id: e.id }) : pick(e.day))} scaleTo={0.99} accessibilityLabel={`${shortDate(e.day)}, ${e.title}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: 14, borderBottomWidth: k === later.length - 1 ? 0 : 1, borderColor: c.rule }}>
+              <Tap key={e.id} testID={`later-${e.id}`} onPress={() => (occasion(e) ? nav.navigate('Event', { id: e.id }) : offsetOf(e.date) < 14 ? pick(offsetOf(e.date)) : nav.navigate('Planning', { date: e.date }))} scaleTo={0.99} accessibilityLabel={`${dayName(e.date)}, ${e.title}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: 14, borderBottomWidth: k === later.length - 1 ? 0 : 1, borderColor: c.rule }}>
                 <T v="kicker" tone="ink2" style={{ width: 86 }}>
-                  {cap(shortDate(e.day))}
+                  {dayName(e.date)}
                 </T>
                 <T v="body" style={{ flex: 1 }} numberOfLines={1}>
                   {e.title}
                 </T>
-                {e.occasion && <Icon name="gift" size={18} color={c.ink} />}
+                {occasion(e) && <Icon name="gift" size={18} color={c.ink} />}
                 <Icon name="chevron" size={16} color={c.ink2} />
               </Tap>
             ))}
           </Card>
         )}
       </Animated.ScrollView>
-      <TabHeader title="Agenda" meta={cap(relativeDay(day))} y={edge} actions={day !== 0 ? [{ icon: 'calendar', label: 'Revenir à aujourd’hui', onPress: () => pick(0), testID: 'agenda-today' }] : []} />
+      <TabHeader
+        title="Agenda"
+        meta={cap(relativeDay(day))}
+        y={edge}
+        actions={[
+          ...(day !== 0 ? [{ icon: 'clock' as const, label: 'Revenir à aujourd’hui', onPress: () => pick(0), testID: 'agenda-today' }] : []),
+          { icon: 'calendar' as const, label: 'Le mois et les voyages', onPress: () => nav.navigate('Planning', { date: iso }), testID: 'agenda-month' },
+        ]}
+      />
     </View>
   );
 }

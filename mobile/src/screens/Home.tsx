@@ -4,10 +4,12 @@ import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSh
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { WEATHER_WORD, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, lcFirst, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
-import { MODULE_LABELS, eventsOf, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { MODULE_LABELS, eventsOn, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { isoOf, spanLabel } from '../state/planning';
+import { usePlanifier } from '../state/usePlanifier';
 import { ferieDu, tendancesChezToi } from '../state/contexte';
 import { Credit } from '../ui/Credit';
-import { canCompose, missingForOutfit, suggestOutfits } from '../state/outfits';
+import { canCompose, missingForOutfit } from '../state/outfits';
 import { FirstRail } from '../ui/onboarding';
 import { useTheme } from '../theme/ThemeProvider';
 import { material, motion, space, TAB_CLEARANCE } from '../theme/tokens';
@@ -15,7 +17,7 @@ import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
-import { DressRows, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
+import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { Card, Tag, WeatherIcon } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
@@ -310,28 +312,6 @@ function DotLine({ text }: { text: string }) {
   );
 }
 
-/** Une tenue posée à plat : le haut à gauche, le bas qui le chevauche, les chaussures devant. */
-function FlatLay({ pieces, w, h }: { pieces: Piece[]; w: number; h: number }) {
-  const { c, scheme } = useTheme();
-  const find = (rows: RowId[]) => pieces.find((p) => rows.includes(rowOf(p)));
-  const top = find(['haut', 'veste']);
-  const bottom = find(['bas']);
-  const feet = find(['pieds']);
-  const put = (p: Piece | undefined, size: number, at: object) =>
-    p ? (
-      <View style={[{ position: 'absolute' }, at]}>
-        <Garment kind={p.kind} tint={p.tint} image={p.image} size={size} dark={scheme === 'dark'} label={p.name} />
-      </View>
-    ) : null;
-  return (
-    <View style={{ width: w, height: h, borderRadius: 22, backgroundColor: c.stage, overflow: 'hidden' }}>
-      {top ? put(bottom, w * 0.64, { right: -2, top: h * 0.18 }) : put(bottom, w * 0.78, { left: w * 0.11, top: 0 })}
-      {put(top, w * 0.52, { left: 0, top: 0 })}
-      {put(feet, w * 0.56, { left: -2, top: h * 0.42 })}
-    </View>
-  );
-}
-
 /** Un jour de la semaine : sa tenue posée à plat, ou une carte en pointillés pour la prévoir. */
 function DayCard({ d }: { d: number }) {
   const { s } = useStore();
@@ -339,11 +319,12 @@ function DayCard({ d }: { d: number }) {
   const nav = useNavigation<Nav>();
   const { c } = useTheme();
   const w = meteo.jours[d];
-  const o = s.planned[d];
-  const ev = eventsOf(s.profile).find((e) => e.day === d);
+  const date = isoOf(d);
+  const o = s.planned[date];
+  const ev = eventsOn(s.events, date)[0];
   const ferie = ferieDu(s.contexte, d);
   const label = d === 1 ? 'Demain' : capital(DAYS_SHORT[dayDate(d).getDay()]);
-  const date = String(dayDate(d).getDate()).padStart(2, '0');
+  const num = String(dayDate(d).getDate()).padStart(2, '0');
   const pieces = o ? (o.pieces.map((id) => s.pieces.find((p) => p.id === id)).filter(Boolean) as Piece[]) : [];
   const note = ev?.title ?? ferie?.nom ?? o?.title ?? null;
   const said = [relativeDay(d), shortDate(d), w ? `${w.t} degrés, ${w.label}` : null, note].filter(Boolean).join(', ');
@@ -360,13 +341,13 @@ function DayCard({ d }: { d: number }) {
         ) : null}
       </View>
       <T v="stat" style={{ fontSize: 44, lineHeight: 46 }}>
-        {date}
+        {num}
       </T>
     </>
   );
   if (!o)
     return (
-      <Tap testID={`week-plan-${d}`} onPress={() => nav.navigate('Compose', { day: d })} accessibilityLabel={`Prévoir une tenue : ${said}`} scaleTo={0.98} style={[shell, { borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.faint }]}>
+      <Tap testID={`week-plan-${d}`} onPress={() => nav.navigate('Compose', { date })} accessibilityLabel={`Prévoir une tenue : ${said}`} scaleTo={0.98} style={[shell, { borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.faint }]}>
         {top}
         <View style={{ height: 132, alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: c.pill, alignItems: 'center', justifyContent: 'center' }}>
@@ -380,7 +361,7 @@ function DayCard({ d }: { d: number }) {
       </Tap>
     );
   return (
-    <Tap testID={`planned-${d}`} onPress={() => nav.navigate('Tabs', { screen: 'Agenda', params: { day: d } })} accessibilityLabel={`Tenue prévue : ${said}`} scaleTo={0.98} style={[shell, { backgroundColor: c.card, borderWidth: d === 1 ? 1.5 : 1, borderColor: d === 1 ? c.ink : c['card-edge'] }]}>
+    <Tap testID={`planned-${d}`} onPress={() => nav.navigate('Planning', { date })} accessibilityLabel={`Tenue prévue : ${said}`} scaleTo={0.98} style={[shell, { backgroundColor: c.card, borderWidth: d === 1 ? 1.5 : 1, borderColor: d === 1 ? c.ink : c['card-edge'] }]}>
       {top}
       <FlatLay pieces={pieces} w={126} h={132} />
       <View style={{ height: 16 }}>
@@ -401,33 +382,37 @@ function Week() {
   const nav = useNavigation<Nav>();
   const { c } = useTheme();
   const outfits = useTodayOutfits();
-  const ready = (i: number) => (i === 0 ? outfits.length > 0 || !!s.wornToday : !!s.planned[i]);
+  const planifier = usePlanifier();
+  const [busy, setBusy] = useState(false);
+  const ready = (i: number) => (i === 0 ? outfits.length > 0 || !!s.wornToday : !!s.planned[isoOf(i)]);
   const count = Array.from({ length: 7 }, (_, i) => ready(i)).filter(Boolean).length;
-  const empty = [1, 2, 3, 4, 5, 6].filter((d) => !s.planned[d]);
-  const fill = () => {
-    let n = 0;
-    empty.forEach((d, k) => {
-      // Une tenue par jour vide, selon sa météo, en évitant de répéter la veille.
-      const opts = suggestOutfits(s.pieces, meteo.jours[d] ?? null);
-      const o = opts[(d + k) % Math.max(1, opts.length)];
-      if (!o) return;
-      a.plan(d, { title: 'Par Kode', pieces: o.pieces });
-      n++;
-    });
-    if (n) a.toast(n > 1 ? `${n} tenues prévues` : 'Une tenue prévue');
+  const empty = [1, 2, 3, 4, 5, 6].filter((d) => !s.planned[isoOf(d)]).map((d) => isoOf(d));
+  const trip = s.trips.find((t) => t.end >= isoOf(0));
+  const fill = async () => {
+    setBusy(true);
+    try {
+      // Kode prépare les jours vides, avec les rendez-vous et la météo de chacun.
+      const out = await planifier(empty);
+      const n = Object.keys(out).length;
+      for (const [d, o] of Object.entries(out)) a.plan(d, o, 'kode');
+      if (n) a.toast(n > 1 ? `${n} tenues prévues` : 'Une tenue prévue');
+    } finally {
+      setBusy(false);
+    }
   };
+  const month = () => nav.navigate('Planning', {});
   return (
     <View style={{ gap: 14 }} testID="home-week">
       <View className="flex-row items-end justify-between" style={{ paddingHorizontal: 4 }}>
-        <T v="hero" accessibilityRole="header" style={{ fontSize: 34, lineHeight: 36 }}>
+        <T testID="home-week-title" v="hero" accessibilityRole="header" onPress={month} suppressHighlighting style={{ fontSize: 34, lineHeight: 36 }}>
           Ta semaine
         </T>
-        <T testID="module-semaine-action" v="caption" tone="ink2" onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12, marginVertical: -12 }}>
-          Agenda
+        <T testID="module-semaine-action" v="caption" tone="ink2" onPress={month} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12, marginVertical: -12 }}>
+          Calendrier
         </T>
       </View>
       {/* Sept jours : le trait se remplit quand la tenue est prête. */}
-      <View className="flex-row items-end" style={{ gap: 6, paddingHorizontal: 4 }} accessible accessibilityLabel={`${count} jours sur 7 ont leur tenue`}>
+      <Tap testID="home-week-bar" onPress={month} scaleTo={1} feedback="none" accessibilityLabel={`${count} jours sur 7 ont leur tenue, ouvrir le calendrier`} style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, paddingHorizontal: 4 }}>
         {Array.from({ length: 7 }, (_, i) => (
           <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
             <View style={{ alignSelf: 'stretch', height: 6, borderRadius: 3, backgroundColor: ready(i) ? c.ink : c.rule }} />
@@ -437,13 +422,22 @@ function Week() {
           </View>
         ))}
         <T v="kicker" style={{ paddingLeft: 8 }}>{`${count}/7`}</T>
-      </View>
+      </Tap>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 10, gap: 10 }}>
         {[1, 2, 3, 4, 5, 6].map((d) => (
           <DayCard key={d} d={d} />
         ))}
       </ScrollView>
-      {empty.length > 0 && canCompose(s.pieces) && <Button testID="week-fill" label="Compléter avec Kode" variant="secondary" icon="kode" onPress={fill} />}
+      {trip && (
+        <Tap testID="home-trip" onPress={() => nav.navigate('Trip', { id: trip.id })} scaleTo={0.99} accessibilityLabel={`Voyage à ${trip.destination}, ${spanLabel(trip.start, trip.end)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>
+          <Icon name="plane" size={18} color={c.ink} />
+          <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={1}>
+            {`${trip.destination} · ${spanLabel(trip.start, trip.end)}`}
+          </T>
+          <Icon name="chevron" size={16} color={c.ink2} />
+        </Tap>
+      )}
+      {empty.length > 0 && canCompose(s.pieces) && <Button testID="week-fill" label="Compléter avec Kode" variant="secondary" icon="kode" loading={busy} onPress={fill} />}
       {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
     </View>
   );
@@ -482,7 +476,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   // Kode : une bulle de message rose poudré, son coin bas presque droit.
   if (id === 'kode') {
-    const tomorrow = eventsOf(s.profile).find((e) => e.day === 1);
+    const tomorrow = eventsOn(s.events, isoOf(1))[0];
     const asks = [
       tomorrow ? `${capital(lcFirst(tomorrow.title))}, demain` : 'Une tenue pour demain',
       s.profile.occasions.includes('Bureau') ? 'Tenue de bureau' : 'Une tenue pour ce soir',

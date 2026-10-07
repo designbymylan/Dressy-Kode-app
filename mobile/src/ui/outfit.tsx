@@ -273,3 +273,39 @@ export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, on
     </View>
   );
 }
+
+/** Une tenue posée à plat : le haut à gauche, le bas qui le chevauche, les chaussures devant. */
+export function FlatLay({ pieces, w, h }: { pieces: Piece[]; w: number; h: number }) {
+  const { c, scheme } = useTheme();
+  const find = (rows: RowId[]) => pieces.find((p) => rows.includes(rowOf(p)));
+  const top = find(['haut', 'veste']);
+  const bottom = find(['bas']);
+  const feet = find(['pieds']);
+  const put = (p: Piece | undefined, size: number, at: object) =>
+    p ? (
+      <View key={p.id} style={[{ position: 'absolute' }, at]}>
+        <Garment kind={p.kind} tint={p.tint} image={p.image} size={size} dark={scheme === 'dark'} label={p.name} />
+      </View>
+    ) : null;
+  // Un cadre allongé : les pièces côte à côte, de la tête aux pieds, entières.
+  if (w > h * 1.3) {
+    const row = [find(['veste']), find(['haut']), bottom, feet].filter((p): p is Piece => !!p).slice(0, 4);
+    const size = Math.min((h * 0.86) / 1.25, (w - 16) / Math.max(1, row.length));
+    return (
+      <View style={{ width: w, height: h, borderRadius: 22, backgroundColor: c.stage, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {row.map((p) => (
+          <View key={p.id} style={{ marginHorizontal: -size * 0.04 }}>
+            <Garment kind={p.kind} tint={p.tint} image={p.image} size={size} dark={scheme === 'dark'} label={p.name} />
+          </View>
+        ))}
+      </View>
+    );
+  }
+  return (
+    <View style={{ width: w, height: h, borderRadius: 22, backgroundColor: c.stage, overflow: 'hidden' }}>
+      {top ? put(bottom, w * 0.64, { right: -2, top: h * 0.18 }) : put(bottom, w * 0.78, { left: w * 0.11, top: 0 })}
+      {put(top, w * 0.52, { left: 0, top: 0 })}
+      {put(feet, w * 0.56, { left: -2, top: h * 0.42 })}
+    </View>
+  );
+}

@@ -33,6 +33,7 @@ import { wikipedia, urlVues, fenetre } from './sources/wikipedia.ts';
 import { selectionDeSaison } from './sources/saison.ts';
 import { fete } from './sources/fete.ts';
 import { contexteDuJour } from './contexte.ts';
+import { chercherLieux, choisirPhoto, largeur, lireGeo, lirePhoto, pageFichier, photoDuLieu } from './voyage.ts';
 
 let fails = 0;
 const check = (label: string, ok: boolean, detail = '') => {
@@ -131,6 +132,27 @@ console.log('\n· Hors ligne');
 }
 
 check('sélection de saison en octobre : le trench en tête', selectionDeSaison('2026-10-02')[0]?.kind === 'trench');
+
+// Voyages (07/10) : lecture des lieux et de la photo, sans réseau.
+{
+  const l = lireGeo({ results: [{ name: 'Tokyo', latitude: 35.69, longitude: 139.69, country: 'Japon', admin1: 'Préfecture de Tokyo' }] });
+  check('voyage : un lieu lu avec son pays', l[0].nom === 'Tokyo' && l[0].pays === 'Japon' && l[0].lat === 35.69);
+  let vide = false;
+  try { lireGeo({}); } catch { vide = true; }
+  check('voyage : lieu introuvable, la lecture échoue (la chaîne de repli prend le relais)', vide);
+  const src = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6d/Tokyo_Tower%2C_Minato_City.jpg/330px-Tokyo_Tower%2C_Minato_City.jpg?utm_source=fr.wikipedia.org';
+  check('voyage : vignette agrandie à 960 px, sans paramètres', largeur(src) === 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6d/Tokyo_Tower%2C_Minato_City.jpg/960px-Tokyo_Tower%2C_Minato_City.jpg');
+  check('voyage : page Commons du fichier pour le crédit', pageFichier(src) === 'https://commons.wikimedia.org/wiki/File:Tokyo_Tower%2C_Minato_City.jpg');
+  const ph = lirePhoto({ thumbnail: { source: src } });
+  check('voyage : la photo porte son crédit', ph.credit.includes('Wikimedia') && ph.url.includes('960px'));
+  let drapeau = false;
+  try { lirePhoto({ thumbnail: { source: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Bandeira_municipal_de_Lisboa.png/330px-Bandeira_municipal_de_Lisboa.png' } }); } catch { drapeau = true; }
+  check('voyage : un drapeau n’est pas une photo du lieu', drapeau);
+  const info = (title: string, w: number, h: number, mime = 'image/jpeg') => ({ title, imageinfo: [{ url: `https://u/${title}`, thumburl: `https://t/${title}`, width: w, height: h, mime, descriptionurl: `https://d/${title}`, extmetadata: { Artist: { value: '<a href="x">Ana</a>' }, LicenseShortName: { value: 'CC BY-SA 4.0' } } }] });
+  const choisie = choisirPhoto({ query: { pages: [info('Fichier:Coat_of_arms.jpg', 4000, 3000), info('Fichier:Tram.jpg', 1200, 900), info('Fichier:Vue_de_Lisbonne.jpg', 4000, 2000), info('Fichier:Portrait.jpg', 1000, 1500), info('Fichier:Plan.png', 5000, 3000, 'image/png')] } });
+  check('voyage : la plus grande photo en paysage, sans blason', choisie.url === 'https://t/Fichier:Vue_de_Lisbonne.jpg', choisie.url);
+  check('voyage : auteur et licence au crédit', choisie.credit === 'Photo : Ana, CC BY-SA 4.0, Wikimedia Commons', choisie.credit);
+}
 
 // ================================================================ en ligne
 
@@ -278,6 +300,15 @@ await essai('contexte complet pour Lyon (cache en mémoire)', async () => {
   const t = Date.now();
   await contexteDuJour(cache, 'lyon');
   return `${etats.join(' ')} · second appel ${Date.now() - t} ms (cache)`;
+});
+
+await essai('Voyage : Tokyo trouvé dans le monde, avec sa photo', async () => {
+  const cache = cacheMemoire();
+  const l = await chercherLieux(cache, 'Tokyo');
+  vrai(l.etat === 'frais' && l.valeur?.[0]?.pays === 'Japon', JSON.stringify(l.valeur?.[0]));
+  const ph = await photoDuLieu(cache, 'Tokyo');
+  vrai(ph.etat === 'frais' && !!ph.valeur?.url, ph.message ?? '');
+  return `${l.valeur?.[0]?.nom}, ${l.valeur?.[0]?.pays} · ${ph.valeur?.url.slice(0, 70)}…`;
 });
 
 await essai('ville introuvable : un message clair, et les fériés quand même', async () => {

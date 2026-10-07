@@ -1,5 +1,6 @@
 import type { NavigatorScreenParams, NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CategoryId } from '../data/wardrobe';
+import type { Iso } from '../state/planning';
 
 export type TabParams = {
   Home: undefined;
@@ -16,7 +17,13 @@ export type RootParams = {
   /** `from` : où était la vignette touchée, pour que la fiche naisse d'elle. */
   Piece: { id: string; from?: { x: number; y: number; w: number; h: number } };
   AddPiece: undefined;
-  Compose: { day?: number; with?: string; pieces?: string[] } | undefined;
+  Compose: { day?: number; date?: Iso; with?: string; pieces?: string[] } | undefined;
+  /** Le grand calendrier des tenues prévues (07/10). */
+  Planning: { date?: Iso; choisir?: boolean } | undefined;
+  /** Un rendez-vous à créer (date) ou à corriger (id). */
+  EventEdit: { id?: string; date?: Iso } | undefined;
+  /** Un voyage à préparer, ou à revoir (id). */
+  Trip: { id?: string } | undefined;
   Event: { id: string };
   Silhouette: undefined;
   Customize: undefined;

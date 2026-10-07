@@ -16,11 +16,12 @@ import { kodeReply, type KodeMessage, type KodeOutfit } from './kode';
 import { todayOutfits } from './outfits';
 import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
-import type { Account, PlanId, Period, Photo, Planned, Session } from './remote';
+import type { Account, NotifChoice, PlanId, Period, Photo, Planned, Session } from './remote';
+import { isoOf, newId, type Iso, type RdvEvent, type Trip } from './planning';
 import { isActive, type JobRow } from './jobs';
 import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './contexte';
 
-export type { PlanId, Period, Planned, Session };
+export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
 export type HomeModule = 'tenue' | 'semaine' | 'kode' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
@@ -99,7 +100,13 @@ type State = {
   pieces: Piece[];
   outfitIndex: number;
   wornToday: string[] | null;
-  planned: Record<number, Planned>;
+  /** Les tenues prévues, par date (AAAA-MM-JJ), sur le mois passé et les mois à venir. */
+  planned: Record<Iso, Planned>;
+  /** Les rendez-vous décrits par la personne (heure, type, importance, tenue voulue…). */
+  events: RdvEvent[];
+  trips: Trip[];
+  /** Ce qu'elle accepte de recevoir ; null : pas encore demandé. */
+  notifs: NotifChoice | null;
   messages: KodeMessage[];
   kodeUsed: number;
   kodeTyping: boolean;
@@ -140,6 +147,9 @@ const initial: State = {
   outfitIndex: 0,
   wornToday: null,
   planned: {},
+  events: [],
+  trips: [],
+  notifs: null,
   messages: [],
   kodeUsed: 0,
   kodeTyping: false,
@@ -169,9 +179,10 @@ const demo: State = {
   profile: DEMO_PROFILE,
   pieces: PIECES,
   planned: {
-    1: { title: 'Noir sur noir, mais doux', pieces: ['r1', 'm2', 'c5', 'a2'] },
-    4: { title: 'Net, sans raideur', pieces: ['m2', 'h5', 'b4', 'c2', 'a1'] },
+    [isoOf(1)]: { title: 'Noir sur noir, mais doux', pieces: ['r1', 'm2', 'c5', 'a2'] },
+    [isoOf(4)]: { title: 'Net, sans raideur', pieces: ['m2', 'h5', 'b4', 'c2', 'a1'] },
   },
+  events: demoEvents(),
   kodeUsed: 12,
   plan: 'capsule',
 };
@@ -192,8 +203,13 @@ type Action =
   | { t: 'swapId'; from: string; to: string }
   | { t: 'removePiece'; id: string }
   | { t: 'updatePiece'; piece: Piece }
-  | { t: 'plan'; day: number; outfit: Planned }
-  | { t: 'unplan'; day: number }
+  | { t: 'plan'; date: Iso; outfit: Planned }
+  | { t: 'unplan'; date: Iso }
+  | { t: 'saveEvent'; event: RdvEvent }
+  | { t: 'removeEvent'; id: string }
+  | { t: 'saveTrip'; trip: Trip; days: Record<Iso, Planned> }
+  | { t: 'removeTrip'; id: string }
+  | { t: 'notifs'; choice: NotifChoice }
   | { t: 'ask'; message: KodeMessage }
   | { t: 'answer'; message: KodeMessage; refund?: boolean }
   | { t: 'setPlan'; plan: PlanId; period: Period }
@@ -220,7 +236,13 @@ let lastJobsRead = 0;
 function reducer(s: State, a: Action): State {
   switch (a.t) {
     case 'hydrate':
-      return { ...s, ...a.patch, ...(a.patch.modules ? { modules: normalizeModules(a.patch.modules) } : {}), booting: false };
+      return {
+        ...s,
+        ...a.patch,
+        ...(a.patch.modules ? { modules: normalizeModules(a.patch.modules) } : {}),
+        ...(a.patch.planned ? { planned: normalizePlanned(a.patch.planned) } : {}),
+        booting: false,
+      };
     case 'account': {
       const { acc } = a;
       // Questionnaire pas encore rempli : on garde la session et on repart de l'onboarding.
@@ -234,6 +256,9 @@ function reducer(s: State, a: Action): State {
         profile: acc.onboarded ? acc.profile : { ...EMPTY_PROFILE, name: acc.profile.name, email: acc.session.email },
         pieces: acc.pieces,
         planned: acc.planned,
+        events: acc.events,
+        trips: acc.trips,
+        notifs: acc.notifs ?? s.notifs,
         messages: acc.messages,
         kodeUsed: acc.kodeUsed,
         plan: acc.plan,
@@ -290,12 +315,26 @@ function reducer(s: State, a: Action): State {
     case 'removePiece':
       return { ...s, undo: s.pieces, pieces: s.pieces.filter((p) => p.id !== a.id), toast: { id: ++toastId, text: 'Pièce retirée du dressing', undo: true } };
     case 'plan':
-      return { ...s, planned: { ...s.planned, [a.day]: a.outfit } };
+      return { ...s, planned: { ...s.planned, [a.date]: a.outfit } };
     case 'unplan': {
       const planned = { ...s.planned };
-      delete planned[a.day];
+      delete planned[a.date];
       return { ...s, planned };
     }
+    case 'saveEvent':
+      return { ...s, events: [...s.events.filter((e) => e.id !== a.event.id), a.event].sort((x, z) => (x.date + (x.time ?? '')).localeCompare(z.date + (z.time ?? ''))) };
+    case 'removeEvent':
+      return { ...s, events: s.events.filter((e) => e.id !== a.id) };
+    case 'saveTrip':
+      return { ...s, trips: [...s.trips.filter((t) => t.id !== a.trip.id), a.trip].sort((x, z) => x.start.localeCompare(z.start)), planned: { ...s.planned, ...a.days } };
+    case 'removeTrip':
+      return {
+        ...s,
+        trips: s.trips.filter((t) => t.id !== a.id),
+        planned: Object.fromEntries(Object.entries(s.planned).filter(([, o]) => o.tripId !== a.id)),
+      };
+    case 'notifs':
+      return { ...s, notifs: a.choice };
     case 'ask':
       return { ...s, messages: [...s.messages, a.message], kodeUsed: s.kodeUsed + 1, kodeTyping: true };
     case 'answer':
@@ -363,7 +402,7 @@ function reducer(s: State, a: Action): State {
 /* ---- Ce qui est gardé sur le téléphone ---- */
 
 const SAVED = 'dresskode:etat:v1';
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -410,13 +449,16 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       });
 
     /** Envoie un espace rempli sur ce téléphone vers le compte, puis relit tout. */
-    const push = async (session: Session, profile: Profile, pieces: Piece[], planned: Record<number, Planned>) => {
+    const push = async (session: Session, profile: Profile, pieces: Piece[], planned: Record<Iso, Planned>, events: RdvEvent[] = [], trips: Trip[] = []) => {
       const ids = await remote.addPieces(session, pieces);
       const idOf = new Map(pieces.map((p, i) => [p.id, ids[i]]));
       const saved = pieces.map((p, i) => ({ ...p, id: ids[i] }));
-      for (const [day, o] of Object.entries(planned)) {
-        if (Number(day) < 0) continue;
-        await remote.plan(session, Number(day), { ...o, pieces: o.pieces.map((id) => idOf.get(id) ?? id) }, saved);
+      // Les voyages d'abord : leurs tenues y renvoient.
+      for (const t of trips) await remote.saveTrip(session, t);
+      for (const e of events) await remote.saveEvent(session, e);
+      for (const [date, o] of Object.entries(planned)) {
+        if (date < isoOf(0)) continue;
+        await remote.plan(session, date, { ...o, pieces: o.pieces.map((id) => idOf.get(id) ?? id) }, saved);
       }
       // En dernier : le compte n'est marqué « rempli » qu'une fois tout arrivé.
       await remote.saveProfile(session, profile, true);
@@ -462,7 +504,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
               // Compte créé après coup (depuis Moi ou l'ajout d'une pièce) : l'espace
               // rempli sur ce téléphone part sur le compte, puis les photos en attente.
               dispatch({ t: 'session', session: acc.session, pendingEmail: null });
-              await push(acc.session, s.profile, s.pieces, s.planned);
+              await push(acc.session, s.profile, s.pieces, s.planned, s.events, s.trips);
               await sendPending(acc.session, s.pendingPhotos);
             } else {
               dispatch({ t: 'session', session: acc?.session ?? null, pendingEmail: null });
@@ -487,7 +529,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
           const s = getState();
           if (!acc.onboarded && s.onboarded && s.account === 'nouveau') {
             dispatch({ t: 'session', session: acc.session, pendingEmail: null });
-            await push(acc.session, s.profile, s.pieces, s.planned);
+            await push(acc.session, s.profile, s.pieces, s.planned, s.events, s.trips);
             dispatch({ t: 'toast', text: 'Ton espace est enregistré sur ton compte' });
             // Les photos du questionnaire attendaient le compte : elles partent maintenant.
             await sendPending(acc.session, s.pendingPhotos);
@@ -553,15 +595,47 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         lastUndo.current = { kind: 'remove', id };
         if (live()) sync(remote.setPieceStatus(id, 'archived'));
       },
-      plan: (day: number, outfit: Planned) => {
-        dispatch({ t: 'plan', day, outfit });
+      plan: (date: Iso, outfit: Planned, source: 'user' | 'kode' = 'user') => {
+        dispatch({ t: 'plan', date, outfit });
         const session = live();
-        if (session) sync(remote.plan(session, day, outfit, getState().pieces));
+        if (session) sync(remote.plan(session, date, outfit, getState().pieces, source));
       },
-      unplan: (day: number) => {
-        dispatch({ t: 'unplan', day });
+      unplan: (date: Iso) => {
+        dispatch({ t: 'unplan', date });
         const session = live();
-        if (session) sync(remote.unplan(session, day));
+        if (session) sync(remote.unplan(session, date));
+      },
+      /** Un rendez-vous créé ou corrigé ; il garde son identifiant, le même en base. */
+      saveEvent: (event: RdvEvent) => {
+        dispatch({ t: 'saveEvent', event });
+        const session = live();
+        if (session) sync(remote.saveEvent(session, event));
+      },
+      removeEvent: (id: string) => {
+        dispatch({ t: 'removeEvent', id });
+        if (live()) sync(remote.removeEvent(id));
+      },
+      /** Un voyage et ses tenues, un jour après l'autre. */
+      saveTrip: (trip: Trip, days: Record<Iso, Planned> = {}) => {
+        const tagged = Object.fromEntries(Object.entries(days).map(([d, o]) => [d, { ...o, tripId: trip.id }]));
+        dispatch({ t: 'saveTrip', trip, days: tagged });
+        const session = live();
+        if (session)
+          sync(
+            (async () => {
+              await remote.saveTrip(session, trip);
+              for (const [d, o] of Object.entries(tagged)) await remote.plan(session, d, o, getState().pieces);
+            })(),
+          );
+      },
+      removeTrip: (id: string) => {
+        dispatch({ t: 'removeTrip', id });
+        if (live()) sync(remote.removeTrip(id));
+      },
+      setNotifs: (choice: NotifChoice) => {
+        dispatch({ t: 'notifs', choice });
+        const session = live();
+        if (session) sync(remote.saveNotifs(session, choice));
       },
       askKode: (text: string) => {
         const s = getState();
@@ -789,7 +863,49 @@ export const sleeping = (pieces: Piece[]) =>
   pieces.filter((p) => p.addedDaysAgo >= 30 && (p.lastWorn === null || p.lastWorn > 60)).sort((a, b) => (b.lastWorn ?? 9999) - (a.lastWorn ?? 9999));
 
 /** Les événements visibles : seulement si l'agenda est relié. */
-export const eventsOf = (profile: Profile) => (profile.agenda ? EVENTS : []);
+/** Les rendez-vous d'un jour, par heure. */
+export const eventsOn = (events: RdvEvent[], date: Iso) => events.filter((e) => e.date === date).sort((x, z) => (x.time ?? '99').localeCompare(z.time ?? '99'));
+
+/**
+ * L'ancien état gardé comptait les jours depuis aujourd'hui (« 1 » : demain) ;
+ * il devient une date, au mieux : relue au lancement, elle vaut pour ce jour-là.
+ */
+function normalizePlanned(planned: Record<string, Planned>): Record<Iso, Planned> {
+  return Object.fromEntries(Object.entries(planned).map(([k, o]) => [/^-?\d+$/.test(k) ? isoOf(Number(k)) : k, o]));
+}
+
+/** Le compte de démonstration : les rendez-vous d'Alice, datés à partir d'aujourd'hui. */
+function demoEvents(): RdvEvent[] {
+  const time = (t: string) => {
+    const m = t.match(/(\d+) h(?: (\d+))?/);
+    return m ? `${m[1].padStart(2, '0')}:${(m[2] ?? '00').padStart(2, '0')}` : null;
+  };
+  const extra: Record<string, Partial<RdvEvent>> = {
+    e1: { kind: 'Rendez-vous client', stake: 'Important', dressCode: 'Business' },
+    e2: { kind: 'Rendez-vous entre amis', stake: 'Tranquille', dressCode: 'Casual chic', setting: 'Intérieur' },
+    e3: { kind: 'Sport', stake: 'Tranquille', dressCode: 'Sportswear' },
+    e4: { kind: 'Présentation', stake: 'Décisif', dressCode: 'Business', impressions: ['Confiance', 'Sérieux'] },
+    e5: { kind: 'Mariage (invité)', stake: 'Important', dressCode: 'Chic', setting: 'Les deux', constraints: ['Danser', 'Debout longtemps'] },
+    e6: { kind: 'Repas de famille', stake: 'Tranquille', dressCode: 'Décontracté' },
+  };
+  return EVENTS.map((e) => ({
+    id: e.id,
+    date: isoOf(e.day),
+    time: time(e.time),
+    title: e.title,
+    kind: null,
+    dressCode: e.occasion?.dressCode ?? null,
+    stake: null,
+    impressions: [],
+    place: e.place ?? null,
+    setting: null,
+    constraints: [],
+    note: e.occasion?.details ?? null,
+    ...extra[e.id],
+  }));
+}
+
+export { newId };
 
 /**
  * La météo à afficher : la vraie (fonction `donnees`) pour un compte
