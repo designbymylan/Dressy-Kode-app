@@ -181,8 +181,11 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   `tools/detour-photos.cjs` dans `mobile/assets/pieces/` et montrées par
   `image: 'photo:<clé>'` (`data/photos.ts`) : portant de l'accueil, carte
   de style Urbain, dressing de démonstration. Les autres cartes de style
-  gardent leurs dessins en attendant d'autres photos. Une photo qui porte
-  une marque lisible n'est pas utilisée.
+  gardent leurs dessins en attendant d'autres photos.
+- **Les marques sur les vêtements** (décision du 07/10) : un vêtement de
+  marque, d'exemple ou de figuration, se montre tel qu'il est, logo et
+  inscriptions compris. Pas de censure sur l'image ; les textes de l'app ne
+  nomment toujours aucune marque.
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -351,7 +354,8 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   Kode travaille.
 - Mode conseil : « tu pourrais », jamais « tu dois ».
 - Prix à la française : `12,99 €`.
-- Aucune marque de vêtement, enseigne ou logo réel.
+- Aucune marque de vêtement ni enseigne dans les textes. Sur l'image d'un
+  vêtement de marque, le logo reste visible tel quel (décision du 07/10).
 - Jamais de pop-up : les offres apparaissent en contexte, les feuilles ne
   s'ouvrent que sur un geste.
 - Les noms « Dresskode » et « Kode » ne changent pas.

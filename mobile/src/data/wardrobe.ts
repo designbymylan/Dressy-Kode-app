@@ -100,6 +100,7 @@ export const PIECES: Piece[] = [
   p('a3', 'Foulard soie', 'foulard', 'accessoires', 'Camel et crème', '#C49A6C', 'Soie', 'toute l’année', 3, 70, 400, 60),
   p('a4', 'Foulard marine', 'foulard', 'accessoires', 'Marine', '#2F3B52', 'Soie', 'toute l’année', 1, 210, 380, 55, '#2F3B52'),
   p('m6', 'Blouson zippé noir', 'veste', 'manteaux', 'Noir', '#1F1F22', 'Sergé de coton', 'mi-saison', 11, 20, 500, 120, '#1F1F22', photo('blouson-noir')),
+  p('h13', 'Pull marine en maille', 'pull', 'hauts', 'Marine', '#1F2A44', 'Maille de laine', 'hiver', 0, null, 3, 95, '#1F2A44', photo('pull-marine')),
   p('h12', 'T-shirt ample écru', 'tshirt', 'hauts', 'Écru', '#ECE6DA', 'Jersey épais', 'toute l’année', 0, null, 6, 35, '#ECE6DA', photo('tshirt-ample')),
   p('m7', 'Blouson court noir', 'veste', 'manteaux', 'Noir', '#1F1F22', 'Sergé de coton', 'mi-saison', 0, null, 6, 140, '#1F1F22', photo('blouson-court')),
   p('h11', 'Débardeur côtelé', 'debardeur', 'hauts', 'Noir', '#2B2B2E', 'Coton côtelé', 'été', 14, 50, 420, 18, '#2B2B2E'),

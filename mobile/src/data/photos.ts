@@ -15,6 +15,7 @@ export const PHOTOS = {
   'blouson-court': require('../../assets/pieces/blouson-court.png'),
   'cardigan-chocolat': require('../../assets/pieces/cardigan-chocolat.png'),
   'jean-large': require('../../assets/pieces/jean-large.png'),
+  'pull-marine': require('../../assets/pieces/pull-marine.png'),
 } satisfies Record<string, ImageSourcePropType>;
 
 export type PhotoKey = keyof typeof PHOTOS;

@@ -20,7 +20,7 @@ import type { Nav } from '../navigation/types';
 // De vraies pièces, détourées (07/10) : le portant montre ce que Kode fera des tiennes.
 const RAIL: { kind: GarmentKind; image: string; label: string }[] = [
   { kind: 'veste', image: photo('blouson-noir'), label: 'Blouson zippé noir' },
-  { kind: 'tshirt', image: photo('tshirt-ample'), label: 'T-shirt ample écru' },
+  { kind: 'pull', image: photo('pull-marine'), label: 'Pull marine en maille' },
   { kind: 'cardigan', image: photo('cardigan-chocolat'), label: 'Cardigan chocolat' },
   { kind: 'jean', image: photo('jean-large'), label: 'Jean large clair' },
 ];
