@@ -18,6 +18,7 @@ import { PLANS } from './Offers';
 import { AccountSheet } from '../ui/account';
 import { online } from '../state/remote';
 import { Ambient } from '../ui/Ambient';
+import { NOTIF_LABEL, NotifChoices } from '../ui/rappels';
 import type { Nav } from '../navigation/types';
 
 export function Me() {
@@ -35,6 +36,7 @@ export function Me() {
   const who =
     s.account === 'connecte' ? s.profile.email : s.pendingEmail ? `${s.pendingEmail} · e-mail à confirmer` : s.account === 'demo' ? s.profile.email : 'Sans compte : tout reste sur ce téléphone';
   const [sharesOpen, setSharesOpen] = useState(false);
+  const [notifsOpen, setNotifsOpen] = useState(false);
   const MODE = { montrer: 'Partage avec', preter: 'Prêt à', donner: 'Don proposé à' } as const;
 
   const top = useTabTop();
@@ -122,6 +124,7 @@ export function Me() {
 
       <Group>
         <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Précision de Kode : ${precision(s.profile)} %`} onPress={() => nav.navigate('Silhouette')} />
+        <Row testID="me-notifs" icon="bell" title="Notifications" detail={s.notifs ? NOTIF_LABEL[s.notifs] : 'Pas encore choisi'} onPress={() => setNotifsOpen(true)} />
         <Row testID="me-shop" icon="bag" title="La boutique" onPress={() => nav.navigate('Shop')} />
         <Row
           testID="me-loans"
@@ -136,6 +139,9 @@ export function Me() {
         {s.account === 'demo' && <Row testID="me-logout" icon="logout" title="Quitter la démonstration" onPress={a.restart} last />}
       </Group>
       <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => setAccount(false)} initial={s.pendingEmail ? 'login' : 'signup'} />
+      <Sheet visible={notifsOpen} onClose={() => setNotifsOpen(false)} title="Notifications" testID="notifs-sheet">
+        <NotifChoices value={s.notifs} testID="me-notif" onDone={() => setNotifsOpen(false)} />
+      </Sheet>
       <Sheet visible={sharesOpen} onClose={() => setSharesOpen(false)} title="Prêts et partages" testID="shares-sheet">
         {s.shares.length === 0 ? (
           <EmptyState

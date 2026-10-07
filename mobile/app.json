@@ -44,7 +44,8 @@
           "cameraPermission": "Dresskode utilise l’appareil photo pour ajouter tes vêtements et, si tu le demandes, estimer ta silhouette.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "backgroundColor": "#F1ECE3",
     "extra": {

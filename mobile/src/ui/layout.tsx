@@ -228,6 +228,9 @@ export function StackHeader({ title, right = [], close, brand, onBack, y }: Head
   const top = close ? 12 : insets.top + 6;
   const side = Math.max(1, right.length) * 44 + Math.max(0, right.length - 1) * 6;
   return (
+    <>
+    {/* La même bande que sur les onglets (07/10) : la page ne passe plus en net sous l'heure. */}
+    {y && !close && <ScrollEdge y={y} />}
     <View pointerEvents="box-none" style={{ position: 'absolute', top, left: space.lg, right: space.lg, zIndex: 10 }}>
       <HeaderShell y={y}>
         <View className="flex-row items-center" style={{ flex: 1, paddingHorizontal: 6, gap: 8 }}>
@@ -243,6 +246,7 @@ export function StackHeader({ title, right = [], close, brand, onBack, y }: Head
         </View>
       </HeaderShell>
     </View>
+    </>
   );
 }
 

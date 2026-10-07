@@ -34,16 +34,17 @@ import { online, type Photo } from '../state/remote';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
+import { NotifChoices } from '../ui/rappels';
 
-type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte' | 'bienvenue';
+type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte' | 'rappels' | 'bienvenue';
 
 const CHAPTERS: { label: string; steps: StepId[] }[] = [
   { label: 'Toi', steps: ['prenom', 'rayon', 'age'] },
   { label: 'Silhouette', steps: ['corps', 'silhouette', 'mesures', 'tailles'] },
   { label: 'Style', steps: ['styles', 'couleurs', 'quotidien', 'ville'] },
-  { label: 'Dressing', steps: ['pieces', 'compte'] },
+  { label: 'Dressing', steps: ['pieces', 'compte', 'rappels'] },
 ];
-const ORDER: StepId[] = ['prenom', 'rayon', 'age', 'corps', 'silhouette', 'mesures', 'tailles', 'styles', 'couleurs', 'quotidien', 'ville', 'pieces', 'generation', 'compte', 'bienvenue'];
+const ORDER: StepId[] = ['prenom', 'rayon', 'age', 'corps', 'silhouette', 'mesures', 'tailles', 'styles', 'couleurs', 'quotidien', 'ville', 'pieces', 'generation', 'compte', 'rappels', 'bienvenue'];
 /** Ce que « Passer » efface : on n'enregistre jamais une valeur que la personne n'a pas choisie. */
 const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
   age: { age: null },
@@ -55,6 +56,7 @@ const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
   couleurs: { love: [], avoid: [] },
   quotidien: { occasions: [] },
   ville: { city: null, agenda: false },
+  rappels: {},
 };
 
 type Ctx = {
@@ -113,6 +115,7 @@ export function Onboarding() {
     pieces: <Pieces {...ctx} />,
     generation: <Generation {...ctx} />,
     compte: <Compte {...ctx} />,
+    rappels: <RappelsStep {...ctx} />,
     bienvenue: <Bienvenue {...ctx} onEnter={() => a.completeOnboarding(draft, [], photos)} />,
   };
 
@@ -1001,6 +1004,16 @@ function Generation({ draft, photos, next }: Ctx) {
  * l'e-mail, l'espace reste sur le téléphone et part sur le compte à la
  * première connexion (voir signIn dans state/store.tsx).
  */
+/** Les rappels (07/10) : demandé en contexte, la fenêtre de l'iPhone ne s'ouvre qu'après un « oui ». */
+function RappelsStep({ next }: Ctx) {
+  const { s } = useStore();
+  return (
+    <Frame lead={'Kode te\n'} em="prévient ?" intro="Un mot la veille d’un rendez-vous ou d’une tenue prévue. Jamais de publicité.">
+      <NotifChoices value={s.notifs} testID="onb-notif" onDone={() => setTimeout(next, 260)} />
+    </Frame>
+  );
+}
+
 function Compte({ draft, set, next }: Ctx) {
   const { s, a } = useStore();
   const [email, setEmail] = useState(draft.email ?? '');

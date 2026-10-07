@@ -13,6 +13,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { PhoneFrame } from './src/web/PhoneFrame';
 import { FONT_FILES } from './src/theme/fonts';
 import { ErrorBoundary } from './src/ui/ErrorBoundary';
+import { Rappels } from './src/state/useRappels';
 
 export default function App() {
   // Les trois polices de la charte (assets/fonts) : l'app attend leur
@@ -56,6 +57,7 @@ function Shell() {
         </NavigationContainer>
         <ToastHost aboveTabs={onTabs} />
       </PortalHost>
+      <Rappels />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </PhoneFrame>
   );

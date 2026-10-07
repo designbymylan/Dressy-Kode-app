@@ -29,6 +29,7 @@ import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
 import { F } from '../theme/fonts';
+import { useChoisirNotifs } from '../ui/rappels';
 import type { Nav, Route } from '../navigation/types';
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
@@ -44,6 +45,7 @@ export function Planning() {
   const top = useStackTop();
   const meteo = useMeteo();
   const planifier = usePlanifier();
+  const choisirNotifs = useChoisirNotifs();
 
   const [at, setAt] = useState(params?.date ? monthAt(params.date) : 0);
   const [day, setDay] = useState<Iso>(params?.date ?? isoOf(0));
@@ -266,6 +268,27 @@ export function Planning() {
               )}
             </Card>
           </Animated.View>
+        )}
+
+        {/* Les rappels, demandés en contexte la première fois qu'il y a quelque chose à rappeler. */}
+        {s.notifs === null && s.account !== 'demo' && (Object.keys(s.planned).some((d) => d >= today) || s.events.some((e) => e.date >= today)) && (
+          <Card className="bg-butter" style={{ padding: 18, gap: 12 }} testID="planning-notifs">
+            <View className="flex-row items-center" style={{ gap: 10 }}>
+              <Icon name="bell" size={20} color={c['butter-ink']} />
+              <T v="bodyStrong" style={{ flex: 1, color: c['butter-ink'] }}>
+                Kode te prévient la veille ?
+              </T>
+            </View>
+            <Button testID="planning-notifs-tout" label="Oui, préviens-moi" size="m" onPress={() => choisirNotifs('tout')} />
+            {/* Sur le rose poudré, les autres réponses en texte noir : lisibles en clair comme en sombre. */}
+            <View className="flex-row justify-center flex-wrap">
+              {([['planning', 'Seulement mon planning'], ['non', 'Non merci']] as const).map(([id, label]) => (
+                <T key={id} testID={`planning-notifs-${id}`} v="bodyStrong" onPress={() => choisirNotifs(id)} accessibilityRole="button" suppressHighlighting style={{ color: c['butter-ink'], paddingVertical: 12, paddingHorizontal: 12 }}>
+                  {label}
+                </T>
+              ))}
+            </View>
+          </Card>
         )}
 
         {/* Les voyages : une photo, des dates, une tenue par jour. */}

@@ -280,6 +280,8 @@ function reducer(s: State, a: Action): State {
         profile: a.profile,
         pieces: a.pieces,
         pendingPhotos: a.photos,
+        // Répondu pendant le questionnaire (étape des rappels).
+        notifs: s.notifs,
       };
     case 'pendingPhotos':
       return { ...s, pendingPhotos: a.photos };
