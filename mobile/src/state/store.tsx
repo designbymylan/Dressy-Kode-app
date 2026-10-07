@@ -240,6 +240,8 @@ function reducer(s: State, a: Action): State {
         ...s,
         ...a.patch,
         ...(a.patch.account === 'demo' && a.patch.pieces ? { pieces: refreshDemo(a.patch.pieces) } : {}),
+        // Un profil sauvegardé avant le 07/10 n'a ni nom, ni pseudo, ni photo.
+        ...(a.patch.profile ? { profile: { ...EMPTY_PROFILE, ...(a.patch.account === 'demo' ? { lastName: DEMO_PROFILE.lastName, username: DEMO_PROFILE.username } : {}), ...a.patch.profile } } : {}),
         ...(a.patch.modules ? { modules: normalizeModules(a.patch.modules) } : {}),
         ...(a.patch.planned ? { planned: normalizePlanned(a.patch.planned) } : {}),
         booting: false,
@@ -577,6 +579,32 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
           const session = live();
           if (session) sync(remote.saveProfile(session, getState().profile));
         }, 700);
+      },
+      /** Prénom, nom, pseudonyme, ce qui s'affiche : enregistré avant d'être montré, pour qu'un pseudo pris ne se perde pas. */
+      saveIdentity: async (patch: Pick<Profile, 'name' | 'lastName' | 'username' | 'nameDisplay'>): Promise<remote.Result> => {
+        const session = live();
+        if (session) {
+          const r = await remote.saveIdentity(session, { ...getState().profile, ...patch });
+          if (!r.ok) return r;
+        }
+        dispatch({ t: 'profile', patch });
+        return { ok: true };
+      },
+      /** La photo de profil : sur le téléphone sans compte, dans l'espace avec un compte ; `null` la retire. */
+      setAvatar: async (photo: Photo | null): Promise<remote.Result> => {
+        const session = live();
+        if (!photo) {
+          if (session) sync(remote.removeAvatar(session));
+          dispatch({ t: 'profile', patch: { avatar: null, avatarPath: null } });
+          return { ok: true };
+        }
+        if (!session) {
+          dispatch({ t: 'profile', patch: { avatar: photo.uri, avatarPath: null } });
+          return { ok: true };
+        }
+        const r = await remote.uploadAvatar(session, photo);
+        if (r.ok) dispatch({ t: 'profile', patch: { avatar: r.url, avatarPath: r.path } });
+        return r;
       },
       restart: () => {
         forget();

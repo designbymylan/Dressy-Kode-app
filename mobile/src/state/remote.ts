@@ -267,7 +267,7 @@ export async function loadAccount(): Promise<Account | null> {
   const spaceId = space.data.id as string;
 
   const [profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages, events, trips] = await Promise.all([
-    sb.from('profiles').select('display_name, age_range, onboarded_at, created_at').eq('id', user.id).single(),
+    sb.from('profiles').select('display_name, last_name, username, name_display, avatar_url, age_range, onboarded_at, created_at').eq('id', user.id).single(),
     sb.from('style_profile').select('gender, styles, colours, avoid_colours, occasions').eq('space_id', spaceId).single(),
     sb.from('silhouettes').select('shape, shape_source, height_cm, weight_kg, measurements, usual_sizes').eq('space_id', spaceId).single(),
     sb.from('settings').select('city, agenda_linked, notifications').eq('space_id', spaceId).single(),
@@ -294,9 +294,12 @@ export async function loadAccount(): Promise<Account | null> {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
 
-  const pieces = await withImages((garments.data ?? []) as GarmentRow[], (stats.data ?? []) as StatRow[]);
-
   const p = profile.data!;
+  const [pieces, avatar] = await Promise.all([
+    withImages((garments.data ?? []) as GarmentRow[], (stats.data ?? []) as StatRow[]),
+    p.avatar_url ? sb.storage.from('uploads').createSignedUrl(p.avatar_url, IMAGE_TTL).then((r) => r.data?.signedUrl ?? null) : Promise.resolve(null),
+  ]);
+
   const st = style.data!;
   const si = silhouette.data!;
   const se = settings.data!;
@@ -320,6 +323,11 @@ export async function loadAccount(): Promise<Account | null> {
     profile: {
       ...EMPTY_PROFILE,
       name: p.display_name ?? '',
+      lastName: p.last_name ?? null,
+      username: p.username ?? null,
+      nameDisplay: p.name_display === 'prenom_nom' || p.name_display === 'pseudo' ? p.name_display : 'prenom',
+      avatar,
+      avatarPath: p.avatar_url ?? null,
       rayon: (['femme', 'homme', 'mixte'] as Rayon[]).includes(st.gender as Rayon) ? (st.gender as Rayon) : null,
       age: ageIndex >= 0 ? AGES[ageIndex] : null,
       height: si.height_cm ?? null,
@@ -375,6 +383,8 @@ export async function saveProfile(session: Session, p: Profile, finished = false
   const results = await Promise.all([
     sb.from('profiles').update({
       display_name: p.name.trim() || null,
+      last_name: p.lastName?.trim() || null,
+      name_display: p.nameDisplay,
       age_range: ageIndex >= 0 ? AGE_IDS[ageIndex] : null,
       ...(finished ? { onboarded_at: new Date().toISOString() } : {}),
     }).eq('id', session.userId),
@@ -398,6 +408,47 @@ export async function saveProfile(session: Session, p: Profile, finished = false
     sb.from('settings').update({ city: p.city?.trim() || null, agenda_linked: p.agenda }).eq('space_id', session.spaceId),
   ]);
   results.forEach((r, i) => check(r, ['profil', 'style', 'silhouette', 'réglages'][i]));
+}
+
+/**
+ * Le profil visible (07/10) : prénom, nom, pseudonyme et ce qui s'affiche.
+ * Un pseudonyme déjà pris revient avec une phrase claire, rien n'est perdu.
+ */
+export async function saveIdentity(session: Session, p: Profile): Promise<Result> {
+  const r = await db().from('profiles').update({
+    display_name: p.name.trim() || null,
+    last_name: p.lastName?.trim() || null,
+    username: p.username || null,
+    name_display: p.nameDisplay,
+  }).eq('id', session.userId);
+  if (!r.error) return { ok: true };
+  if (r.error.code === '23505') return { ok: false, message: 'Ce pseudo est déjà pris. Essaie une variante.' };
+  console.warn('[profil]', r.error.message);
+  return { ok: false, message: 'Ton profil n’a pas pu être enregistré. Réessaie dans un instant.' };
+}
+
+/** La photo de profil : envoyée dans l'espace, son chemin noté sur le profil ; rend son adresse signée. */
+export async function uploadAvatar(session: Session, photo: Photo): Promise<Result<{ path: string; url: string }>> {
+  const sb = db();
+  const mime = photo.mime && PHOTO_TYPES[photo.mime] ? photo.mime : 'image/jpeg';
+  const path = `${session.spaceId}/avatar-${Date.now().toString(36)}.${PHOTO_TYPES[mime]}`;
+  try {
+    const body = await (await fetch(photo.uri)).arrayBuffer();
+    if (body.byteLength > MAX_PHOTO_BYTES) return { ok: false, message: 'Cette photo est trop lourde (5 Mo au plus).' };
+    const up = await sb.storage.from('uploads').upload(path, body, { contentType: mime });
+    if (up.error) throw new Error(up.error.message);
+    const r = await sb.from('profiles').update({ avatar_url: path }).eq('id', session.userId);
+    if (r.error) throw new Error(r.error.message);
+    const signed = await sb.storage.from('uploads').createSignedUrl(path, IMAGE_TTL);
+    return { ok: true, path, url: signed.data?.signedUrl ?? photo.uri };
+  } catch (e) {
+    console.warn('[profil] photo :', e instanceof Error ? e.message : e);
+    return { ok: false, message: 'Ta photo n’a pas pu être envoyée. Réessaie dans un instant.' };
+  }
+}
+
+export async function removeAvatar(session: Session) {
+  check(await db().from('profiles').update({ avatar_url: null }).eq('id', session.userId), 'photo de profil');
 }
 
 /** Ajoute des pièces ; rend, dans l'ordre, les identifiants donnés par la base. */

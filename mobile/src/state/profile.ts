@@ -11,8 +11,20 @@ export type Silhouette = 'A' | 'V' | 'H' | 'X' | 'O' | 'inconnue';
 export type Rayon = 'femme' | 'homme' | 'mixte';
 export type MeasureId = 'poitrine' | 'taille' | 'hanches';
 
+/** Ce qui s'affiche en haut de Moi et pour les amies (07/10). */
+export type NameDisplay = 'prenom' | 'prenom_nom' | 'pseudo';
+
 export type Profile = {
+  /** Le prénom (display_name côté base, lu par Kode). */
   name: string;
+  lastName: string | null;
+  /** Le pseudonyme, sans @ : lettres minuscules, chiffres, point et tiret bas. */
+  username: string | null;
+  nameDisplay: NameDisplay;
+  /** La photo de profil à afficher (fichier du téléphone ou adresse signée). */
+  avatar: string | null;
+  /** Son chemin dans le stockage, pour un compte connecté. */
+  avatarPath: string | null;
   rayon: Rayon | null;
   age: string | null;
   /** cm */
@@ -35,6 +47,11 @@ export type Profile = {
 
 export const EMPTY_PROFILE: Profile = {
   name: '',
+  lastName: null,
+  username: null,
+  nameDisplay: 'prenom',
+  avatar: null,
+  avatarPath: null,
   rayon: null,
   age: null,
   height: null,
@@ -56,6 +73,11 @@ export const EMPTY_PROFILE: Profile = {
 /** Le compte de démonstration (« J'ai déjà un compte »). */
 export const DEMO_PROFILE: Profile = {
   name: 'Alice',
+  lastName: 'Martin',
+  username: 'alice.m',
+  nameDisplay: 'prenom',
+  avatar: null,
+  avatarPath: null,
   rayon: 'femme',
   age: '25–34 ans',
   height: 166,
@@ -154,3 +176,16 @@ export function nextBestAnswer(p: Profile): { label: string; gain: number } | nu
   const n = list.find((x) => !x.ok);
   return n ? { label: n.label, gain: n.gain } : null;
 }
+
+/** Le nom tel que la personne veut le voir : prénom, prénom et nom, ou pseudonyme. */
+export function displayName(p: Pick<Profile, 'name' | 'lastName' | 'username' | 'nameDisplay'>): string {
+  if (p.nameDisplay === 'pseudo' && p.username) return `@${p.username}`;
+  if (p.nameDisplay === 'prenom_nom' && p.lastName) return `${p.name} ${p.lastName}`.trim();
+  return p.name;
+}
+
+/** Un pseudonyme valable : minuscules sans accent, chiffres, point et tiret bas, 24 signes au plus. */
+export const cleanUsername = (s: string) =>
+  s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9._]/g, '').slice(0, 24);
+
+export const usernameOk = (s: string) => /^[a-z0-9._]{3,24}$/.test(s);
