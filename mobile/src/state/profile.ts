@@ -5,6 +5,7 @@
  * réponse apporte, sans jamais culpabiliser.
  */
 import type { GarmentKind } from '../ui/Garment';
+import { photo } from '../data/photos';
 
 export type Silhouette = 'A' | 'V' | 'H' | 'X' | 'O' | 'inconnue';
 export type Rayon = 'femme' | 'homme' | 'mixte';
@@ -104,12 +105,12 @@ export function sizeOptions(rayon: Rayon | null) {
 }
 
 /** Les styles, chacun illustré par trois pièces originales. */
-export const STYLE_CARDS: { name: string; note: string; kinds: [GarmentKind, string?][] }[] = [
+export const STYLE_CARDS: { name: string; note: string; kinds: [GarmentKind, string?, string?][] }[] = [
   { name: 'Minimal', note: 'Peu de pièces, des lignes nettes', kinds: [['tshirt'], ['pantalon'], ['baskets']] },
   { name: 'Classique', note: 'Ce qui ne se démode pas', kinds: [['blazer'], ['chemise', '#F4F1EA'], ['mocassins']] },
   { name: 'Chic parisien', note: 'Marinière, trench, sans effort', kinds: [['mariniere'], ['trench'], ['escarpins']] },
   { name: 'Bohème', note: 'Fluide, chaud, un peu libre', kinds: [['robe', '#B5603A'], ['foulard'], ['bottines', '#6E4A32']] },
-  { name: 'Urbain', note: 'Pratique, pour la ville', kinds: [['veste'], ['jean'], ['baskets']] },
+  { name: 'Urbain', note: 'Pratique, pour la ville', kinds: [['veste', undefined, photo('blouson-court')], ['tshirt', undefined, photo('tshirt-ample')], ['jean', undefined, photo('jean-large')]] },
   { name: 'Romantique', note: 'Doux, poudré, délicat', kinds: [['chemise', '#E3BFB7'], ['jupe', '#D9B8A0'], ['escarpins', '#D9B8A0']] },
   { name: 'Sportswear chic', note: 'Le confort qui a de l’allure', kinds: [['debardeur'], ['pantalon', '#CDBB9C'], ['baskets']] },
   { name: 'Vintage', note: 'Des pièces qui ont une histoire', kinds: [['cardigan', '#C9A13B'], ['jupe'], ['mocassins']] },

@@ -124,7 +124,7 @@ function curated(question: string, pieces: Piece[]): Reply {
       outfit: {
         title: 'Réveiller le blazer lin',
         pieces: exists(['m3', 'h6', 'b2', 'c1', 'a1']),
-        why: 'Porté sur un t-shirt blanc et le jean clair, le blazer lin perd son côté habillé. Samedi, il fera 19° et grand beau.',
+        why: 'Porté sur le t-shirt écru et le jean large, le blazer lin perd son côté habillé. Samedi, il fera 19° et grand beau.',
       },
     };
   }
@@ -150,7 +150,7 @@ function curated(question: string, pieces: Piece[]): Reply {
       outfit: {
         title: 'En couches',
         pieces: exists(['m6', 'h9', 'b4', 'c3']),
-        why: 'La veste matelassée s’enlève au bureau, le pull gris garde la chaleur sans épaisseur.',
+        why: 'Le blouson zippé s’enlève au bureau, le pull gris garde la chaleur sans épaisseur.',
       },
     };
   }

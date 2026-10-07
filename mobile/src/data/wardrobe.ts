@@ -5,6 +5,7 @@
  * à côté des données.
  */
 import type { GarmentKind } from '../ui/Garment';
+import { photo } from './photos';
 
 export type CategoryId = 'manteaux' | 'hauts' | 'bas' | 'robes' | 'chaussures' | 'accessoires';
 export type Season = 'toute l’année' | 'mi-saison' | 'hiver' | 'été';
@@ -61,8 +62,8 @@ export const SEASONS: Season[] = ['toute l’année', 'mi-saison', 'hiver', 'ét
 
 const p = (
   id: string, name: string, kind: GarmentKind, category: CategoryId, color: string, swatch: string,
-  material: string, season: Season, wears: number, lastWorn: number | null, addedDaysAgo: number, price?: number, tint?: string,
-): Piece => ({ id, name, kind, category, color, swatch, material, season, wears, lastWorn, addedDaysAgo, price, tint });
+  material: string, season: Season, wears: number, lastWorn: number | null, addedDaysAgo: number, price?: number, tint?: string, image?: string,
+): Piece => ({ id, name, kind, category, color, swatch, material, season, wears, lastWorn, addedDaysAgo, price, tint, ...(image ? { image } : {}) });
 
 export const PIECES: Piece[] = [
   p('m1', 'Trench camel', 'trench', 'manteaux', 'Camel', '#C49A6C', 'Gabardine de coton', 'mi-saison', 14, 12, 420, 180),
@@ -75,13 +76,13 @@ export const PIECES: Piece[] = [
   p('h3', 'Chemise ciel', 'chemise', 'hauts', 'Ciel', '#C9DAEA', 'Popeline de coton', 'toute l’année', 5, 20, 260, 55),
   p('h4', 'Pull bordeaux', 'pull', 'hauts', 'Bordeaux', '#8A3B3B', 'Laine', 'hiver', 2, 90, 330, 65, '#8A3B3B'),
   p('h5', 'Chemise blanche', 'chemise', 'hauts', 'Blanc', '#F4F1EA', 'Popeline de coton', 'toute l’année', 26, 2, 800, 50, '#F4F1EA'),
-  p('h6', 'T-shirt blanc', 'tshirt', 'hauts', 'Blanc', '#F5F3EE', 'Jersey de coton', 'toute l’année', 40, 1, 500, 20),
+  p('h6', 'T-shirt écru', 'tshirt', 'hauts', 'Écru', '#ECE6DA', 'Jersey de coton', 'toute l’année', 40, 1, 500, 20, '#ECE6DA', photo('tshirt-ecru')),
   p('h7', 'T-shirt noir', 'tshirt', 'hauts', 'Noir', '#2B2B2E', 'Jersey de coton', 'toute l’année', 25, 6, 500, 20, '#2B2B2E'),
-  p('h8', 'Cardigan écru', 'cardigan', 'hauts', 'Écru', '#EDE3D1', 'Laine et coton', 'mi-saison', 18, 8, 460, 60),
+  p('h8', 'Cardigan chocolat', 'cardigan', 'hauts', 'Chocolat', '#4A332A', 'Laine bouclette', 'mi-saison', 18, 8, 460, 60, '#4A332A', photo('cardigan-chocolat')),
   p('h9', 'Pull gris chiné', 'pull', 'hauts', 'Gris', '#A7A29A', 'Laine', 'hiver', 12, 15, 520, 55, '#A7A29A'),
   p('h10', 'Chemise sauge', 'chemise', 'hauts', 'Sauge', '#A9B79C', 'Lin', 'été', 1, 200, 240, 49, '#A9B79C'),
   p('b1', 'Jean brut', 'jean', 'bas', 'Brut', '#3E5A86', 'Denim', 'toute l’année', 40, 2, 900, 90),
-  p('b2', 'Jean clair', 'jean', 'bas', 'Bleu clair', '#9DB4CF', 'Denim', 'toute l’année', 12, 18, 400, 80, '#9DB4CF'),
+  p('b2', 'Jean large clair', 'jean', 'bas', 'Bleu clair', '#9DB4CF', 'Denim', 'toute l’année', 12, 18, 400, 80, '#9DB4CF', photo('jean-large')),
   p('b3', 'Jupe plissée olive', 'jupe', 'bas', 'Olive', '#7B7F4F', 'Crêpe', 'mi-saison', 4, 45, 350, 60),
   p('b4', 'Pantalon noir', 'pantalon', 'bas', 'Noir', '#2B2B2E', 'Laine froide', 'toute l’année', 19, 4, 650, 85),
   p('b5', 'Pantalon beige', 'pantalon', 'bas', 'Beige', '#CDBB9C', 'Coton', 'mi-saison', 7, 22, 300, 70, '#CDBB9C'),
@@ -98,7 +99,9 @@ export const PIECES: Piece[] = [
   p('a2', 'Sac noir', 'sac', 'accessoires', 'Noir', '#26231F', 'Cuir', 'toute l’année', 12, 40, 600, 130, '#26231F'),
   p('a3', 'Foulard soie', 'foulard', 'accessoires', 'Camel et crème', '#C49A6C', 'Soie', 'toute l’année', 3, 70, 400, 60),
   p('a4', 'Foulard marine', 'foulard', 'accessoires', 'Marine', '#2F3B52', 'Soie', 'toute l’année', 1, 210, 380, 55, '#2F3B52'),
-  p('m6', 'Veste matelassée', 'veste', 'manteaux', 'Kaki', '#5D6147', 'Nylon recyclé', 'hiver', 11, 20, 500, 120),
+  p('m6', 'Blouson zippé noir', 'veste', 'manteaux', 'Noir', '#1F1F22', 'Sergé de coton', 'mi-saison', 11, 20, 500, 120, '#1F1F22', photo('blouson-noir')),
+  p('h12', 'T-shirt ample écru', 'tshirt', 'hauts', 'Écru', '#ECE6DA', 'Jersey épais', 'toute l’année', 0, null, 6, 35, '#ECE6DA', photo('tshirt-ample')),
+  p('m7', 'Blouson court noir', 'veste', 'manteaux', 'Noir', '#1F1F22', 'Sergé de coton', 'mi-saison', 0, null, 6, 140, '#1F1F22', photo('blouson-court')),
   p('h11', 'Débardeur côtelé', 'debardeur', 'hauts', 'Noir', '#2B2B2E', 'Coton côtelé', 'été', 14, 50, 420, 18, '#2B2B2E'),
   p('b7', 'Short en lin', 'short', 'bas', 'Écru', '#E7DCC6', 'Lin', 'été', 6, 80, 300, 45),
   p('a5', 'Ceinture cognac', 'ceinture', 'accessoires', 'Cognac', '#7E4F2C', 'Cuir', 'toute l’année', 21, 9, 700, 40),

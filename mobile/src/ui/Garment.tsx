@@ -8,6 +8,7 @@
 import { memo, useMemo, useState } from 'react';
 import { Image, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { photoSource } from '../data/photos';
 
 type Role =
   | 'base' | 'shade' | 'deep' | 'light' | 'shirt' | 'collar' | 'stripe' | 'sole' | 'accent'
@@ -220,7 +221,7 @@ type Props = {
   hangerColor?: string;
   dark?: boolean;
   label?: string;
-  /** La vignette détourée dessinée par Kode : elle remplace l'illustration, le cintre reste. */
+  /** La vignette détourée dessinée par Kode, ou une photo rangée avec l'app (`photo:<clé>`) : elle remplace l'illustration, le cintre reste. */
   image?: string;
 };
 
@@ -291,14 +292,16 @@ function GarmentBase({ kind, size = 120, tint, hanger = false, hangerColor = '#9
   if (image && broken !== image) {
     const mode = hanger ? KINDS[kind].hang : 'none';
     const h = Math.round(size * 1.25);
+    const top = mode === 'hook' ? h * 0.19 : mode === 'clip' ? h * 0.1 : 0;
     const drawn = mode === 'clip' ? [...hangerOf(mode, hangerColor), CLIP_JAWS(hangerColor)] : hangerOf(mode, hangerColor);
     return (
       <View style={{ width: size, height: h }} accessible accessibilityRole="image" accessibilityLabel={label ?? KINDS[kind].label}>
         <Image
-          source={{ uri: image }}
+          source={photoSource(image) ?? { uri: image }}
           onError={() => setBroken(image)}
           resizeMode="contain"
-          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: mode === 'hook' ? h * 0.19 : mode === 'clip' ? h * 0.1 : 0 }}
+          // Taille écrite en clair : une photo rangée avec l'app porte ses propres dimensions, qui l'emporteraient sinon.
+          style={{ position: 'absolute', left: 0, bottom: 0, width: size, height: h - top }}
         />
         {drawn.length > 0 && (
           <Svg width={size} height={h} viewBox="0 0 120 150" style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">

@@ -239,6 +239,7 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         ...a.patch,
+        ...(a.patch.account === 'demo' && a.patch.pieces ? { pieces: refreshDemo(a.patch.pieces) } : {}),
         ...(a.patch.modules ? { modules: normalizeModules(a.patch.modules) } : {}),
         ...(a.patch.planned ? { planned: normalizePlanned(a.patch.planned) } : {}),
         booting: false,
@@ -402,6 +403,20 @@ function reducer(s: State, a: Action): State {
 /* ---- Ce qui est gardé sur le téléphone ---- */
 
 const SAVED = 'dresskode:etat:v1';
+/**
+ * Une démo sauvegardée sur le téléphone avant le 07/10 reprend les photos et
+ * les noms des pièces de démonstration ; ses ports et ses dates restent.
+ */
+function refreshDemo(pieces: Piece[]): Piece[] {
+  const ref = new Map(PIECES.map((p) => [p.id, p]));
+  const known = new Set(pieces.map((p) => p.id));
+  const updated = pieces.map((p) => {
+    const r = ref.get(p.id);
+    return r?.image ? { ...p, name: r.name, color: r.color, swatch: r.swatch, material: r.material, tint: r.tint, image: r.image } : p;
+  });
+  return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
+}
+
 const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {

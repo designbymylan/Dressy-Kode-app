@@ -12,15 +12,17 @@ import { HeaderShell } from '../ui/layout';
 import { DotChip, Tag } from '../ui/bits';
 import { AccountSheet } from '../ui/account';
 import { Garment, type GarmentKind } from '../ui/Garment';
+import { photo } from '../data/photos';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
-const RAIL: { kind: GarmentKind; tint?: string }[] = [
-  { kind: 'trench' },
-  { kind: 'mariniere' },
-  { kind: 'pull' },
-  { kind: 'jean' },
+// De vraies pièces, détourées (07/10) : le portant montre ce que Kode fera des tiennes.
+const RAIL: { kind: GarmentKind; image: string; label: string }[] = [
+  { kind: 'veste', image: photo('blouson-noir'), label: 'Blouson zippé noir' },
+  { kind: 'tshirt', image: photo('tshirt-ample'), label: 'T-shirt ample écru' },
+  { kind: 'cardigan', image: photo('cardigan-chocolat'), label: 'Cardigan chocolat' },
+  { kind: 'jean', image: photo('jean-large'), label: 'Jean large clair' },
 ];
 
 const CHIPS = ['détourage', 'tenue du jour', 'météo', 'agenda', 'coût par port'];
@@ -79,7 +81,7 @@ export function Welcome() {
           <View className="flex-row justify-center" style={{ gap: 2 }}>
             {RAIL.map((g, i) => (
               <Drop key={g.kind + i} i={i}>
-                <Garment kind={g.kind} tint={g.tint} size={size} hanger hangerColor={c.rod} dark={scheme === 'dark'} />
+                <Garment kind={g.kind} image={g.image} label={g.label} size={size} hanger hangerColor={c.rod} dark={scheme === 'dark'} />
               </Drop>
             ))}
           </View>
