@@ -150,7 +150,39 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   (`normalizeModules`, `state/store.tsx`).
 - **Bande derrière l'heure** : sur les onglets, une bande floutée de la
   couleur du fond (`ScrollEdge`) cache la page qui passe sous la barre
-  d'état.
+  d'état. Depuis le 07/10, les écrans empilés l'ont aussi (`StackHeader`).
+
+**Demandes du 07/10 (planification, voyages, notifications, photos) :**
+
+- **Planning** (`screens/Planning.tsx`) : un grand calendrier mois par mois,
+  vide ou non, ouvert depuis « Ta semaine » et l'Agenda ; un jour montre sa
+  météo, ses rendez-vous et sa tenue. « Choisir des jours pour Kode » : la
+  personne touche les jours, Kode prépare une tenue pour chacun.
+- **Rendez-vous détaillés** (`screens/EventEdit.tsx`, `state/planning.ts`) :
+  heure, type (entretien, premier rendez-vous, repas de famille, mariage…),
+  importance, tenue voulue, ce qu'on veut dégager, lieu, contraintes, note.
+  Tout part chez Kode.
+- **Kode prévoit plusieurs jours** : action `planifier` de la fonction
+  `kode` (rendez-vous, météo de chez soi ou du lieu, tenues voisines), avec
+  une culture de styliste dans sa consigne (couleurs, coupes, matières,
+  dress codes, occasions, impression à donner : `kode/prompt.ts`). Sans
+  compte ou sans réponse, `state/planifier.ts` prend le relais.
+- **Voyages** (`screens/TripScreen.tsx`) : destination cherchée dans le
+  monde, dates, motif, activités ; photo libre du lieu et météo jour par
+  jour (fonction `donnees`, actions `lieux` et `voyage`) ; une tenue par
+  jour, modifiable, et la valise qui en découle.
+- **Notifications** : la question se pose en contexte (étape « Kode te
+  prévient ? » du questionnaire, carte du planning, réglage dans Moi) avec
+  trois réponses : tout, seulement le planning, non. La fenêtre de l'iPhone
+  ne s'ouvre qu'après un oui. Rappels locaux (`state/rappels.ts`,
+  `expo-notifications`, ajouté le 07/10 pour cette demande) : rien ne part
+  d'un serveur. Les e-mails attendent le choix d'un service d'envoi.
+- **Vraies pièces photographiées** : les photos envoyées sont détourées par
+  `tools/detour-photos.cjs` dans `mobile/assets/pieces/` et montrées par
+  `image: 'photo:<clé>'` (`data/photos.ts`) : portant de l'accueil, carte
+  de style Urbain, dressing de démonstration. Les autres cartes de style
+  gardent leurs dessins en attendant d'autres photos. Une photo qui porte
+  une marque lisible n'est pas utilisée.
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
