@@ -187,6 +187,34 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   inscriptions compris. Pas de censure sur l'image ; les textes de l'app ne
   nomment toujours aucune marque.
 
+**Demandes du 07/10 (Moi, profil, réglages, offres, boutique), sur les
+modèles envoyés (applis de banque, page d'abonnement, page de réglages) :**
+
+- **Une action propre à chaque onglet** : l'icône Personnaliser n'est qu'à
+  l'accueil ; Moi porte la roue des Réglages ; Dressing, recherche et
+  ajout ; Agenda, le mois. Personnaliser ne règle plus que l'accueil.
+- **Moi** (`screens/Me.tsx`) : la photo et le nom choisi en
+  haut, les chiffres en grand, quatre raccourcis ronds, la carte de membre
+  (offre, places, questions, noire en clair et blanche en sombre), « Ton
+  style » (styles, couleurs aimées et évitées, tailles, précision de Kode),
+  le plus porté.
+- **Profil** (`screens/ProfileEdit.tsx`) : photo (appareil ou galerie,
+  bucket privé `uploads`, `<space_id>/avatar-…`, lien signé), prénom, nom,
+  pseudo unique, ce qui s'affiche (prénom, prénom et nom, pseudo), styles,
+  couleurs, tailles, ville. Migration `profil_visible`.
+- **Réglages** (`screens/Settings.tsx`) : carte du profil, notifications,
+  apparence (thème, grille, verre, gardés d'un lancement à l'autre), compte,
+  aide, sortie en capsule.
+- **Offres et Boutique façon boutique** : la remise en très grand, des
+  **patchs** penchés (`ui/Patch.tsx` : `Patch`, `Seal`, `Struck`) en rose
+  poudré ou en noir, prix barrés, cartes à cocher, tuiles de ce qui est
+  inclus ; la boutique en carte noire des cinq packs, packs en cartes qui
+  défilent, tuiles d'usage en pourcentage. Les couleurs des modèles (bleu,
+  vert anis) ne sont pas reprises : la galerie reste la seule palette. Pas
+  de faux avis ni de « la plus choisie » sans chiffres : « Recommandée ».
+  Une remise affichée est arrondie vers le bas, un prix à la semaine vers
+  le haut.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 
