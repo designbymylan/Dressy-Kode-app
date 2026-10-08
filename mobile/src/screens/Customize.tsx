@@ -8,8 +8,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Card, Tag } from '../ui/bits';
-import { IconButton, Button } from '../ui/Button';
-import { SegmentedPill, Toggle } from '../ui/controls';
+import { IconButton } from '../ui/Button';
+import { Toggle } from '../ui/controls';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
@@ -19,7 +19,7 @@ export function Customize() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { c, pref, setPref, solidGlass, setSolidGlass } = useTheme();
+  const { c } = useTheme();
   const { y, onScroll } = useHeaderScroll();
   const top = useStackTop();
   const shown = s.modules.filter((m) => m.on).length;
@@ -62,58 +62,9 @@ export function Customize() {
           </T>
         </View>
 
-        <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2">
-            Thème
-          </T>
-          <SegmentedPill
-            label="Thème"
-            value={pref}
-            onChange={setPref}
-            options={[
-              { value: 'auto', label: 'Auto' },
-              { value: 'light', label: 'Clair', icon: 'sun' },
-              { value: 'dark', label: 'Sombre', icon: 'moon' },
-            ]}
-          />
-          <T v="caption" tone="ink2">
-            Auto suit le réglage de ton téléphone.
-          </T>
-        </View>
-
-        <View style={{ gap: 10 }}>
-          <T v="kicker" tone="ink2">
-            Densité de la grille
-          </T>
-          <SegmentedPill
-            label="Densité de la grille"
-            value={s.density}
-            onChange={a.setDensity}
-            options={[
-              { value: 'aeree', label: 'Aérée · 2 colonnes' },
-              { value: 'dense', label: 'Dense · 3 colonnes' },
-            ]}
-          />
-        </View>
-
-        <View className="flex-row items-center" style={{ gap: 14 }}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <T v="bodyStrong">Verre plus opaque</T>
-            <T v="caption" tone="ink2">
-              La barre d’onglets et les boutons flottants deviennent pleins. Plus lisible sur les pièces claires.
-            </T>
-          </View>
-          <Toggle testID="solid-glass" value={solidGlass} onChange={setSolidGlass} label="Verre plus opaque" />
-        </View>
-
-        {s.account !== 'connecte' && (
-          <>
-            <Button testID="replay-welcome" label="Revoir l’accueil de bienvenue" variant="secondary" icon="refresh" onPress={() => { a.restart(); }} />
-            <T v="small" tone="ink2" style={{ textAlign: 'center', marginTop: -16 }}>
-              Remet l’aperçu à zéro, comme au premier lancement.
-            </T>
-          </>
-        )}
+        <T testID="customize-settings" v="caption" tone="ink2" onPress={() => nav.navigate('Settings')} accessibilityRole="link" suppressHighlighting style={{ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 12 }}>
+          Thème, grille et verre : dans Réglages
+        </T>
       </Animated.ScrollView>
     </View>
   );

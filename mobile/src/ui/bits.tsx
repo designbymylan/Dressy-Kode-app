@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import type { Piece, Weather } from '../data/wardrobe';
@@ -88,12 +88,20 @@ export function Bars({ values, labels }: { values: number[]; labels: string[] })
   );
 }
 
-export function Avatar({ name, size = 44, on }: { name: string; size?: number; on?: boolean }) {
+/** L'avatar : la photo de profil quand il y en a une, sinon l'initiale. */
+export function Avatar({ name, size = 44, on, uri }: { name: string; size?: number; on?: boolean; uri?: string | null }) {
   const { c } = useTheme();
+  const round = { width: size, height: size, borderRadius: size / 2 };
+  if (uri)
+    return (
+      <View style={[round, { overflow: 'hidden', backgroundColor: c.stage, borderWidth: 1, borderColor: c['card-edge'] }]}>
+        <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="cover" accessibilityIgnoresInvertColors />
+      </View>
+    );
   return (
-    <View style={[{ width: size, height: size, borderRadius: size / 2 }, !on && { borderWidth: 1, borderColor: c['card-edge'] }]} className={`items-center justify-center ${on ? 'bg-primary-bg' : 'bg-sunk'}`}>
-      <T v="bodyStrong" tone={on ? 'primary-fg' : 'ink'} style={{ fontSize: size * 0.38 }}>
-        {name.slice(0, 1)}
+    <View style={[round, !on && { borderWidth: 1, borderColor: c['card-edge'] }]} className={`items-center justify-center ${on ? 'bg-primary-bg' : 'bg-sunk'}`}>
+      <T v={size >= 64 ? 'stat' : 'bodyStrong'} tone={on ? 'primary-fg' : 'ink'} style={{ fontSize: size * 0.4, lineHeight: size * 0.48 }}>
+        {(name.trim().slice(0, 1) || '?').toUpperCase()}
       </T>
     </View>
   );

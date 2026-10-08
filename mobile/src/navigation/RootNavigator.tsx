@@ -19,6 +19,8 @@ import { EventEdit } from '../screens/EventEdit';
 import { TripScreen } from '../screens/TripScreen';
 import { SilhouetteScreen } from '../screens/Silhouette';
 import { Customize } from '../screens/Customize';
+import { ProfileEdit } from '../screens/ProfileEdit';
+import { Settings } from '../screens/Settings';
 import { ShareScreen } from '../screens/Share';
 import { Offers } from '../screens/Offers';
 import { Shop } from '../screens/Shop';
@@ -71,6 +73,8 @@ export function RootNavigator() {
           <Stack.Screen name="Trip" component={TripScreen} />
           <Stack.Screen name="Silhouette" component={SilhouetteScreen} />
           <Stack.Screen name="Customize" component={Customize} />
+          <Stack.Screen name="Settings" component={Settings} />
+          <Stack.Screen name="ProfileEdit" component={ProfileEdit} />
           <Stack.Screen name="Offers" component={Offers} />
           <Stack.Screen name="Shop" component={Shop} />
           <Stack.Screen name="States" component={States} />

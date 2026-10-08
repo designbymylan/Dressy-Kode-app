@@ -27,6 +27,10 @@ export type RootParams = {
   Event: { id: string };
   Silhouette: undefined;
   Customize: undefined;
+  /** Photo, nom, pseudo et ce que Kode retient de toi (07/10). */
+  ProfileEdit: undefined;
+  /** Les réglages, ouverts par la roue de Moi (07/10). */
+  Settings: undefined;
   Share: { id: string };
   Offers: undefined;
   Shop: { pack?: string } | undefined;

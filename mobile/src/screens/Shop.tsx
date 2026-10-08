@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { pieceLimit, useStore } from '../state/store';
+import { LIMITS, pieceLimit, questionsLeft, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -11,6 +11,9 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Badge, Card, Gauge, Tag } from '../ui/bits';
+import { Patch, Struck } from '../ui/Patch';
+import { glassSurface } from '../ui/Glass';
+import { price } from './Offers';
 import { Icon, type IconName } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
@@ -26,94 +29,153 @@ export const PACKS: { id: string; name: string; price: string; icon: IconName; d
   { id: 'defi', name: 'Défi 30 jours', price: '0,99 €', icon: 'leaf', desc: 'Un mois sans rien acheter de neuf, une contrainte par jour.', delivery: 'Commence demain matin, s’arrête quand tu veux', cta: 'Relever le défi', contents: ['Trente jours sans achat neuf, suivis dans l’app', 'Une contrainte par jour tirée de ton dressing', 'Les pièces qui dormaient depuis six mois remises en jeu', 'Le bilan à la fin : ports gagnés, euros non dépensés'] },
 ];
 
+/** Le prix d'un pack, en centimes, pour additionner sans arrondi. */
+const cents = (price: string) => Math.round(parseFloat(price.replace(',', '.').replace(/[^\d.]/g, '')) * 100);
+const BUNDLE = 1499;
+
+/**
+ * La boutique (refaite le 07/10), sur le modèle des applis de banque envoyées
+ * en exemple : la grande carte noire des cinq packs avec son prix barré, les
+ * packs en cartes qui défilent, chacun avec son patch, et deux tuiles d'usage
+ * (places, questions) qui disent où tu en es, en pourcentage.
+ */
 export function Shop() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const route = useRoute<Route<'Shop'>>();
   const insets = useSafeAreaInsets();
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const { y, onScroll } = useHeaderScroll();
   const top = useStackTop();
   const [open, setOpen] = useState<string | null>(null);
   const [bundle, setBundle] = useState(false);
   const limit = pieceLimit(s);
+  const left = questionsLeft(s);
+  const quota = LIMITS[s.plan].questions;
   const pack = PACKS.find((p) => p.id === open);
   const inPlan = s.plan === 'atelier' || s.plan === 'couture';
   const owns = (id: string) => s.packs.includes(id) || (inPlan && !!PACKS.find((p) => p.id === id)?.included);
   const allOwned = PACKS.every((p) => owns(p.id));
+  const total = PACKS.reduce((n, p) => n + cents(p.price), 0);
+  const cheapest = Math.min(...PACKS.map((p) => cents(p.price)));
 
   useEffect(() => {
     if (route.params?.pack) setOpen(route.params.pack);
   }, [route.params]);
 
+  const patch = (p: (typeof PACKS)[number]) =>
+    owns(p.id) ? null : p.included ? { label: 'Inclus dans Atelier', tone: 'ink' as const } : cents(p.price) === cheapest ? { label: 'Petit prix', tone: 'butter' as const } : null;
+
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-shop">
       <Ambient />
       <StackHeader title="La boutique" y={y} />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
-        <View style={{ gap: 8 }}>
-          <Tag label="Achat unique" />
-          <T v="title" accessibilityRole="header">
-            À l’unité,{'\n'}
-            <T v="title" style={{ ...F.accent }}>
-              quand tu en as besoin.
-            </T>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingBottom: insets.bottom + 32, gap: 20 }}>
+        <View style={{ paddingHorizontal: space.gutter }}>
+          <T v="kicker" tone="ink2">
+            Packs à l’unité, à toi pour toujours
+          </T>
+          <T v="hero" style={{ fontSize: 56, lineHeight: 60 }} accessibilityRole="header">
+            {`dès ${price(cheapest)}`}
           </T>
         </View>
 
-        {limit !== null && (
-          <Card style={{ gap: 12 }} testID="shop-places">
-            <View className="flex-row items-center justify-between">
-              <T v="bodyStrong">Places du dressing</T>
-              <T v="caption" tone="ink2">
-                {s.pieces.length} sur {limit}
-              </T>
-            </View>
-            <Gauge value={s.pieces.length} max={limit} label="Places du dressing" />
-            <View className="flex-row items-center" style={{ gap: 12 }}>
-              <T v="caption" tone="ink2" style={{ flex: 1 }}>
-                30 places de plus, une seule fois. Au-delà, Couture lève la limite.
-              </T>
-              <Button testID="buy-places" label="+30 · 4,99 €" size="m" onPress={a.buyPlaces} />
-            </View>
-          </Card>
-        )}
-
-        <View style={{ gap: 0 }}>
-          {PACKS.map((p, i) => (
-            <Tap key={p.id} testID={`pack-${p.id}`} onPress={() => setOpen(p.id)} scaleTo={0.99} accessibilityLabel={`${p.name}, ${owns(p.id) ? 'déjà à toi' : p.price}`} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 84, gap: 14, borderBottomWidth: i === PACKS.length - 1 ? 0 : 1, borderColor: c.rule, paddingVertical: 12 }}>
-              <View className="bg-sunk items-center justify-center" style={{ width: 48, height: 48, borderRadius: 24 }}>
-                <Icon name={p.icon} size={22} color={c.brass} />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <T v="bodyStrong">{p.name}</T>
-                <T v="caption" tone="ink2" numberOfLines={2}>
-                  {p.desc}
+        {/* La grande carte : les cinq packs, le prix barré, l'économie. */}
+        {!allOwned && (
+          <View style={{ paddingHorizontal: space.gutter }}>
+            <View testID="bundle" style={{ borderRadius: 28, padding: 20, gap: 16, backgroundColor: c['primary-bg'] }}>
+              <View className="flex-row items-center justify-between">
+                <T v="brand" tone="primary-fg" style={{ fontSize: 13 }}>
+                  LES CINQ PACKS
                 </T>
               </View>
-              {owns(p.id) ? <Badge label="À toi" icon="check" /> : <T v="bodyStrong">{p.price}</T>}
-            </Tap>
-          ))}
-        </View>
-
-        {!allOwned && (
-          <Card className="bg-primary-bg" style={{ gap: 10 }} testID="bundle">
-            <T v="kicker" tone="primary-fg" style={{ opacity: 0.8 }}>
-              Les cinq packs
-            </T>
-            <T v="cardTitle" tone="primary-fg">
-              14,99 € au lieu de 19,95 €
-            </T>
-            <T v="body" tone="primary-fg" style={{ opacity: 0.85 }}>
-              Occasion, Voyage, Audit, Couleurs et Défi, débloqués sans date limite.
-            </T>
-            <Tap testID="bundle-buy" onPress={() => setBundle(true)} accessibilityLabel="Prendre les cinq pour 14,99 €" style={{ alignItems: 'center', justifyContent: 'center', height: 50, borderRadius: 25, backgroundColor: c.paper }}>
-              <T v="button">Prendre les cinq · 14,99 €</T>
-            </Tap>
-          </Card>
+              <View className="flex-row" style={{ gap: 8 }}>
+                {PACKS.map((p) => (
+                  <View key={p.id} className="items-center justify-center" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: c['primary-fg'], opacity: 0.85 }}>
+                    <Icon name={p.icon} size={18} color={c['primary-fg']} />
+                  </View>
+                ))}
+              </View>
+              <View className="flex-row items-end" style={{ gap: 10 }}>
+                <T v="hero" tone="primary-fg" style={{ fontSize: 44, lineHeight: 46 }}>
+                  {price(BUNDLE)}
+                </T>
+                <View style={{ paddingBottom: 6 }}>
+                  <Struck label={price(total)} tone="primary-fg" />
+                </View>
+              </View>
+              <Tap testID="bundle-buy" onPress={() => setBundle(true)} accessibilityLabel={`Prendre les cinq pour ${price(BUNDLE)}`} style={{ alignItems: 'center', justifyContent: 'center', height: 50, borderRadius: 25, backgroundColor: c.paper }}>
+                <T v="button">{`Tout prendre · ${price(BUNDLE)}`}</T>
+              </Tap>
+              <Patch label={`Économise ${price(total - BUNDLE)}`} tilt={5} icon="tag" style={{ position: 'absolute', top: -12, right: 18 }} />
+            </View>
+          </View>
         )}
 
-        <Button label="Voir les abonnements" variant="plain" iconRight="chevron" onPress={() => nav.navigate('Offers')} />
+        {/* Les packs, en cartes qui défilent. */}
+        <View style={{ gap: 10 }}>
+          <View style={{ paddingHorizontal: space.gutter }}>
+            <Tag label="Les packs" />
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={CARD + 12} decelerationRate="fast" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 14, gap: 12 }}>
+            {PACKS.map((p) => {
+              const mine = owns(p.id);
+              const pt = patch(p);
+              return (
+                <View key={p.id}>
+                  <Tap testID={`pack-${p.id}`} onPress={() => setOpen(p.id)} scaleTo={0.98} accessibilityLabel={`${p.name}, ${mine ? 'déjà à toi' : p.price}`} style={[{ width: CARD, height: 236, borderRadius: 28, padding: 18, gap: 10 }, glassSurface(c, scheme)]}>
+                    <View className="items-center justify-center" style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.pill }}>
+                      <Icon name={p.icon} size={22} color={c.ink} />
+                    </View>
+                    <T v="section" numberOfLines={2} style={{ fontSize: 22 }}>
+                      {p.name}
+                    </T>
+                    <T v="caption" tone="ink2" numberOfLines={3} style={{ flex: 1 }}>
+                      {p.desc}
+                    </T>
+                    <View className="flex-row items-center justify-between">
+                      {mine ? (
+                        <Badge label="À toi" icon="check" />
+                      ) : (
+                        <View style={{ borderRadius: 999, paddingHorizontal: 14, height: 34, justifyContent: 'center', backgroundColor: c['primary-bg'] }}>
+                          <T v="caption" tone="primary-fg" style={F.s600}>
+                            {p.price}
+                          </T>
+                        </View>
+                      )}
+                      <Icon name="chevron" size={18} color={c.ink2} />
+                    </View>
+                  </Tap>
+                  {pt && <Patch label={pt.label} tone={pt.tone} tilt={-4} style={{ position: 'absolute', top: -10, right: 12 }} />}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Où tu en es : deux tuiles, chacune avec son pourcentage. */}
+        <View className="flex-row" style={{ gap: 10, paddingHorizontal: space.gutter }}>
+          <Usage
+            testID="shop-places"
+            icon="hanger"
+            label="Places"
+            value={s.pieces.length}
+            max={limit}
+            action={limit === null ? undefined : <Button testID="buy-places" label="+30 · 4,99 €" size="s" onPress={a.buyPlaces} />}
+          />
+          <Usage
+            testID="shop-questions"
+            icon="kode"
+            label="Questions"
+            value={quota === null ? 0 : quota - (left ?? 0)}
+            max={quota}
+            action={quota === null ? undefined : <Button testID="shop-more-questions" label="Sans limite" variant="secondary" size="s" onPress={() => nav.navigate('Offers')} />}
+          />
+        </View>
+
+        <View style={{ paddingHorizontal: space.gutter }}>
+          <Button label="Voir les abonnements" variant="plain" iconRight="chevron" onPress={() => nav.navigate('Offers')} />
+        </View>
       </Animated.ScrollView>
 
       <Sheet
@@ -177,7 +239,7 @@ export function Shop() {
         footer={
           <Button
             testID="bundle-pay"
-            label="Payer 14,99 €"
+            label={`Payer ${price(BUNDLE)}`}
             icon="lock"
             onPress={() => {
               PACKS.forEach((p) => a.buyPack(p.id));
@@ -187,9 +249,37 @@ export function Shop() {
         }
       >
         <T v="body" tone="ink2">
-          Cinq packs, 4,96 € d’économie, sans date limite. Aperçu : le paiement est simulé.
+          {`Cinq packs, ${price(total - BUNDLE)} d’économie, sans date limite. Aperçu : le paiement est simulé.`}
         </T>
       </Sheet>
     </View>
+  );
+}
+
+const CARD = 214;
+
+/** Une tuile d'usage : l'icône, le compte, la jauge et le pourcentage en pastille. */
+function Usage({ icon, label, value, max, action, testID }: { icon: IconName; label: string; value: number; max: number | null; action?: ReactNode; testID?: string }) {
+  const { c } = useTheme();
+  const pct = max === null ? null : Math.min(100, Math.round((value / max) * 100));
+  return (
+    <Card testID={testID} style={{ flex: 1, padding: 16, gap: 10, borderRadius: 24 }}>
+      <View className="flex-row items-center justify-between">
+        <View className="items-center justify-center" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.pill }}>
+          <Icon name={icon} size={18} color={c.ink} />
+        </View>
+        {pct !== null && <Badge label={`${pct} %`} tone={pct >= 90 ? 'caution' : 'neutral'} />}
+      </View>
+      <View>
+        <T v="kicker" tone="ink2">
+          {label}
+        </T>
+        <T v="stat" style={{ fontSize: 30, lineHeight: 33 }}>
+          {max === null ? 'Sans limite' : `${value}/${max}`}
+        </T>
+      </View>
+      {max !== null && <Gauge value={value} max={max} label={label} />}
+      {action}
+    </Card>
   );
 }
