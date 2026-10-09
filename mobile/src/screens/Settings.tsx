@@ -1,7 +1,7 @@
 /**
  * Réglages (07/10), sur le modèle envoyé par l'utilisatrice : la carte du
  * profil en haut, puis des groupes courts (notifications, apparence, compte,
- * aide) et la sortie en capsule tout en bas. Ce qui était en vrac dans Moi
+ * vie privée depuis le 09/10, aide) et la sortie en capsule tout en bas. Ce qui était en vrac dans Moi
  * et dans Personnaliser y est rangé ; Personnaliser ne garde que l'accueil.
  */
 import { useState } from 'react';
@@ -121,6 +121,12 @@ export function Settings() {
             onPress={() => setSharesOpen(true)}
             last
           />
+        </Group>
+
+        <Label text="Vie privée" />
+        <Group>
+          <Row testID="settings-donnees" icon="lock" title="Tes données" detail="Ce que nous gardons, tes accords, tes droits" onPress={() => nav.navigate('TesDonnees')} />
+          <Row testID="settings-politique" icon="eye" title="Politique de confidentialité" onPress={() => nav.navigate('Confidentialite')} last />
         </Group>
 
         <Label text="Aide" />

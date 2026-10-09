@@ -131,6 +131,10 @@ export function Kode() {
               </View>
               {meteo.reelle && <Credit blocs={[s.contexte?.meteo, prochain?.bloc]} />}
             </View>
+            {/* Transparence (09/10, règlement européen sur l'IA, art. 50) : on sait qu'on parle à une IA. */}
+            <T v="small" tone="ink2" style={{ paddingHorizontal: 4 }} testID="kode-ai">
+              Kode est une intelligence artificielle : ses tenues sont des idées, il peut se tromper. Il reçoit ton dressing, ton style et ton agenda, jamais ton nom.
+            </T>
             {!ready && <Button testID="kode-add" label="Ajouter mes premières pièces" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
           </Animated.View>
         )}

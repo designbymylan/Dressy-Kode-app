@@ -30,17 +30,16 @@ import { Chip, Stepper, Toggle } from '../ui/controls';
 import { Card, Ring } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Masthead } from '../ui/layout';
-import { Sheet } from '../ui/Sheet';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
-import { ChoiceCard, ColorChoice, FirstRail, Figure, MeasureFigure, PhotoSlot, Ruler, StyleCard, Trio, IS_WEB, type ColorState } from '../ui/onboarding';
+import { ChoiceCard, ColorChoice, FirstRail, MeasureFigure, Ruler, StyleCard, Trio, IS_WEB, type ColorState } from '../ui/onboarding';
 import { useScreen } from '../ui/screen';
-import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, validEmail } from '../ui/account';
+import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, SignupTerms, validEmail } from '../ui/account';
 import { online, type Photo } from '../state/remote';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
 
-type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte';
+type StepId = 'prenom' | 'rayon' | 'age' | 'confiance' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte';
 
 const CHAPTERS: { label: string; steps: StepId[] }[] = [
   { label: 'Toi', steps: ['prenom', 'rayon'] },
@@ -51,12 +50,17 @@ const CHAPTERS: { label: string; steps: StepId[] }[] = [
 const ORDER: StepId[] = ['prenom', 'rayon', 'styles', 'pieces', 'compte', 'generation'];
 /** « Affiner » : ce qui aide Kode, demandé une fois l'app découverte. Tout se passe. */
 const AFFINER_CHAPTERS: { label: string; steps: StepId[] }[] = [
-  { label: 'Silhouette', steps: ['corps', 'silhouette', 'mesures', 'tailles'] },
+  { label: 'Silhouette', steps: ['confiance', 'corps', 'silhouette', 'mesures', 'tailles'] },
   { label: 'Goûts', steps: ['couleurs', 'quotidien', 'ville', 'age'] },
 ];
 const AFFINER: StepId[] = ['corps', 'silhouette', 'mesures', 'tailles', 'couleurs', 'quotidien', 'ville', 'age'];
+/**
+ * Ce qui touche au corps (09/10, RGPD) : demandé seulement après un accord
+ * explicite (étape « confiance »). Sans accord, ces écrans sont sautés.
+ */
+const BODY: StepId[] = ['corps', 'silhouette', 'mesures'];
 /** Les champs qu'« Affiner » enregistre dans le profil. */
-const AFFINE = ['height', 'weight', 'silhouette', 'silhouetteSource', 'measures', 'sizes', 'love', 'avoid', 'occasions', 'city', 'agenda', 'age'] as const;
+const AFFINE = ['bodyConsent', 'height', 'weight', 'silhouette', 'silhouetteSource', 'measures', 'sizes', 'love', 'avoid', 'occasions', 'city', 'agenda', 'age'] as const;
 /** Ce que « Passer » efface : on n'enregistre jamais une valeur que la personne n'a pas choisie. */
 const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
   age: { age: null },
@@ -98,7 +102,11 @@ export function Onboarding({ affiner }: { affiner?: boolean }) {
   const [draft, setDraft] = useState<Profile>(affiner ? s.profile : EMPTY_PROFILE);
   const [photos, setPhotos] = useState<Photo[]>([]);
   // Sans photo confiée, pas de compte à créer maintenant : il se propose plus tard, dans Moi.
-  const order = affiner ? AFFINER : ORDER.filter((x) => x !== 'compte' || photos.length > 0);
+  const order = affiner
+    ? draft.bodyConsent
+      ? AFFINER
+      : (['confiance', ...AFFINER.filter((x) => !BODY.includes(x))] as StepId[])
+    : ORDER.filter((x) => x !== 'compte' || photos.length > 0);
   const chapters = affiner ? AFFINER_CHAPTERS : CHAPTERS;
   const step = order[Math.min(i, order.length - 1)];
   const chapter = Math.max(0, chapters.findIndex((c) => c.steps.includes(step)));
@@ -133,6 +141,7 @@ export function Onboarding({ affiner }: { affiner?: boolean }) {
     prenom: <Prenom {...ctx} />,
     rayon: <RayonStep {...ctx} />,
     age: <AgeStep {...ctx} />,
+    confiance: <Confiance {...ctx} />,
     corps: <Corps {...ctx} />,
     silhouette: <SilhouetteStep {...ctx} />,
     mesures: <Mesures {...ctx} />,
@@ -381,17 +390,74 @@ function AgeStep({ draft, set, next }: Ctx) {
 
 /* ---- 2. Silhouette ---- */
 
+/**
+ * L'accord avant tout ce qui touche au corps (09/10, RGPD art. 9, par
+ * prudence) : ce qui est demandé, à quoi ça sert, qui le reçoit, comment le
+ * retirer. Accepter ouvre la taille, la silhouette et les mesures ; « Pas
+ * maintenant » passe directement aux tailles de vêtements.
+ */
+function Confiance({ set, next }: Ctx) {
+  const { a } = useStore();
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  const [busy, setBusy] = useState(false);
+  const rows: { icon: IconName; text: string }[] = [
+    { icon: 'lock', text: 'Elles restent dans ton espace, protégées. Personne d’autre ne les voit.' },
+    { icon: 'kode', text: 'Kode reçoit ta silhouette et ta taille, sans ton nom, pour choisir tes coupes. Jamais tes mesures.' },
+    { icon: 'trash', text: 'Tu retires ton accord quand tu veux, dans Réglages › Tes données : tout est effacé aussitôt.' },
+  ];
+  return (
+    <Frame
+      kicker="Avant de continuer"
+      lead={'Ta silhouette,\n'}
+      em="en confiance."
+      intro="Ta taille, ta silhouette et tes mesures aident Kode à choisir tes coupes. Elles touchent à ton corps : on te demande ton accord."
+      footer={
+        <>
+          <Button
+            testID="onb-consent-yes"
+            label="J’accepte"
+            loading={busy}
+            onPress={async () => {
+              setBusy(true);
+              const ok = await a.setBodyConsent(true);
+              setBusy(false);
+              if (ok) set({ bodyConsent: new Date().toISOString() });
+            }}
+          />
+          <Button testID="onb-consent-no" label="Pas maintenant" variant="plain" onPress={next} />
+        </>
+      }
+    >
+      <View style={{ gap: 12 }}>
+        {rows.map((r) => (
+          <View key={r.text} className="flex-row items-center" style={{ gap: 12 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: c.pill }}>
+              <Icon name={r.icon} size={17} color={c.ink} />
+            </View>
+            <T v="caption" style={{ flex: 1 }}>
+              {r.text}
+            </T>
+          </View>
+        ))}
+      </View>
+      <Why icon="help">On ne te demande plus ton poids : Kode n’en a pas besoin pour t’habiller.</Why>
+      <T testID="onb-policy" v="label" tone="ink2" onPress={() => nav.navigate('Confidentialite')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12 }}>
+        Politique de confidentialité
+      </T>
+    </Frame>
+  );
+}
+
 function Corps({ draft, set, next, W }: Ctx) {
   const homme = draft.rayon === 'homme';
   const [height, setHeight] = useState(draft.height ?? (homme ? 178 : 165));
-  const [withWeight, setWithWeight] = useState(draft.weight !== null);
-  const [weight, setWeight] = useState(draft.weight ?? (homme ? 75 : 60));
   return (
     <Frame
-      lead={'Ta taille,\n'}
-      em="et ton poids."
+      lead={'Ta taille\n'}
+      em="en centimètres."
       intro="Fais glisser la règle, ou touche − et +."
-      footer={<Button testID="onb-next" label="Continuer" onPress={() => { set({ height, weight: withWeight ? weight : null }); next(); }} />}
+      footer={<Button testID="onb-next" label="Continuer" onPress={() => { set({ height }); next(); }} />}
     >
       <Card style={{ gap: 4, paddingHorizontal: 12 }}>
         <T v="kicker" tone="ink2" style={{ paddingHorizontal: 4 }}>
@@ -399,214 +465,32 @@ function Corps({ draft, set, next, W }: Ctx) {
         </T>
         <Ruler testID="ruler-taille" value={height} onChange={setHeight} min={140} max={205} unit="cm" label="Ta taille" width={W - 24} />
       </Card>
-      <Card style={{ gap: 10, paddingHorizontal: 12 }}>
-        <View className="flex-row items-center" style={{ gap: 12, paddingHorizontal: 4 }}>
-          <View style={{ flex: 1 }}>
-            <T v="kicker" tone="ink2">
-              Ton poids
-            </T>
-            <T v="caption" tone="ink2">
-              Facultatif
-            </T>
-          </View>
-          <Toggle testID="onb-weight" value={withWeight} onChange={setWithWeight} label="Indiquer mon poids" />
-        </View>
-        {withWeight && (
-          <Animated.View entering={FadeInDown.duration(220)}>
-            <Ruler testID="ruler-poids" value={weight} onChange={setWeight} min={35} max={160} unit="kg" label="Ton poids" width={W - 24} />
-          </Animated.View>
-        )}
-      </Card>
-      <Why>Ils servent uniquement à ajuster les coupes et les longueurs. Jamais affichés, jamais partagés, jamais commentés.</Why>
+      <Why>Elle sert à choisir les longueurs : manches, ourlets, robes. Jamais affichée, jamais commentée.</Why>
     </Frame>
   );
 }
 
-const ANALYSE_STEPS = ['Repérage des épaules', 'Repérage de la taille', 'Repérage des hanches', 'Calcul des proportions'];
-
-function SilhouetteStep({ draft, set, next, W }: Ctx) {
-  const { a } = useStore();
+/** La silhouette, choisie parmi cinq (l'estimation par photos est retirée le 09/10 : elle n'était qu'une démonstration). */
+function SilhouetteStep({ draft, set, next }: Ctx) {
   const { c } = useTheme();
-  const [mode, setMode] = useState<'choix' | 'photos' | 'manuel'>(draft.silhouetteSource === 'choix' ? 'manuel' : 'choix');
-  const [photos, setPhotos] = useState<{ face: string | null; profil: string | null; example: boolean }>({ face: null, profil: null, example: false });
-  const [consent, setConsent] = useState(false);
-  const [phase, setPhase] = useState<'pose' | 'analyse' | 'resultat'>('pose');
-  const [k, setK] = useState(0);
-  const [slot, setSlot] = useState<'face' | 'profil' | null>(null);
-  const [picked, setPicked] = useState<Silhouette | null>(draft.silhouette);
-
-  useEffect(() => {
-    if (phase !== 'analyse') return;
-    setK(0);
-    const t = ANALYSE_STEPS.map((_, n) => setTimeout(() => setK(n + 1), 480 * (n + 1)));
-    const done = setTimeout(() => setPhase('resultat'), 480 * ANALYSE_STEPS.length + 350);
-    return () => {
-      t.forEach(clearTimeout);
-      clearTimeout(done);
-    };
-  }, [phase]);
-
-  const choose = async (from: 'camera' | 'library' | 'example') => {
-    const which = slot;
-    setSlot(null);
-    if (!which) return;
-    if (from === 'example') return setPhotos({ face: null, profil: null, example: true });
-    try {
-      if (from === 'camera' && (await cameraAccess()) === 'blocked') return a.toast(CAMERA_BLOCKED, true);
-      const r = from === 'camera' ? await ImagePicker.launchCameraAsync({ quality: 0.6 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
-      if (!r.canceled && r.assets[0]) setPhotos((p) => ({ ...p, example: false, [which]: r.assets[0].uri }));
-    } catch {
-      // Sélection annulée ou refusée : rien à faire, l'emplacement reste vide.
-    }
-  };
-
-  if (mode === 'choix') {
-    return (
-      <Frame lead={'Ta\n'} em="silhouette." intro="Elle aide Kode à choisir les coupes qui te mettent en valeur. Deux façons de la lui donner :">
-        <View style={{ gap: 10 }}>
-          <ChoiceCard
-            testID="onb-sil-photos"
-            badge="Le plus précis"
-            title="Analyse par photos"
-            note="Deux photos, trente secondes. Supprimées juste après l’analyse."
-            art={<Figure color={c.ink2} fill={c.raised} width={24} />}
-            onPress={() => setMode('photos')}
-          />
-          <ChoiceCard
-            testID="onb-sil-manuel"
-            title="Je la choisis"
-            note="Cinq silhouettes, décrites sans jugement."
-            art={<SilhouetteShape id="X" size={30} color={c.ink2} fill={c.raised} />}
-            onPress={() => setMode('manuel')}
-          />
-        </View>
-        <Tap testID="onb-sil-unknown" onPress={() => { set({ silhouette: 'inconnue', silhouetteSource: null }); next(); }} scaleTo={1} accessibilityLabel="Je ne sais pas encore : Kode apprendra" style={{ minHeight: 44, justifyContent: 'center' }}>
-          <T v="bodyStrong" style={{ textDecorationLine: 'underline' }}>
-            Je ne sais pas encore : Kode apprendra
-          </T>
-        </Tap>
-      </Frame>
-    );
-  }
-
-  if (mode === 'manuel') {
-    return (
-      <Frame
-        lead={'Laquelle te\n'}
-        em="ressemble ?"
-        intro="Aucune n’est meilleure qu’une autre : c’est un point de départ pour les coupes."
-        footer={<Button testID="onb-next" label="Continuer" disabled={!picked} onPress={() => { set({ silhouette: picked, silhouetteSource: 'choix' }); next(); }} />}
-      >
-        <View style={{ gap: 8 }}>
-          {SILHOUETTES.map((x) => (
-            <ChoiceCard key={x.id} testID={`onb-sil-${x.id}`} title={`En ${x.id}`} note={x.note} on={picked === x.id} art={<SilhouetteShape id={x.id} size={30} color={c.ink} fill={picked === x.id ? c.raised : 'transparent'} />} onPress={() => setPicked(x.id)} />
-          ))}
-        </View>
-        <Button label="Plutôt l’analyse par photos" variant="plain" icon="camera" onPress={() => setMode('photos')} />
-      </Frame>
-    );
-  }
-
-  // Analyse par photos
-  const half = (W - 12) / 2;
-  const ready = (photos.face || photos.example) && consent;
-  if (phase === 'resultat') {
-    const result: Silhouette = 'X';
-    const note = SILHOUETTES.find((x) => x.id === result)!.note;
-    return (
-      <Frame
-        lead={'Silhouette\n'}
-        em={`en ${result}.`}
-        footer={
-          <>
-            <Button testID="onb-next" label="C’est bien moi" onPress={() => { set({ silhouette: result, silhouetteSource: 'photos' }); next(); }} />
-            <Button label="Ce n’est pas ça : je choisis" variant="plain" onPress={() => { setPicked(result); setMode('manuel'); }} />
-          </>
-        }
-      >
-        <Animated.View entering={FadeInDown.duration(300)}>
-          <Card className="flex-row items-center" style={{ gap: 16 }}>
-            <View className="bg-sunk items-center justify-center" style={{ width: 92, height: 120, borderRadius: 18 }}>
-              <SilhouetteShape id={result} size={44} color={c.ink} fill={c.raised} />
-            </View>
-            <View style={{ flex: 1, gap: 6 }}>
-              <T v="bodyStrong">{note}</T>
-              <T v="caption" tone="ink2">
-                Kode va privilégier les coupes qui marquent la taille, et les longueurs qui gardent l’équilibre épaules-hanches.
-              </T>
-              <T v="small" tone="positive" style={{ ...F.s600 }}>
-                Confiance : bonne
-              </T>
-            </View>
-          </Card>
-        </Animated.View>
-        <Why icon="trash">Tes photos ont été supprimées dès la fin de l’analyse. Seul le résultat est gardé, et tu peux le changer à tout moment.</Why>
-        <T v="small" tone="ink2">
-          Aperçu : le résultat est simulé. Dans l’app, l’analyse est faite par Kode sur nos serveurs.
-        </T>
-      </Frame>
-    );
-  }
-
+  const [picked, setPicked] = useState<Silhouette | null>(draft.silhouette && draft.silhouette !== 'inconnue' ? draft.silhouette : null);
   return (
     <Frame
-      lead={'Deux photos,\n'}
-      em="c’est tout."
-      footer={
-        <Button testID="onb-analyse" label={phase === 'analyse' ? 'Analyse en cours…' : 'Analyser mes photos'} loading={phase === 'analyse'} disabled={!ready} onPress={() => setPhase('analyse')} />
-      }
+      lead={'Laquelle te\n'}
+      em="ressemble ?"
+      intro="Aucune n’est meilleure qu’une autre : c’est un point de départ pour les coupes."
+      footer={<Button testID="onb-next" label="Continuer" disabled={!picked} onPress={() => { set({ silhouette: picked, silhouetteSource: 'choix' }); next(); }} />}
     >
       <View style={{ gap: 8 }}>
-        {[
-          { icon: 'check' as const, text: 'Garde une tenue ajustée : pas besoin de te déshabiller.' },
-          { icon: 'person' as const, text: 'En entier, de face puis de profil, bras légèrement écartés.' },
-          { icon: 'sun' as const, text: 'Lumière du jour, fond uni, téléphone à hauteur de taille.' },
-        ].map((t) => (
-          <View key={t.text} className="flex-row items-center" style={{ gap: 10 }}>
-            <View className="bg-sunk items-center justify-center" style={{ width: 30, height: 30, borderRadius: 15 }}>
-              <Icon name={t.icon} size={16} color={c.ink} />
-            </View>
-            <T v="caption" style={{ flex: 1 }}>
-              {t.text}
-            </T>
-          </View>
+        {SILHOUETTES.map((x) => (
+          <ChoiceCard key={x.id} testID={`onb-sil-${x.id}`} title={`En ${x.id}`} note={x.note} on={picked === x.id} art={<SilhouetteShape id={x.id} size={30} color={c.ink} fill={picked === x.id ? c.raised : 'transparent'} />} onPress={() => setPicked(x.id)} />
         ))}
       </View>
-      <View className="flex-row" style={{ gap: 12 }}>
-        <PhotoSlot testID="slot-face" label="De face" pose="face" width={half} uri={photos.face} example={photos.example} onPress={() => setSlot('face')} scanning={phase === 'analyse'} />
-        <PhotoSlot testID="slot-profil" label="De profil" pose="profil" width={half} uri={photos.profil} example={photos.example} onPress={() => setSlot('profil')} scanning={phase === 'analyse'} />
-      </View>
-      {phase === 'analyse' ? (
-        <View style={{ gap: 8 }} accessibilityLiveRegion="polite">
-          {ANALYSE_STEPS.map((s, n) => (
-            <View key={s} className="flex-row items-center" style={{ gap: 10, opacity: k > n ? 1 : 0.45 }}>
-              <Icon name={k > n ? 'check' : 'clock'} size={18} color={k > n ? c.positive : c.ink2} strokeWidth={2} />
-              <T v="body">{s}</T>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <>
-          <Tap testID="onb-consent" onPress={() => setConsent(!consent)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: consent }} accessibilityLabel="J’accepte que Kode analyse ces photos pour estimer ma silhouette. Elles sont supprimées juste après." style={{ flexDirection: 'row', gap: 12, paddingVertical: 4, minHeight: 44 }}>
-            <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: consent ? c.ink : c.control, backgroundColor: consent ? c['primary-bg'] : 'transparent' }} className="items-center justify-center">
-              {consent && <Icon name="check" size={15} color={c['primary-fg']} strokeWidth={2.4} />}
-            </View>
-            <T v="caption" style={{ flex: 1 }}>
-              J’accepte que Kode analyse ces photos pour estimer ma silhouette. Elles sont supprimées juste après, jamais montrées ni partagées.
-            </T>
-          </Tap>
-          {!photos.face && !photos.example && (
-            <Button testID="onb-example" label="Essayer avec des photos d’exemple" variant="plain" icon="image" onPress={() => setPhotos({ face: null, profil: null, example: true })} />
-          )}
-        </>
-      )}
-      <Sheet visible={!!slot} onClose={() => setSlot(null)} kicker="Photo" title={slot === 'profil' ? 'De profil' : 'De face'} testID="photo-sheet">
-        <View style={{ gap: 8 }}>
-          {!IS_WEB && <Button label="Prendre la photo" icon="camera" onPress={() => choose('camera')} />}
-          <Button testID="photo-library" label="Choisir dans ma galerie" icon="image" variant={IS_WEB ? 'primary' : 'secondary'} onPress={() => choose('library')} />
-          <Button testID="photo-example" label="Utiliser une photo d’exemple" variant="plain" onPress={() => choose('example')} />
-        </View>
-      </Sheet>
+      <Tap testID="onb-sil-unknown" onPress={() => { set({ silhouette: 'inconnue', silhouetteSource: null }); next(); }} scaleTo={1} accessibilityLabel="Je ne sais pas encore : Kode apprendra" style={{ minHeight: 44, justifyContent: 'center' }}>
+        <T v="bodyStrong" style={{ textDecorationLine: 'underline' }}>
+          Je ne sais pas encore : Kode apprendra
+        </T>
+      </Tap>
     </Frame>
   );
 }
@@ -627,7 +511,7 @@ function Mesures({ draft, set, next }: Ctx) {
     <Frame
       lead={'Tes mesures,\n'}
       em="si tu les as."
-      intro={draft.silhouetteSource === 'photos' ? 'Kode a déjà estimé tes proportions. En centimètres, il devient exact.' : 'Chaque mesure rend Kode plus juste. Aucune n’est obligatoire.'}
+      intro="Pour t’aider à choisir une taille quand tu achètes. Aucune n’est obligatoire."
       footer={<Button testID="onb-next" label="Continuer" onPress={next} />}
     >
       <View className="flex-row" style={{ gap: 12 }}>
@@ -1041,12 +925,10 @@ function Compte({ draft, set, next }: Ctx) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [login, setLogin] = useState(false);
-  const ready = validEmail(email) && (!online || password.length >= PASSWORD_MIN);
-  const legal = (
-    <T v="small" tone="ink2">
-      En continuant, tu acceptes les conditions d’utilisation et la politique de confidentialité de Dresskode. Tes photos de silhouette ne sont jamais conservées.
-    </T>
-  );
+  const [adult, setAdult] = useState(false);
+  const nav = useNavigation<Nav>();
+  const ready = validEmail(email) && (!online || password.length >= PASSWORD_MIN) && adult;
+  const legal = <SignupTerms adult={adult} onAdult={setAdult} onPolicy={() => nav.navigate('Confidentialite')} />;
 
   // Déjà connectée (compte ouvert depuis l'accueil) ou compte créé en attente de confirmation.
   if (s.session || s.pendingEmail) {

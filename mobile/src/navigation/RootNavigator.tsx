@@ -22,6 +22,8 @@ import { Customize } from '../screens/Customize';
 import { ProfileEdit } from '../screens/ProfileEdit';
 import { Settings } from '../screens/Settings';
 import { Bilan } from '../screens/Bilan';
+import { TesDonnees } from '../screens/TesDonnees';
+import { Confidentialite } from '../screens/Confidentialite';
 import { ShareScreen } from '../screens/Share';
 import { Offers } from '../screens/Offers';
 import { Shop } from '../screens/Shop';
@@ -76,6 +78,7 @@ export function RootNavigator() {
           <Stack.Screen name="Customize" component={Customize} />
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="Bilan" component={Bilan} />
+          <Stack.Screen name="TesDonnees" component={TesDonnees} />
           <Stack.Screen name="ProfileEdit" component={ProfileEdit} />
           <Stack.Screen name="Affiner" component={Affiner} />
           <Stack.Screen name="Offers" component={Offers} />
@@ -87,6 +90,8 @@ export function RootNavigator() {
           </Stack.Group>
         </>
       )}
+      {/* La politique de confidentialité se lit avant comme après l'inscription. */}
+      <Stack.Screen name="Confidentialite" component={Confidentialite} />
     </Stack.Navigator>
   );
 }

@@ -22,7 +22,7 @@ import { Ambient } from '../ui/Ambient';
 import { useScreen } from '../ui/screen';
 import { F } from '../theme/fonts';
 
-type Edit = 'taille' | 'poids' | 'silhouette' | MeasureId | 'haut' | 'bas' | 'pointure' | 'styles' | 'couleurs' | null;
+type Edit = 'taille' | 'silhouette' | MeasureId | 'haut' | 'bas' | 'pointure' | 'styles' | 'couleurs' | null;
 
 const MEASURES: { id: MeasureId; label: string; min: number; max: number; start: number }[] = [
   { id: 'poitrine', label: 'Tour de poitrine', min: 70, max: 140, start: 90 },
@@ -68,7 +68,7 @@ export function SilhouetteScreen() {
             </T>
           </T>
           <T v="body" tone="ink2">
-            Tout est facultatif, rien n’est partagé.
+            Tout est facultatif. Ce qui touche à ton corps attend ton accord.
           </T>
         </View>
 
@@ -91,33 +91,54 @@ export function SilhouetteScreen() {
           </View>
         </Card>
 
-        <View>
-          <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
-            Ton corps
-          </T>
-          <Group>
-          <Row testID="sil-taille" title="Taille" detail={p.height ? `${p.height} cm` : 'Ajouter · +10 %'} onPress={() => open('taille', p.height ?? 165)} />
-          <Row testID="sil-poids" title="Poids" detail={p.weight ? `${p.weight} kg · visible par toi seulement` : 'Facultatif · +5 %'} onPress={() => open('poids', p.weight ?? 60)} />
-          <Row
-            testID="sil-silhouette"
-            title="Silhouette"
-            detail={p.silhouette && p.silhouette !== 'inconnue' ? `En ${p.silhouette}${p.silhouetteSource === 'photos' ? ' · estimée sur photos' : ' · choisie'}` : 'Ajouter · +20 %'}
-            onPress={() => open('silhouette')}
-            last
-          />
-          </Group>
-        </View>
+        {/* Ce qui touche au corps attend un accord explicite (09/10, RGPD art. 9). */}
+        {!p.bodyConsent ? (
+          <Card style={{ gap: 10 }} testID="sil-consent">
+            <Tag label="Ton corps" />
+            <T v="cardTitle">Taille, silhouette et mesures</T>
+            <T v="body" tone="ink2">
+              Elles aident Kode à choisir tes coupes. Elles touchent à ton corps : on te demande ton accord avant de les noter. Kode reçoit ta silhouette et ta taille, sans ton nom ; jamais tes mesures.
+            </T>
+            <Button testID="sil-consent-yes" label="J’accepte" size="m" onPress={() => void a.setBodyConsent(true)} />
+            <T v="label" tone="ink2" onPress={() => nav.navigate('TesDonnees')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10 }}>
+              {p.height || p.weight || Object.values(p.measures).some(Boolean) || (p.silhouette && p.silhouette !== 'inconnue') ? 'Voir ou effacer ce que tu avais noté' : 'Tes données et tes accords'}
+            </T>
+          </Card>
+        ) : (
+          <>
+            <View>
+              <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
+                Ton corps
+              </T>
+              <Group>
+                <Row testID="sil-taille" title="Taille" detail={p.height ? `${p.height} cm` : 'Ajouter · +10 %'} onPress={() => open('taille', p.height ?? 165)} />
+                {/* Le poids n'est plus demandé (09/10) : une valeur donnée avant s'efface d'un geste. */}
+                {p.weight !== null && <Row testID="sil-poids" title="Poids" detail={`${p.weight} kg · plus utilisé, touche pour l’effacer`} onPress={() => set({ weight: null })} />}
+                <Row
+                  testID="sil-silhouette"
+                  title="Silhouette"
+                  detail={p.silhouette && p.silhouette !== 'inconnue' ? `En ${p.silhouette}` : 'Ajouter · +25 %'}
+                  onPress={() => open('silhouette')}
+                  last
+                />
+              </Group>
+            </View>
 
-        <View>
-          <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
-            Tes mesures
-          </T>
-          <Group>
-          {MEASURES.map((x, i) => (
-            <Row key={x.id} testID={`measure-${x.id}`} title={x.label} detail={p.measures[x.id] ? `${p.measures[x.id]} cm` : 'Ajouter · +8 %'} onPress={() => open(x.id, p.measures[x.id] ?? x.start)} last={i === MEASURES.length - 1} />
-          ))}
-          </Group>
-        </View>
+            <View>
+              <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
+                Tes mesures
+              </T>
+              <Group>
+                {MEASURES.map((x, i) => (
+                  <Row key={x.id} testID={`measure-${x.id}`} title={x.label} detail={p.measures[x.id] ? `${p.measures[x.id]} cm` : 'Ajouter · +8 %'} onPress={() => open(x.id, p.measures[x.id] ?? x.start)} last={i === MEASURES.length - 1} />
+                ))}
+              </Group>
+              <T v="small" tone="ink2" style={{ marginTop: 8, marginLeft: 6 }}>
+                Pour t’aider à choisir une taille. Elles restent dans ton espace.
+              </T>
+            </View>
+          </>
+        )}
 
         <View>
           <T v="kicker" tone="ink2" style={{ marginBottom: 8, marginLeft: 6 }}>
@@ -141,22 +162,20 @@ export function SilhouetteScreen() {
         </View>
       </Animated.ScrollView>
 
-      <Sheet visible={edit === 'taille' || edit === 'poids'} onClose={() => setEdit(null)} kicker="Ton corps" title={edit === 'poids' ? 'Poids' : 'Taille'} testID="body-sheet"
+      <Sheet visible={edit === 'taille'} onClose={() => setEdit(null)} kicker="Ton corps" title="Taille" testID="body-sheet"
         footer={
           <View className="flex-row" style={{ gap: 8 }}>
-            {edit === 'poids' && p.weight !== null && <Button label="Effacer" variant="secondary" grow onPress={() => { set({ weight: null }); setEdit(null); }} />}
-            <Button testID="body-save" label="Enregistrer" grow onPress={() => { set(edit === 'poids' ? { weight: num } : { height: num }); setEdit(null); }} />
+            {p.height !== null && <Button label="Effacer" variant="secondary" grow onPress={() => { set({ height: null }); setEdit(null); }} />}
+            <Button testID="body-save" label="Enregistrer" grow onPress={() => { set({ height: num }); setEdit(null); }} />
           </View>
         }
       >
-        {(edit === 'taille' || edit === 'poids') && (
+        {edit === 'taille' && (
           <View style={{ gap: 10 }}>
-            <Ruler value={num} onChange={setNum} min={edit === 'poids' ? 35 : 140} max={edit === 'poids' ? 160 : 205} unit={edit === 'poids' ? 'kg' : 'cm'} label={edit === 'poids' ? 'Ton poids' : 'Ta taille'} width={W} />
-            {edit === 'poids' && (
-              <T v="caption" tone="ink2">
-                Il sert uniquement à ajuster les coupes. Jamais affiché ailleurs qu’ici, jamais partagé.
-              </T>
-            )}
+            <Ruler value={num} onChange={setNum} min={140} max={205} unit="cm" label="Ta taille" width={W} />
+            <T v="caption" tone="ink2">
+              Elle sert à choisir les longueurs : manches, ourlets, robes.
+            </T>
           </View>
         )}
       </Sheet>
@@ -176,9 +195,6 @@ export function SilhouetteScreen() {
           </View>
           <T v="caption" tone="ink2">
             {p.silhouette && p.silhouette !== 'inconnue' ? SILHOUETTES.find((x) => x.id === p.silhouette)?.note : 'Un doute ? Laisse vide : Kode apprendra de ce que tu portes.'}
-          </T>
-          <T v="small" tone="ink2">
-            L’analyse par photos se relance depuis l’app : deux photos, supprimées juste après.
           </T>
         </View>
       </Sheet>

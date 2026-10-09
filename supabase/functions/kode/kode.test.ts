@@ -88,6 +88,9 @@ const profile = profileText({
 check('profil lisible, genre non précisé, sans prénom', profile,
   'Styles choisis : smart casual, minimal.\nCouleurs aimées : noir.\nÀ éviter : couleurs vives.\nPar défaut : fais ressortir les pièces peu ou jamais portées.');
 check('profil absent', profileText(null), 'Profil de style : pas encore renseigné.');
+check('silhouette et taille, avec accord', profileText(null, { shape: 'sablier', height_cm: 168 }),
+  'Pour les coupes et les longueurs : silhouette en X (taille marquée), taille 168 cm. Ne commente jamais le corps : sers-t’en seulement pour mettre en valeur.');
+check('sans accord, rien du corps', profileText(null, null), 'Profil de style : pas encore renseigné.');
 
 // ---------------------------------------------------------------- « Pas pour moi »
 

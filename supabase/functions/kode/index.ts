@@ -24,7 +24,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   RULES, ANSWER_RULES, PLAN_RULES, ANSWER_SCHEMA, PLAN_SCHEMA, profileText, agendaText, eventText, planDaysText, voyageText, ecartsText,
-  type Answer, type AgendaLine, type EcartRow, type EventRow, type Profile, type Voyage,
+  type Answer, type AgendaLine, type Corps, type EcartRow, type EventRow, type Profile, type Voyage,
 } from './prompt.ts';
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
 import { cachePostgres } from '../_shared/donnees/cache.ts';
@@ -116,7 +116,7 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
   const from = window?.from ?? today;
   const horizon = window?.to ?? parisDay(14);
 
-  const [settings, style, categories, garments, stats, planned, events, history, ecarts] = await Promise.all([
+  const [settings, style, categories, garments, stats, planned, events, history, ecarts, silhouette, accord] = await Promise.all([
     db.from('settings').select('city').eq('space_id', spaceId).maybeSingle(),
     db.from('style_profile').select('*').eq('space_id', spaceId).maybeSingle(),
     db.from('categories').select('id, label').order('sort'),
@@ -150,6 +150,9 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
       .gte('created_at', new Date(Date.now() - 90 * 86_400_000).toISOString())
       .order('created_at', { ascending: false })
       .limit(20),
+    // La silhouette et la taille (jamais le poids ni les mesures), seulement avec l'accord en vigueur (RGPD art. 9).
+    db.from('silhouettes').select('shape, height_cm').eq('space_id', spaceId).maybeSingle(),
+    db.rpc('has_consent', { target: spaceId, what: 'silhouette' }),
   ]);
 
   for (const r of [categories, garments, stats, planned, events, history]) {
@@ -193,6 +196,7 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
     today,
     // Une table absente ou illisible ne prive pas Kode de répondre.
     ecarts: ecarts.error ? [] : ((ecarts.data ?? []) as EcartRow[]),
+    corps: accord.data === true && silhouette.data ? (silhouette.data as Corps) : null,
     city: (settings.data?.city as string | null | undefined) ?? null,
     style: (style.data ?? null) as Profile | null,
     labels: new Map((categories.data ?? []).map((c) => [c.id as string, c.label as string])),
@@ -331,7 +335,7 @@ async function reply(token: string, question: string) {
   try {
     const refs = withRefs(ctx.wardrobe);
     const context = [
-      profileText(ctx.style),
+      profileText(ctx.style, ctx.corps),
       `Agenda Dresskode des deux prochaines semaines :\n${agendaText(ctx.agenda)}`,
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
       ecartsText(ctx.ecarts, refOf(refs)),
@@ -470,7 +474,7 @@ async function plan(token: string, input: PlanInput) {
   try {
     const refs = withRefs(ctx.wardrobe);
     const context = [
-      profileText(ctx.style),
+      profileText(ctx.style, ctx.corps),
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
       ecartsText(ctx.ecarts, refOf(refs)),
     ].filter(Boolean).join('\n\n');

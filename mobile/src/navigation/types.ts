@@ -35,6 +35,10 @@ export type RootParams = {
   Settings: undefined;
   /** Le bilan de la semaine (09/10), à l'accueil le dimanche et depuis Moi. */
   Bilan: undefined;
+  /** Tes données (09/10, RGPD) : ce qui est gardé, tes accords, tes droits. */
+  TesDonnees: undefined;
+  /** La politique de confidentialité (09/10). */
+  Confidentialite: undefined;
   Share: { id: string };
   Offers: undefined;
   Shop: { pack?: string } | undefined;

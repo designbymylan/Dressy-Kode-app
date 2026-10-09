@@ -27,9 +27,18 @@ export type Profile = {
   avatarPath: string | null;
   rayon: Rayon | null;
   age: string | null;
+  /**
+   * L'accord explicite pour la taille, la silhouette et les mesures (09/10,
+   * RGPD art. 9, par prudence) : sa date, ou null. Sans lui, rien de cela
+   * n'est demandé ni enregistré.
+   */
+  bodyConsent: string | null;
   /** cm */
   height: number | null;
-  /** kg, facultatif, jamais affiché ailleurs que dans « Ma silhouette ». */
+  /**
+   * kg. Plus demandé depuis le 09/10 (minimisation : Kode n'en a pas
+   * besoin pour habiller) ; une valeur donnée avant peut être effacée.
+   */
   weight: number | null;
   silhouette: Silhouette | null;
   silhouetteSource: 'photos' | 'choix' | null;
@@ -54,6 +63,7 @@ export const EMPTY_PROFILE: Profile = {
   avatarPath: null,
   rayon: null,
   age: null,
+  bodyConsent: null,
   height: null,
   weight: null,
   silhouette: null,
@@ -80,10 +90,11 @@ export const DEMO_PROFILE: Profile = {
   avatarPath: null,
   rayon: 'femme',
   age: '25–34 ans',
+  bodyConsent: '2026-09-15T09:00:00.000Z',
   height: 166,
   weight: null,
   silhouette: 'X',
-  silhouetteSource: 'photos',
+  silhouetteSource: 'choix',
   measures: { taille: 70 },
   sizes: { haut: 'S', bas: '38', pointure: '38' },
   styles: ['Minimal', 'Chic parisien'],
@@ -144,14 +155,14 @@ export const STYLE_CARDS: { name: string; note: string; kinds: [GarmentKind, str
 
 /**
  * Précision de Kode (0 à 100) : ce que chaque réponse lui apprend.
- * Barème : silhouette 20 (+5 par photos), taille 10, poids 5, 3 mesures × 8,
- * 3 tailles × 4, styles 7, couleurs 5, quotidien 4, ville 3, base 5.
+ * Barème (09/10, sans le poids ni l'analyse par photos) : silhouette 25,
+ * taille 10, 3 mesures × 8, 3 tailles × 4, styles 7, couleurs 5,
+ * quotidien 4, ville 3, base 10.
  */
 export function precision(p: Profile) {
-  let s = 5;
-  if (p.silhouette && p.silhouette !== 'inconnue') s += 20 + (p.silhouetteSource === 'photos' ? 5 : 0);
+  let s = 10;
+  if (p.silhouette && p.silhouette !== 'inconnue') s += 25;
   if (p.height) s += 10;
-  if (p.weight) s += 5;
   s += Object.values(p.measures).filter(Boolean).length * 8;
   s += [p.sizes.haut, p.sizes.bas, p.sizes.pointure].filter(Boolean).length * 4;
   if (p.styles.length) s += 7;
@@ -164,13 +175,12 @@ export function precision(p: Profile) {
 /** La prochaine réponse qui ferait le plus progresser Kode. */
 export function nextBestAnswer(p: Profile): { label: string; gain: number } | null {
   const list: { ok: boolean; label: string; gain: number }[] = [
-    { ok: !!p.silhouette && p.silhouette !== 'inconnue', label: 'ta silhouette', gain: 20 },
+    { ok: !!p.silhouette && p.silhouette !== 'inconnue', label: 'ta silhouette', gain: 25 },
     { ok: !!p.height, label: 'ta taille', gain: 10 },
     { ok: !!p.measures.hanches, label: 'ton tour de hanches', gain: 8 },
     { ok: !!p.measures.taille, label: 'ton tour de taille', gain: 8 },
     { ok: !!p.measures.poitrine, label: 'ton tour de poitrine', gain: 8 },
     { ok: !!p.styles.length, label: 'ton style', gain: 7 },
-    { ok: !!p.weight, label: 'ton poids (facultatif)', gain: 5 },
     { ok: !!p.sizes.haut, label: 'ta taille de haut', gain: 4 },
   ];
   const n = list.find((x) => !x.ok);

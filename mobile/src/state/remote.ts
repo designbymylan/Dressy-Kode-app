@@ -298,8 +298,8 @@ export async function loadAccount(): Promise<Account | null> {
   for (const [what, r] of Object.entries({ profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages, events, trips })) {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
-  // Le journal et les tenues écartées enrichissent l'app sans la bloquer : en cas d'échec, ils restent vides.
-  const [ecarts, journal] = await Promise.all([loadEcarts(spaceId), loadJournal()]);
+  // Le journal, les tenues écartées et l'accord enrichissent l'app sans la bloquer : en cas d'échec, ils restent vides.
+  const [ecarts, journal, bodyConsent] = await Promise.all([loadEcarts(spaceId), loadJournal(), loadConsent(spaceId, 'silhouette')]);
 
   const p = profile.data!;
   const [pieces, avatar] = await Promise.all([
@@ -337,6 +337,7 @@ export async function loadAccount(): Promise<Account | null> {
       avatarPath: p.avatar_url ?? null,
       rayon: (['femme', 'homme', 'mixte'] as Rayon[]).includes(st.gender as Rayon) ? (st.gender as Rayon) : null,
       age: ageIndex >= 0 ? AGES[ageIndex] : null,
+      bodyConsent,
       height: si.height_cm ?? null,
       weight: si.weight_kg ?? null,
       silhouette: si.shape ? (SHAPE_OF[si.shape] ?? null) : null,
@@ -527,6 +528,42 @@ async function loadJournal(): Promise<Record<Iso, string[]>> {
   const out: Record<Iso, string[]> = {};
   for (const w of (r.data ?? []) as { garment_id: string; worn_on: string }[]) (out[w.worn_on] ??= []).push(w.garment_id);
   return out;
+}
+
+/* ---- Accords et droits (RGPD, 09/10) ---- */
+
+export type ConsentKind = 'silhouette';
+
+/** L'accord en vigueur : sa date s'il est donné, null s'il ne l'est pas ou plus. */
+async function loadConsent(spaceId: string, kind: ConsentKind): Promise<string | null> {
+  const r = await db().from('consents').select('granted, created_at').eq('space_id', spaceId).eq('kind', kind).order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (r.error) {
+    console.warn('[supabase] accord :', r.error.message);
+    return null;
+  }
+  return r.data?.granted ? (r.data.created_at as string) : null;
+}
+
+/**
+ * Un accord donné ou retiré, gardé comme preuve (date, version). Retiré, la
+ * base efface aussitôt la taille, le poids, la silhouette et les mesures.
+ */
+export async function saveConsent(session: Session, kind: ConsentKind, granted: boolean) {
+  check(await db().from('consents').insert({ space_id: session.spaceId, profile_id: session.userId, kind, granted, version: 1 }), 'accord');
+}
+
+/** Toutes tes données, préparées par la fonction `compte` : un lien valable une heure. */
+export async function exportData(): Promise<Result<{ url: string }>> {
+  const { data, error } = await db().functions.invoke<{ url: string }>('compte', { body: { action: 'exporter' } });
+  if (error || !data?.url) return { ok: false, ...(await functionError(error, 'L’export n’a pas pu être préparé. Réessaie dans un instant.')) };
+  return { ok: true, url: data.url };
+}
+
+/** Supprime le compte et tout ce qu'il contient ; l'abonnement s'arrête. */
+export async function deleteAccount(): Promise<Result> {
+  const { data, error } = await db().functions.invoke<{ ok: boolean }>('compte', { body: { action: 'supprimer', confirmation: 'SUPPRIMER' } });
+  if (error || !data?.ok) return { ok: false, ...(await functionError(error, 'La suppression n’a pas abouti. Réessaie dans un instant.')) };
+  return { ok: true };
 }
 
 /** « Pas pour moi » : la tenue écartée et sa raison, que Kode lira avec ses prochaines questions. */

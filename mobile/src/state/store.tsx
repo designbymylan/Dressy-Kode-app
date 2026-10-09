@@ -629,6 +629,56 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         forget();
         dispatch({ t: 'restart' });
       },
+
+      /* ---- Tes données (RGPD, 09/10) ---- */
+
+      /**
+       * L'accord pour la taille, la silhouette et les mesures. Retiré, tout
+       * cela est effacé, sur le téléphone comme dans le compte (la base le
+       * fait aussi d'elle-même à la réception du retrait).
+       */
+      setBodyConsent: async (granted: boolean) => {
+        const session = live();
+        const patch: Partial<Profile> = granted
+          ? { bodyConsent: new Date().toISOString() }
+          : { bodyConsent: null, height: null, weight: null, silhouette: null, silhouetteSource: null, measures: {} };
+        if (session) {
+          try {
+            await remote.saveConsent(session, 'silhouette', granted);
+          } catch (e) {
+            console.warn('[supabase] accord :', e instanceof Error ? e.message : e);
+            dispatch({ t: 'toast', text: OFFLINE, warn: true });
+            return false;
+          }
+        }
+        dispatch({ t: 'profile', patch });
+        if (session && !granted) sync(remote.saveProfile(session, { ...getState().profile, ...patch }));
+        dispatch({ t: 'toast', text: granted ? 'Merci. Tu peux retirer ton accord à tout moment.' : 'Accord retiré : ta silhouette et tes mesures sont effacées' });
+        return true;
+      },
+      /** Toutes tes données dans un fichier : le lien s'ouvre dans le navigateur. */
+      exportData: async (): Promise<remote.Result> => {
+        if (!live()) return { ok: false, message: 'Sans compte, tout reste sur ce téléphone : rien n’est gardé chez nous.' };
+        const r = await remote.exportData().catch(() => ({ ok: false as const, message: NETWORK }));
+        if (r.ok) await Linking.openURL(r.url);
+        return r;
+      },
+      /** Supprime le compte pour de bon, puis repart de la bienvenue. */
+      deleteAccount: async (): Promise<remote.Result> => {
+        if (!live()) {
+          await forget();
+          dispatch({ t: 'restart' });
+          dispatch({ t: 'toast', text: 'Ce téléphone est effacé' });
+          return { ok: true };
+        }
+        const r = await remote.deleteAccount().catch(() => ({ ok: false as const, message: NETWORK }));
+        if (!r.ok) return r;
+        await remote.signOut().catch(() => undefined);
+        await forget();
+        dispatch({ t: 'restart' });
+        dispatch({ t: 'toast', text: 'Ton compte et tes données sont effacés' });
+        return { ok: true };
+      },
       wear: (ids: string[], toast = 'Notée dans ton journal') => {
         dispatch({ t: 'wear', ids, toast });
         lastUndo.current = { kind: 'wear', ids };

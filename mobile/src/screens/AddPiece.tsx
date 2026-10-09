@@ -223,6 +223,14 @@ export function AddPiece() {
                     );
                   })}
                 </View>
+                {!demo && (
+                  <View className="flex-row" style={{ gap: 8, paddingHorizontal: 4 }} testID="add-privacy">
+                    <Icon name="lock" size={15} color={c.ink2} />
+                    <T v="small" tone="ink2" style={{ flex: 1 }}>
+                      Ta photo sert seulement à dessiner tes pièces, puis elle est effacée sous 30 jours. Évite d’y montrer ton visage.
+                    </T>
+                  </View>
+                )}
                 {error && (
                   <Card className="bg-butter" style={{ gap: 10 }} testID="add-error">
                     <T v="body">{error}</T>

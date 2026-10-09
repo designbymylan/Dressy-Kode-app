@@ -209,6 +209,7 @@ export function EventEdit() {
 
         {section(
           'Note pour Kode',
+          <View style={{ gap: 8 }}>
           <TextInput
             testID="event-note"
             value={e.note ?? ''}
@@ -219,7 +220,11 @@ export function EventEdit() {
             placeholderTextColor={c.ink2}
             accessibilityLabel="Note pour Kode"
             style={{ ...input, minHeight: 96, borderRadius: 22, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' }}
-          />,
+          />
+          <T v="small" tone="ink2">
+            Ta note part chez Kode pour choisir ta tenue. Pas besoin d’y mettre de détail sur ta santé.
+          </T>
+          </View>,
           'event-note-card',
         )}
 

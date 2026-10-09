@@ -40,8 +40,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Dresskode utilise tes photos pour dessiner tes vêtements et, si tu le demandes, estimer ta silhouette. Les photos de silhouette sont supprimées juste après l’analyse.",
-          "cameraPermission": "Dresskode utilise l’appareil photo pour ajouter tes vêtements et, si tu le demandes, estimer ta silhouette.",
+          "photosPermission": "Dresskode utilise les photos que tu choisis pour dessiner tes vêtements et, si tu le veux, pour ta photo de profil. Les photos de vêtements sont effacées de nos serveurs 30 jours après l’envoi.",
+          "cameraPermission": "Dresskode utilise l’appareil photo pour photographier tes vêtements et, si tu le veux, ta photo de profil.",
           "microphonePermission": false
         }
       ],

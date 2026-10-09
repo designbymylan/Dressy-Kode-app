@@ -4,6 +4,8 @@
  */
 import { useState } from 'react';
 import { TextInput, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { Nav } from '../navigation/types';
 import { useStore } from '../state/store';
 import { online } from '../state/remote';
 import { useTheme } from '../theme/ThemeProvider';
@@ -13,6 +15,34 @@ import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { Tap } from './Tap';
 import { F } from '../theme/fonts';
+
+/**
+ * À la création d'un compte (09/10) : avoir 15 ans ou plus, l'âge auquel la
+ * loi française permet de consentir seul en ligne (loi Informatique et
+ * Libertés, art. 45), et le lien vers la politique de confidentialité.
+ */
+export function SignupTerms({ adult, onAdult, onPolicy }: { adult: boolean; onAdult: (v: boolean) => void; onPolicy: () => void }) {
+  const { c } = useTheme();
+  return (
+    <View style={{ gap: 6 }}>
+      <Tap testID="signup-age" onPress={() => onAdult(!adult)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: adult }} accessibilityLabel="J’ai 15 ans ou plus" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
+        <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: adult ? c.ink : c.control, backgroundColor: adult ? c['primary-bg'] : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+          {adult && <Icon name="check" size={15} color={c['primary-fg']} strokeWidth={2.4} flat />}
+        </View>
+        <T v="body" style={F.s500}>
+          J’ai 15 ans ou plus
+        </T>
+      </Tap>
+      <T v="small" tone="ink2">
+        Tes données servent seulement à t’habiller, comme l’explique notre{' '}
+        <T v="small" style={{ ...F.s600, textDecorationLine: 'underline' }} onPress={onPolicy} accessibilityRole="link" testID="signup-policy">
+          politique de confidentialité
+        </T>
+        .
+      </T>
+    </View>
+  );
+}
 
 export const validEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 export const PASSWORD_MIN = 8;
@@ -110,14 +140,16 @@ export function AccountSheet({
   initial?: Mode;
 }) {
   const { s, a } = useStore();
+  const nav = useNavigation<Nav>();
   const [mode, setMode] = useState<Mode>(initial);
+  const [adult, setAdult] = useState(false);
   const [email, setEmail] = useState(s.pendingEmail ?? '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
 
-  const ready = validEmail(email) && password.length >= (mode === 'signup' ? PASSWORD_MIN : 1);
+  const ready = validEmail(email) && password.length >= (mode === 'signup' ? PASSWORD_MIN : 1) && (mode === 'login' || adult);
 
   const submit = async () => {
     if (!ready || busy) return;
@@ -197,6 +229,7 @@ export function AccountSheet({
         </T>
         <EmailField testID="login-email" value={email} onChange={setEmail} />
         <PasswordField testID="login-password" value={password} onChange={setPassword} onSubmit={submit} isNew={mode === 'signup'} />
+        {mode === 'signup' && <SignupTerms adult={adult} onAdult={setAdult} onPolicy={() => { onClose(); nav.navigate('Confidentialite'); }} />}
         <FormError text={error} />
       </View>
     </Sheet>

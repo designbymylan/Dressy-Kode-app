@@ -168,15 +168,30 @@ const ASSISTANCE: Record<string, string> = {
   achats: 'quand une pièce manque vraiment, dis quel type de pièce ferait le plus d’usage avec le reste',
 };
 
+/** La silhouette et la taille, lues seulement avec l'accord « silhouette » en vigueur. */
+export type Corps = { shape: string | null; height_cm: number | null };
+
+const SHAPE: Record<string, string> = {
+  triangle: 'en A (hanches plus marquées que les épaules)',
+  triangle_inverse: 'en V (épaules plus marquées que les hanches)',
+  rectangle: 'en H (épaules, taille et hanches alignées)',
+  sablier: 'en X (taille marquée)',
+  ronde: 'en O (volume au centre)',
+};
+
 /**
  * Le profil tel que Kode le lit. Ni prénom, ni nom, ni e-mail (09/10,
  * minimisation RGPD) : Kode tutoie sans nommer, et le prestataire d'IA ne
- * reçoit rien qui désigne la personne directement.
+ * reçoit rien qui désigne la personne directement. La silhouette et la
+ * taille n'y entrent qu'avec l'accord de la personne ; jamais le poids ni
+ * les mesures.
  */
-export function profileText(p: Profile | null): string {
+export function profileText(p: Profile | null, corps: Corps | null = null): string {
   // Tournures neutres : le genre sert aux coupes, pas à genrer la personne.
   const lines: string[] = [];
-  if (!p) return 'Profil de style : pas encore renseigné.';
+  const body = [corps?.shape && SHAPE[corps.shape] ? `silhouette ${SHAPE[corps.shape]}` : null, corps?.height_cm ? `taille ${corps.height_cm} cm` : null].filter(Boolean);
+  if (body.length) lines.push(`Pour les coupes et les longueurs : ${body.join(', ')}. Ne commente jamais le corps : sers-t’en seulement pour mettre en valeur.`);
+  if (!p) return lines.length ? lines.join('\n') : 'Profil de style : pas encore renseigné.';
   if (p.gender === 'femme' || p.gender === 'homme') lines.push(`Coupes : ${p.gender}.`);
   if (p.styles.length) lines.push(`Styles choisis : ${words(p.styles)}.`);
   if (p.colours.length) lines.push(`Couleurs aimées : ${words(p.colours)}.`);

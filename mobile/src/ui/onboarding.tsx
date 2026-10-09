@@ -3,7 +3,7 @@
  * mesures, cartes de style, couleurs aimées/évitées, premier portant.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Image, Platform, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Platform, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import type { Piece } from '../data/wardrobe';
@@ -180,66 +180,6 @@ export function FirstRail({ pieces, slots = 5, size = 76, onPiece }: { pieces: P
       </ScrollView>
     </View>
   );
-}
-
-/* ---- Photos pour l'analyse de silhouette ---- */
-
-/** Une silhouette de personne, pour guider la pose et illustrer les photos d'exemple. */
-export function Figure({ pose = 'face', color, fill, width = 60 }: { pose?: 'face' | 'profil'; color: string; fill: string; width?: number }) {
-  const face = 'M22 30 Q30 26 38 30 L44 36 Q46 52 42 62 L41 70 Q46 84 44 98 L40 150 L33 150 L31 104 L29 104 L27 150 L20 150 L16 98 Q14 84 19 70 L18 62 Q14 52 16 36 Z';
-  const side = 'M26 30 Q33 27 36 32 Q40 44 38 58 Q42 66 41 80 Q41 92 38 100 L37 150 L29 150 L28 104 Q24 90 25 78 Q20 64 24 50 Q22 38 26 30 Z';
-  return (
-    <Svg width={width} height={width * 2.6} viewBox="0 0 60 156">
-      <Circle cx={pose === 'face' ? 30 : 31} cy={15} r={10} fill={fill} stroke={color} strokeWidth={1.4} />
-      <Path d={pose === 'face' ? face : side} fill={fill} stroke={color} strokeWidth={1.4} strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-export function PhotoSlot({ label, uri, example, pose, width, onPress, testID, scanning }: { label: string; uri?: string | null; example?: boolean; pose: 'face' | 'profil'; width: number; onPress: () => void; testID?: string; scanning?: boolean }) {
-  const { c } = useTheme();
-  const h = width * 1.33;
-  const filled = !!uri || example;
-  return (
-    <Tap testID={testID} onPress={onPress} accessibilityLabel={filled ? `${label} : photo ajoutée. Changer` : `${label} : ajouter une photo`} style={{ width, gap: 8 }} scaleTo={0.98}>
-      <View
-        style={{ width, height: h, borderRadius: 22, overflow: 'hidden', borderWidth: filled ? 0 : 1.5, borderStyle: 'dashed', borderColor: c.control, backgroundColor: filled ? (example ? '#DADADA' : c.sunk) : 'transparent' }}
-        className="items-center justify-center"
-      >
-        {uri ? (
-          <Image source={{ uri }} style={{ width, height: h }} resizeMode="cover" accessibilityIgnoresInvertColors />
-        ) : example ? (
-          <Figure pose={pose} color="#5E5E5E" fill="#F3F3F3" width={width * 0.36} />
-        ) : (
-          <View className="items-center" style={{ gap: 10, opacity: 0.9 }}>
-            <View style={{ opacity: 0.55 }}>
-              <Figure pose={pose} color={c.control} fill="transparent" width={width * 0.3} />
-            </View>
-            <View className="flex-row items-center bg-pill" style={{ borderRadius: 14, paddingHorizontal: 10, height: 28, gap: 4 }}>
-              <Icon name="plus" size={14} color={c.ink} strokeWidth={2} />
-              <T v="small" style={{ ...F.s600 }}>
-                Ajouter
-              </T>
-            </View>
-          </View>
-        )}
-        {scanning && <ScanLine height={h} />}
-      </View>
-      <T v="caption" style={{ textAlign: 'center', ...F.s600 }}>
-        {label}
-      </T>
-    </Tap>
-  );
-}
-
-function ScanLine({ height }: { height: number }) {
-  const { c } = useTheme();
-  const y = useSharedValue(0);
-  useEffect(() => {
-    y.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1, true);
-  }, [y]);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.value * (height - 3) }] }));
-  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: c.brass }, style]} />;
 }
 
 /* ---- Figure de mesures ---- */
