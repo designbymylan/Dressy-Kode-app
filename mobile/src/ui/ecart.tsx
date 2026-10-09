@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { T } from './T';
 import { Tap } from './Tap';
 import { Button } from './Button';
-import { Chip } from './controls';
+import { F } from '../theme/fonts';
 import { Garment } from './Garment';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
@@ -44,9 +44,27 @@ export function NotForMeSheet({ visible, pieces, onClose, onConfirm }: { visible
           Pourquoi ? Kode s’en souviendra pour tes prochaines tenues. Tu peux aussi passer sans rien dire.
         </T>
         <View className="flex-row flex-wrap" style={{ gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="La raison">
-          {RAISONS.map((r) => (
-            <Chip key={r.id} testID={`raison-${r.id}`} label={r.label} on={raison === r.id} onPress={() => setRaison(raison === r.id ? null : r.id)} />
-          ))}
+          {RAISONS.map((r) => {
+            const on = raison === r.id;
+            // Une capsule pleine : sur le blanc d'une feuille, le verre des puces ne se verrait pas.
+            return (
+              <Tap
+                key={r.id}
+                testID={`raison-${r.id}`}
+                onPress={() => setRaison(on ? null : r.id)}
+                feedback="select"
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                accessibilityLabel={r.label}
+                scaleTo={0.97}
+                style={{ height: 44, paddingHorizontal: 16, borderRadius: 22, justifyContent: 'center', backgroundColor: on ? c['primary-bg'] : c.pill }}
+              >
+                <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={F.s500}>
+                  {r.label}
+                </T>
+              </Tap>
+            );
+          })}
         </View>
         {raison === 'piece' && (
           <View style={{ gap: 10 }}>

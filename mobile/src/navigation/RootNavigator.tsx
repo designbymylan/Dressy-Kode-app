@@ -21,6 +21,7 @@ import { SilhouetteScreen } from '../screens/Silhouette';
 import { Customize } from '../screens/Customize';
 import { ProfileEdit } from '../screens/ProfileEdit';
 import { Settings } from '../screens/Settings';
+import { Bilan } from '../screens/Bilan';
 import { ShareScreen } from '../screens/Share';
 import { Offers } from '../screens/Offers';
 import { Shop } from '../screens/Shop';
@@ -74,6 +75,7 @@ export function RootNavigator() {
           <Stack.Screen name="Silhouette" component={SilhouetteScreen} />
           <Stack.Screen name="Customize" component={Customize} />
           <Stack.Screen name="Settings" component={Settings} />
+          <Stack.Screen name="Bilan" component={Bilan} />
           <Stack.Screen name="ProfileEdit" component={ProfileEdit} />
           <Stack.Screen name="Affiner" component={Affiner} />
           <Stack.Screen name="Offers" component={Offers} />

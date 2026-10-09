@@ -20,6 +20,7 @@ import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { Card, Tag, WeatherIcon } from '../ui/bits';
 import { NotForMeSheet } from '../ui/ecart';
+import { bilanDe, jourDeBilan } from '../state/bilan';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -107,6 +108,9 @@ export function Home() {
 
         {/* Un dressing pas encore prêt : l'appel à ajouter reste en tête, quel que soit l'ordre choisi. */}
         {!outfits.length && <EmptyToday />}
+
+        {/* Le dimanche et le lundi, le bilan de la semaine passe devant (09/10). */}
+        {outfits.length > 0 && jourDeBilan() && <BilanCard />}
 
         {/* Un dressing pas encore prêt : les premiers pas seuls, sans sections vides ni suggestions sans pièces. */}
         {s.modules
@@ -216,6 +220,44 @@ function TodayCard({ W }: { W: number }) {
         }}
       />
     </Card>
+  );
+}
+
+/** La carte du bilan : la semaine en sept traits de couleur, et le chiffre qui compte. */
+function BilanCard() {
+  const { s } = useStore();
+  const nav = useNavigation<Nav>();
+  const { c } = useTheme();
+  const b = bilanDe(s);
+  const byId = new Map(s.pieces.map((p) => [p.id, p]));
+  const vide = b.habilles === 0;
+  return (
+    <Tap testID="home-bilan" onPress={() => nav.navigate('Bilan')} scaleTo={0.99} accessibilityLabel={vide ? 'Ton bilan : prépare ta semaine' : `Ton bilan : ${b.habilles} tenues cette semaine`} style={{ borderRadius: 28, padding: 16, gap: 12, backgroundColor: c.card, borderWidth: 1, borderColor: c['card-edge'] }}>
+      <View className="flex-row items-center justify-between">
+        <Tag label={new Date().getDay() === 0 ? 'Bilan du dimanche' : 'Ta semaine passée'} />
+        <Icon name="arrow" size={16} color={c.ink2} />
+      </View>
+      <View className="flex-row items-end justify-between" style={{ gap: 12 }}>
+        <T v="section" style={{ flex: 1 }}>
+          {vide ? 'Ta semaine qui vient' : `${b.habilles} tenue${b.habilles > 1 ? 's' : ''} sur 7 jours`}
+        </T>
+        <View className="flex-row" style={{ gap: 4 }} accessibilityElementsHidden importantForAccessibility="no">
+          {b.jours.map((j) => {
+            const tints = j.pieces.map((id) => byId.get(id)).filter(Boolean).map((p) => (p as Piece).tint ?? (p as Piece).swatch).slice(0, 3);
+            return (
+              <View key={j.date} style={{ width: 10, height: 34, borderRadius: 5, overflow: 'hidden', justifyContent: 'flex-end', gap: 1, borderWidth: 1, borderColor: tints.length ? c['card-edge'] : c.rule, opacity: j.futur ? 0.4 : 1 }}>
+                {tints.map((t, k) => (
+                  <View key={k} style={{ flex: 1, backgroundColor: t }} />
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+      <T v="caption" tone="ink2">
+        {vide ? 'Kode prépare tes tenues avec la météo et tes rendez-vous.' : `${b.portees.length} pièces portées · ${b.part} % de ton dressing${b.ecartees ? ` · ${b.ecartees} écartée${b.ecartees > 1 ? 's' : ''}` : ''}`}
+      </T>
+    </Tap>
   );
 }
 

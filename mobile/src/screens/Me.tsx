@@ -115,7 +115,8 @@ export function Me() {
             <Button testID="me-first-add" label="Ajouter une pièce" icon="plus" size="m" onPress={() => nav.navigate('AddPiece')} />
           </Card>
         ) : (
-        <Card style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6 }} testID="me-stats">
+        <Tap testID="me-stats" onPress={() => nav.navigate('Bilan')} scaleTo={0.99} accessibilityLabel="Tes chiffres. Voir le bilan de la semaine">
+        <Card style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6 }}>
           {stats.map((x, i) => (
             <View key={x.l} className="items-center" style={{ flex: 1, gap: 2, borderLeftWidth: i ? 1 : 0, borderColor: c.rule }}>
               <T v="stat" numberOfLines={1} adjustsFontSizeToFit>
@@ -127,6 +128,7 @@ export function Me() {
             </View>
           ))}
         </Card>
+        </Tap>
         )}
 
         {/* Quatre raccourcis, comme les actions rapides d'une banque. */}

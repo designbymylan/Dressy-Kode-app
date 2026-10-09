@@ -5,7 +5,7 @@
  *   rendez-vous, une heure et demie avant un rendez-vous important, et deux
  *   jours avant un départ en voyage ;
  * - « tout » : en plus, la tenue du jour chaque matin (programmée à part,
- *   en rappel quotidien) ;
+ *   en rappel quotidien) et le bilan de la semaine, le dimanche à 18 h ;
  * - « non » : rien.
  *
  * Logique pure, sans module natif : la programmation est dans
@@ -68,6 +68,15 @@ export function rappels(
 
   for (const t of s.trips) {
     out.push({ id: `depart-${t.id}`, quand: at(addDays(t.start, -2), 18), titre: `Départ pour ${t.destination} dans deux jours`, texte: 'Tes tenues et ta valise t’attendent.', date: t.start });
+  }
+
+  // Tout accepté : le bilan de la semaine, les deux prochains dimanches à 18 h (09/10).
+  if (choix === 'tout') {
+    for (let k = 0; k < 2; k++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + ((7 - now.getDay()) % 7) + 7 * k);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      out.push({ id: `bilan-${iso}`, quand: at(iso, 18), titre: 'Ton bilan de la semaine', texte: 'Ce que tu as porté, ce qui dort, et Kode qui prépare la semaine qui vient.', date: iso });
+    }
   }
 
   return out

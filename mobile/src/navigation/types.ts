@@ -33,6 +33,8 @@ export type RootParams = {
   ProfileEdit: undefined;
   /** Les réglages, ouverts par la roue de Moi (07/10). */
   Settings: undefined;
+  /** Le bilan de la semaine (09/10), à l'accueil le dimanche et depuis Moi. */
+  Bilan: undefined;
   Share: { id: string };
   Offers: undefined;
   Shop: { pack?: string } | undefined;
