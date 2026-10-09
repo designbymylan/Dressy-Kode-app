@@ -172,8 +172,8 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   monde, dates, motif, activités ; photo libre du lieu et météo jour par
   jour (fonction `donnees`, actions `lieux` et `voyage`) ; une tenue par
   jour, modifiable, et la valise qui en découle.
-- **Notifications** : la question se pose en contexte (étape « Kode te
-  prévient ? » du questionnaire, carte du planning, réglage dans Moi) avec
+- **Notifications** : la question se pose en contexte (carte du planning,
+  réglage dans Réglages ; l'étape du questionnaire est retirée le 09/10) avec
   trois réponses : tout, seulement le planning, non. La fenêtre de l'iPhone
   ne s'ouvre qu'après un oui. Rappels locaux (`state/rappels.ts`,
   `expo-notifications`, ajouté le 07/10 pour cette demande) : rien ne part
@@ -237,6 +237,26 @@ couleurs de la galerie, verre et arrondis ne changent pas.
   icône de couleur reste pleine (`flat` pour forcer). Tailles modestes.
 - **Rien de trop gros** : sections, images et icônes à taille mesurée
   (Moi : photo à côté du nom, raccourcis de 48 px).
+
+**Diagnostic UX du 09/10** (page
+https://claude.ai/artifact/TmpQN3Qkud1J3QnS2varVN, commit `c18dc9b`),
+demandé par l'utilisateur pour lever les freins de la cible :
+
+- **Questionnaire court** : quatre écrans avant l'app (prénom, rayon,
+  style, premier portant), le compte seulement si des photos attendent
+  Kode, la préparation, puis on entre. Taille, poids, silhouette, mesures,
+  tailles, couleurs, quotidien, ville et âge passent dans **« Affiner »**
+  (`Affiner`, `screens/Onboarding.tsx`), facultatif, ouvert depuis Moi, Ma
+  silhouette et les premiers pas ; y passer une question garde la réponse
+  déjà donnée. On ne redemande jamais de données intimes avant d'avoir
+  montré une tenue.
+- **Accueil d'une débutante** (aucune tenue possible) : la seule carte
+  « Tes premiers pas » (trois pièces, ton style, aider Kode) ; les sections
+  reviennent dès la première tenue.
+- **Le matin en un geste** : « Je la porte » et « Une autre » en tête de la
+  carte de la tenue du jour.
+- **Moins de trois pièces** : Moi et l'ajout montrent le chemin vers la
+  première tenue (0/3), pas de quota ni de chiffres à zéro.
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
