@@ -94,7 +94,22 @@ export function Me() {
           </View>
         </Tap>
 
-        {/* Les chiffres, en grand, comme un solde. */}
+        {/* Une débutante (09/10) : pas de chiffres à zéro, le chemin vers sa première tenue. */}
+        {s.pieces.length < 3 ? (
+          <Card style={{ gap: 12, padding: 16 }} testID="me-first">
+            <View className="flex-row items-center justify-between">
+              <Tag label="Ta première tenue" />
+              <T v="kicker" tone="ink2">{`${s.pieces.length}/3 pièces`}</T>
+            </View>
+            <View style={{ height: 3, borderRadius: 2, backgroundColor: c.rule, overflow: 'hidden' }}>
+              <View style={{ height: 3, width: `${Math.round((s.pieces.length / 3) * 100)}%`, backgroundColor: c.ink }} />
+            </View>
+            <T v="caption" tone="ink2">
+              Un haut, un bas, des chaussures : Kode compose ta première tenue.
+            </T>
+            <Button testID="me-first-add" label="Ajouter une pièce" icon="plus" size="m" onPress={() => nav.navigate('AddPiece')} />
+          </Card>
+        ) : (
         <Card style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6 }} testID="me-stats">
           {stats.map((x, i) => (
             <View key={x.l} className="items-center" style={{ flex: 1, gap: 2, borderLeftWidth: i ? 1 : 0, borderColor: c.rule }}>
@@ -107,6 +122,7 @@ export function Me() {
             </View>
           ))}
         </Card>
+        )}
 
         {/* Quatre raccourcis, comme les actions rapides d'une banque. */}
         <View className="flex-row justify-between" style={{ paddingHorizontal: 4 }}>
@@ -190,7 +206,7 @@ export function Me() {
               Dis à Kode ce que tu aimes : tes tenues lui ressembleront davantage.
             </T>
           )}
-          <Tap testID="me-precision" onPress={() => nav.navigate('Silhouette')} scaleTo={0.99} accessibilityLabel={`Kode te connaît à ${knows} %`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderColor: c.rule }}>
+          <Tap testID="me-precision" onPress={() => nav.navigate(knows < 50 ? 'Affiner' : 'Silhouette')} scaleTo={0.99} accessibilityLabel={`Kode te connaît à ${knows} %`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderColor: c.rule }}>
             <Ring value={knows} size={40} stroke={3}>
               <T v="kicker">{`${knows}`}</T>
             </Ring>

@@ -1,9 +1,14 @@
 /**
- * L'onboarding : quatre chapitres (Toi, Silhouette, Style, Dressing), une
- * question par écran. Chaque question dit pourquoi elle est posée ; seuls le
- * prénom et le rayon sont obligatoires. Avant d'ouvrir l'espace, on accroche
- * ses premières pièces et Kode compose les premières tenues : l'utilisatrice
- * voit la valeur de l'app avant même d'y entrer.
+ * L'onboarding (raccourci le 09/10, diagnostic UX) : quatre écrans avant
+ * l'app (prénom, rayon, style, premier portant), le compte seulement si des
+ * photos attendent Kode, puis la préparation, et on entre. Seuls le prénom
+ * et le rayon sont obligatoires.
+ *
+ * Tout le reste (taille, silhouette, mesures, tailles, couleurs, quotidien,
+ * ville, âge) passe dans « Affiner » : le même écran, ouvert plus tard et
+ * en contexte (Moi, Ma silhouette, Premiers pas de l'accueil). La cible
+ * fuit les onboardings longs, et le poids ou les mesures ne se demandent
+ * pas avant d'avoir montré la valeur de l'app.
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
@@ -34,17 +39,24 @@ import { online, type Photo } from '../state/remote';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
-import { NotifChoices } from '../ui/rappels';
 
-type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte' | 'rappels' | 'bienvenue';
+type StepId = 'prenom' | 'rayon' | 'age' | 'corps' | 'silhouette' | 'mesures' | 'tailles' | 'styles' | 'couleurs' | 'quotidien' | 'ville' | 'pieces' | 'generation' | 'compte';
 
 const CHAPTERS: { label: string; steps: StepId[] }[] = [
-  { label: 'Toi', steps: ['prenom', 'rayon', 'age'] },
-  { label: 'Silhouette', steps: ['corps', 'silhouette', 'mesures', 'tailles'] },
-  { label: 'Style', steps: ['styles', 'couleurs', 'quotidien', 'ville'] },
-  { label: 'Dressing', steps: ['pieces', 'compte', 'rappels'] },
+  { label: 'Toi', steps: ['prenom', 'rayon'] },
+  { label: 'Style', steps: ['styles'] },
+  { label: 'Dressing', steps: ['pieces', 'compte'] },
 ];
-const ORDER: StepId[] = ['prenom', 'rayon', 'age', 'corps', 'silhouette', 'mesures', 'tailles', 'styles', 'couleurs', 'quotidien', 'ville', 'pieces', 'generation', 'compte', 'rappels', 'bienvenue'];
+/** Le compte ne se demande que si des photos attendent Kode (voir `order`). */
+const ORDER: StepId[] = ['prenom', 'rayon', 'styles', 'pieces', 'compte', 'generation'];
+/** « Affiner » : ce qui aide Kode, demandé une fois l'app découverte. Tout se passe. */
+const AFFINER_CHAPTERS: { label: string; steps: StepId[] }[] = [
+  { label: 'Silhouette', steps: ['corps', 'silhouette', 'mesures', 'tailles'] },
+  { label: 'Goûts', steps: ['couleurs', 'quotidien', 'ville', 'age'] },
+];
+const AFFINER: StepId[] = ['corps', 'silhouette', 'mesures', 'tailles', 'couleurs', 'quotidien', 'ville', 'age'];
+/** Les champs qu'« Affiner » enregistre dans le profil. */
+const AFFINE = ['height', 'weight', 'silhouette', 'silhouetteSource', 'measures', 'sizes', 'love', 'avoid', 'occasions', 'city', 'agenda', 'age'] as const;
 /** Ce que « Passer » efface : on n'enregistre jamais une valeur que la personne n'a pas choisie. */
 const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
   age: { age: null },
@@ -56,7 +68,6 @@ const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
   couleurs: { love: [], avoid: [] },
   quotidien: { occasions: [] },
   ville: { city: null, agenda: false },
-  rappels: {},
 };
 
 type Ctx = {
@@ -72,33 +83,51 @@ type Ctx = {
 /** Photos confiées d'un coup, comme sur l'écran d'ajout. */
 const MAX_PHOTOS = 10;
 
-export function Onboarding() {
-  const { a } = useStore();
+/** « Affiner mon profil » : les questions qui aident Kode, ouvertes depuis l'app. */
+export function Affiner() {
+  return <Onboarding affiner />;
+}
+
+export function Onboarding({ affiner }: { affiner?: boolean }) {
+  const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { width } = useScreen();
   const [i, setI] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
-  const [draft, setDraft] = useState<Profile>(EMPTY_PROFILE);
+  const [draft, setDraft] = useState<Profile>(affiner ? s.profile : EMPTY_PROFILE);
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const step = ORDER[i];
-  const chapter = CHAPTERS.findIndex((c) => c.steps.includes(step));
+  // Sans photo confiée, pas de compte à créer maintenant : il se propose plus tard, dans Moi.
+  const order = affiner ? AFFINER : ORDER.filter((x) => x !== 'compte' || photos.length > 0);
+  const chapters = affiner ? AFFINER_CHAPTERS : CHAPTERS;
+  const step = order[Math.min(i, order.length - 1)];
+  const chapter = Math.max(0, chapters.findIndex((c) => c.steps.includes(step)));
   const W = width - space.gutter * 2;
 
+  const finish = () => {
+    if (!affiner) return a.completeOnboarding(draft, [], photos);
+    a.setProfile(Object.fromEntries(AFFINE.map((k) => [k, draft[k]])) as Partial<Profile>);
+    a.toast(`Kode te connaît à ${precision(draft)} %`);
+    nav.goBack();
+  };
   const go = (to: number) => {
+    if (to >= order.length) return finish();
     setDir(to > i ? 1 : -1);
-    setI(Math.max(0, Math.min(ORDER.length - 1, to)));
+    setI(Math.max(0, to));
   };
   const next = () => go(i + 1);
   const back = () => {
-    // Le questionnaire a remplacé l'accueil (voir Welcome) : on y retourne de même.
-    if (i === 0) return nav.dispatch(StackActions.replace('Welcome'));
+    if (i === 0) {
+      if (affiner) return nav.goBack();
+      // Le questionnaire a remplacé l'accueil (voir Welcome) : on y retourne de même.
+      return nav.dispatch(StackActions.replace('Welcome'));
+    }
     // On ne revient pas sur l'écran de préparation : il se rejoue tout seul.
-    go(ORDER[i - 1] === 'generation' ? i - 2 : i - 1);
+    go(order[i - 1] === 'generation' ? i - 2 : i - 1);
   };
   const set = (patch: Partial<Profile>) => setDraft((d) => ({ ...d, ...patch }));
   const ctx: Ctx = { draft, set, photos, setPhotos, next, W };
-  const full = step === 'generation' || step === 'bienvenue';
+  const full = step === 'generation';
 
   const body: Record<StepId, ReactNode> = {
     prenom: <Prenom {...ctx} />,
@@ -115,8 +144,6 @@ export function Onboarding() {
     pieces: <Pieces {...ctx} />,
     generation: <Generation {...ctx} />,
     compte: <Compte {...ctx} />,
-    rappels: <RappelsStep {...ctx} />,
-    bienvenue: <Bienvenue {...ctx} onEnter={() => a.completeOnboarding(draft, [], photos)} />,
   };
 
   return (
@@ -125,10 +152,14 @@ export function Onboarding() {
       <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 10 }}>
         {!full && (
           <Header
+            chapters={chapters}
             chapter={chapter}
-            fill={(CHAPTERS[chapter].steps.indexOf(step) + 1) / CHAPTERS[chapter].steps.length}
+            fill={(chapters[chapter].steps.indexOf(step) + 1) / chapters[chapter].steps.length}
             onBack={back}
-            onSkip={SKIP[step] ? () => { set(SKIP[step]!); next(); } : undefined}
+            onSkip={SKIP[step] ? () => { // En « Affiner », passer garde ce qui était déjà dit.
+              if (!affiner) set(SKIP[step]!);
+              next();
+            } : undefined}
           />
         )}
         <Animated.View key={step} entering={(dir > 0 ? SlideInRight : SlideInLeft).springify().damping(24)} style={{ flex: 1 }}>
@@ -141,13 +172,13 @@ export function Onboarding() {
 
 /* ---- Cadre commun ---- */
 
-function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: number; onBack: () => void; onSkip?: () => void }) {
+function Header({ chapters, chapter, fill, onBack, onSkip }: { chapters: { label: string }[]; chapter: number; fill: number; onBack: () => void; onSkip?: () => void }) {
   return (
     <View style={{ paddingHorizontal: 12, gap: 6 }}>
       <View className="flex-row items-center" style={{ gap: 6 }}>
         <IconButton testID="onb-back" icon="back" label="Retour" variant="plain" onPress={onBack} />
-        <View style={{ flex: 1 }} accessibilityRole="progressbar" accessibilityLabel={`Chapitre ${chapter + 1} sur 4 : ${CHAPTERS[chapter].label}`}>
-          <Thread chapter={chapter} fill={fill} count={CHAPTERS.length} />
+        <View style={{ flex: 1 }} accessibilityRole="progressbar" accessibilityLabel={`Chapitre ${chapter + 1} sur ${chapters.length} : ${chapters[chapter].label}`}>
+          <Thread chapter={chapter} fill={fill} count={chapters.length} />
         </View>
         {onSkip ? (
           <T testID="onb-skip" v="bodyStrong" onPress={onSkip} accessibilityRole="button" style={{ paddingHorizontal: 10, paddingVertical: 12, minWidth: 64, textAlign: 'right' }}>
@@ -158,7 +189,7 @@ function Header({ chapter, fill, onBack, onSkip }: { chapter: number; fill: numb
         )}
       </View>
       <View className="flex-row justify-center" style={{ gap: 18 }}>
-        {CHAPTERS.map((c, k) => (
+        {chapters.map((c, k) => (
           <T key={c.label} v="small" tone={k === chapter ? 'ink' : 'ink2'} style={{ ...(k === chapter ? F.s700 : F.s500), letterSpacing: 0.4 }} upper>
             {c.label}
           </T>
@@ -954,10 +985,9 @@ function Generation({ draft, photos, next }: Ctx) {
   const n = photos.length;
   const rayon = draft.rayon === 'femme' ? 'rayon femme' : draft.rayon === 'homme' ? 'rayon homme' : draft.rayon === 'mixte' ? 'rayons femme et homme' : '';
   const lines = [
-    `Profil : ${[rayon, draft.height ? `${draft.height} cm` : '', draft.silhouette && draft.silhouette !== 'inconnue' ? `silhouette en ${draft.silhouette}` : ''].filter(Boolean).join(', ') || 'Kode apprendra en route'}`,
+    `Profil : ${rayon || 'Kode apprendra en route'}`,
     `Style : ${draft.styles.length ? draft.styles.join(', ') : 'à découvrir avec toi'}`,
-    `Palette : ${draft.love.length ? draft.love.join(', ') : 'toutes les couleurs'}${draft.avoid.length ? `, sans ${draft.avoid.join(', ').toLowerCase()}` : ''}`,
-    draft.city ? `Météo de ${draft.city}, suivie chaque matin` : 'Météo : ta ville, au prochain lancement',
+    'La météo du jour, chaque matin',
     n ? `${n} photo${n > 1 ? 's' : ''} pour Kode : il dessine tes pièces dès ton arrivée` : 'Tes portants, prêts à se remplir',
     n ? 'Tes premières tenues, dès tes pièces dessinées' : 'Ta première tenue, dès trois pièces',
   ];
@@ -1004,16 +1034,6 @@ function Generation({ draft, photos, next }: Ctx) {
  * l'e-mail, l'espace reste sur le téléphone et part sur le compte à la
  * première connexion (voir signIn dans state/store.tsx).
  */
-/** Les rappels (07/10) : demandé en contexte, la fenêtre de l'iPhone ne s'ouvre qu'après un « oui ». */
-function RappelsStep({ next }: Ctx) {
-  const { s } = useStore();
-  return (
-    <Frame lead={'Kode te\n'} em="prévient ?" intro="Un mot la veille d’un rendez-vous ou d’une tenue prévue. Jamais de publicité.">
-      <NotifChoices value={s.notifs} testID="onb-notif" onDone={() => setTimeout(next, 260)} />
-    </Frame>
-  );
-}
-
 function Compte({ draft, set, next }: Ctx) {
   const { s, a } = useStore();
   const [email, setEmail] = useState(draft.email ?? '');
@@ -1098,80 +1118,3 @@ function Compte({ draft, set, next }: Ctx) {
   );
 }
 
-function Bienvenue({ draft, photos, W, onEnter }: Ctx & { onEnter: () => void }) {
-  const { s } = useStore();
-  const n = photos.length;
-  const score = precision(draft);
-  const chips = [
-    draft.silhouette && draft.silhouette !== 'inconnue' ? `Silhouette en ${draft.silhouette}` : null,
-    draft.height ? `${draft.height} cm` : null,
-    draft.sizes.haut ? `Haut ${draft.sizes.haut}` : null,
-    draft.sizes.bas ? `Bas ${draft.sizes.bas}` : null,
-    draft.sizes.pointure ? `Pointure ${draft.sizes.pointure}` : null,
-    ...draft.styles,
-    draft.city,
-  ].filter(Boolean) as string[];
-  // Ce que deviennent les photos : dessinées tout de suite, ou en attente du compte.
-  const [title, body] = !n
-    ? ['Ton dressing t’attend.', `Dès trois pièces ajoutées, Kode compose ta première tenue, avec la météo ${draft.city ? `de ${draft.city}` : 'du jour'} et ton style.`]
-    : s.session
-      ? ['Kode dessine tes pièces.', `Tes ${n > 1 ? `${n} photos partent` : 'photo part'} chez Kode dès que tu entres : chaque vêtement arrive sur tes portants, sans fond, en quelques instants.`]
-      : !online
-        ? ['Tes photos attendent l’app.', 'Dans cet aperçu, Kode ne reçoit pas les photos. Dans l’app, avec ton compte, il les dessine pour tes portants.']
-        : ['Tes photos attendent ton compte.', s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kode dessinera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kode dessinera tes pièces aussitôt.'];
-  return (
-    <View style={{ flex: 1 }} testID="onb-welcome">
-      <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: 20, gap: 18 }}>
-        <Masthead kicker="DRESSKODE" meta="Ton espace est prêt" />
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <T v="hero" accessibilityRole="header">
-            Bienvenue,{'\n'}
-            <T v="hero" style={{ ...F.accent }}>
-              {draft.name}.
-            </T>
-          </T>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(250).duration(400)} style={{ gap: 12 }}>
-          <View style={{ marginHorizontal: -space.gutter }}>
-            <FirstRail pieces={[]} slots={5} size={70} />
-          </View>
-          <T v="cardTitle">{title}</T>
-          <T v="body" tone="ink2">
-            {body}
-          </T>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(450).duration(400)}>
-          <Card style={{ gap: 12 }}>
-            <View className="flex-row items-center" style={{ gap: 14 }}>
-              <Ring value={score} size={52} stroke={5}>
-                <T v="small" style={{ ...F.s700 }}>
-                  {score} %
-                </T>
-              </Ring>
-              <View style={{ flex: 1 }}>
-                <T v="bodyStrong">Ce que Kode sait de toi</T>
-                <T v="caption" tone="ink2">
-                  Tu peux tout compléter ou changer dans Moi.
-                </T>
-              </View>
-            </View>
-            {chips.length > 0 && (
-              <View className="flex-row flex-wrap" style={{ gap: 6 }}>
-                {chips.map((x) => (
-                  <View key={x} className="bg-pill" style={{ borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5 }}>
-                    <T v="small" style={{ ...F.s600 }}>
-                      {x}
-                    </T>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Card>
-        </Animated.View>
-      </ScrollView>
-      <View style={{ paddingHorizontal: space.gutter, paddingTop: 8 }}>
-        <Button testID="onb-enter" label="Entrer dans mon Dresskode" iconRight="chevron" onPress={onEnter} />
-      </View>
-    </View>
-  );
-}

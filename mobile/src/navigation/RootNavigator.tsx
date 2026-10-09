@@ -9,7 +9,7 @@ import { Kode } from '../screens/Kode';
 import { Agenda } from '../screens/Agenda';
 import { Me } from '../screens/Me';
 import { Welcome } from '../screens/Welcome';
-import { Onboarding } from '../screens/Onboarding';
+import { Affiner, Onboarding } from '../screens/Onboarding';
 import { PieceScreen } from '../screens/Piece';
 import { AddPiece } from '../screens/AddPiece';
 import { Compose } from '../screens/Compose';
@@ -75,6 +75,7 @@ export function RootNavigator() {
           <Stack.Screen name="Customize" component={Customize} />
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="ProfileEdit" component={ProfileEdit} />
+          <Stack.Screen name="Affiner" component={Affiner} />
           <Stack.Screen name="Offers" component={Offers} />
           <Stack.Screen name="Shop" component={Shop} />
           <Stack.Screen name="States" component={States} />

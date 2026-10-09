@@ -27,6 +27,8 @@ export type RootParams = {
   Event: { id: string };
   Silhouette: undefined;
   Customize: undefined;
+  /** Les questions qui aident Kode (silhouette, tailles, goûts), posées après l'entrée (09/10). */
+  Affiner: undefined;
   /** Photo, nom, pseudo et ce que Kode retient de toi (07/10). */
   ProfileEdit: undefined;
   /** Les réglages, ouverts par la roue de Moi (07/10). */

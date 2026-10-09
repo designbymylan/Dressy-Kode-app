@@ -173,7 +173,15 @@ export function AddPiece() {
               </T>
             </View>
 
-            {limit !== null && (
+            {/* Une débutante voit le chemin vers sa première tenue, pas un quota (09/10). */}
+            {s.pieces.length < 3 ? (
+              <View style={{ gap: 6 }} testID="add-first">
+                <T v="kicker" tone="ink2">
+                  {`Ta première tenue : ${s.pieces.length}/3 pièces · une photo de tenue entière en compte plusieurs`}
+                </T>
+                <Gauge value={s.pieces.length} max={3} label="Pièces pour la première tenue" />
+              </View>
+            ) : limit !== null && (
               <View style={{ gap: 6 }}>
                 <T v="kicker" tone={full ? 'caution' : 'ink2'}>
                   {`${s.pieces.length} / ${limit} places`}

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { Nav } from '../navigation/types';
 import { COLOR_CHOICES } from '../data/wardrobe';
 import { STYLE_CARDS, nextBestAnswer, precision, sizeOptions, type MeasureId, type Profile } from '../state/profile';
 import { useStore } from '../state/store';
@@ -30,6 +32,7 @@ const MEASURES: { id: MeasureId; label: string; min: number; max: number; start:
 
 /** Moi › Ma silhouette : tout ce que l'onboarding a demandé, modifiable à tout moment. */
 export function SilhouetteScreen() {
+  const nav = useNavigation<Nav>();
   const { s, a } = useStore();
   const insets = useSafeAreaInsets();
   const { c } = useTheme();
@@ -80,6 +83,11 @@ export function SilhouetteScreen() {
             <T v="caption" tone="ink2">
               {next ? `Ajoute ${next.label} : +${next.gain} %.` : 'Kode a tout ce qu’il lui faut.'}
             </T>
+            {next && (
+              <T testID="sil-affiner" v="label" onPress={() => nav.navigate('Affiner')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10 }}>
+                Répondre en deux minutes
+              </T>
+            )}
           </View>
         </Card>
 

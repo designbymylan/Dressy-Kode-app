@@ -4,7 +4,7 @@ import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSh
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { WEATHER_WORD, DAYS, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, lcFirst, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
-import { MODULE_LABELS, eventsOn, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { MODULE_LABELS, eventsOn, precision, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
 import { isoOf, spanLabel } from '../state/planning';
 import { usePlanifier } from '../state/usePlanifier';
 import { ferieDu, tendancesChezToi } from '../state/contexte';
@@ -15,7 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { material, motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
-import { Button } from '../ui/Button';
+import { Button, IconButton } from '../ui/Button';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { Card, Tag, WeatherIcon } from '../ui/bits';
@@ -107,8 +107,9 @@ export function Home() {
         {/* Un dressing pas encore prêt : l'appel à ajouter reste en tête, quel que soit l'ordre choisi. */}
         {!outfits.length && <EmptyToday />}
 
+        {/* Un dressing pas encore prêt : les premiers pas seuls, sans sections vides ni suggestions sans pièces. */}
         {s.modules
-          .filter((m) => m.on)
+          .filter((m) => m.on && outfits.length > 0)
           .map((m) => (m.id === 'tenue' ? outfits.length ? <TodayCard key="tenue" W={W} /> : null : <Module key={m.id} id={m.id} W={W} />))}
 
         {/* La météo de l'en-tête est créditée dans « Ta semaine » ; section masquée, elle l'est ici. */}
@@ -155,7 +156,18 @@ function TodayCard({ W }: { W: number }) {
 
   return (
     <Card style={{ padding: 14, gap: 12 }} testID="home-outfit">
-      <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+      {/* Le matin, un geste (09/10) : « Je la porte » et « Une autre » en tête de carte, visibles sans défiler. */}
+      <View className="flex-row items-center" style={{ gap: 8, minHeight: 40 }}>
+        <View style={{ flex: 1 }}>
+          <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+        </View>
+        {!worn && (
+          <>
+            {outfits.length > 1 && <IconButton testID="another-outfit" icon="refresh" label="Une autre tenue" variant="quiet" size={40} onPress={another} />}
+            <Button testID="wear-today" label="Je la porte" size="s" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
+          </>
+        )}
+      </View>
       {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. */}
       <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, paddingVertical: 12, overflow: 'hidden' }}>
         <DressRows
@@ -177,14 +189,7 @@ function TodayCard({ W }: { W: number }) {
           {outfit.why}
         </T>
       </Animated.View>
-      {worn ? (
-        <WornToday pieces={shown} />
-      ) : (
-        <View className="flex-row" style={{ gap: 8 }}>
-          <Button grow testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
-          <Button testID="another-outfit" label="Une autre" variant="quiet" icon="refresh" disabled={outfits.length < 2} onPress={another} />
-        </View>
-      )}
+      {worn && <WornToday pieces={shown} />}
     </Card>
   );
 }
@@ -264,8 +269,16 @@ function EmptyToday() {
   // Les photos confiées à Kode (au questionnaire ou depuis l'ajout) : on voit qu'il travaille.
   const drawing = new Set(s.jobs.filter(isActive).map((j) => j.source_paths[0])).size;
   const waiting = s.pendingPhotos.length;
+  const knows = precision(s.profile);
+  // Trois premiers pas, dans l'ordre où ils servent : des pièces, un style, une silhouette.
+  const steps: { id: string; title: string; note: string; done: boolean; onPress: () => void }[] = [
+    { id: 'pieces', title: n >= 3 ? 'Trois pièces ajoutées' : `Ajouter trois pièces · ${n}/3`, note: 'Une photo de tenue entière en compte plusieurs.', done: n >= 3, onPress: () => nav.navigate('AddPiece') },
+    { id: 'style', title: 'Dire à Kode ton style', note: 'Deux ou trois mots suffisent.', done: s.profile.styles.length > 0, onPress: () => nav.navigate('ProfileEdit') },
+    { id: 'affiner', title: 'Aider Kode à viser juste', note: `Deux minutes, tout est facultatif · ${knows} %`, done: knows >= 50, onPress: () => nav.navigate('Affiner') },
+  ];
+  const done = steps.filter((x) => x.done).length;
   return (
-    <Animated.View entering={FadeIn.duration(320)} style={{ gap: 16 }} testID="home-empty">
+    <Animated.View entering={FadeIn.duration(320)} style={{ gap: 12 }} testID="home-empty">
       {drawing > 0 ? (
         <Card className="bg-butter" style={{ gap: 8 }} testID="home-drawing">
           <KodeThinking phrases={['Kode repère chaque pièce', 'Kode dessine tes pièces', 'Kode les range sur tes portants']} />
@@ -281,53 +294,48 @@ function EmptyToday() {
           </T>
         </Card>
       ) : null}
-      <View style={{ gap: 6 }}>
-        <T v="kicker" tone="ink2">
-          Ta première tenue
+
+      {/* Tes premiers pas (09/10) : ce qui manque pour la première tenue, et deux gestes qui aident Kode. */}
+      <Card style={{ gap: 14, padding: 16 }} testID="home-first-steps">
+        <View className="flex-row items-center justify-between">
+          <Tag label="Tes premiers pas" />
+          <T v="kicker" tone="ink2">{`${done}/3`}</T>
+        </View>
+        <View style={{ marginHorizontal: -16 }}>
+          <FirstRail pieces={s.pieces.slice(0, 5)} slots={5} size={62} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
+        </View>
+        <T v="caption" tone="ink2">
+          {n ? `Il manque ${missing} pour ta première tenue.` : 'Trois pièces suffisent pour ta première tenue : un haut, un bas, des chaussures.'}
         </T>
-        <T v="hero" accessibilityRole="header">
-          {n === 0 ? 'Ton dressing\n' : n === 1 ? 'C’est bien\n' : 'Presque\n'}
-          <T v="hero" style={{ ...F.accent }}>
-            {n === 0 ? `t’attend${s.profile.name ? `, ${s.profile.name}` : ''}.` : n === 1 ? 'parti.' : 'prête.'}
-          </T>
-        </T>
-      </View>
-      <View style={{ marginHorizontal: -space.gutter }}>
-        <FirstRail pieces={s.pieces.slice(0, 5)} slots={5} size={70} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
-      </View>
-      <View className="flex-row items-center" style={{ gap: 10 }}>
-        <View className="flex-row" style={{ gap: 5 }}>
-          {[0, 1, 2].map((k) => (
-            <View key={k} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: k < Math.min(3, n) ? c.ink : c.rule }} />
+        <Button testID="home-add-first" label={n ? 'Ajouter la pièce qui manque' : 'Ajouter mes premières pièces'} icon="plus" onPress={() => nav.navigate('AddPiece')} />
+        <View>
+          {steps.map((x, k) => (
+            <Tap
+              key={x.id}
+              testID={`first-${x.id}`}
+              onPress={x.onPress}
+              scaleTo={0.99}
+              accessibilityLabel={`${x.title}${x.done ? ', fait' : ''}`}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, borderTopWidth: 1, borderColor: c.rule }}
+            >
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: x.done ? 0 : 1.5, borderColor: c.control, backgroundColor: x.done ? c['primary-bg'] : 'transparent' }}>
+                {x.done ? <Icon name="check" size={14} color={c['primary-fg']} strokeWidth={2.4} /> : <T v="small" tone="ink2">{String(k + 1)}</T>}
+              </View>
+              <View style={{ flex: 1, paddingVertical: 8 }}>
+                <T v="body" style={[F.s500, x.done && { textDecorationLine: 'line-through', color: c.ink2 }]}>
+                  {x.title}
+                </T>
+                {!x.done && (
+                  <T v="small" tone="ink2">
+                    {x.note}
+                  </T>
+                )}
+              </View>
+              {!x.done && <Icon name="chevron" size={16} color={c.ink2} />}
+            </Tap>
           ))}
         </View>
-        <T v="caption" tone="ink2" style={{ flex: 1 }}>
-          {n ? `${n} pièce${n > 1 ? 's' : ''} · il manque ${missing}` : 'Trois pièces suffisent : un haut, un bas, des chaussures.'}
-        </T>
-      </View>
-      <Button testID="home-add-first" label={n ? 'Ajouter la pièce qui manque' : 'Ajouter mes premières pièces'} icon="plus" onPress={() => nav.navigate('AddPiece')} />
-      <View className="flex-row" style={{ gap: 8 }}>
-        {[
-          { icon: 'camera' as const, t: 'Une photo', d: 'sur un cintre ou à plat' },
-          { icon: 'hanger' as const, t: 'Une illustration', d: 'rangée sur tes portants' },
-          { icon: 'kode' as const, t: 'Des tenues', d: 'selon la météo et ton style' },
-        ].map((x, k) => (
-          <View key={x.t} className="bg-stage" style={{ flex: 1, borderRadius: 18, padding: 12, gap: 6 }}>
-            <View className="flex-row items-center justify-between">
-              <Icon name={x.icon} size={20} color={k === 2 ? c.brass : c.ink} />
-              <T v="numeral" tone="brass" style={{ fontSize: 15 }}>
-                {String(k + 1).padStart(2, '0')}
-              </T>
-            </View>
-            <T v="caption" style={{ ...F.s600 }}>
-              {x.t}
-            </T>
-            <T v="small" tone="ink2">
-              {x.d}
-            </T>
-          </View>
-        ))}
-      </View>
+      </Card>
     </Animated.View>
   );
 }
