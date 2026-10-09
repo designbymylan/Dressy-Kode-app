@@ -10,7 +10,7 @@ import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap, haptic } from '../ui/Tap';
 import { Button } from '../ui/Button';
-import { Chip, UnderlineTabs } from '../ui/controls';
+import { Chip } from '../ui/controls';
 import { ScrollEdge, SectionHead, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { EmptyState, PieceTile, measureOrigin, type Origin } from '../ui/bits';
 import { Garment, hangOf, type GarmentKind } from '../ui/Garment';
@@ -133,23 +133,26 @@ export function Dressing() {
         </Animated.View>
       )}
       <Circles value={category} onChange={setCategory} />
-      <UnderlineTabs
-        label="Vue du dressing"
-        value={view}
-        onChange={setView}
-        options={[
-          { value: 'grille', label: 'Grille' },
-          { value: 'portants', label: 'Portants' },
-        ]}
-        right={
-          <Tap testID="open-filters" onPress={openFilters} accessibilityLabel={active ? `Filtres, ${active} actifs` : 'Filtres'} scaleTo={1} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, minWidth: 44, justifyContent: 'flex-end', gap: 6 }}>
-            <Icon name="filter" size={20} color={c.ink} />
-            {active > 0 && (
-              <T v="kicker">{String(active)}</T>
-            )}
+      {/* Le nombre de pièces à gauche ; la vue (grille, portants) et les filtres à droite. */}
+      <View className="flex-row items-center" style={{ gap: 4, marginTop: -6 }}>
+        <T v="kicker" tone="ink2" style={{ flex: 1 }}>
+          {`${list.length} pièce${list.length > 1 ? 's' : ''}`}
+        </T>
+        {(
+          [
+            ['grille', 'grid', 'Grille'],
+            ['portants', 'rails', 'Portants'],
+          ] as const
+        ).map(([v, icon, label]) => (
+          <Tap key={v} testID={`seg-${v}`} onPress={() => setView(v)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: view === v }} accessibilityLabel={label} scaleTo={0.95} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', opacity: view === v ? 1 : 0.45 }}>
+            <Icon name={icon} size={19} color={c.ink} />
           </Tap>
-        }
-      />
+        ))}
+        <Tap testID="open-filters" onPress={openFilters} accessibilityLabel={active ? `Filtres, ${active} actifs` : 'Filtres'} scaleTo={1} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingLeft: 8, gap: 6 }}>
+          <Icon name="filter" size={18} color={c.ink} />
+          <T v="label">{active ? `Filtrer · ${active}` : 'Filtrer'}</T>
+        </Tap>
+      </View>
     </View>
   );
 
@@ -322,57 +325,44 @@ function EmptyWardrobe() {
   );
 }
 
-/** Le pictogramme d'une catégorie encore vide : une silhouette grise, jamais une fausse pièce. */
-const KIND_FOR: Record<CategoryId, GarmentKind> = { manteaux: 'trench', hauts: 'tshirt', bas: 'jean', robes: 'robe', chaussures: 'baskets', accessoires: 'sac' };
-
 /**
- * Les catégories en ronds (05/10, inspirées des apps de garde-robe) : chaque
- * rond montre une pièce du dressing ; « Tout » montre le cintre.
+ * Les rayons (09/10, codes des grandes enseignes) : les catégories en
+ * capitales espacées, la catégorie active soulignée. Une catégorie vide
+ * reste visible, en gris : on sait ce qui manque.
  */
 function Circles({ value, onChange }: { value: CategoryId | null; onChange: (v: CategoryId | null) => void }) {
   const { s } = useStore();
-  const { c, scheme } = useTheme();
-  const items: { id: CategoryId | null; label: string; count: number; piece?: Piece }[] = [
+  const { c } = useTheme();
+  const items: { id: CategoryId | null; label: string; count: number }[] = [
     { id: null, label: 'Tout', count: s.pieces.length },
-    ...CATEGORIES.map((cat) => {
-      const mine = s.pieces.filter((p) => p.category === cat.id);
-      return { id: cat.id, label: cat.short, count: mine.length, piece: mine[0] };
-    }),
+    ...CATEGORIES.map((cat) => ({ id: cat.id, label: cat.short, count: s.pieces.filter((p) => p.category === cat.id).length })),
   ];
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter - 4, gap: 4, paddingVertical: 2 }} accessibilityRole="tablist">
-      {items.map((it) => {
-        const on = value === it.id;
-        return (
-          <Tap
-            key={it.id ?? 'all'}
-            testID={`cat-${it.id ?? 'all'}`}
-            onPress={() => onChange(on && it.id ? null : it.id)}
-            feedback="select"
-            scaleTo={0.95}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
-            accessibilityLabel={`${it.label}, ${it.count} pièce${it.count > 1 ? 's' : ''}`}
-            style={{ width: 76, alignItems: 'center', gap: 7 }}
-          >
-            <View style={{ width: 62, height: 62, borderRadius: 31, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: on ? 1.5 : 0, borderColor: c.ink }}>
-              {it.id === null ? (
-                <Icon name="hanger" size={26} color={c.ink} />
-              ) : it.piece ? (
-                <Garment kind={it.piece.kind} tint={it.piece.tint} image={it.piece.image} size={40} dark={scheme === 'dark'} label={it.piece.name} />
-              ) : (
-                <View style={{ opacity: 0.35 }}>
-                  <Garment kind={KIND_FOR[it.id]} tint={c.faint} size={38} dark={scheme === 'dark'} />
-                </View>
-              )}
-            </View>
-            <T v="small" style={on ? F.s600 : F.s400} numberOfLines={1}>
-              {it.label}
-            </T>
-          </Tap>
-        );
-      })}
-    </ScrollView>
+    <View style={{ borderBottomWidth: 1, borderColor: c.rule, marginHorizontal: -space.gutter }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 18 }} accessibilityRole="tablist">
+        {items.map((it) => {
+          const on = value === it.id;
+          return (
+            <Tap
+              key={it.id ?? 'all'}
+              testID={`cat-${it.id ?? 'all'}`}
+              onPress={() => onChange(on && it.id ? null : it.id)}
+              feedback="select"
+              scaleTo={1}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${it.label}, ${it.count} pièce${it.count > 1 ? 's' : ''}`}
+              style={{ height: 42, justifyContent: 'center' }}
+            >
+              <T v="label" tone={on ? 'ink' : 'ink2'} style={!on && !it.count ? { opacity: 0.6 } : undefined}>
+                {it.label}
+              </T>
+              <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 1.5, backgroundColor: on ? c.ink : 'transparent' }} />
+            </Tap>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 

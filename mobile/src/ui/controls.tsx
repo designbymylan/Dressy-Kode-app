@@ -62,16 +62,16 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
     x.value = withSpring(index, motion.spring);
   }, [index, x]);
   const thumb = useAnimatedStyle(() => ({ width: w.value, transform: [{ translateX: x.value * w.value }] }));
-  const h = compact ? 38 : 42;
+  const h = compact ? 32 : 38;
   return (
     <View
       accessibilityRole={role}
       accessibilityLabel={label}
-      onLayout={(e) => (w.value = (e.nativeEvent.layout.width - 8) / options.length)}
+      onLayout={(e) => (w.value = (e.nativeEvent.layout.width - 6) / options.length)}
       className="flex-row"
-      style={[{ padding: 4, borderRadius: 999, borderWidth: 1, borderColor: c['glass-border'], backgroundColor: c['glass-strong'] }, compact && { alignSelf: 'flex-start' }]}
+      style={[{ padding: 3, borderRadius: 999, backgroundColor: c.pill }, compact && { alignSelf: 'flex-start', width: options.length * 108 + 6 }]}
     >
-      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 4, bottom: 4, left: 4, borderRadius: 999, backgroundColor: c['primary-bg'] }, material.press[scheme], thumb]} />
+      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 3, bottom: 3, left: 3, borderRadius: 999, backgroundColor: c['primary-bg'] }, thumb]} />
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -92,7 +92,7 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
                 <Icon name={o.icon} size={16} color={on ? c['primary-fg'] : c.ink2} />
               </View>
             )}
-            <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={[on ? F.s600 : F.s500, { fontSize: 14 }]}>
+            <T v="caption" tone={on ? 'primary-fg' : 'ink2'}>
               {o.label}
             </T>
           </Tap>
@@ -103,14 +103,15 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
 }
 
 /**
- * Onglets soulignés (version cartes, 05/10) : le libellé actif en encre, un
- * trait sous lui ; les autres en gris. `right` accueille une action (filtres).
+ * Onglets soulignés (05/10, en capitales espacées depuis le 09/10, comme les
+ * rayons d'une grande enseigne) : le libellé actif en encre, un trait sous
+ * lui ; les autres en gris. `right` accueille une action (filtres).
  */
 export function UnderlineTabs<V extends string>({ options, value, onChange, label, right }: { options: { value: V; label: string }[]; value: V; onChange: (v: V) => void; label: string; right?: ReactNode }) {
   const { c } = useTheme();
   return (
     <View className="flex-row items-center justify-between" style={{ borderBottomWidth: 1, borderColor: c.rule }}>
-      <View accessibilityRole="tablist" accessibilityLabel={label} className="flex-row" style={{ gap: 22 }}>
+      <View accessibilityRole="tablist" accessibilityLabel={label} className="flex-row" style={{ gap: 18 }}>
         {options.map((o) => {
           const on = o.value === value;
           return (
@@ -123,12 +124,12 @@ export function UnderlineTabs<V extends string>({ options, value, onChange, labe
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={o.label}
-              style={{ height: 44, justifyContent: 'center', paddingHorizontal: 2 }}
+              style={{ height: 44, justifyContent: 'center', paddingHorizontal: 1 }}
             >
-              <T v="body" tone={on ? 'ink' : 'ink2'} style={on ? F.s600 : F.s400}>
+              <T v="label" tone={on ? 'ink' : 'ink2'}>
                 {o.label}
               </T>
-              <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, borderRadius: 1, backgroundColor: on ? c.ink : 'transparent' }} />
+              <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 1.5, backgroundColor: on ? c.ink : 'transparent' }} />
             </Tap>
           );
         })}

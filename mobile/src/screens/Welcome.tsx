@@ -57,7 +57,7 @@ export function Welcome() {
 
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6 + 56 + 36, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 24, gap: 16, alignItems: 'center' }}>
         <Animated.View entering={FadeInDown.delay(200).duration(500)} style={{ gap: 12, alignItems: 'center' }}>
-          <T v="hero" style={{ fontSize: 46, lineHeight: 44, textAlign: 'center' }} accessibilityRole="header">
+          <T v="hero" style={{ fontSize: 40, lineHeight: 44, textAlign: 'center' }} accessibilityRole="header">
             Porte mieux ce que tu as.
           </T>
           <T v="body" tone="ink2" style={{ textAlign: 'center' }}>

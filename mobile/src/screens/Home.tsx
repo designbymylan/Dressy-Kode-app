@@ -3,7 +3,7 @@ import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { WEATHER_WORD, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, lcFirst, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
+import { WEATHER_WORD, DAYS, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, lcFirst, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
 import { MODULE_LABELS, eventsOn, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
 import { isoOf, spanLabel } from '../state/planning';
 import { usePlanifier } from '../state/usePlanifier';
@@ -29,6 +29,11 @@ import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
 
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
+/** « jeudi 9 octobre » : la date du jour en toutes lettres. */
+const longDate = () => {
+  const d = new Date();
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+};
 
 /**
  * L'accueil (06/10) : chaque section a sa forme, dans l'ordre choisi dans
@@ -51,7 +56,8 @@ export function Home() {
   const city = s.profile.city;
   // « Mar. 6 oct. · Lyon, 15°, nuageux » ; sans météo connue, la date et la ville seulement.
   const meteoTxt = now ? `${now.t}°, ${now.mot ?? (city ? WEATHER_WORD[now.kind] : (meteo.jours[0]?.label ?? WEATHER_WORD[now.kind]))}` : null;
-  const meta = [capital(shortDate(0)), [city, meteoTxt].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+  const todayEvents = eventsOn(s.events, isoOf(0)).length;
+  const { c } = useTheme();
   const semaineVisible = s.modules.some((m) => m.id === 'semaine' && m.on);
   const W = width - space.gutter * 2;
   const top = useTabTop();
@@ -67,9 +73,36 @@ export function Home() {
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 28 }}
       >
-        <T v="kicker" tone="ink2" style={{ textAlign: 'center', marginBottom: -14 }} numberOfLines={1}>
-          {meta}
-        </T>
+        {/* Le salut (09/10) : la date et la ville en petites capitales, une phrase fine, la météo et la journée en puces. */}
+        <View style={{ gap: 8, paddingHorizontal: 4, marginBottom: -12 }} testID="home-hello">
+          <T v="label" tone="ink2" numberOfLines={1}>
+            {[capital(longDate()), city].filter(Boolean).join(' · ')}
+          </T>
+          <T v="hero" accessibilityRole="header">
+            {`Bonjour${s.profile.name ? ` ${s.profile.name}` : ''},\n`}
+            {!outfits.length ? 'ton dressing\nt’attend' : s.wornToday ? 'ta tenue du jour\nest ' : 'ta tenue du jour\nest '}
+            {outfits.length ? (
+              <T v="hero" style={F.accent}>
+                {s.wornToday ? 'portée' : 'prête'}
+              </T>
+            ) : null}
+            .
+          </T>
+          <View className="flex-row flex-wrap" style={{ gap: 6, marginTop: 2 }}>
+            {now && (
+              <View className="flex-row items-center" style={{ gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
+                <Icon name={now.kind === 'soleil' ? 'sun' : now.kind === 'nuages' ? 'cloud' : now.kind === 'pluie' ? 'rain' : 'showers'} size={15} color={c.ink} />
+                <T v="small">{meteoTxt}</T>
+              </View>
+            )}
+            {todayEvents > 0 && (
+              <Tap testID="home-today-events" onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityLabel={`${todayEvents} rendez-vous aujourd’hui`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
+                <Icon name="calendar" size={15} color={c.ink} />
+                <T v="small">{`${todayEvents} rendez-vous`}</T>
+              </Tap>
+            )}
+          </View>
+        </View>
 
         {/* Un dressing pas encore prêt : l'appel à ajouter reste en tête, quel que soit l'ordre choisi. */}
         {!outfits.length && <EmptyToday />}
@@ -340,7 +373,7 @@ function DayCard({ d }: { d: number }) {
           </View>
         ) : null}
       </View>
-      <T v="stat" style={{ fontSize: 44, lineHeight: 46 }}>
+      <T v="stat" style={{ fontSize: 32, lineHeight: 36 }}>
         {num}
       </T>
     </>
@@ -404,10 +437,10 @@ function Week() {
   return (
     <View style={{ gap: 14 }} testID="home-week">
       <View className="flex-row items-end justify-between" style={{ paddingHorizontal: 4 }}>
-        <T testID="home-week-title" v="hero" accessibilityRole="header" onPress={month} suppressHighlighting style={{ fontSize: 34, lineHeight: 36 }}>
+        <T testID="home-week-title" v="hero" accessibilityRole="header" onPress={month} suppressHighlighting style={{ fontSize: 28, lineHeight: 32 }}>
           Ta semaine
         </T>
-        <T testID="module-semaine-action" v="caption" tone="ink2" onPress={month} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12, marginVertical: -12 }}>
+        <T testID="module-semaine-action" v="label" tone="ink2" onPress={month} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12, marginVertical: -12 }}>
           Calendrier
         </T>
       </View>
@@ -464,7 +497,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     <View className="flex-row items-center justify-between" style={{ minHeight: 28 }}>
       <Tag label={title} />
       {action && onAction && (
-        <T testID={`module-${id}-action`} v="caption" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12 }}>
+        <T testID={`module-${id}-action`} v="label" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12 }}>
           {action}
         </T>
       )}
@@ -565,7 +598,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     return (
       <View style={{ gap: 12, paddingHorizontal: 4 }} testID="home-trend">
         <Tag label={title} />
-        <T v="hero" accessibilityRole="header" numberOfLines={2} adjustsFontSizeToFit style={{ fontSize: 50, lineHeight: 52 }}>
+        <T v="hero" accessibilityRole="header" numberOfLines={2} adjustsFontSizeToFit style={{ fontSize: 34, lineHeight: 38 }}>
           {name}
         </T>
         <T v="body" tone="ink2">
@@ -601,7 +634,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
         <View style={{ gap: 12 }}>
           {list.map((p, k) => (
             <Tap key={p.id} testID={`porte-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${k + 1}, ${p.name}, ${p.wears} ports`} scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72 }}>
-              <T v="stat" style={{ width: 22, textAlign: 'center', fontSize: 36, lineHeight: 38 }}>
+              <T v="stat" style={{ width: 22, textAlign: 'center', fontSize: 28, lineHeight: 32 }}>
                 {String(k + 1)}
               </T>
               <View style={{ width: 68, height: 68, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -731,7 +764,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
       <View className="flex-row" style={{ gap: 10 }}>
         {stats.map((x) => (
           <View key={x.l} style={{ flex: 1, gap: 6 }}>
-            <T v="stat" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 40, lineHeight: 42, color: fg }}>
+            <T v="stat" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 32, lineHeight: 36, color: fg }}>
               {x.v}
             </T>
             <T v="caption" style={{ color: fg }}>

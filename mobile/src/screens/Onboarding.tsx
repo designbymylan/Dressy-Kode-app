@@ -283,7 +283,7 @@ function Prenom({ draft, set, next }: Ctx) {
         maxLength={30}
         onSubmitEditing={() => ok && next()}
         accessibilityLabel="Ton prénom"
-        style={{ ...F.s500, fontSize: 34, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
+        style={{ ...F.display, fontSize: 30, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
       />
       <Why>Kode t’appellera comme ça. Rien n’est public.</Why>
     </Frame>

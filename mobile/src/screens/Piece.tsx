@@ -162,7 +162,7 @@ export function PieceScreen() {
             <T v="bodyStrong" style={{ fontSize: 15 }} accessibilityRole="header">
               L’étiquette
             </T>
-            <T testID="label-edit" v="caption" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 16 }}>
+            <T testID="label-edit" v="label" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 16 }}>
               Modifier
             </T>
           </View>

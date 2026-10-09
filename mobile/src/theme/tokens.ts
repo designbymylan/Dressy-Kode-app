@@ -3,9 +3,9 @@
  * du 02/10 (revenus le 04/10 à la demande de Mylan) : verre dépoli, arrondis,
  * capsules, boutons en casse normale. Les couleurs restent celles de la
  * « galerie » (fond blanc, texte noir, gris studio sous les vêtements, rose
- * poudré pour les bandeaux de service, halos crème, noirs en sombre) et la
- * typographie celle de la charte v1 (design/charte-typographique-v1.md,
- * polices dans fonts.ts). La disposition des écrans reste celle de la
+ * poudré pour les bandeaux de service, halos crème, noirs en sombre) ; la
+ * typographie est celle de la charte v2 du 09/10 (Inter Tight et Inter,
+ * design/charte-typographique-v2.md, polices dans fonts.ts). La disposition des écrans reste celle de la
  * refonte (design/refonte/).
  * Les couleurs vivent dans palette.json : c'est le fichier que lit
  * design/refonte/contraste.py, pour que le code et la vérification AA
@@ -33,36 +33,40 @@ export const radius = { sm: 12, md: 18, tile: 22, lg: 24, card: 28, xl: 32, shee
 /** Taille mini d'une cible tactile (HIG) : 44 × 44 pt. */
 export const HIT = 44;
 
-/** Titres en capitales, interlettrage +0,012 em (charte typographique v1). */
-const caps = (size: number) => ({ textTransform: 'uppercase' as const, letterSpacing: Math.round(size * 0.012 * 100) / 100 });
+/** Chiffres de même largeur : un prix, un compteur ne bougent pas. */
+const tab = { fontVariant: ['tabular-nums' as const] };
 
 /**
- * Échelle de la charte typographique v1. Cormorant (titres, marque, chiffres)
- * jamais sous 22 px, sauf la marque ; DM Mono pour les étiquettes courtes,
- * jamais pour du texte lu ; Hanken Grotesk pour tout le reste. Rien sous
- * 11,5 px.
+ * Échelle de la charte typographique v2 (09/10) : sept tailles qui montent
+ * d'un même pas (11, 12, 13, 15, 17, 20, 22, 28, 30), titres en casse
+ * normale. Inter Tight fin pour les titres et les grands chiffres, Inter 500
+ * pour le texte, 600 pour l'insistance ; étiquettes en capitales espacées,
+ * à la manière des grandes enseignes de mode. Rien sous 11 px, et les
+ * capitales seulement sur deux ou trois mots.
  */
 export const type = {
-  // La marque, DRESSKODE : Cormorant en capitales, interlettrage 0,24 em.
-  brand: { ...F.displayStrong, fontSize: 17, lineHeight: 20, textTransform: 'uppercase' as const, letterSpacing: 4.1 },
-  // Le mot de la page en haut à gauche (LE DRESSING, KODE…), en capitales espacées.
-  masthead: { ...F.s600, fontSize: 12, letterSpacing: 3.6, lineHeight: 16, textTransform: 'uppercase' as const },
-  // Étiquette (« Tenue du jour », « L'étiquette ») : mono, casse normale.
-  kicker: { ...F.mono, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
-  hero: { ...F.display, fontSize: 28, lineHeight: 30, ...caps(28) },
-  title: { ...F.display, fontSize: 25, lineHeight: 27, ...caps(25) },
-  section: { ...F.display, fontSize: 22, lineHeight: 25, ...caps(22) },
-  // Grands chiffres (coût par port, compteurs, pourcentages) : Cormorant, en casse normale.
-  stat: { ...F.display, fontSize: 28, lineHeight: 31 },
-  quote: { ...F.s400, fontSize: 17, lineHeight: 24 },
-  cardTitle: { ...F.s500, fontSize: 17, lineHeight: 22, letterSpacing: -0.1 },
-  numeral: { ...F.mono, fontSize: 13, lineHeight: 18 },
-  bodyL: { ...F.s400, fontSize: 17, lineHeight: 24 },
-  body: { ...F.s400, fontSize: 15, lineHeight: 21.75 },
-  bodyStrong: { ...F.s500, fontSize: 15, lineHeight: 21.75 },
-  button: { ...F.s600, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
-  caption: { ...F.s400, fontSize: 13, lineHeight: 18 },
-  small: { ...F.s400, fontSize: 12, lineHeight: 16 },
+  // La marque, DRESSKODE : Inter Tight en capitales, interlettrage 0,3 em.
+  brand: { ...F.displayStrong, fontSize: 13, lineHeight: 16, textTransform: 'uppercase' as const, letterSpacing: 3.9 },
+  // Le mot de la page, en capitales espacées.
+  masthead: { ...F.s500, fontSize: 11, letterSpacing: 0.9, lineHeight: 14, textTransform: 'uppercase' as const },
+  // Étiquette de carte ou de section (« TENUE DU JOUR », « TOUT VOIR ») : capitales espacées.
+  label: { ...F.s500, fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: 'uppercase' as const },
+  // Petite information (« 40 / 60 places », « pièces ») : Inter 500, casse normale.
+  kicker: { ...F.mono, fontSize: 12, lineHeight: 16, letterSpacing: 0, ...tab },
+  hero: { ...F.display, fontSize: 30, lineHeight: 34, letterSpacing: -0.3 },
+  title: { ...F.display, fontSize: 28, lineHeight: 32, letterSpacing: -0.28 },
+  section: { ...F.display, fontSize: 22, lineHeight: 26, letterSpacing: -0.22 },
+  // Grands chiffres (coût par port, compteurs, pourcentages) : Inter Tight fin.
+  stat: { ...F.display, fontSize: 26, lineHeight: 30, ...tab },
+  quote: { ...F.s500, fontSize: 17, lineHeight: 24 },
+  cardTitle: { ...F.displayStrong, fontSize: 20, lineHeight: 24, letterSpacing: -0.1 },
+  numeral: { ...F.mono, fontSize: 13, lineHeight: 18, ...tab },
+  bodyL: { ...F.s500, fontSize: 17, lineHeight: 24 },
+  body: { ...F.s500, fontSize: 15, lineHeight: 21 },
+  bodyStrong: { ...F.s600, fontSize: 15, lineHeight: 21 },
+  button: { ...F.s600, fontSize: 15, lineHeight: 20 },
+  caption: { ...F.s500, fontSize: 13, lineHeight: 18 },
+  small: { ...F.s500, fontSize: 12, lineHeight: 16 },
   tab: { ...F.s500, fontSize: 12, lineHeight: 15 },
 } as const;
 

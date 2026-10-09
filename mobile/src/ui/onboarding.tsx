@@ -70,7 +70,7 @@ export function Ruler({ value, onChange, min, max, unit, label, width, testID }:
     >
       <View className="flex-row items-center justify-between">
         <IconButton testID={testID && `${testID}-minus`} icon="minus" label={`Diminuer ${label}`} variant="quiet" size={40} onPress={() => nudge(-1)} />
-        <T v="hero" style={{ fontSize: 52, lineHeight: 56, textAlign: 'center' }} accessibilityElementsHidden>
+        <T v="hero" style={{ fontSize: 40, lineHeight: 44, textAlign: 'center' }} accessibilityElementsHidden>
           {value}
           <T v="cardTitle" tone="ink2">
             {' '}

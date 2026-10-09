@@ -24,11 +24,10 @@ import { Button } from '../ui/Button';
 import { Garment } from '../ui/Garment';
 import { Icon, type IconName } from '../ui/Icon';
 import { Ambient } from '../ui/Ambient';
-import { Patch } from '../ui/Patch';
 import { AccountSheet } from '../ui/account';
 import { Avatar, Card, DotChip, Ring, Tag } from '../ui/bits';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
-import { PLANS, bestSaving, price } from './Offers';
+import { PLANS, price } from './Offers';
 import type { Nav } from '../navigation/types';
 
 export function Me() {
@@ -77,35 +76,32 @@ export function Me() {
       <ScrollEdge y={edge} />
       <TabHeader title="Moi" y={edge} actions={[{ icon: 'gear', label: 'Réglages', onPress: () => nav.navigate('Settings'), testID: 'me-settings' }]} />
       <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top + 4, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 14 }}>
-        {/* Toi : la photo, le nom choisi, le pseudo. */}
-        <View className="items-center" style={{ gap: 10 }}>
-          <Tap testID="me-avatar" onPress={() => nav.navigate('ProfileEdit')} accessibilityLabel={p.avatar ? 'Modifier mon profil' : 'Ajouter une photo de profil'} scaleTo={0.97}>
-            <View style={{ padding: 4, borderRadius: 62, borderWidth: 1, borderColor: c['rule-strong'] }}>
-              <Avatar name={p.name || '?'} uri={p.avatar} size={108} on />
+        {/* Toi (09/10) : la photo à gauche, le nom choisi en fin, le pseudo dessous. */}
+        <Tap testID="me-avatar" onPress={() => nav.navigate('ProfileEdit')} accessibilityLabel="Modifier mon profil" scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 4 }}>
+          <View>
+            <Avatar name={p.name || '?'} uri={p.avatar} size={72} on />
+            <View style={{ position: 'absolute', right: -2, bottom: -2, width: 26, height: 26, borderRadius: 13, backgroundColor: c.raised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c['card-edge'] }}>
+              <Icon name={p.avatar ? 'edit' : 'camera'} size={13} color={c.ink} strokeWidth={2} />
             </View>
-            <View style={{ position: 'absolute', right: 0, bottom: 2, width: 36, height: 36, borderRadius: 18, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: c.paper }}>
-              <Icon name={p.avatar ? 'edit' : 'camera'} size={16} color={c['primary-fg']} strokeWidth={1.9} />
-            </View>
-          </Tap>
-          <View className="items-center" style={{ gap: 4 }}>
-            <T v="hero" style={{ fontSize: 34, lineHeight: 36, textAlign: 'center', textTransform: p.nameDisplay === 'pseudo' && p.username ? 'none' : 'uppercase' }} numberOfLines={2} accessibilityRole="header" testID="me-name">
+          </View>
+          <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
+            <T v="title" style={{ fontSize: 26, lineHeight: 30 }} numberOfLines={2} accessibilityRole="header" testID="me-name">
               {name || 'Bienvenue'}
             </T>
-            <T v="kicker" tone="ink2" style={{ textAlign: 'center' }} numberOfLines={1}>
+            <T v="small" tone="ink2" numberOfLines={1}>
               {s.account === 'nouveau' ? 'Sans compte · tout reste sur ce téléphone' : [handle, `membre depuis ${p.since}`].filter(Boolean).join(' · ')}
             </T>
           </View>
-          <Button testID="me-edit" label="Modifier le profil" variant="secondary" size="s" icon="edit" onPress={() => nav.navigate('ProfileEdit')} />
-        </View>
+        </Tap>
 
         {/* Les chiffres, en grand, comme un solde. */}
-        <Card style={{ flexDirection: 'row', paddingVertical: 16, paddingHorizontal: 8 }} testID="me-stats">
+        <Card style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6 }} testID="me-stats">
           {stats.map((x, i) => (
             <View key={x.l} className="items-center" style={{ flex: 1, gap: 2, borderLeftWidth: i ? 1 : 0, borderColor: c.rule }}>
-              <T v="stat" style={{ fontSize: 34, lineHeight: 38 }} numberOfLines={1} adjustsFontSizeToFit>
+              <T v="stat" numberOfLines={1} adjustsFontSizeToFit>
                 {x.v}
               </T>
-              <T v="kicker" tone="ink2">
+              <T v="small" tone="ink2">
                 {x.l}
               </T>
             </View>
@@ -115,11 +111,11 @@ export function Me() {
         {/* Quatre raccourcis, comme les actions rapides d'une banque. */}
         <View className="flex-row justify-between" style={{ paddingHorizontal: 4 }}>
           {shortcuts.map((x) => (
-            <Tap key={x.testID} testID={x.testID} onPress={x.onPress} accessibilityLabel={x.label} scaleTo={0.95} style={{ alignItems: 'center', gap: 7, width: 76 }}>
-              <View style={[{ width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center' }, x.solid ? { backgroundColor: c['primary-bg'] } : { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }]}>
-                <Icon name={x.icon} size={23} color={x.solid ? c['primary-fg'] : c.ink} strokeWidth={1.8} />
+            <Tap key={x.testID} testID={x.testID} onPress={x.onPress} accessibilityLabel={x.label} scaleTo={0.95} style={{ alignItems: 'center', gap: 6, width: 76 }}>
+              <View style={[{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }, x.solid ? { backgroundColor: c['primary-bg'] } : { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }]}>
+                <Icon name={x.icon} size={20} color={x.solid ? c['primary-fg'] : c.ink} strokeWidth={1.8} />
               </View>
-              <T v="caption" style={F.s500} numberOfLines={1}>
+              <T v="small" numberOfLines={1}>
                 {x.label}
               </T>
             </Tap>
@@ -127,17 +123,17 @@ export function Me() {
         </View>
 
         {/* La carte de membre : l'offre, les places, les questions ; elle ouvre les offres. */}
-        <Tap testID="me-offer" onPress={() => nav.navigate('Offers')} scaleTo={0.99} accessibilityLabel={`Ton offre ${plan.name}. Voir les offres`} style={{ borderRadius: 28, padding: 20, gap: 18, backgroundColor: c['primary-bg'], overflow: 'visible' }}>
+        <Tap testID="me-offer" onPress={() => nav.navigate('Offers')} scaleTo={0.99} accessibilityLabel={`Ton offre ${plan.name}. Voir les offres`} style={{ borderRadius: 28, padding: 18, gap: 14, backgroundColor: c['primary-bg'] }}>
           <View className="flex-row items-center justify-between">
-            <T v="brand" tone="primary-fg" style={{ fontSize: 13 }}>
+            <T v="brand" tone="primary-fg" style={{ fontSize: 11, letterSpacing: 3.3 }}>
               DRESSKODE
             </T>
-            <T v="kicker" tone="primary-fg" style={{ opacity: 0.75 }}>
-              carte de membre
+            <T v="label" tone="primary-fg" style={{ opacity: 0.75 }}>
+              Carte de membre
             </T>
           </View>
           <View style={{ gap: 2 }}>
-            <T v="hero" tone="primary-fg" style={{ fontSize: 36, lineHeight: 38 }}>
+            <T v="title" tone="primary-fg" style={{ fontSize: 30, lineHeight: 34 }}>
               {plan.name}
             </T>
             <T v="caption" tone="primary-fg" style={{ opacity: 0.8 }}>
@@ -152,16 +148,15 @@ export function Me() {
             <T v="caption" tone="primary-fg" style={F.s600}>
               {s.plan === 'couture' ? 'Voir mon offre' : 'Voir les offres'}
             </T>
-            <Icon name="chevron" size={18} color={c['primary-fg']} />
+            <Icon name="arrow" size={16} color={c['primary-fg']} />
           </View>
-          {s.plan !== 'couture' && <Patch label={`Jusqu’à -${bestSaving()} % sur l’année`} tilt={5} style={{ position: 'absolute', top: -10, right: 16 }} />}
         </Tap>
 
         {/* Ton style, tel que Kode le retient : il se modifie dans le profil. */}
         <Card style={{ gap: 14 }} testID="me-style">
           <View className="flex-row items-center justify-between">
             <Tag label="Ton style" />
-            <T testID="me-style-edit" v="caption" tone="ink2" onPress={() => nav.navigate('ProfileEdit')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 8, paddingLeft: 12 }}>
+            <T testID="me-style-edit" v="label" tone="ink2" onPress={() => nav.navigate('ProfileEdit')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10, paddingLeft: 12 }}>
               Modifier
             </T>
           </View>
@@ -196,7 +191,7 @@ export function Me() {
             </T>
           )}
           <Tap testID="me-precision" onPress={() => nav.navigate('Silhouette')} scaleTo={0.99} accessibilityLabel={`Kode te connaît à ${knows} %`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderColor: c.rule }}>
-            <Ring value={knows} size={50} stroke={5}>
+            <Ring value={knows} size={40} stroke={3}>
               <T v="kicker">{`${knows}`}</T>
             </Ring>
             <View style={{ flex: 1 }}>
@@ -218,8 +213,8 @@ export function Me() {
             <Tag label="Le plus porté" />
             <View className="flex-row" style={{ gap: 8 }}>
               {most.map((x) => (
-                <Tap key={x.id} testID={`most-${x.id}`} onPress={() => nav.navigate('Piece', { id: x.id })} accessibilityLabel={`${x.name}, ${x.wears} ports`} outerStyle={{ flex: 1 }} style={{ height: 112, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
-                  <Garment kind={x.kind} tint={x.tint} image={x.image} size={62} dark={scheme === 'dark'} label={x.name} />
+                <Tap key={x.id} testID={`most-${x.id}`} onPress={() => nav.navigate('Piece', { id: x.id })} accessibilityLabel={`${x.name}, ${x.wears} ports`} outerStyle={{ flex: 1 }} style={{ height: 96, borderRadius: 18, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center' }}>
+                  <Garment kind={x.kind} tint={x.tint} image={x.image} size={56} dark={scheme === 'dark'} label={x.name} />
                   <View style={{ position: 'absolute', top: 8, left: 8 }}>
                     <Tag label={`${x.wears}×`} tone="glass" dot={false} />
                   </View>

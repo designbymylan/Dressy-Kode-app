@@ -2,9 +2,14 @@
  * Jeu d'icônes original, dessiné pour Dresskode : trait 1,6 sur une grille
  * de 24, bouts ronds (le jeu du 02/10, revenu le 04/10). Aucune icône n'est
  * reprise d'un jeu propriétaire.
+ *
+ * Reflet chromé (09/10) : une icône noire, grise ou blanche est tracée d'un
+ * dégradé métal (sombre sur fond clair, clair sur fond sombre), tiré de sa
+ * couleur. Une icône de couleur (vert de « validé », rouge d'alerte, teinte
+ * d'un vêtement) garde sa couleur pleine, comme une icône `flat`.
  */
-import { memo } from 'react';
-import Svg, { Path } from 'react-native-svg';
+import { memo, useId } from 'react';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
 const PATHS = {
   home: 'M4 11.5 12 5l8 6.5V20H4ZM10 20v-5h4v5',
@@ -66,15 +71,50 @@ const PATHS = {
 
 export type IconName = keyof typeof PATHS;
 
-type Props = { name: IconName; size?: number; color: string; strokeWidth?: number };
+type Props = { name: IconName; size?: number; color: string; strokeWidth?: number; flat?: boolean };
 
-function IconBase({ name, size = 22, color, strokeWidth = 1.6 }: Props) {
+const rgb = (color: string): [number, number, number] | null => {
+  const h = color.trim();
+  if (/^#[0-9a-f]{6}$/i.test(h)) return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  if (/^#[0-9a-f]{3}$/i.test(h)) return [parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16), parseInt(h[3] + h[3], 16)];
+  return null;
+};
+const hex = (n: number) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
+const mix = ([r, g, b]: [number, number, number], to: number, t: number) => `#${hex(r + (to - r) * t)}${hex(g + (to - g) * t)}${hex(b + (to - b) * t)}`;
+
+/**
+ * Les cinq arrêts du reflet : sombre, gris, éclat, gris, sombre (ou l'inverse
+ * pour une icône claire). `null` pour une couleur qui n'est pas un gris.
+ */
+export function chromeStops(color: string): string[] | null {
+  const c = rgb(color);
+  if (!c || Math.max(...c) - Math.min(...c) > 24) return null;
+  const lum = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+  return lum < 0.5 ? [0.04, 0.42, 0.72, 0.38, 0.08].map((t) => mix(c, 255, t)) : [0.02, 0.38, 0, 0.42, 0.12].map((t) => mix(c, 0, t));
+}
+
+const OFFSETS = ['0', '0.38', '0.52', '0.68', '1'];
+
+function IconBase({ name, size = 22, color, strokeWidth = 1.6, flat }: Props) {
   const dots = name === 'more';
+  // Un identifiant par icône : sur le web, les dégradés partagent la même page.
+  const id = `chrome${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const stops = flat ? null : chromeStops(color);
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" accessibilityElementsHidden importantForAccessibility="no">
+      {stops && (
+        <Defs>
+          {/* Sur la grille de 24 et non sur la forme : un trait droit (moins, points) garde son reflet. */}
+          <LinearGradient id={id} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+            {stops.map((c, i) => (
+              <Stop key={i} offset={OFFSETS[i]} stopColor={c} />
+            ))}
+          </LinearGradient>
+        </Defs>
+      )}
       <Path
         d={PATHS[name]}
-        stroke={color}
+        stroke={stops ? `url(#${id})` : color}
         strokeWidth={dots ? 3 : strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"

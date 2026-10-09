@@ -48,7 +48,7 @@ export function SectionHead({ n, title, action, onAction, testID }: { n?: string
         {title}
       </T>
       {action && onAction && (
-        <T testID={testID} v="caption" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 13, paddingLeft: 8 }}>
+        <T testID={testID} v="label" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 14, paddingLeft: 8 }}>
           {action}
         </T>
       )}

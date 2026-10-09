@@ -1,5 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { ScrollView, View } from 'react-native';
+/**
+ * La boutique (09/10), copie de la maquette validée : la même page que les
+ * offres (promesse en grand, deux cartes, lignes à cocher, réassurance,
+ * bouton noir en bas), pour les services à l'unité. Les deux cartes disent
+ * où tu en es (places, questions) ; les lignes, les cinq packs et le lot.
+ * Ni patch ni pastille : l'économie du lot se lit par le prix barré.
+ */
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -7,18 +14,15 @@ import { LIMITS, pieceLimit, questionsLeft, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
-import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
-import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Badge, Card, Gauge, Tag } from '../ui/bits';
-import { Patch, Struck } from '../ui/Patch';
-import { glassSurface } from '../ui/Glass';
-import { price } from './Offers';
+import { Badge } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
+import { ScrollEdge, useHeaderScroll } from '../ui/layout';
+import { BottomFade, CloseButton, FeatureCard, Fold, Promise, RadioRow, Reassure, Scribble } from '../ui/shop';
+import { price } from './Offers';
 import type { Nav, Route } from '../navigation/types';
-import { F } from '../theme/fonts';
 
 /** Le contenu des packs vient de la maquette d'origine (Offres) : quatre lignes concrètes, un délai, un prix. */
 export const PACKS: { id: string; name: string; price: string; icon: IconName; desc: string; delivery: string; cta: string; included?: boolean; contents: string[] }[] = [
@@ -30,23 +34,23 @@ export const PACKS: { id: string; name: string; price: string; icon: IconName; d
 ];
 
 /** Le prix d'un pack, en centimes, pour additionner sans arrondi. */
-const cents = (price: string) => Math.round(parseFloat(price.replace(',', '.').replace(/[^\d.]/g, '')) * 100);
+const cents = (p: string) => Math.round(parseFloat(p.replace(',', '.').replace(/[^\d.]/g, '')) * 100);
 const BUNDLE = 1499;
+const SHORT: Record<string, string> = {
+  occasion: 'Un mariage, un entretien : la tenue est trouvée',
+  voyage: 'Tes dates, ta destination, ta valise',
+  audit: 'Ce qui dort, ce qui double, ce qui manque',
+  couleurs: 'Tes teintes, testées sur tes pièces',
+  defi: 'Un mois sans achat neuf, une règle par jour',
+};
 
-/**
- * La boutique (refaite le 07/10), sur le modèle des applis de banque envoyées
- * en exemple : la grande carte noire des cinq packs avec son prix barré, les
- * packs en cartes qui défilent, chacun avec son patch, et deux tuiles d'usage
- * (places, questions) qui disent où tu en es, en pourcentage.
- */
 export function Shop() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const route = useRoute<Route<'Shop'>>();
   const insets = useSafeAreaInsets();
-  const { c, scheme } = useTheme();
   const { y, onScroll } = useHeaderScroll();
-  const top = useStackTop();
+  const { c } = useTheme();
   const [open, setOpen] = useState<string | null>(null);
   const [bundle, setBundle] = useState(false);
   const limit = pieceLimit(s);
@@ -58,125 +62,86 @@ export function Shop() {
   const allOwned = PACKS.every((p) => owns(p.id));
   const total = PACKS.reduce((n, p) => n + cents(p.price), 0);
   const cheapest = Math.min(...PACKS.map((p) => cents(p.price)));
+  const [pick, setPick] = useState<string>(allOwned ? PACKS[0].id : 'tout');
+  const chosen = PACKS.find((p) => p.id === pick);
 
   useEffect(() => {
-    if (route.params?.pack) setOpen(route.params.pack);
+    if (route.params?.pack) {
+      setPick(route.params.pack);
+      setOpen(route.params.pack);
+    }
   }, [route.params]);
 
-  const patch = (p: (typeof PACKS)[number]) =>
-    owns(p.id) ? null : p.included ? { label: 'Inclus dans Atelier', tone: 'ink' as const } : cents(p.price) === cheapest ? { label: 'Petit prix', tone: 'butter' as const } : null;
+  const used = quota === null ? 0 : quota - (left ?? 0);
+  const bar = (v: number, max: number) => (
+    <View style={{ height: 3, borderRadius: 2, backgroundColor: c.rule, overflow: 'hidden' }}>
+      <View style={{ height: 3, borderRadius: 2, width: `${Math.min(100, Math.round((v / max) * 100))}%`, backgroundColor: c.ink }} />
+    </View>
+  );
+  const cta = pick === 'tout' ? `Prendre les cinq · ${price(BUNDLE)}` : chosen ? (owns(chosen.id) ? `Ouvrir ${chosen.name}` : `${chosen.cta} · ${chosen.price}`) : '';
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-shop">
       <Ambient />
-      <StackHeader title="La boutique" y={y} />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingBottom: insets.bottom + 32, gap: 20 }}>
-        <View style={{ paddingHorizontal: space.gutter }}>
-          <T v="kicker" tone="ink2">
-            Packs à l’unité, à toi pour toujours
-          </T>
-          <T v="hero" style={{ fontSize: 56, lineHeight: 60 }} accessibilityRole="header">
-            {`dès ${price(cheapest)}`}
-          </T>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 50, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 120, gap: 12 }}>
+        <Scribble variant={1} />
+        <Promise title={`À l’unité,\ndès ${price(cheapest)}`} lead="Cinq services, à toi pour toujours" note="Pas d’abonnement : un achat, et c’est débloqué." />
+
+        <Fold label="Où tu en es" />
+        <View className="flex-row flex-wrap" style={{ gap: 10 }}>
+          <FeatureCard testID="shop-places" icon="hanger" title="Places" right={limit === null ? 'Sans limite' : `${s.pieces.length} / ${limit}`}>
+            {limit !== null && bar(s.pieces.length, limit)}
+            {limit !== null && (
+              <T testID="buy-places" v="small" tone="ink2" onPress={a.buyPlaces} accessibilityRole="button" suppressHighlighting style={{ paddingVertical: 6 }}>
+                +30 places · 4,99 €
+              </T>
+            )}
+          </FeatureCard>
+          <FeatureCard testID="shop-questions" icon="kode" title="Questions à Kode" right={quota === null ? 'Sans limite' : `${used} / ${quota}`}>
+            {quota !== null && bar(used, quota)}
+            {quota !== null && (
+              <T testID="shop-more-questions" v="small" tone="ink2" onPress={() => nav.navigate('Offers')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 6 }}>
+                Sans limite avec Atelier
+              </T>
+            )}
+          </FeatureCard>
         </View>
 
-        {/* La grande carte : les cinq packs, le prix barré, l'économie. */}
-        {!allOwned && (
-          <View style={{ paddingHorizontal: space.gutter }}>
-            <View testID="bundle" style={{ borderRadius: 28, padding: 20, gap: 16, backgroundColor: c['primary-bg'] }}>
-              <View className="flex-row items-center justify-between">
-                <T v="brand" tone="primary-fg" style={{ fontSize: 13 }}>
-                  LES CINQ PACKS
-                </T>
-              </View>
-              <View className="flex-row" style={{ gap: 8 }}>
-                {PACKS.map((p) => (
-                  <View key={p.id} className="items-center justify-center" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: c['primary-fg'], opacity: 0.85 }}>
-                    <Icon name={p.icon} size={18} color={c['primary-fg']} />
-                  </View>
-                ))}
-              </View>
-              <View className="flex-row items-end" style={{ gap: 10 }}>
-                <T v="hero" tone="primary-fg" style={{ fontSize: 44, lineHeight: 46 }}>
-                  {price(BUNDLE)}
-                </T>
-                <View style={{ paddingBottom: 6 }}>
-                  <Struck label={price(total)} tone="primary-fg" />
-                </View>
-              </View>
-              <Tap testID="bundle-buy" onPress={() => setBundle(true)} accessibilityLabel={`Prendre les cinq pour ${price(BUNDLE)}`} style={{ alignItems: 'center', justifyContent: 'center', height: 50, borderRadius: 25, backgroundColor: c.paper }}>
-                <T v="button">{`Tout prendre · ${price(BUNDLE)}`}</T>
-              </Tap>
-              <Patch label={`Économise ${price(total - BUNDLE)}`} tilt={5} icon="tag" style={{ position: 'absolute', top: -12, right: 18 }} />
-            </View>
-          </View>
-        )}
-
-        {/* Les packs, en cartes qui défilent. */}
-        <View style={{ gap: 10 }}>
-          <View style={{ paddingHorizontal: space.gutter }}>
-            <Tag label="Les packs" />
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={CARD + 12} decelerationRate="fast" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 14, gap: 12 }}>
-            {PACKS.map((p) => {
-              const mine = owns(p.id);
-              const pt = patch(p);
-              return (
-                <View key={p.id}>
-                  <Tap testID={`pack-${p.id}`} onPress={() => setOpen(p.id)} scaleTo={0.98} accessibilityLabel={`${p.name}, ${mine ? 'déjà à toi' : p.price}`} style={[{ width: CARD, height: 236, borderRadius: 28, padding: 18, gap: 10 }, glassSurface(c, scheme)]}>
-                    <View className="items-center justify-center" style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.pill }}>
-                      <Icon name={p.icon} size={22} color={c.ink} />
-                    </View>
-                    <T v="section" numberOfLines={2} style={{ fontSize: 22 }}>
-                      {p.name}
-                    </T>
-                    <T v="caption" tone="ink2" numberOfLines={3} style={{ flex: 1 }}>
-                      {p.desc}
-                    </T>
-                    <View className="flex-row items-center justify-between">
-                      {mine ? (
-                        <Badge label="À toi" icon="check" />
-                      ) : (
-                        <View style={{ borderRadius: 999, paddingHorizontal: 14, height: 34, justifyContent: 'center', backgroundColor: c['primary-bg'] }}>
-                          <T v="caption" tone="primary-fg" style={F.s600}>
-                            {p.price}
-                          </T>
-                        </View>
-                      )}
-                      <Icon name="chevron" size={18} color={c.ink2} />
-                    </View>
-                  </Tap>
-                  {pt && <Patch label={pt.label} tone={pt.tone} tilt={-4} style={{ position: 'absolute', top: -10, right: 12 }} />}
-                </View>
-              );
-            })}
-          </ScrollView>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Services" style={{ gap: 8, paddingTop: 4 }}>
+          {!allOwned && (
+            <RadioRow testID="pack-tout" name="Les cinq ensemble" note="Occasion, voyage, audit, couleurs, défi" price={price(BUNDLE)} struck={price(total)} on={pick === 'tout'} onPress={() => setPick('tout')} />
+          )}
+          {PACKS.map((p) => (
+            <RadioRow
+              key={p.id}
+              testID={`pack-${p.id}`}
+              name={p.name}
+              note={SHORT[p.id] ?? p.desc}
+              price={p.price}
+              on={pick === p.id}
+              onPress={() => setPick(p.id)}
+              right={owns(p.id) ? <Badge label="À toi" icon="check" /> : undefined}
+            />
+          ))}
         </View>
 
-        {/* Où tu en es : deux tuiles, chacune avec son pourcentage. */}
-        <View className="flex-row" style={{ gap: 10, paddingHorizontal: space.gutter }}>
-          <Usage
-            testID="shop-places"
-            icon="hanger"
-            label="Places"
-            value={s.pieces.length}
-            max={limit}
-            action={limit === null ? undefined : <Button testID="buy-places" label="+30 · 4,99 €" size="s" onPress={a.buyPlaces} />}
-          />
-          <Usage
-            testID="shop-questions"
-            icon="kode"
-            label="Questions"
-            value={quota === null ? 0 : quota - (left ?? 0)}
-            max={quota}
-            action={quota === null ? undefined : <Button testID="shop-more-questions" label="Sans limite" variant="secondary" size="s" onPress={() => nav.navigate('Offers')} />}
-          />
-        </View>
-
-        <View style={{ paddingHorizontal: space.gutter }}>
-          <Button label="Voir les abonnements" variant="plain" iconRight="chevron" onPress={() => nav.navigate('Offers')} />
-        </View>
+        <Reassure
+          items={[
+            { icon: 'check', text: 'Occasion et voyage déjà inclus dans Atelier et Couture : rien à payer deux fois.' },
+            { icon: 'lock', text: 'Paiement sécurisé, sans date limite d’utilisation.' },
+          ]}
+        />
+        <T testID="shop-offers" v="label" tone="ink2" onPress={() => nav.navigate('Offers')} accessibilityRole="link" suppressHighlighting style={{ alignSelf: 'center', paddingVertical: 12 }}>
+          Voir les abonnements
+        </T>
       </Animated.ScrollView>
+
+      <ScrollEdge y={y} />
+      <CloseButton />
+      <BottomFade />
+      <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16 }}>
+        <Button testID="shop-cta" label={cta} onPress={() => (pick === 'tout' ? setBundle(true) : setOpen(pick))} />
+      </View>
 
       <Sheet
         visible={!!pack}
@@ -253,33 +218,5 @@ export function Shop() {
         </T>
       </Sheet>
     </View>
-  );
-}
-
-const CARD = 214;
-
-/** Une tuile d'usage : l'icône, le compte, la jauge et le pourcentage en pastille. */
-function Usage({ icon, label, value, max, action, testID }: { icon: IconName; label: string; value: number; max: number | null; action?: ReactNode; testID?: string }) {
-  const { c } = useTheme();
-  const pct = max === null ? null : Math.min(100, Math.round((value / max) * 100));
-  return (
-    <Card testID={testID} style={{ flex: 1, padding: 16, gap: 10, borderRadius: 24 }}>
-      <View className="flex-row items-center justify-between">
-        <View className="items-center justify-center" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.pill }}>
-          <Icon name={icon} size={18} color={c.ink} />
-        </View>
-        {pct !== null && <Badge label={`${pct} %`} tone={pct >= 90 ? 'caution' : 'neutral'} />}
-      </View>
-      <View>
-        <T v="kicker" tone="ink2">
-          {label}
-        </T>
-        <T v="stat" style={{ fontSize: 30, lineHeight: 33 }}>
-          {max === null ? 'Sans limite' : `${value}/${max}`}
-        </T>
-      </View>
-      {max !== null && <Gauge value={value} max={max} label={label} />}
-      {action}
-    </Card>
   );
 }

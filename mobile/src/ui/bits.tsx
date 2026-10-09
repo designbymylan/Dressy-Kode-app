@@ -116,9 +116,10 @@ export function measureOrigin(view: View | null, then: (from?: Origin) => void) 
 }
 
 /**
- * Vignette de la grille du dressing (05/10) : la pièce sur gris studio, son
- * étiquette à point en haut à gauche quand elle est neuve ou jamais portée,
- * puis son nom et ses ports en DM Mono.
+ * Vignette de la grille du dressing (05/10, 09/10) : la pièce sur gris
+ * studio, une pastille en haut à gauche quand elle est neuve ou jamais
+ * portée, puis son nom en capitales espacées et ses ports en gris, comme
+ * une fiche produit de grande enseigne.
  */
 export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean }) {
   const { scheme, c } = useTheme();
@@ -136,15 +137,13 @@ export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; widt
         )}
       </View>
       {!dense && (
-        <View className="flex-row items-baseline" style={{ paddingTop: 8, paddingHorizontal: 4, gap: 8 }}>
-          <T v="caption" style={[F.s500, { flex: 1 }]} numberOfLines={1}>
+        <View style={{ paddingTop: 8, paddingHorizontal: 4, gap: 2 }}>
+          <T v="label" numberOfLines={1}>
             {piece.name}
           </T>
-          {piece.wears > 0 && (
-            <T v="kicker" tone="ink2">
-              {`${piece.wears}×`}
-            </T>
-          )}
+          <T v="small" tone="ink2" numberOfLines={1}>
+            {piece.wears ? `${wornLabel(piece)[0].toUpperCase()}${wornLabel(piece).slice(1)}` : piece.color}
+          </T>
         </View>
       )}
     </Tap>
@@ -229,48 +228,64 @@ export function Badge({ label, tone = 'positive', icon }: { label: string; tone?
 }
 
 /**
- * Étiquette à point (version cartes, 05/10) : un point et un ou deux mots en
- * DM Mono, sur une pastille. Elle ouvre une carte (« Tenue du jour ») ou
- * marque une vignette (« Nouveau »). `tone` : gris studio, verre (posée sur
- * une image) ou rose poudré (service de Kode, texte noir en clair comme en
- * sombre). `swatch` remplace le point par une pastille de couleur.
+ * Étiquette (09/10, codes des grandes enseignes de mode) : un ou deux mots en
+ * capitales espacées, sans fond, qui ouvrent une carte (« TENUE DU JOUR »).
+ * Posée sur une image (`glass`) ou en service de Kode (`butter`), elle
+ * devient une petite pastille en casse normale (« Nouveau », « 12× »).
+ * `icon` ou `swatch` (pastille de couleur) peuvent la précéder.
  */
-export function Tag({ label, tone = 'sunk', icon, swatch, dot = true, testID }: { label: string; tone?: 'sunk' | 'glass' | 'butter'; icon?: IconName; swatch?: string; dot?: boolean; testID?: string }) {
+export function Tag({ label, tone = 'sunk', icon, swatch, testID }: { label: string; tone?: 'sunk' | 'glass' | 'butter'; icon?: IconName; swatch?: string; dot?: boolean; testID?: string }) {
   const { c } = useTheme();
-  const bg = tone === 'butter' ? c.butter : tone === 'glass' ? c['glass-strong'] : c.pill;
   const fg = tone === 'butter' ? c['butter-ink'] : c.ink;
+  const lead = icon ? (
+    <Icon name={icon} size={13} color={fg} strokeWidth={2} />
+  ) : swatch ? (
+    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} />
+  ) : null;
+  if (tone === 'sunk')
+    return (
+      <View testID={testID} className="flex-row items-center self-start" style={{ gap: 6, minHeight: 18 }}>
+        {lead}
+        <T v="label" style={{ color: fg }} numberOfLines={1}>
+          {label}
+        </T>
+      </View>
+    );
   return (
-    <View testID={testID} className="flex-row items-center self-start" style={{ backgroundColor: bg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, gap: 6 }}>
-      {icon ? (
-        <Icon name={icon} size={13} color={fg} strokeWidth={2} />
-      ) : swatch ? (
-        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} />
-      ) : dot ? (
-        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: fg }} />
-      ) : null}
-      <T v="kicker" style={{ color: fg }} numberOfLines={1}>
+    <View testID={testID} className="flex-row items-center self-start" style={{ backgroundColor: tone === 'butter' ? c.butter : c['glass-strong'], borderRadius: 999, paddingHorizontal: 10, height: 24, gap: 5 }}>
+      {lead}
+      <T v="small" style={{ color: fg, fontSize: 11.5, lineHeight: 14 }} numberOfLines={1}>
         {label}
       </T>
     </View>
   );
 }
 
+/** Un prix barré, à côté du vrai : ce que l'année ou le lot fait gagner. */
+export function Struck({ label, tone = 'ink2' }: { label: string; tone?: 'ink2' | 'primary-fg' }) {
+  return (
+    <T v="small" tone={tone} style={{ fontSize: 11.5, lineHeight: 14, textDecorationLine: 'line-through' }} accessibilityLabel={`au lieu de ${label}`}>
+      {label}
+    </T>
+  );
+}
+
 /**
- * Puce à point (05/10) : un mot ou deux en DM Mono, précédés d'un point ou
- * d'une pastille de couleur. Sans `onPress`, elle se lit (l'étiquette d'une
- * pièce) ; avec, elle se touche (les suggestions de Kode).
+ * Puce (09/10) : un mot ou deux sur gris studio, précédés d'une pastille de
+ * couleur quand il s'agit d'une teinte. Sans `onPress`, elle se lit
+ * (l'étiquette d'une pièce) ; avec, elle se touche (les suggestions de Kode).
  */
 export function DotChip({ label, onPress, swatch, testID, disabled }: { label: string; onPress?: () => void; swatch?: string; testID?: string; disabled?: boolean }) {
   const { c } = useTheme();
   const body = (
     <>
-      {swatch ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} /> : <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c.ink }} />}
-      <T v="kicker" numberOfLines={1} style={{ flexShrink: 1 }}>
+      {swatch ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} /> : null}
+      <T v="small" numberOfLines={1} style={{ flexShrink: 1 }}>
         {label}
       </T>
     </>
   );
-  const style = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 7, height: 36, paddingHorizontal: 13, borderRadius: 18, backgroundColor: c.pill, opacity: disabled ? 0.5 : 1 };
+  const style = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c.pill, opacity: disabled ? 0.5 : 1 };
   if (!onPress)
     return (
       <View testID={testID} style={style} accessible accessibilityLabel={label}>
