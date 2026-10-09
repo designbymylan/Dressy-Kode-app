@@ -2,8 +2,9 @@
  * Moi (refait le 07/10) : une page à toi, sur le modèle des grandes boutiques
  * et des applis de banque envoyées en exemple. En haut, ta photo et le nom
  * que tu as choisi ; puis tes chiffres, quatre raccourcis, ta carte de
- * membre (l'offre, les places, les questions), ton style tel que Kode le
- * retient, et tes pièces les plus portées. Les réglages sont derrière la
+ * membre (l'offre, les places, les questions ; seulement après la première
+ * tenue, depuis le 09/10), ton style tel que Kode le retient, et tes pièces
+ * les plus portées. Les réglages sont derrière la
  * roue de l'en-tête ; l'icône Personnaliser reste à l'accueil.
  */
 import { useState } from 'react';
@@ -15,6 +16,7 @@ import { COLOR_CHOICES, euros } from '../data/wardrobe';
 import { displayName, nextBestAnswer } from '../state/profile';
 import { LIMITS, pieceLimit, precision, questionsLeft, usageRate, useStore } from '../state/store';
 import { online } from '../state/remote';
+import { canCompose } from '../state/outfits';
 import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { F } from '../theme/fonts';
@@ -55,6 +57,9 @@ export function Me() {
   const next = nextBestAnswer(p);
   const hex = (n: string) => COLOR_CHOICES.find((x) => x.name === n)?.hex;
   const hasStyle = p.styles.length > 0 || p.love.length > 0 || p.avoid.length > 0;
+  // L'offre attend la première tenue (09/10) : on ne vend rien à qui n'a pas encore vu Kode à l'œuvre.
+  const ready = canCompose(s.pieces);
+  const showOffer = ready || s.plan !== 'decouverte';
   const sizes = [p.sizes.haut && `Haut ${p.sizes.haut}`, p.sizes.bas && `Bas ${p.sizes.bas}`, p.sizes.pointure && `Pointure ${p.sizes.pointure}`].filter(Boolean) as string[];
 
   const stats = [
@@ -67,7 +72,7 @@ export function Me() {
     { icon: 'plus', label: 'Ajouter', onPress: () => nav.navigate('AddPiece'), testID: 'me-add', solid: true },
     { icon: 'hanger', label: 'Habille-moi', onPress: () => nav.navigate('Compose'), testID: 'me-compose' },
     { icon: 'calendar', label: 'Planning', onPress: () => nav.navigate('Planning'), testID: 'me-planning' },
-    { icon: 'bag', label: 'Boutique', onPress: () => nav.navigate('Shop'), testID: 'me-shop-tile' },
+    showOffer ? { icon: 'bag', label: 'Boutique', onPress: () => nav.navigate('Shop'), testID: 'me-shop-tile' } : { icon: 'palette', label: 'Ton style', onPress: () => nav.navigate('Affiner'), testID: 'me-affiner-tile' },
   ];
 
   return (
@@ -138,7 +143,8 @@ export function Me() {
           ))}
         </View>
 
-        {/* La carte de membre : l'offre, les places, les questions ; elle ouvre les offres. */}
+        {/* La carte de membre : l'offre, les places, les questions ; elle ouvre les offres. Seulement après la première tenue. */}
+        {showOffer && (
         <Tap testID="me-offer" onPress={() => nav.navigate('Offers')} scaleTo={0.99} accessibilityLabel={`Ton offre ${plan.name}. Voir les offres`} style={{ borderRadius: 28, padding: 18, gap: 14, backgroundColor: c['primary-bg'] }}>
           <View className="flex-row items-center justify-between">
             <T v="brand" tone="primary-fg" style={{ fontSize: 11, letterSpacing: 3.3 }}>
@@ -167,6 +173,7 @@ export function Me() {
             <Icon name="arrow" size={16} color={c['primary-fg']} />
           </View>
         </Tap>
+        )}
 
         {/* Ton style, tel que Kode le retient : il se modifie dans le profil. */}
         <Card style={{ gap: 14 }} testID="me-style">
