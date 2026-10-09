@@ -19,6 +19,7 @@ import { Button, IconButton } from '../ui/Button';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { Card, Tag, WeatherIcon } from '../ui/bits';
+import { NotForMeSheet } from '../ui/ecart';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -133,6 +134,7 @@ function TodayCard({ W }: { W: number }) {
   // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
   const [pinned, setPinned] = useState<Set<RowId>>(new Set());
+  const [nope, setNope] = useState(false);
   const base = worn ? (s.wornToday!.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : pieces;
   const shown = (() => {
     const out = base.map((p) => {
@@ -190,6 +192,29 @@ function TodayCard({ W }: { W: number }) {
         </T>
       </Animated.View>
       {worn && <WornToday pieces={shown} />}
+      {/* « Pas pour moi » (09/10) : la raison part chez Kode, la tenue ne revient plus. */}
+      {!worn && (
+        <View className="flex-row items-center justify-between" style={{ borderTopWidth: 1, borderColor: c.rule, marginHorizontal: 4 }}>
+          <T testID="not-for-me" v="label" tone="ink2" onPress={() => setNope(true)} accessibilityRole="button" accessibilityHint="Dis à Kode pourquoi, et vois une autre tenue" suppressHighlighting style={{ paddingTop: 14, paddingBottom: 16, marginBottom: -12, paddingRight: 16 }}>
+            Pas pour moi
+          </T>
+          <T v="small" tone="ink2">
+            {outfits.length > 1 ? `${(s.outfitIndex % outfits.length) + 1} sur ${outfits.length}` : ''}
+          </T>
+        </View>
+      )}
+      <NotForMeSheet
+        visible={nope}
+        pieces={shown}
+        onClose={() => setNope(false)}
+        onConfirm={(raison, cibles) => {
+          setNope(false);
+          a.ecarter(shown.map((p) => p.id), raison, cibles, outfit.pieces);
+          // La suivante arrive telle que Kode l'a pensée : les pièces changées ou gardées repartent.
+          setSwapped({});
+          setPinned(new Set());
+        }}
+      />
     </Card>
   );
 }

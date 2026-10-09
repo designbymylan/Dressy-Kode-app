@@ -23,8 +23,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
-  RULES, ANSWER_RULES, PLAN_RULES, ANSWER_SCHEMA, PLAN_SCHEMA, profileText, agendaText, eventText, planDaysText, voyageText,
-  type Answer, type AgendaLine, type EventRow, type Profile, type Voyage,
+  RULES, ANSWER_RULES, PLAN_RULES, ANSWER_SCHEMA, PLAN_SCHEMA, profileText, agendaText, eventText, planDaysText, voyageText, ecartsText,
+  type Answer, type AgendaLine, type EcartRow, type EventRow, type Profile, type Voyage,
 } from './prompt.ts';
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
 import { cachePostgres } from '../_shared/donnees/cache.ts';
@@ -111,13 +111,12 @@ const pieceNames = (o: OutfitEmbed) =>
   (o?.outfit_items ?? []).map((i) => i.garments?.name).filter(Boolean).join(', ');
 
 /** Le dressing, le profil, et l'agenda de `from` à `to` (par défaut, les deux semaines à venir). */
-async function loadContext(db: SupabaseClient, userId: string, spaceId: string, window?: { from: string; to: string }) {
+async function loadContext(db: SupabaseClient, spaceId: string, window?: { from: string; to: string }) {
   const today = parisDay(0);
   const from = window?.from ?? today;
   const horizon = window?.to ?? parisDay(14);
 
-  const [profile, settings, style, categories, garments, stats, planned, events, history] = await Promise.all([
-    db.from('profiles').select('display_name').eq('id', userId).maybeSingle(),
+  const [settings, style, categories, garments, stats, planned, events, history, ecarts] = await Promise.all([
     db.from('settings').select('city').eq('space_id', spaceId).maybeSingle(),
     db.from('style_profile').select('*').eq('space_id', spaceId).maybeSingle(),
     db.from('categories').select('id, label').order('sort'),
@@ -144,6 +143,13 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string, 
       .eq('archived', false)
       .order('created_at', { ascending: false })
       .limit(HISTORY),
+    // Les tenues écartées des trois derniers mois, vingt au plus.
+    db.from('outfit_feedback')
+      .select('garment_ids, reason, target_ids, created_at')
+      .eq('space_id', spaceId)
+      .gte('created_at', new Date(Date.now() - 90 * 86_400_000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(20),
   ]);
 
   for (const r of [categories, garments, stats, planned, events, history]) {
@@ -185,7 +191,8 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string, 
 
   return {
     today,
-    name: profile.data?.display_name ?? null,
+    // Une table absente ou illisible ne prive pas Kode de répondre.
+    ecarts: ecarts.error ? [] : ((ecarts.data ?? []) as EcartRow[]),
     city: (settings.data?.city as string | null | undefined) ?? null,
     style: (style.data ?? null) as Profile | null,
     labels: new Map((categories.data ?? []).map((c) => [c.id as string, c.label as string])),
@@ -196,6 +203,9 @@ async function loadContext(db: SupabaseClient, userId: string, spaceId: string, 
     turns,
   };
 }
+
+/** L'identifiant d'une pièce vers sa référence courte (p1, p2…). */
+const refOf = (refs: Map<string, Garment>) => new Map([...refs].map(([ref, g]) => [g.id, ref]));
 
 /** Une promesse qui ne bloque jamais Kode : sans réponse à temps, ou en erreur, elle rend `null`. */
 function within<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> {
@@ -304,8 +314,8 @@ async function countQuestion(spaceId: string, question: string): Promise<string>
 }
 
 async function reply(token: string, question: string) {
-  const { db, user, space } = await openSession(token);
-  const ctx = await loadContext(db, user.id, space.id);
+  const { db, space } = await openSession(token);
+  const ctx = await loadContext(db, space.id);
   // Vérifié avant le quota : une question sans pièces à combiner ne doit
   // pas coûter une des questions du mois.
   if (ctx.wardrobe.length < MIN_PIECES) {
@@ -321,10 +331,11 @@ async function reply(token: string, question: string) {
   try {
     const refs = withRefs(ctx.wardrobe);
     const context = [
-      profileText(ctx.name, ctx.style),
+      profileText(ctx.style),
       `Agenda Dresskode des deux prochaines semaines :\n${agendaText(ctx.agenda)}`,
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
-    ].join('\n\n');
+      ecartsText(ctx.ecarts, refOf(refs)),
+    ].filter(Boolean).join('\n\n');
 
     // La date et le contexte du jour n'entrent que dans la dernière bulle :
     // placés dans le contexte, ils invalideraient le cache à chaque heure.
@@ -434,14 +445,14 @@ function tripWeather(m: Awaited<ReturnType<typeof meteoVoyage>>) {
 }
 
 async function plan(token: string, input: PlanInput) {
-  const { db, user, space } = await openSession(token);
+  const { db, space } = await openSession(token);
   const today = parisDay(0);
   const { days, trip, consigne } = readPlanInput(input, today);
   const from = days[0];
   const to = days.at(-1)!;
 
   // Les jours voisins aussi, pour ne pas remettre la tenue de la veille.
-  const ctx = await loadContext(db, user.id, space.id, { from: shift(from, -3), to: shift(to, 3) });
+  const ctx = await loadContext(db, space.id, { from: shift(from, -3), to: shift(to, 3) });
   if (ctx.wardrobe.length < MIN_PIECES) {
     throw new KodeError('Kode a besoin d’au moins deux pièces dans ton dressing pour composer une tenue.', 409, 'wardrobe');
   }
@@ -459,9 +470,10 @@ async function plan(token: string, input: PlanInput) {
   try {
     const refs = withRefs(ctx.wardrobe);
     const context = [
-      profileText(ctx.name, ctx.style),
+      profileText(ctx.style),
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
-    ].join('\n\n');
+      ecartsText(ctx.ecarts, refOf(refs)),
+    ].filter(Boolean).join('\n\n');
 
     const w = await weather;
     const wanted = new Set(days);

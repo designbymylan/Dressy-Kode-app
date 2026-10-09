@@ -20,6 +20,7 @@ import type { Account, NotifChoice, PlanId, Period, Photo, Planned, Session } fr
 import { isoOf, newId, type Iso, type RdvEvent, type Trip } from './planning';
 import { isActive, type JobRow } from './jobs';
 import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './contexte';
+import { cleTenue, evite, garder, type Ecart, type Raison } from './ecarts';
 
 export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
@@ -107,6 +108,10 @@ type State = {
   trips: Trip[];
   /** Ce qu'elle accepte de recevoir ; null : pas encore demandé. */
   notifs: NotifChoice | null;
+  /** Les tenues écartées par « Pas pour moi », les plus récentes d'abord. */
+  ecarts: Ecart[];
+  /** Ce qui a été porté, jour par jour (« Je la porte ») : le bilan du dimanche s'en sert. */
+  journal: Record<Iso, string[]>;
   messages: KodeMessage[];
   kodeUsed: number;
   kodeTyping: boolean;
@@ -150,6 +155,8 @@ const initial: State = {
   events: [],
   trips: [],
   notifs: null,
+  ecarts: [],
+  journal: {},
   messages: [],
   kodeUsed: 0,
   kodeTyping: false,
@@ -210,6 +217,7 @@ type Action =
   | { t: 'saveTrip'; trip: Trip; days: Record<Iso, Planned> }
   | { t: 'removeTrip'; id: string }
   | { t: 'notifs'; choice: NotifChoice }
+  | { t: 'ecart'; ecart: Ecart }
   | { t: 'ask'; message: KodeMessage }
   | { t: 'answer'; message: KodeMessage; refund?: boolean }
   | { t: 'setPlan'; plan: PlanId; period: Period }
@@ -262,6 +270,8 @@ function reducer(s: State, a: Action): State {
         events: acc.events,
         trips: acc.trips,
         notifs: acc.notifs ?? s.notifs,
+        ecarts: acc.ecarts,
+        journal: acc.journal,
         messages: acc.messages,
         kodeUsed: acc.kodeUsed,
         plan: acc.plan,
@@ -299,14 +309,23 @@ function reducer(s: State, a: Action): State {
         ...s,
         undo: s.pieces,
         wornToday: a.ids,
+        journal: { ...s.journal, [isoOf(0)]: a.ids },
         pieces: s.pieces.map((p) => (ids.has(p.id) ? { ...p, wears: p.wears + 1, lastWorn: 0 } : p)),
         toast: { id: ++toastId, text: a.toast, undo: true },
       };
     }
-    case 'undo':
-      return s.undo ? { ...s, pieces: s.undo, undo: null, wornToday: null, toast: null } : s;
+    case 'undo': {
+      if (!s.undo) return s;
+      // Un port annulé quitte aussi le journal du jour.
+      const journal = { ...s.journal };
+      if (s.wornToday) delete journal[isoOf(0)];
+      return { ...s, pieces: s.undo, undo: null, wornToday: null, journal, toast: null };
+    }
     case 'nextOutfit':
-      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0]).length), wornToday: null };
+      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0], evite(s.ecarts)).length), wornToday: null };
+    case 'ecart':
+      // La tenue écartée sort de la liste : le même rang montre déjà la suivante.
+      return { ...s, ecarts: garder([a.ecart, ...s.ecarts]), wornToday: null };
     case 'addPiece':
       return { ...s, pieces: [a.piece, ...s.pieces], fresh: [...s.fresh, a.piece.id], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
     case 'swapId': {
@@ -421,7 +440,7 @@ function refreshDemo(pieces: Piece[]): Piece[] {
   return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
 }
 
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -623,6 +642,24 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         sync(u.kind === 'wear' ? remote.unwear(u.ids) : remote.setPieceStatus(u.id, 'active'));
       },
       nextOutfit: () => dispatch({ t: 'nextOutfit' }),
+      /**
+       * « Pas pour moi » : la tenue montrée est écartée, avec sa raison. Elle
+       * ne revient plus ; la raison part chez Kode avec le compte. Rend vrai
+       * s'il reste d'autres tenues à proposer aujourd'hui.
+       */
+      ecarter: (pieces: string[], raison: Raison, cibles: string[] = [], proposee?: string[]) => {
+        const ecart: Ecart = { id: newId(), date: isoOf(0), pieces, raison, cibles, ...(proposee && cleTenue(proposee) !== cleTenue(pieces) ? { proposee } : {}) };
+        const before = getState();
+        dispatch({ t: 'ecart', ecart });
+        const session = live();
+        if (session) sync(remote.saveEcart(session, ecart));
+        // L'état n'est relu qu'au prochain rendu : la liste d'après se calcule ici.
+        const left = todayOutfits(before.pieces, meteoDe(before).jours[0], evite(garder([ecart, ...before.ecarts])));
+        const gone = new Set([cleTenue(pieces), ...(proposee ? [cleTenue(proposee)] : [])]);
+        const more = left.some((o) => !gone.has(cleTenue(o.pieces)));
+        dispatch({ t: 'toast', text: more ? 'Noté. Kode ne te la proposera plus.' : 'Noté. Ajoute une pièce ou deux : Kode aura plus de choix.' });
+        return more;
+      },
       addPiece: (piece: Piece) => {
         dispatch({ t: 'addPiece', piece });
         const session = live();
@@ -971,7 +1008,7 @@ export const useMeteo = () => {
 export const useTodayOutfits = () => {
   const { s } = useStore();
   const today = useMeteo().jours[0];
-  return useMemo(() => todayOutfits(s.pieces, today), [s.pieces, today]);
+  return useMemo(() => todayOutfits(s.pieces, today, evite(s.ecarts)), [s.pieces, today, s.ecarts]);
 };
 
 export { precision } from './profile';

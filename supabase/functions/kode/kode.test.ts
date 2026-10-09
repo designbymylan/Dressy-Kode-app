@@ -5,7 +5,7 @@
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
-import { profileText, agendaText, eventText, hourText, planDaysText, voyageText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
+import { profileText, agendaText, eventText, ecartsText, hourText, planDaysText, voyageText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -81,13 +81,24 @@ check('commence par la personne, bulles consécutives fusionnées', normaliseHis
 
 // ---------------------------------------------------------------- consigne
 
-const profile = profileText('Sam', {
+const profile = profileText({
   gender: 'non_precise', styles: ['smart_casual', 'minimal'], colours: ['noir'], avoid: ['couleurs_vives'],
   occasions: [], favourite_items: [], goals: [], morning_time: null, time_intent: null, assistance: 'dressing',
 });
-check('profil lisible, genre non précisé', profile,
-  'Prénom : Sam.\nStyles choisis : smart casual, minimal.\nCouleurs aimées : noir.\nÀ éviter : couleurs vives.\nPar défaut : fais ressortir les pièces peu ou jamais portées.');
-check('profil absent', profileText(null, null), 'Prénom : non donné.');
+check('profil lisible, genre non précisé, sans prénom', profile,
+  'Styles choisis : smart casual, minimal.\nCouleurs aimées : noir.\nÀ éviter : couleurs vives.\nPar défaut : fais ressortir les pièces peu ou jamais portées.');
+check('profil absent', profileText(null), 'Profil de style : pas encore renseigné.');
+
+// ---------------------------------------------------------------- « Pas pour moi »
+
+const refOf = new Map([['g-a', 'p1'], ['g-b', 'p2'], ['g-c', 'p3']]);
+check('tenues écartées, références du dressing et raison', ecartsText([
+  { garment_ids: ['g-a', 'g-b'], reason: 'couleurs', target_ids: [], created_at: '2026-10-08T07:12:00Z' },
+  { garment_ids: ['g-a', 'g-c', 'g-x'], reason: 'piece', target_ids: ['g-c'], created_at: '2026-10-07T07:00:00Z' },
+  { garment_ids: ['g-x', 'g-b'], reason: 'style', target_ids: null, created_at: '2026-10-06T07:00:00Z' },
+], refOf),
+  'Tenues écartées d’un « Pas pour moi » (ne les repropose pas telles quelles, et tiens compte de la raison) :\n- 2026-10-08 : p1 + p2 (les couleurs ne lui plaisaient pas ensemble)\n- 2026-10-07 : p1 + p3 (une pièce ne lui allait pas : p3)');
+check('aucune tenue écartée', ecartsText([], refOf), '');
 check('agenda trié par jour', agendaText([
   { day: '2026-09-30 (mardi)', text: 'Entretien' },
   { day: '2026-09-27 (dimanche)', text: 'Brunch' },

@@ -14,6 +14,7 @@ import type { Bloc, Contexte, JourMeteo } from './contexte';
 import type { KodeLink, KodeMessage } from './kode';
 import { JOB_SELECT, type JobRow, type Reveal } from './jobs';
 import { slotOf as momentOf, type Iso, type RdvEvent, type Setting, type Stake, type Trip, type TripPurpose } from './planning';
+import type { Ecart, Raison } from './ecarts';
 
 export type PlanId = 'decouverte' | 'capsule' | 'atelier' | 'couture';
 export type Period = 'mois' | 'an';
@@ -33,6 +34,10 @@ export type Account = {
   events: RdvEvent[];
   trips: Trip[];
   notifs: NotifChoice | null;
+  /** Les tenues écartées ces six derniers mois (« Pas pour moi »). */
+  ecarts: Ecart[];
+  /** Ce qui a été porté ces cinq dernières semaines, jour par jour. */
+  journal: Record<Iso, string[]>;
   messages: KodeMessage[];
   kodeUsed: number;
   plan: PlanId;
@@ -293,6 +298,8 @@ export async function loadAccount(): Promise<Account | null> {
   for (const [what, r] of Object.entries({ profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages, events, trips })) {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
+  // Le journal et les tenues écartées enrichissent l'app sans la bloquer : en cas d'échec, ils restent vides.
+  const [ecarts, journal] = await Promise.all([loadEcarts(spaceId), loadJournal()]);
 
   const p = profile.data!;
   const [pieces, avatar] = await Promise.all([
@@ -350,6 +357,8 @@ export async function loadAccount(): Promise<Account | null> {
     events: ((events.data ?? []) as unknown as EventRow[]).map(toEvent),
     trips: ((trips.data ?? []) as unknown as TripRow[]).map(toTrip),
     notifs: notif === 'tout' || notif === 'planning' || notif === 'non' ? notif : null,
+    ecarts,
+    journal,
     messages: ((messages.data ?? []) as unknown as MessageRow[]).reverse().map(toMessage),
     kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
     plan: best?.plan ?? 'decouverte',
@@ -490,6 +499,44 @@ export async function wear(ids: string[]) {
   const rows = ids.filter(isUuid).map((garment_id) => ({ garment_id, worn_on: isoDay(0) }));
   if (!rows.length) return;
   check(await db().from('wears').upsert(rows, { onConflict: 'garment_id,worn_on', ignoreDuplicates: true }), 'port');
+}
+
+type EcartRow = { id: string; garment_ids: string[]; reason: Raison; target_ids: string[]; created_at: string };
+
+async function loadEcarts(spaceId: string): Promise<Ecart[]> {
+  const r = await db()
+    .from('outfit_feedback')
+    .select('id, garment_ids, reason, target_ids, created_at')
+    .eq('space_id', spaceId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (r.error) {
+    console.warn('[supabase] tenues écartées :', r.error.message);
+    return [];
+  }
+  return ((r.data ?? []) as EcartRow[]).map((e) => ({ id: e.id, date: e.created_at.slice(0, 10), pieces: e.garment_ids, raison: e.reason, cibles: e.target_ids ?? [] }));
+}
+
+/** Les ports des cinq dernières semaines, regroupés par jour (la RLS ne rend que ceux de l'espace). */
+async function loadJournal(): Promise<Record<Iso, string[]>> {
+  const r = await db().from('wears').select('garment_id, worn_on').gte('worn_on', isoDay(-35));
+  if (r.error) {
+    console.warn('[supabase] journal :', r.error.message);
+    return {};
+  }
+  const out: Record<Iso, string[]> = {};
+  for (const w of (r.data ?? []) as { garment_id: string; worn_on: string }[]) (out[w.worn_on] ??= []).push(w.garment_id);
+  return out;
+}
+
+/** « Pas pour moi » : la tenue écartée et sa raison, que Kode lira avec ses prochaines questions. */
+export async function saveEcart(session: Session, e: Ecart) {
+  const garment_ids = e.pieces.filter(isUuid);
+  if (!garment_ids.length) return;
+  check(
+    await db().from('outfit_feedback').insert({ id: e.id, space_id: session.spaceId, garment_ids, reason: e.raison, target_ids: e.cibles.filter(isUuid) }),
+    'tenue écartée',
+  );
 }
 
 export async function unwear(ids: string[]) {

@@ -168,10 +168,15 @@ const ASSISTANCE: Record<string, string> = {
   achats: 'quand une pièce manque vraiment, dis quel type de pièce ferait le plus d’usage avec le reste',
 };
 
-export function profileText(name: string | null, p: Profile | null): string {
+/**
+ * Le profil tel que Kode le lit. Ni prénom, ni nom, ni e-mail (09/10,
+ * minimisation RGPD) : Kode tutoie sans nommer, et le prestataire d'IA ne
+ * reçoit rien qui désigne la personne directement.
+ */
+export function profileText(p: Profile | null): string {
   // Tournures neutres : le genre sert aux coupes, pas à genrer la personne.
-  const lines = [name ? `Prénom : ${name}.` : 'Prénom : non donné.'];
-  if (!p) return lines.join('\n');
+  const lines: string[] = [];
+  if (!p) return 'Profil de style : pas encore renseigné.';
   if (p.gender === 'femme' || p.gender === 'homme') lines.push(`Coupes : ${p.gender}.`);
   if (p.styles.length) lines.push(`Styles choisis : ${words(p.styles)}.`);
   if (p.colours.length) lines.push(`Couleurs aimées : ${words(p.colours)}.`);
@@ -186,7 +191,40 @@ export function profileText(name: string | null, p: Profile | null): string {
   if (p.accessories_wish?.length) lines.push(`Accessoires à oser : ${words(p.accessories_wish)} ; tu peux les suggérer quand ils vont avec la tenue.`);
   if (p.goals.length) lines.push(`Attentes envers Dresskode : ${words(p.goals)}.`);
   if (p.assistance && ASSISTANCE[p.assistance]) lines.push(`Par défaut : ${ASSISTANCE[p.assistance]}.`);
-  return lines.join('\n');
+  return lines.length ? lines.join('\n') : 'Profil de style : pas encore renseigné.';
+}
+
+// ---------------------------------------------------------------- « Pas pour moi »
+
+/** Une tenue écartée (table outfit_feedback, 09/10). */
+export type EcartRow = { garment_ids: string[]; reason: string; target_ids: string[] | null; created_at: string };
+
+const RAISON: Record<string, string> = {
+  style: 'pas son style',
+  couleurs: 'les couleurs ne lui plaisaient pas ensemble',
+  confort: 'pas à l’aise dedans',
+  meteo: 'pas adaptée à la météo',
+  journee: 'pas adaptée à sa journée',
+  piece: 'une pièce ne lui allait pas',
+  sans: 'sans raison donnée',
+};
+
+/**
+ * Les tenues écartées, avec les références du dressing (p1, p2…) : Kode ne
+ * les repropose pas telles quelles et tient compte de la raison. Une pièce
+ * qui n'est plus dans le dressing disparaît de la ligne.
+ */
+export function ecartsText(rows: EcartRow[], refOf: Map<string, string>): string {
+  const lines = rows
+    .map((r) => {
+      const refs = r.garment_ids.map((id) => refOf.get(id)).filter(Boolean);
+      if (refs.length < 2) return null;
+      const target = (r.target_ids ?? []).map((id) => refOf.get(id)).filter(Boolean);
+      return `- ${r.created_at.slice(0, 10)} : ${refs.join(' + ')} (${RAISON[r.reason] ?? RAISON.sans}${target.length ? ` : ${target.join(', ')}` : ''})`;
+    })
+    .filter(Boolean);
+  if (!lines.length) return '';
+  return `Tenues écartées d’un « Pas pour moi » (ne les repropose pas telles quelles, et tiens compte de la raison) :\n${lines.join('\n')}`;
 }
 
 export type AgendaLine = { day: string; text: string };
