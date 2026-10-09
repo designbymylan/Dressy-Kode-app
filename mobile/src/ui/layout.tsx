@@ -137,7 +137,7 @@ export function HeaderShell({ y, children }: { y?: SharedValue<number>; children
 
 type Action = { icon: IconName; label: string; onPress: () => void; testID?: string; solid?: boolean };
 
-/** Ce qui s'affiche au centre ou à gauche d'une capsule : la marque, un titre court en Cormorant, ou un titre long en Hanken. */
+/** Ce qui s'affiche au centre ou à gauche d'une capsule : la marque, un titre court en Inter Tight fin, ou un titre long en Inter. */
 function CapsuleTitle({ title, brand, center }: { title: string; brand?: boolean; center?: boolean }) {
   if (brand)
     return (
@@ -166,7 +166,7 @@ function Actions({ list }: { list: Action[] }) {
 /**
  * L'en-tête des écrans à onglets : une capsule de verre qui flotte en haut
  * (décision du 05/10, « version cartes »). Le mot de la page ou la marque à
- * gauche, un compteur discret en DM Mono, ses actions rondes à droite ; à
+ * gauche, un compteur discret en Inter, ses actions rondes à droite ; à
  * gauche, `lead` peut porter un avatar.
  */
 export function TabHeader({ title, brand, meta, lead, actions = [], y }: { title: string; brand?: boolean; meta?: string; lead?: ReactNode; actions?: Action[]; y?: SharedValue<number> }) {

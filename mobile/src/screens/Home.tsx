@@ -332,7 +332,7 @@ function EmptyToday() {
   );
 }
 
-/** Une petite ligne à point : un mot ou deux en DM Mono. */
+/** Une petite ligne à point : un mot ou deux. */
 function DotLine({ text }: { text: string }) {
   const { c } = useTheme();
   return (

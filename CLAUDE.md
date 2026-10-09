@@ -60,9 +60,9 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
   blocs) : c'est celle de la refonte (`design/refonte/`, `mobile/src/screens/`).
   On peut retoucher l'apparence d'un écran sans changer sa structure.
 - **L'apparence** : les couleurs de la « galerie » (charte
-  `design/charte-galerie.md`, 02/10) et la typographie v1, sur les formes de
-  la « vitrine de verre » : arrondis, verre dépoli, transparence (décision du
-  03/10). La même sur le web et sur le mobile.
+  `design/charte-galerie.md`, 02/10) et la typographie v2 (09/10), sur les
+  formes de la « vitrine de verre » : arrondis, verre dépoli, transparence
+  (décision du 03/10). La même sur le web et sur le mobile.
 - Ne rajoute ni dépendance, ni skill, ni service externe sans demander.
   (Accordés le 03/10 : `expo-updates` et le service Expo EAS Update, pour
   essayer l'app dans Expo Go sans ordinateur.)
@@ -70,8 +70,9 @@ Ce qui ne bouge pas sans décision explicite de l'utilisateur :
   de verre dépoli** et la **transparence** façon iOS (barre d'onglets, feuilles,
   cartes, boutons) sont là pour de bon, sur le web et le mobile. Une nouvelle
   charte change les couleurs et les typographies, jamais ces trois choses.
-- **Typographies** : la charte typographique v1
-  (`design/charte-typographique-v1.md`, décidée le 03/10) fait foi. Polices
+- **Typographies** : la charte typographique v2
+  (`design/charte-typographique-v2.md`, décidée le 09/10, Inter Tight et
+  Inter) fait foi ; la v1 (Cormorant, Hanken, DM Mono) n'est plus. Polices
   rangées dans `mobile/assets/fonts/` (.ttf) et `web/public/fonts/` (.woff2),
   licences OFL à côté, branchées par `mobile/src/theme/fonts.ts` et des
   `@font-face` locales dans `globals.css`, jamais par un service externe.
@@ -205,15 +206,37 @@ modèles envoyés (applis de banque, page d'abonnement, page de réglages) :**
 - **Réglages** (`screens/Settings.tsx`) : carte du profil, notifications,
   apparence (thème, grille, verre, gardés d'un lancement à l'autre), compte,
   aide, sortie en capsule.
-- **Offres et Boutique façon boutique** : la remise en très grand, des
-  **patchs** penchés (`ui/Patch.tsx` : `Patch`, `Seal`, `Struck`) en rose
-  poudré ou en noir, prix barrés, cartes à cocher, tuiles de ce qui est
-  inclus ; la boutique en carte noire des cinq packs, packs en cartes qui
-  défilent, tuiles d'usage en pourcentage. Les couleurs des modèles (bleu,
-  vert anis) ne sont pas reprises : la galerie reste la seule palette. Pas
-  de faux avis ni de « la plus choisie » sans chiffres : « Recommandée ».
-  Une remise affichée est arrondie vers le bas, un prix à la semaine vers
-  le haut.
+- **Offres et Boutique** : remplacées le 09/10 (voir plus bas). Restent
+  valables : la galerie seule palette (ni bleu ni vert anis des modèles),
+  pas de faux avis ni de « la plus choisie » sans chiffres, une remise
+  affichée arrondie vers le bas, un prix à la semaine vers le haut.
+
+**Décision du 09/10 : la nouvelle base** (canevas
+https://claude.ai/artifact/JrJosA6gj1EEw9wH29gtM2, validé par
+l'utilisateur, commit `e1351e6`). Elle sert de base à toute l'app ;
+couleurs de la galerie, verre et arrondis ne changent pas.
+
+- **Offres et Boutique copient la page d'abonnement envoyée** : rond de
+  fermeture, trait chromé en haut, promesse en grand (« −29 % sur
+  l'année », « À l'unité, dès 0,99 € »), « Ce qui est inclus » en deux
+  cartes, mois ou année, lignes à cocher avec prix barré, cartes de
+  réassurance qui défilent, bouton noir fixe en bas (`ui/shop.tsx`). Elles
+  suivent le thème clair ou sombre. **Plus aucune pastille ni patch de
+  réduction** : l'économie se lit par le prix barré. Découverte se
+  retrouve par un lien en bas des offres.
+- **Typographie v2** : Inter Tight fin pour les titres et les grands
+  chiffres, Inter 500 pour le texte ; sept tailles proportionnées de 11 à
+  30 px (48 pour la seule promesse des offres) ; titres en casse normale.
+- **Codes des grandes enseignes** (Zara, Stradivarius) : étiquettes de
+  carte et liens de section en capitales espacées (`T v="label"`, `Tag`),
+  rayons du dressing en texte souligné, noms de pièces en capitales sous la
+  vignette. Cela remplace « plus de sur-titre en capitales espacées » du
+  05/10 pour ces étiquettes courtes (deux ou trois mots).
+- **Icônes chromées** : chaque icône noire, grise ou blanche est tracée d'un
+  dégradé métal tiré de sa couleur (`chromeStops`, `ui/Icon.tsx`) ; une
+  icône de couleur reste pleine (`flat` pour forcer). Tailles modestes.
+- **Rien de trop gros** : sections, images et icônes à taille mesurée
+  (Moi : photo à côté du nom, raccourcis de 48 px).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -280,17 +303,17 @@ Ordre de priorité, du plus fort au plus faible :
   avec son ombre, libellé en casse normale ; les autres en capsule de verre,
   en pastille ou en texte gris. Liens de section (« Tout voir »,
   « Agenda ») : texte gris discret, sans flèche.
-- Typographie (charte v1) : **Cormorant Garamond** 500 pour les titres
-  d'écran (capitales, +0,012 em, jamais sous 22 px), la marque (DRESSKODE,
-  capitales espacées de 0,24 em) et les grands chiffres ; **Hanken Grotesk**
-  400/500/600 pour le texte (15 px), les boutons (15 px, 600), les
-  onglets et les formulaires ; **DM Mono** 12 px, casse normale, pour les
-  étiquettes courtes (25 caractères au plus, jamais du texte lu). Polices
-  appelées par rôle : `F.s400`… `F.display`, `F.mono` (mobile), variables
-  `--font`, `--font-display`, `--font-mono` (web). Titres sur 3 lignes au
-  plus. Jamais sous 11,5 px. Les fichiers sont réduits au latin et les
-  chiffres de Cormorant y sont alignés par défaut : pour régénérer une police,
-  refaire ces deux étapes (voir la fin de la charte).
+- Typographie (charte v2, 09/10) : **Inter Tight** 300 pour les titres
+  d'écran (casse normale, légèrement resserrés), les grands chiffres et la
+  promesse des offres, 400 pour la marque (DRESSKODE, capitales espacées de
+  0,3 em) et les titres de carte ; **Inter** 500 pour le texte (15 px), 600
+  pour l'insistance et les boutons (15 px) ; **étiquettes** en Inter 500,
+  11 px, capitales espacées de 0,08 em (deux ou trois mots, jamais du texte
+  lu). Polices appelées par rôle : `F.s400`… `F.display`, `F.mono`, et les
+  variantes de `T` (`label`, `kicker`, `body`…) sur le mobile ; variables
+  `--font`, `--font-display`, `--font-mono` sur le web. Titres sur 3 lignes
+  au plus. Rien sous 11 px. Les fichiers sont réduits au latin : pour
+  régénérer une police, voir la fin de la charte v2.
 - **Mode sombre tiré de la charte** : fond noir, texte blanc, filets gris
   foncé, beurre conservé (texte noir dessus). Chaque écran marche en clair
   **et** en sombre.
@@ -303,8 +326,9 @@ Ordre de priorité, du plus fort au plus faible :
 - Vêtements : illustrations vectorielles plates ou détourages de Kode, posés
   sur gris studio dans des vignettes arrondies ; jamais de photo produit, pas
   de 3D.
-- Icônes : noires et monochromes, au trait (jeu du 02/10 sur le mobile), des
-  formes qui se comprennent sans leur nom. Dans la barre d'onglets mobile,
+- Icônes : au trait (jeu du 02/10 sur le mobile), des formes qui se
+  comprennent sans leur nom, avec un reflet chromé depuis le 09/10 (dégradé
+  métal sombre en clair, clair en sombre). Dans la barre d'onglets mobile,
   l'onglet actif se signale par un point ; tous gardent leur libellé pour
   les lecteurs d'écran.
 - Mouvement : discret (fondus, ressorts courts), jamais bloquant, coupé par

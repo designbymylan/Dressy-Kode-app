@@ -28,7 +28,7 @@ type Props = {
 
 /**
  * Les boutons du 02/10 (revenus le 04/10) : toujours en capsule, libellé en
- * casse normale (Hanken Grotesk 600). Principal en noir plein avec son ombre
+ * casse normale (Inter 600). Principal en noir plein avec son ombre
  * portée, une seule action par écran ; secondaire en verre clair bordé d'un
  * filet ; discret en pastille ; simple en texte gris. Toujours ≥ 44 pt de
  * zone tactile.

@@ -21,7 +21,7 @@ export default function Bienvenue() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 26 }}>
         <FlatLay />
 
-        <h1 className="hero-title rise" style={{ '--i': 7, fontSize: 36, lineHeight: 1.05 } as CSSProperties}>
+        <h1 className="hero-title rise" style={{ '--i': 7, fontSize: 34, lineHeight: 1.1 } as CSSProperties}>
           Ton dressing,
           <br />
           <em className="accent">en vitrine.</em>
