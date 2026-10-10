@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CATEGORIES, GALLERY, type Found, type Piece, type Season } from '../data/wardrobe';
 import { pieceLimit, useStore } from '../state/store';
 import * as remote from '../state/remote';
-import { CAMERA_BLOCKED, cameraAccess } from '../lib/camera';
+import { CAMERA_BLOCKED, cameraAccess, shootBurst, type Shot } from '../lib/camera';
 import { groupByPhoto, isActive, isPiece, jobNote, jobPhrases, jobStep, jobTitle, scanPieces, type Box, type JobRow, type Reveal } from '../state/jobs';
 import { useTheme } from '../theme/ThemeProvider';
 import { material, space } from '../theme/tokens';
@@ -30,7 +30,9 @@ import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
 
 /** Une photo choisie sur le téléphone, avec ses proportions. */
-type Picked = { uri: string; ratio: number; mime?: string | null };
+type Picked = Shot;
+/** Une photo confiée à Kode : son chemin une fois envoyée, ou ce qui l'a arrêtée. */
+type Sent = { picked: Picked; path: string | null; error?: string };
 
 const STEPS = ['Détourage de la pièce', 'Type de pièce', 'Couleur dominante', 'Matière probable', 'Illustration pour tes portants'];
 
@@ -56,13 +58,14 @@ export function AddPiece() {
   const [error, setError] = useState<string | null>(null);
   // Appareil photo refusé : le message propose d'ouvrir les Réglages.
   const [settings, setSettings] = useState(false);
-  const [sent, setSent] = useState<{ picked: Picked[]; paths: string[] | null } | null>(null);
+  const [sent, setSent] = useState<Sent[] | null>(null);
   // La galerie de la démonstration propose d'abord ce qui n'est pas déjà dans le dressing.
   const names = new Set(s.pieces.map((p) => p.name));
   const gallery = [...GALLERY.filter((g) => !names.has(g.name)), ...GALLERY.filter((g) => names.has(g.name))];
   const limit = pieceLimit(s);
   const full = limit !== null && s.pieces.length >= limit;
   const tile = (width - space.gutter * 2 - 20) / 3;
+  const burst = !demo && Platform.OS !== 'web';
 
   useEffect(() => {
     if (phase !== 'analyse') return;
@@ -84,16 +87,24 @@ export function AddPiece() {
 
   /** Les photos partent chez Kode ; l'écran les montre tout de suite, balayées par le scan. */
   const confide = async (picked: Picked[]) => {
-    setError(null);
-    setSent({ picked, paths: null });
+    setSent((prev) => [...(prev ?? []), ...picked.map((p) => ({ picked: p, path: null }))]);
     setPhase('suivi');
     const r = await a.sendPhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })), hint);
-    if (!r.ok) {
-      setSent(null);
-      setPhase('source');
-      return setError(r.message);
-    }
-    setSent({ picked, paths: r.paths });
+    setSent((prev) =>
+      prev &&
+      prev.map((x) => {
+        const i = picked.indexOf(x.picked);
+        return i < 0 ? x : r.ok ? { ...x, path: r.paths[i] } : { ...x, error: r.message };
+      }),
+    );
+    return r;
+  };
+
+  /** Rien n'est parti : retour au choix de la photo, avec la raison. */
+  const giveUp = (message: string) => {
+    setSent(null);
+    setPhase('source');
+    setError(message);
   };
 
   /**
@@ -111,14 +122,29 @@ export function AddPiece() {
         setSettings(true);
         return setError(CAMERA_BLOCKED);
       }
-      const r =
-        camera && native
-          ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 })
-          : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
-      if (r.canceled || !r.assets.length) return;
-      const picked = r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType, ratio: x.width && x.height ? x.width / x.height : 0.75 }));
-      if (live) confide(picked.slice(0, 10));
-      else if (demo) pick(gallery[0], picked[0]);
+      if (camera && native && live) {
+        // En rafale : chaque photo part chez Kode pendant qu'on prend la suivante.
+        const sending: ReturnType<typeof confide>[] = [];
+        const shots = await shootBurst({ max: 10, quality: 0.5, onShot: (shot) => sending.push(confide([shot])) });
+        if (!shots.length) return;
+        const results = await Promise.all(sending);
+        const first = results[0];
+        if (!results.some((r) => r.ok) && first && !first.ok) giveUp(first.message);
+        return;
+      }
+      let picked: Picked[];
+      if (camera && native) {
+        // Sans compte, la rafale attend sur le téléphone ; la démonstration simule une seule photo.
+        picked = await shootBurst({ max: demo ? 1 : Math.max(1, 10 - waiting), quality: 0.5 });
+      } else {
+        const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
+        picked = r.canceled ? [] : r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType, ratio: x.width && x.height ? x.width / x.height : 0.75 }));
+      }
+      if (!picked.length) return;
+      if (live) {
+        const r = await confide(picked.slice(0, 10));
+        if (!r.ok) giveUp(r.message);
+      } else if (demo) pick(gallery[0], picked[0]);
       else {
         a.queuePhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })));
         setAccount(true);
@@ -205,7 +231,10 @@ export function AddPiece() {
               <>
                 <View className="flex-row" style={{ gap: 10 }}>
                   {[
-                    { icon: 'camera' as const, label: 'Photo', note: 'cintre ou à plat', hint: 'Prendre une photo' },
+                    // Sur iPhone, l'appareil se rouvre après chaque photo (rafale), sauf dans la démonstration.
+                    burst
+                      ? { icon: 'camera' as const, label: 'Photo', note: 'à la suite, 10 max', hint: 'Prendre des photos à la suite. Touche Annuler quand tu as fini.' }
+                      : { icon: 'camera' as const, label: 'Photo', note: 'cintre ou à plat', hint: 'Prendre une photo' },
                     { icon: 'image' as const, label: 'Galerie', note: demo ? '1 photo à la fois' : '10 photos max', hint: 'Depuis la galerie' },
                   ].map((o) => {
                     // La photo est l'action principale (noire) ; la galerie, en gris studio (05/10).
@@ -395,8 +424,7 @@ export function AddPiece() {
         )}
         {phase === 'suivi' && sent && (
           <LiveTracking
-            picked={sent.picked}
-            paths={sent.paths}
+            sent={sent}
             hint={hint}
             onAgain={() => {
               setSent(null);
@@ -439,22 +467,25 @@ function DemoScan({ found, photo, step, width }: { found: Found; photo: Picked |
 /**
  * Le suivi en direct, compte connecté : chaque photo confiée s'affiche en
  * grand (scan de repérage), avec une ligne par pièce repérée. Quand une
- * pièce est rangée sous nos yeux, sa ligne joue le détourage révélé.
+ * pièce est rangée sous nos yeux, sa ligne joue le détourage révélé. En
+ * rafale, les photos s'ajoutent au fil des prises.
  */
-function LiveTracking({ picked, paths, hint, onAgain }: { picked: Picked[]; paths: string[] | null; hint: string; onAgain: () => void }) {
+function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onAgain: () => void }) {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const { width } = useScreen();
   const W = width - space.gutter * 2;
-  const jobs = useMemo(() => (paths ? s.jobs.filter((j) => paths.includes(j.source_paths[0])) : []), [s.jobs, paths]);
+  const key = sent.map((x) => x.path ?? '').join('|');
+  const paths = useMemo(() => key.split('|').filter(Boolean), [key]);
+  const jobs = useMemo(() => s.jobs.filter((j) => paths.includes(j.source_paths[0])), [s.jobs, paths]);
   const [reveals, setReveals] = useState<Record<string, Reveal>>({});
   const [cuts, setCuts] = useState<Record<string, string>>({});
   const seen = useRef(new Map<string, string>());
-  const working = !paths || jobs.some(isActive);
+  const working = sent.some((x) => !x.path && !x.error) || jobs.some(isActive);
 
   // Toutes les deux secondes tant que Kode travaille (quelques octets).
   useEffect(() => {
-    if (!paths || !working) return;
+    if (!paths.length || !working) return;
     const t = setInterval(() => a.readJobs(paths).catch(() => undefined), 2000);
     return () => clearInterval(t);
   }, [paths, working, a]);
@@ -492,7 +523,7 @@ function LiveTracking({ picked, paths, hint, onAgain }: { picked: Picked[]; path
 
   const playing = Object.keys(reveals).length > 0;
   const anyDone = jobs.some((j) => j.status === 'done' && isPiece(j));
-  const groups = paths ? groupByPhoto(jobs) : [];
+  const groups = new Map(groupByPhoto(jobs).map((g) => [g.key, g.jobs]));
 
   return (
     <Animated.View entering={FadeIn.duration(200)} style={{ gap: 22 }} accessibilityLiveRegion="polite">
@@ -510,48 +541,58 @@ function LiveTracking({ picked, paths, hint, onAgain }: { picked: Picked[]; path
         </T>
       </View>
 
-      {!paths
-        ? picked.map((p) => (
-            <View key={p.uri} style={{ gap: 12 }}>
-              <PhotoScan width={W} ratio={p.ratio} photo={p.uri} pieces={[]} scanning />
-              <KodeThinking phrases={['Kode reçoit tes photos', 'Kode les regarde de près']} step="look" center every={2000} />
+      {sent.map((x) => {
+        const list = x.path ? groups.get(x.path) : undefined;
+        // Une photo retirée (« Retirer ») quitte le suivi.
+        if (x.path && !list) return null;
+        // Pas encore arrivée chez Kode (ou arrêtée en route) : la photo seule.
+        if (!list) {
+          return (
+            <View key={x.picked.uri} style={{ gap: 12 }}>
+              <PhotoScan width={W} ratio={x.picked.ratio} photo={x.picked.uri} pieces={[]} scanning={!x.error} dim={Boolean(x.error)} />
+              {x.error ? (
+                <T v="body" tone="ink2">
+                  {x.error}
+                </T>
+              ) : (
+                <KodeThinking phrases={['Kode reçoit ta photo', 'Kode la regarde de près']} step="look" center every={2000} />
+              )}
             </View>
-          ))
-        : groups.map((g, gi) => {
-            const parent = g.jobs.find((j) => !j.parent_id) ?? null;
-            const pieceJobs = g.jobs.filter(isPiece);
-            const scanning = Boolean(parent && !parent.target && !parent.analysis?.inventory && isActive(parent));
-            const failedPhoto = g.jobs.filter((j) => !isPiece(j) && j.status === 'failed');
-            const local = picked[paths.indexOf(g.key)] ?? picked[gi];
-            const note = parent ? jobNote(parent) : null;
-            return (
-              <View key={g.key} style={{ gap: 12 }}>
-                <PhotoScan width={W} ratio={local?.ratio ?? 0.75} photo={local?.uri} pieces={scanPieces(g.jobs, reveals)} scanning={scanning} dim={failedPhoto.length === g.jobs.length} />
-                {scanning && parent ? <KodeThinking phrases={jobPhrases(parent)} step={jobStep(parent)} center every={2400} /> : null}
-                {note ? (
-                  <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
-                    {note}
-                  </T>
-                ) : null}
-                {hint.trim() ? (
-                  <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
-                    « {hint.trim()} »
-                  </T>
-                ) : null}
-                {failedPhoto.map((j) => (
-                  <View key={j.id} style={{ gap: 8 }}>
-                    <T v="body" tone="ink2">
-                      {j.error ?? 'Kode n’a pas pu lire cette photo.'}
-                    </T>
-                    <JobActions job={j} />
-                  </View>
-                ))}
-                {pieceJobs.map((j) => (
-                  <PieceRow key={j.id} job={j} reveal={reveals[j.id]} cut={cuts[j.id]} onRevealed={() => revealed(j.id)} />
-                ))}
+          );
+        }
+        const parent = list.find((j) => !j.parent_id) ?? null;
+        const pieceJobs = list.filter(isPiece);
+        const scanning = Boolean(parent && !parent.target && !parent.analysis?.inventory && isActive(parent));
+        const failedPhoto = list.filter((j) => !isPiece(j) && j.status === 'failed');
+        const note = parent ? jobNote(parent) : null;
+        return (
+          <View key={x.picked.uri} style={{ gap: 12 }}>
+            <PhotoScan width={W} ratio={x.picked.ratio} photo={x.picked.uri} pieces={scanPieces(list, reveals)} scanning={scanning} dim={failedPhoto.length === list.length} />
+            {scanning && parent ? <KodeThinking phrases={jobPhrases(parent)} step={jobStep(parent)} center every={2400} /> : null}
+            {note ? (
+              <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
+                {note}
+              </T>
+            ) : null}
+            {hint.trim() ? (
+              <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
+                « {hint.trim()} »
+              </T>
+            ) : null}
+            {failedPhoto.map((j) => (
+              <View key={j.id} style={{ gap: 8 }}>
+                <T v="body" tone="ink2">
+                  {j.error ?? 'Kode n’a pas pu lire cette photo.'}
+                </T>
+                <JobActions job={j} />
               </View>
-            );
-          })}
+            ))}
+            {pieceJobs.map((j) => (
+              <PieceRow key={j.id} job={j} reveal={reveals[j.id]} cut={cuts[j.id]} onRevealed={() => revealed(j.id)} />
+            ))}
+          </View>
+        );
+      })}
 
       {working || playing ? (
         <View style={{ gap: 10 }}>

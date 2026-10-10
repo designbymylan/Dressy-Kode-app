@@ -17,7 +17,7 @@ import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { CAMERA_BLOCKED, cameraAccess } from '../lib/camera';
+import { CAMERA_BLOCKED, cameraAccess, shootBurst } from '../lib/camera';
 import { COLOR_CHOICES } from '../data/wardrobe';
 import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision, sizeOptions, type MeasureId, type Profile, type Silhouette } from '../state/profile';
 import { useStore } from '../state/store';
@@ -807,11 +807,12 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
     if (room <= 0) return;
     try {
       if (camera && (await cameraAccess()) === 'blocked') return a.toast(CAMERA_BLOCKED, true);
-      const r = camera
-        ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7 });
-      if (r.canceled) return;
-      setPhotos([...photos, ...r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType }))].slice(0, MAX_PHOTOS));
+      // L'appareil en rafale : il se rouvre après chaque photo, jusqu'à « Annuler ».
+      const picked = camera
+        ? await shootBurst({ max: room, quality: 0.7 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7 }).then((r) => (r.canceled ? [] : r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType }))));
+      if (!picked.length) return;
+      setPhotos([...photos, ...picked.map((x) => ({ uri: x.uri, mime: x.mime }))].slice(0, MAX_PHOTOS));
       haptic('success');
     } catch {
       // Sélection annulée : rien à faire.
