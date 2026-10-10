@@ -16,7 +16,9 @@ Deux applications, un seul projet Supabase :
 - **`web/` : l'app web Next.js pensée pour mobile** (App Router, React 19,
   TypeScript, `@supabase/ssr`) : compte, dressing, tenues, Kode, paiement.
 - `supabase/` : migrations, Edge Functions (`dressy-agent`, `kode`,
-  `billing`, `stripe-webhook`, `donnees`).
+  `billing`, `stripe-webhook`, `donnees`, `compte`, `menage`).
+- `docs/rgpd/` : registre des traitements, analyse d'impact, politique de
+  confidentialité, et ce qui reste à faire avant la sortie (`README.md`).
 - **Données du jour** (météo, fériés, vacances scolaires, tendances…) :
   `supabase/functions/_shared/donnees/` (une source par fichier, cache
   partagé `data_cache`, chaîne de repli ; voir son `README.md`). L'app les
@@ -257,6 +259,41 @@ demandé par l'utilisateur pour lever les freins de la cible :
   carte de la tenue du jour.
 - **Moins de trois pièces** : Moi et l'ajout montrent le chemin vers la
   première tenue (0/3), pas de quota ni de chiffres à zéro.
+- **L'offre après la première tenue** : avant, Moi ne montre ni la carte de
+  membre ni la Boutique (une abonnée garde sa carte).
+- **« Pas pour moi »** sous la tenue du jour (`ui/ecart.tsx`,
+  `state/ecarts.ts`) : une raison facultative en un geste (style, couleurs,
+  confort, météo, journée, une pièce), puis une autre tenue tout de suite.
+  La tenue écartée ne revient plus, une pièce visée passe en dernier deux
+  semaines ; table `outfit_feedback` (effacée après six mois), que Kode lit.
+- **Bilan du dimanche** (`screens/Bilan.tsx`, `state/bilan.ts`) : la
+  semaine en couleurs portées, les chiffres, la pièce de la semaine, ce qui
+  dort, ce que Kode a retenu, la semaine qui vient. Carte à l'accueil le
+  dimanche et le lundi, ouvert depuis Moi toute la semaine, rappel local le
+  dimanche à 18 h pour qui a tout accepté. Une semaine vide se tourne vers
+  la suivante, sans reproche. Ports notés par jour (table `wears`).
+- **Photos en rafale** (10/10, `shootBurst`, `lib/camera.ts`) : l'appareil
+  se rouvre après chaque photo jusqu'à « Annuler » (dix au plus) ; connectée,
+  chaque photo part chez Kode pendant qu'on prend la suivante. Aussi au
+  premier portant du questionnaire ; la démonstration garde une photo.
+
+**RGPD (09/10)**, demandé par l'utilisateur (détail et reste à faire :
+`docs/rgpd/README.md`) :
+
+- **Silhouette avec accord** : « Affiner » commence par « Ta silhouette, en
+  confiance » ; sans accord, taille, silhouette et mesures sont sautées. Le
+  poids n'est plus demandé. Table `consents` (preuve datée, versionnée) ;
+  retiré, la base efface tout et refuse toute nouvelle valeur.
+- **Réglages › Tes données** (`screens/TesDonnees.tsx`) : ce qui est gardé,
+  les accords, télécharger (fonction `compte`, JSON par lien signé),
+  corriger, effacer la silhouette, supprimer le compte. **Vie privée**
+  (`screens/Confidentialite.tsx`) et la page web `/confidentialite`.
+- **Conservation limitée** : `menage` chaque nuit (photos 30 jours, exports
+  2 jours, conversations 12 mois ou 2 si archivées, demandes de dessin 90
+  jours).
+- **Inscription dès 15 ans** (case et lien vers la politique, mobile et
+  web) ; information au bon moment (photo effacée sous 30 jours, éviter le
+  visage ; pas de santé dans une note ; Kode est une IA).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -446,6 +483,16 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   `getSession()` : seul `getUser()` revalide le jeton.
 - Schéma : `supabase/migrations/`. Toute modification passe par une nouvelle
   migration, dont le nom de fichier reprend la version appliquée au projet.
-- Edge Functions : `kode`, `billing` et `donnees` avec vérification JWT,
-  `stripe-webhook` et `dressy-agent` sans (signature Stripe, déclencheur
-  interne).
+- Edge Functions : `kode`, `billing`, `donnees` et `compte` avec
+  vérification JWT, `stripe-webhook`, `dressy-agent` et `menage` sans
+  (signature Stripe, déclencheur interne, ménage de la nuit sans entrée).
+- **RGPD** : toute nouvelle donnée personnelle passe dans le registre
+  (`docs/rgpd/registre-des-traitements.md`) et, si elle touche au corps, à
+  la santé ou part chez l'IA, dans l'analyse d'impact. Toute nouvelle durée
+  de conservation se règle dans `menage` (ou pg_cron) et dans `DUREES`.
+  Kode ne reçoit jamais le prénom, l'e-mail, le poids ni les mesures ; la
+  silhouette et la taille seulement avec l'accord en vigueur.
+- **La politique de confidentialité** vit dans `mobile/src/data/legal.ts` ;
+  après une modification, `node tools/politique.mjs` régénère
+  `docs/rgpd/politique-de-confidentialite.md` et `web/src/lib/politique.ts`
+  (jamais à la main).
