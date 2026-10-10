@@ -43,6 +43,7 @@ export async function signUp(_prev: FormResult, formData: FormData): Promise<For
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const password = String(formData.get('password') ?? '');
 
+  if (formData.get('adult') !== '1') return { error: 'Dresskode est ouverte à partir de 15 ans : coche la case pour continuer.' };
   if (!email || !password) return { error: 'Adresse e-mail et mot de passe sont nécessaires.' };
   if (password.length < 8) return { error: 'Mot de passe trop court : il en faut au moins 8.' };
 

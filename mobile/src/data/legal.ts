@@ -1,9 +1,10 @@
 /**
  * Ce que la loi demande d'afficher (09/10) : l'éditeur, responsable du
  * traitement, et la politique de confidentialité, écrite pour être lue
- * (RGPD art. 12 à 14 ; loi Informatique et Libertés). Même texte que
+ * (RGPD art. 12 à 14 ; loi Informatique et Libertés). C'est la source :
  * docs/rgpd/politique-de-confidentialite.md et la page /confidentialite du
- * site : une modification se reporte aux trois.
+ * site en sont tirés par `node tools/politique.mjs`, à relancer après
+ * toute modification (et une nouvelle POLITIQUE_VERSION si elle compte).
  *
  * À COMPLÉTER avant la sortie : l'identité de l'éditeur et l'adresse de
  * contact (voir docs/rgpd/README.md). Tant qu'elles manquent, l'écran le dit.
@@ -51,7 +52,7 @@ export const POLITIQUE: Section[] = [
     titre: 'Ce que nous gardons, et pourquoi',
     liste: [
       { titre: 'Ton compte', texte: 'E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).' },
-      { titre: 'Ton dressing', texte: 'Les photos que tu confies à Kode, les pièces qu’il en dessine, leurs étiquettes, leurs prix et tes ports. Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.' },
+      { titre: 'Ton dressing', texte: 'Les photos que tu confies à Kode, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.' },
       { titre: 'Ton style', texte: 'Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat.' },
       { titre: 'Ta silhouette', texte: 'Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé.' },
       { titre: 'Ton agenda et Kode', texte: 'Tes rendez-vous, voyages, tenues prévues et conversations avec Kode. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).' },

@@ -28,7 +28,7 @@ function AppleLogo() {
 }
 
 /** « Continuer avec Google / Apple » : un même formulaire, deux boutons. */
-export function OAuthButtons() {
+export function OAuthButtons({ disabled }: { disabled?: boolean } = {}) {
   const [state, action] = useActionState<FormResult, FormData>(signInWithProvider, undefined);
   return (
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -36,12 +36,14 @@ export function OAuthButtons() {
       <SubmitButton
         name="provider" value="google"
         className="btn btn-glass btn-block btn-oauth"
+        disabled={disabled}
         label={<><GoogleLogo />Continuer avec Google</>}
         pending="Ouverture de Google"
       />
       <SubmitButton
         name="provider" value="apple"
         className="btn btn-glass btn-block btn-oauth"
+        disabled={disabled}
         label={<><AppleLogo />Continuer avec Apple</>}
         pending="Ouverture d’Apple"
       />
@@ -86,13 +88,14 @@ export function PasswordInput({ isNew, id = 'password' }: { isNew?: boolean; id?
  * Connexion ou création de compte par e-mail. Pas de prénom ici : il se
  * donne dans le questionnaire, juste après.
  */
-export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
+export function AuthForm({ mode, adult }: { mode: 'signin' | 'signup'; adult?: boolean }) {
   const isSignUp = mode === 'signup';
   const [state, action] = useActionState<FormResult, FormData>(isSignUp ? signUp : signIn, undefined);
 
   return (
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
+      {isSignUp ? <input type="hidden" name="adult" value={adult ? '1' : ''} /> : null}
 
       <label className="field">
         <span>E-mail</span>
@@ -108,10 +111,42 @@ export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
       </div>
 
       <SubmitButton
+        disabled={isSignUp && !adult}
         label={isSignUp ? 'Créer mon espace' : 'Me connecter'}
         pending={isSignUp ? 'Création de ton espace' : 'Connexion'}
         style={{ marginTop: 4 }}
       />
     </form>
+  );
+}
+
+/**
+ * L'inscription (09/10, comme sur le mobile) : avoir 15 ans ou plus, l'âge
+ * auquel la loi française permet de consentir seul en ligne (loi
+ * Informatique et Libertés, art. 45), et le lien vers la politique. La case
+ * ouvre les trois façons de créer un compte ; le serveur la revérifie pour
+ * l'e-mail.
+ */
+export function SignupForms() {
+  const [adult, setAdult] = useState(false);
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <label className="signup-age">
+          <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
+          <span>J’ai 15 ans ou plus</span>
+        </label>
+        <p className="small muted">
+          Tes données servent seulement à t’habiller, comme l’explique notre{' '}
+          <Link href="/confidentialite" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+            politique de confidentialité
+          </Link>
+          .
+        </p>
+      </div>
+      <OAuthButtons disabled={!adult} />
+      <div className="auth-or" aria-hidden="true">ou</div>
+      <AuthForm mode="signup" adult={adult} />
+    </>
   );
 }
