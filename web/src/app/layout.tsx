@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { getTheme } from '@/lib/space';
+import { Intro, INTRO_SCRIPT } from '@/components/Intro';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -24,6 +25,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="fr" data-theme={theme}>
+      <head>
+        {/* L'intro déjà vue dans cet onglet ne doit pas clignoter : décidé avant le premier affichage. */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+      </head>
       {/* Helvetica, celle du système : aucune police à télécharger. */}
       <body>
         {/* Les halos crème (noirs en sombre), derrière le verre : un seul calque fixe, sous tout le reste. */}
@@ -34,6 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <i />
         </div>
         {children}
+        <Intro />
       </body>
     </html>
   );

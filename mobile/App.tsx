@@ -14,6 +14,7 @@ import { PhoneFrame } from './src/web/PhoneFrame';
 import { FONT_FILES } from './src/theme/fonts';
 import { ErrorBoundary } from './src/ui/ErrorBoundary';
 import { Rappels } from './src/state/useRappels';
+import { Intro } from './src/ui/Intro';
 
 export default function App() {
   // Les trois polices de la charte (assets/fonts) : l'app attend leur
@@ -58,6 +59,8 @@ function Shell() {
         <ToastHost aboveTabs={onTabs} />
       </PortalHost>
       <Rappels />
+      {/* L'intro du K étoilé, une fois par lancement, au-dessus de tout. */}
+      <Intro />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </PhoneFrame>
   );

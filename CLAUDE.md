@@ -303,7 +303,19 @@ est noir ou blanc comme le texte ; l'étincelle passe en rose poudré
 seulement sur noir. Web : `components/Logo.tsx` (`Monogram`, `Wordmark
 mark`) sur Bienvenue et les écrans de compte, favicon `app/icon.svg`.
 Mobile : icônes et écran de lancement dans `mobile/assets/` ; les écrans
-de l'app écrivent encore DRESSKODE seul.
+de l'app écrivent encore DRESSKODE seul. Couleurs gardées (13/10) : noir
+sur blanc, blanc sur noir, noir sur rose poudré ; l'icône d'app garde son
+étincelle rose sur noir (mock-ups validés). Le site a aussi son image de
+partage (`app/opengraph-image.png`), son manifeste et l'étincelle du logo
+dans `ICON.sparkle`.
+
+**Intro (13/10)**, demandée par l'utilisateur : à l'arrivée, une fois par
+visite (web, `sessionStorage`) ou par lancement (mobile), le K se coud
+trait par trait, l'étincelle s'allume, une couture se pique, DRESSKODE se
+resserre, puis la caméra plonge dans le K (2,7 s). Noir sur blanc ou blanc
+sur noir selon le thème ; un toucher la passe ; « Réduire les animations »
+la réduit à un fondu. Web : `components/Intro.tsx` et `.intro` dans
+`globals.css` ; mobile : `src/ui/Intro.tsx` (Reanimated, react-native-svg).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.

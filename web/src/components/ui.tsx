@@ -138,7 +138,8 @@ export const ICON = {
   lock: 'M5.5 11h13v9.5h-13ZM8.3 11V8a3.7 3.7 0 0 1 7.4 0v3',
   unlock: 'M5.5 11h13v9.5h-13ZM8.3 11V8a3.7 3.7 0 0 1 7.1-1.4',
   check: 'M4.5 12.5l4.8 4.8L19.5 7',
-  sparkle: 'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z',
+  // L'étincelle de Kode, la même que celle du logo (components/Logo.tsx).
+  sparkle: 'M12 3C12.64 9.43 14.57 11.36 21 12C14.57 12.64 12.64 14.57 12 21C11.36 14.57 9.43 12.64 3 12C9.43 11.36 11.36 9.43 12 3Z',
   camera: 'M3.5 7.5h4l1.5-2.5h6l1.5 2.5h4V19h-17ZM12 16a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z',
   close: 'M5.5 5.5l13 13M18.5 5.5l-13 13',
   hanger: 'M10 5.6a2 2 0 1 1 2 2v1.3M12 8.9 3 15.5h18Z',

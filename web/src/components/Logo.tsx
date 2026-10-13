@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
  * couleur du texte (noir en clair, blanc en sombre) ; l'étincelle aussi, sauf
  * sur fond noir où elle peut passer en rose poudré (`sparkle="var(--butter)"`).
  */
-const K = {
+export const K = {
   stem: 'M26.75 14H33.25V86H26.75Z',
   upper: 'M32.3 63.3L63.3 32.3L58.7 27.7L27.7 58.7Z',
   lower: 'M41.53 49.11L72.93 86L81.47 86L46.48 44.89Z',
