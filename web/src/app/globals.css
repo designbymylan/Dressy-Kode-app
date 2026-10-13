@@ -194,6 +194,8 @@ h1, h2, h3 {
   text-transform: uppercase;
   color: var(--ink);
 }
+/* Le monogramme (K étoilé) devant la marque ; il suit la couleur du texte. */
+.brand-lockup { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
 
 /* L'ancien « mot qui chante » : il garde la police du titre qui le porte. */
 em.accent, .accent {

@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { FlatLay } from '@/components/garments';
-import { Wordmark } from '@/components/AuthShell';
+import { Wordmark } from '@/components/Logo';
 
 /** Écran 1 du brief : collage à plat, une phrase, un seul bouton. */
 export default function Bienvenue() {
@@ -15,7 +15,7 @@ export default function Bienvenue() {
       }}
     >
       <div className="rise" style={{ display: 'flex', justifyContent: 'center', paddingBlock: 6 }}>
-        <Wordmark />
+        <Wordmark mark />
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 26 }}>

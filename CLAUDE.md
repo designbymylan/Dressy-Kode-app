@@ -295,6 +295,16 @@ demandé par l'utilisateur pour lever les freins de la cible :
   web) ; information au bon moment (photo effacée sous 30 jours, éviter le
   visage ; pas de santé dans une note ; Kode est une IA).
 
+**Logo (13/10)**, piste A validée par l'utilisateur parmi trois (planches :
+https://claude.ai/artifact/LJomyeYSjzN9abt5v5VpJP) : **le K étoilé**, un K
+fin dont la branche haute s'arrête sur l'étincelle de Kode, à côté de
+DRESSKODE. Fichiers, règles et géométrie : `design/logo/README.md`. Le K
+est noir ou blanc comme le texte ; l'étincelle passe en rose poudré
+seulement sur noir. Web : `components/Logo.tsx` (`Monogram`, `Wordmark
+mark`) sur Bienvenue et les écrans de compte, favicon `app/icon.svg`.
+Mobile : icônes et écran de lancement dans `mobile/assets/` ; les écrans
+de l'app écrivent encore DRESSKODE seul.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 

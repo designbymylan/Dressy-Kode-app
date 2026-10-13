@@ -1,7 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Wordmark } from '@/components/HeroFan';
-import { GlossIcon } from '@/components/Gloss';
-import { ICON } from '@/components/ui';
+import { Monogram, Wordmark } from '@/components/Logo';
 
 export { Wordmark };
 
@@ -24,7 +22,7 @@ export function AuthShell({
   return (
     <main className="auth page">
       <div className="auth-head rise">
-        <GlossIcon d={ICON.hanger} tone={1} size={60} stroke={1.5} />
+        <Monogram size={56} />
         <Wordmark />
       </div>
 

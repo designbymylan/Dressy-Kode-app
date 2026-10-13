@@ -51,9 +51,3 @@ export function HeroFan({ scale = 1 }: { scale?: number }) {
     </div>
   );
 }
-
-export function Wordmark() {
-  return (
-    <span className="brand">Dresskode</span>
-  );
-}
