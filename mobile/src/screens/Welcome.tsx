@@ -9,6 +9,7 @@ import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Button } from '../ui/Button';
 import { HeaderShell } from '../ui/layout';
+import { BrandMark } from '../ui/Logo';
 import { DotChip, Tag } from '../ui/bits';
 import { AccountSheet } from '../ui/account';
 import { Garment, type GarmentKind } from '../ui/Garment';
@@ -47,9 +48,7 @@ export function Welcome() {
       <View style={{ position: 'absolute', top: insets.top + 6, left: space.lg, right: space.lg, zIndex: 10 }}>
         <HeaderShell>
           <View className="flex-row items-center justify-between" style={{ flex: 1, paddingLeft: 20, paddingRight: 6 }}>
-            <T v="brand" accessibilityRole="header">
-              DRESSKODE
-            </T>
+            <BrandMark />
             <Button testID="welcome-login" label="Connexion" variant="quiet" size="m" onPress={() => setLogin(true)} />
           </View>
         </HeaderShell>

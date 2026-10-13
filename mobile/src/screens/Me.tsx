@@ -21,6 +21,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { F } from '../theme/fonts';
 import { T } from '../ui/T';
+import { BrandMark } from '../ui/Logo';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Garment } from '../ui/Garment';
@@ -149,9 +150,7 @@ export function Me() {
         {showOffer && (
         <Tap testID="me-offer" onPress={() => nav.navigate('Offers')} scaleTo={0.99} accessibilityLabel={`Ton offre ${plan.name}. Voir les offres`} style={{ borderRadius: 28, padding: 18, gap: 14, backgroundColor: c['primary-bg'] }}>
           <View className="flex-row items-center justify-between">
-            <T v="brand" tone="primary-fg" style={{ fontSize: 11, letterSpacing: 3.3 }}>
-              DRESSKODE
-            </T>
+            <BrandMark tone="primary-fg" size={18} textStyle={{ fontSize: 11, letterSpacing: 3.3 }} />
             <T v="label" tone="primary-fg" style={{ opacity: 0.75 }}>
               Carte de membre
             </T>

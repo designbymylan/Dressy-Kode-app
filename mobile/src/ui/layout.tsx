@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { material, space } from '../theme/tokens';
 import { T } from './T';
+import { BrandMark } from './Logo';
 import { IconButton } from './Button';
 import { BlurView } from 'expo-blur';
 import type { IconName } from './Icon';
@@ -20,9 +21,13 @@ export function Masthead({ kicker, meta, right }: { kicker: string; meta?: strin
   return (
     <View style={{ gap: 10, paddingBottom: 2 }}>
       <View className="flex-row items-center justify-between" style={{ minHeight: 20, gap: 12 }}>
-        <T v={kicker === 'DRESSKODE' ? 'brand' : 'masthead'} accessibilityRole="header">
-          {kicker}
-        </T>
+        {kicker === 'DRESSKODE' ? (
+          <BrandMark size={20} />
+        ) : (
+          <T v="masthead" accessibilityRole="header">
+            {kicker}
+          </T>
+        )}
         {meta ? (
           <T v="caption" tone="ink2" numberOfLines={1} style={{ flexShrink: 1, textAlign: 'right' }}>
             {meta}
@@ -141,9 +146,7 @@ type Action = { icon: IconName; label: string; onPress: () => void; testID?: str
 function CapsuleTitle({ title, brand, center }: { title: string; brand?: boolean; center?: boolean }) {
   if (brand)
     return (
-      <T v="brand" accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={center ? { textAlign: 'center' } : undefined}>
-        DRESSKODE
-      </T>
+      <BrandMark size={20} style={center ? { alignSelf: 'center' } : undefined} />
     );
   const short = title.length <= 14;
   return (

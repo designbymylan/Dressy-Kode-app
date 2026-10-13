@@ -302,8 +302,10 @@ DRESSKODE. Fichiers, règles et géométrie : `design/logo/README.md`. Le K
 est noir ou blanc comme le texte ; l'étincelle passe en rose poudré
 seulement sur noir. Web : `components/Logo.tsx` (`Monogram`, `Wordmark
 mark`) sur Bienvenue et les écrans de compte, favicon `app/icon.svg`.
-Mobile : icônes et écran de lancement dans `mobile/assets/` ; les écrans
-de l'app écrivent encore DRESSKODE seul. Couleurs gardées (13/10) : noir
+Mobile : icônes et écran de lancement dans `mobile/assets/` ; le
+monogramme devant DRESSKODE partout où la marque s'écrit (capsule de
+l'accueil et de la fiche pièce, Bienvenue, carte de membre de Moi), par
+`BrandMark` (`mobile/src/ui/Logo.tsx`, accord du 13/10). Couleurs gardées (13/10) : noir
 sur blanc, blanc sur noir, noir sur rose poudré ; l'icône d'app garde son
 étincelle rose sur noir (mock-ups validés). Le site a aussi son image de
 partage (`app/opengraph-image.png`), son manifeste et l'étincelle du logo
