@@ -325,6 +325,8 @@ cd web && npm run test:agent                   # tests de l'agent (détourage, d
 cd web && npm run test:donnees                 # chaque source de données, contre la vraie API
 
 node tools/serve.mjs                           # maquettes sur http://localhost:4173
+node tools/qa-web.mjs --base http://localhost:3000 --routes /bienvenue,/connexion --out <dossier>
+                                               # parcours navigateur (clair et sombre), rapport de points ; la recette complète : /dressy-qa
 ```
 
 `npm run dev` (web) plante parfois (`__webpack_modules__[moduleId] is not a
