@@ -19,7 +19,7 @@ export default function Confidentialite() {
 
   return (
     <main className="screen page" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 48px)', gap: 14 }}>
-      <Link href="/" className="small muted" style={{ alignSelf: 'flex-start', paddingBlock: 12 }}>
+      <Link href="/" className="small muted" style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', minHeight: 44, minWidth: 44, paddingInlineEnd: 8 }}>
         Retour
       </Link>
 

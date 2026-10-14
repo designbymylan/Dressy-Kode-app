@@ -293,7 +293,7 @@ export function DotChip({ label, onPress, swatch, testID, disabled }: { label: s
       </View>
     );
   return (
-    <Tap testID={testID} onPress={onPress} disabled={disabled} feedback="select" hitSlop={4} accessibilityRole="button" accessibilityLabel={label} scaleTo={0.97} style={style}>
+    <Tap testID={testID} onPress={onPress} disabled={disabled} feedback="select" hitSlop={6} accessibilityRole="button" accessibilityLabel={label} scaleTo={0.97} style={style}>
       {body}
     </Tap>
   );

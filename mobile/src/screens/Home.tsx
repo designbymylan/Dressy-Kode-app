@@ -98,7 +98,7 @@ export function Home() {
               </View>
             )}
             {todayEvents > 0 && (
-              <Tap testID="home-today-events" onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityLabel={`${todayEvents} rendez-vous aujourd’hui`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
+              <Tap testID="home-today-events" hitSlop={6} onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityLabel={`${todayEvents} rendez-vous aujourd’hui`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
                 <Icon name="calendar" size={15} color={c.ink} />
                 <T v="small">{`${todayEvents} rendez-vous`}</T>
               </Tap>
