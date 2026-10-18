@@ -6,6 +6,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Dresskode, ton dressing en vitrine',
   description: 'Ta garde-robe numérique et ton styliste IA. Porte mieux, achète moins.',
+  applicationName: 'Dresskode',
+  // iOS ignore le manifest pour le mode plein écran. Les icônes viennent des
+  // fichiers app/icon.svg et app/apple-icon.png (le K étoilé).
+  appleWebApp: { capable: true, title: 'Dresskode', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
