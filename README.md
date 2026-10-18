@@ -27,6 +27,23 @@ Puis http://localhost:3000. Le mode `npm run dev` existe, mais son bundler
 plante parfois (`__webpack_modules__[moduleId] is not a function`) : le build
 de production est la référence pour vérifier.
 
+## Déployer sur Vercel
+
+Le projet Vercel `dresskode-app` est relié à ce dépôt : chaque push sur
+`main` part en production, chaque autre branche en preview.
+
+- **Root Directory** : `web` (l'application n'est pas à la racine du dépôt).
+- **Framework** : Next.js, commandes par défaut.
+- **Variables d'environnement** (Production et Preview) :
+  `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`, mêmes
+  valeurs que `web/.env.local.example`. Sans elles, le build passe mais le
+  middleware renvoie une erreur 500 à chaque page.
+- **Supabase** > Authentication > URL Configuration : y déclarer l'URL
+  Vercel comme Site URL.
+
+Vercel ne sert que l'interface : l'agent tourne dans l'Edge Function
+Supabase, ses clés restent dans Supabase.
+
 ## L'agent central
 
 Chaque photo ajoutée devient une ligne `ai_jobs`. Un trigger réveille l'Edge
