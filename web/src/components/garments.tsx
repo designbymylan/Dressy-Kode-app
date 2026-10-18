@@ -81,25 +81,26 @@ export function Garment({
 }
 
 /**
- * Collage de vêtements posés à plat, légèrement basculés, l'image de
- * marque du brief : « la vitrine d'un magasin de vêtements ».
+ * Le collage de Bienvenue, « la vitrine d'un magasin de vêtements » du brief :
+ * de vraies pièces détourées (photos envoyées le
+ * 07/10, `mobile/assets/pieces/`, réduites dans `public/pieces/`), chacune
+ * posée sur sa tuile, qui flotte à son propre rythme.
  */
 export function FlatLay() {
-  // Teintes pastel des halos de fond : les tuiles de verre en reprennent la lumière.
-  const pieces: { shape: ShapeName; x: number; y: number; r: number; s: number }[] = [
-    { shape: 'trench', x: 4, y: 10, r: -11, s: 104 },
-    { shape: 'chemise', x: 86, y: 0, r: 6, s: 96 },
-    { shape: 'blazer', x: 160, y: 14, r: 13, s: 100 },
-    { shape: 'jean', x: 44, y: 86, r: 7, s: 92 },
-    { shape: 'robe', x: 124, y: 92, r: -8, s: 96 },
-    { shape: 'escarpin', x: 206, y: 104, r: -4, s: 76 },
+  const pieces: { src: string; x: number; y: number; r: number; s: number }[] = [
+    { src: 'blouson-court', x: 4, y: 10, r: -11, s: 104 },
+    { src: 'tshirt-ecru', x: 86, y: 0, r: 6, s: 96 },
+    { src: 'cardigan-chocolat', x: 160, y: 14, r: 13, s: 100 },
+    { src: 'jean-large', x: 44, y: 86, r: 7, s: 92 },
+    { src: 'pull-marine', x: 124, y: 92, r: -8, s: 96 },
+    { src: 'blouson-noir', x: 206, y: 104, r: -4, s: 76 },
   ];
 
   return (
     <div aria-hidden="true" style={{ position: 'relative', height: 210, width: 284, margin: '0 auto' }}>
       {pieces.map((p, i) => (
         <div
-          key={p.shape}
+          key={p.src}
           className="pop"
           style={{ position: 'absolute', left: p.x, top: p.y, '--i': i + 1 } as React.CSSProperties}
         >
@@ -108,11 +109,19 @@ export function FlatLay() {
             style={{
               '--r': `${p.r}deg`, animationDelay: `${i * -1.3}s`, animationDuration: `${6.5 + i * 0.5}s`,
               width: p.s, height: p.s, borderRadius: 26,
-              background: 'var(--glass-strong)', border: '1px solid var(--glass-edge)', color: 'var(--ink)', boxShadow: 'var(--shadow-float)',
+              background: 'var(--glass-strong)', border: '1px solid var(--glass-edge)', boxShadow: 'var(--shadow-float)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             } as React.CSSProperties}
           >
-            <Garment shape={p.shape} size={p.s * 0.72} fill="transparent" stroke="currentColor" />
+            <img
+              src={`/pieces/${p.src}.webp`}
+              alt=""
+              width={Math.round(p.s * 0.78)}
+              height={Math.round(p.s * 0.78)}
+              decoding="async"
+              fetchPriority={i < 3 ? 'high' : 'auto'}
+              style={{ objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12))' }}
+            />
           </div>
         </div>
       ))}

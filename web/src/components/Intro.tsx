@@ -62,9 +62,9 @@ export function Intro() {
             </clipPath>
           </defs>
           <g clipPath="url(#intro-clip)" fill="none" stroke="currentColor" strokeWidth="6.5">
-            <path className="intro-stroke intro-stem" pathLength={1} d="M30 86V14" />
-            <path className="intro-stroke intro-up" pathLength={1} d="M30 61L61 30" />
-            <path className="intro-stroke intro-lo" pathLength={1} d="M44 47L82.3 92" />
+            <path className="intro-stroke intro-stem" d="M30 86V14" />
+            <path className="intro-stroke intro-up" d="M30 61L61 30" />
+            <path className="intro-stroke intro-lo" d="M44 47L82.3 92" />
           </g>
           <circle className="intro-glint" cx="71" cy="17" r="14" fill="none" stroke="currentColor" strokeWidth="0.8" />
           <path className="intro-spark" d={K.spark} fill="currentColor" />

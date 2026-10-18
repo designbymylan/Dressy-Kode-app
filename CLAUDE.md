@@ -322,6 +322,14 @@ la réduit à un fondu. Web : `components/Intro.tsx` et `.intro` dans
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 
+**Déploiement (demande du 18/10)** : le site est sur Vercel
+(https://dresskode-app.vercel.app, projet `dresskode-app`, Root Directory
+`web`), qui met en production chaque push sur `main`. Toute modification
+demandée sur l'app finit donc sur `main` une fois vérifiée (`npm run
+typecheck`, `npm run build`), puis on contrôle que la production sert la
+nouvelle version. Une branche `claude/…` seule n'est qu'une Preview :
+c'est ainsi que la version Dresskode est restée hors ligne jusqu'au 18/10.
+
 ## Commandes
 
 ```bash
