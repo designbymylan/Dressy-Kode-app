@@ -5,6 +5,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Dressy — ton dressing, en vitrine',
   description: 'Ta garde-robe numérique et ton styliste IA. Porte mieux, achète moins.',
+  applicationName: 'Dressy',
+  // iOS ignore le manifest pour l'icône et le mode plein écran.
+  icons: { icon: '/icons/icon-192.png', apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: 'Dressy', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
