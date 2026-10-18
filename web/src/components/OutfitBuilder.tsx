@@ -118,7 +118,7 @@ function Row({
           aria-pressed={locked}
           aria-label={locked ? `Déverrouiller ${label.toLowerCase()}` : `Garder ${label.toLowerCase()} au mélange`}
           className="chip"
-          style={{ minHeight: 34, width: 34, padding: 0, justifyContent: 'center' }}
+          style={{ minHeight: 44, width: 44, padding: 0, justifyContent: 'center' }}
         >
           <Icon d={locked ? ICON.lock : ICON.unlock} size={15} width={1.9} />
         </button>

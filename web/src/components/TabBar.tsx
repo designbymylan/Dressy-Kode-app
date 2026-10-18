@@ -18,6 +18,8 @@ const TABS = [
   {
     href: '/dressing',
     label: 'Dressing',
+    // Les tenues se composent à partir du dressing : elles en font partie.
+    also: ['/tenues'],
     d: 'M8.6 4 3.5 6.6 2.4 11.4l3.4 1.1V20h12.4v-7.5l3.4-1.1-1.1-4.8L15.4 4c-.5 1.7-1.8 2.7-3.4 2.7S9.1 5.7 8.6 4Z',
     full: 'M8.6 4 3.5 6.6 2.4 11.4l3.4 1.1V20h12.4v-7.5l3.4-1.1-1.1-4.8L15.4 4c-.5 1.7-1.8 2.7-3.4 2.7S9.1 5.7 8.6 4Z',
   },
@@ -72,7 +74,7 @@ export function TabBar() {
     <nav aria-label="Navigation principale" className="tabbar">
       <div className="tabbar-inner">
         {TABS.map((tab) => {
-          const on = pathname === tab.href || pathname.startsWith(tab.href + '/');
+          const on = [tab.href, ...(tab.also ?? [])].some((h) => pathname === h || pathname.startsWith(h + '/'));
           return (
             <Link
               key={tab.href}

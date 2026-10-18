@@ -11,6 +11,8 @@ import { FREE_PLAN, PLANS, planName } from '@/lib/plans';
 import { Screen, Title, Card } from '@/components/ui';
 import { labelsFor, colourHex } from '@/lib/onboarding';
 
+const DRESSING_VIEW: Record<string, string> = { portants: 'Par portants', grille: 'En grille' };
+
 function Line({ label, values }: { label: string; values: string[] }) {
   if (!values.length) return null;
   return (
@@ -133,7 +135,7 @@ export default async function Moi({
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <dt className="muted">Vue du dressing</dt>
-            <dd style={{ fontWeight: 500 }}>{viewer.settings.dressing_view}</dd>
+            <dd style={{ fontWeight: 500 }}>{DRESSING_VIEW[viewer.settings.dressing_view] ?? viewer.settings.dressing_view}</dd>
           </div>
         </dl>
       </Card>

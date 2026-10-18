@@ -318,7 +318,7 @@ export function KodeChat({
                   placeholder="Écris à Kode…"
                   style={{
                     flex: 1, border: 'none', outline: 'none', resize: 'none', background: 'transparent',
-                    fontSize: 15, lineHeight: 1.4, padding: '11px 0', maxHeight: 120,
+                    fontSize: 16, lineHeight: 1.4, padding: '11px 0', maxHeight: 120,
                   }}
                 />
                 <button

@@ -471,7 +471,8 @@ img { display: block; }
   border-radius: 999px;
   background: var(--stage);
   padding: 0 22px;
-  font-size: 15px;
+  /* 16 px au moins : en dessous, Safari iOS zoome sur le champ au focus. */
+  font-size: 16px;
   outline: none;
   transition: border-color 200ms var(--ease);
 }
