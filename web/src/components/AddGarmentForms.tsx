@@ -1,22 +1,31 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type FormEvent } from 'react';
-import { useFormStatus } from 'react-dom';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { addGarment, requestAiGarments, type FormResult } from '@/app/actions';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { COLOURS } from '@/lib/onboarding';
 import { Field, ErrorNote, Icon, ICON } from '@/components/ui';
+import { SubmitButton } from '@/components/SubmitButton';
+import { KodeThinking } from '@/components/KodeThinking';
+import { THINKING } from '@/lib/thinking';
 
-function Submit({ label }: { label: string }) {
-  const { pending } = useFormStatus();
+/** Le message d'erreur, et le chemin vers les offres quand le dressing est plein. */
+function Problem({ error, code }: { error: string; code?: string }) {
   return (
-    <button type="submit" disabled={pending} className="btn btn-primary btn-block">
-      {pending ? 'Un instant…' : label}
-    </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <ErrorNote>{error}</ErrorNote>
+      {code === 'pieces' ? (
+        <Link href="/offres" className="btn btn-glass btn-sm" style={{ alignSelf: 'center' }}>
+          Voir les offres
+        </Link>
+      ) : null}
+    </div>
   );
 }
+
 
 /* ---------------------------------------------------------------- saisie */
 
@@ -29,7 +38,7 @@ export function ManualForm() {
 
   return (
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
+      {state?.error ? <Problem error={state.error} code={state.code} /> : null}
       <input type="hidden" name="category_id" value={category} />
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="colour" value={colour} />
@@ -111,7 +120,7 @@ export function ManualForm() {
         <input name="price" type="text" inputMode="decimal" placeholder="49,90" className="input" />
       </Field>
 
-      <Submit label="Ranger dans mon dressing" />
+      <SubmitButton label="Ranger dans mon dressing" pending="Kode range ta pièce" />
     </form>
   );
 }
@@ -154,6 +163,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
   const [items, setItems] = useState<Picked[]>([]);
   const [hint, setHint] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState<string | null>(null);
   const [over, setOver] = useState(false);
   const busy = progress !== null;
@@ -165,6 +175,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
 
   async function addFiles(files: File[]) {
     setError(null);
+    setCode(undefined);
     const room = MAX_PHOTOS - items.length;
     if (files.length > room) setError(`${MAX_PHOTOS} photos au plus à la fois : les suivantes n'ont pas été ajoutées.`);
 
@@ -198,23 +209,24 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
     e.preventDefault();
     if (!items.length || busy) return;
     setError(null);
+    setCode(undefined);
 
     const supabase = createBrowserClient();
-    const paths: string[] = [];
+    const paths = items.map((item) => `${spaceId}/${item.id}.jpg`);
     try {
-      for (const [k, item] of items.entries()) {
-        setProgress(`Envoi ${k + 1}/${items.length}…`);
-        const path = `${spaceId}/${item.id}.jpg`;
-        const { error: upErr } = await supabase.storage
-          .from('uploads')
-          .upload(path, item.blob, { contentType: 'image/jpeg' });
-        if (upErr) throw new Error("Une photo n'a pas pu être envoyée. Vérifie ta connexion et réessaie.");
-        paths.push(path);
-      }
+      // Toutes les photos partent en même temps : l'attente ne s'allonge pas avec leur nombre.
+      setProgress(items.length > 1 ? `Envoi de ${items.length} photos` : 'Envoi de ta photo');
+      const sent = await Promise.all(items.map((item, k) =>
+        supabase.storage.from('uploads').upload(paths[k], item.blob, { contentType: 'image/jpeg' }),
+      ));
+      if (sent.some((r) => r.error)) throw new Error("Une photo n'a pas pu être envoyée. Vérifie ta connexion et réessaie.");
 
-      setProgress('Kode prend le relais…');
+      setProgress('Kode prend le relais');
       const res = await requestAiGarments({ paths, hint });
-      if (res?.error) throw new Error(res.error);
+      if (res?.error) {
+        setCode(res.code);
+        throw new Error(res.error);
+      }
 
       items.forEach((i) => URL.revokeObjectURL(i.preview));
       router.push(`/dressing?demande=${paths.length}`);
@@ -230,7 +242,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
 
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {error ? <ErrorNote>{error}</ErrorNote> : null}
+      {error ? <Problem error={error} code={code} /> : null}
 
       {n ? (
         <ul aria-label="Photos choisies" style={{ listStyle: 'none', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -278,24 +290,28 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
         </label>
       ) : null}
 
-      <Field label="Précision (facultatif)">
+      <Field label="Seulement certaines pièces ? (facultatif)">
         <input
           type="text"
           value={hint}
           onChange={(e) => setHint(e.target.value)}
           maxLength={280}
-          placeholder="Le collier, pas le pull"
+          placeholder="Seulement la veste et le jean"
           disabled={busy}
           className="input"
         />
       </Field>
 
       <p className="small muted center" style={{ paddingInline: 6 }}>
-        Claude décrit la pièce, Nano Banana la redessine seule et sans fond, puis Claude vérifie
-        qu&apos;elle ressemble à la tienne à 95 %, jusqu&apos;à trois essais.
+        Kode repère chaque pièce de ta photo, vêtements, chaussures, sacs et bijoux compris, puis les
+        redessine une par une, sans fond, et les range sur tes portants. Tu n’en veux que certaines ?
+        Dis-le juste au-dessus.
       </p>
 
-      <button type="submit" disabled={!n || busy} className="btn btn-primary btn-block">
+      {busy ? <KodeThinking phrases={[progress ?? THINKING.send[0], ...THINKING.send]} center /> : null}
+
+      <button type="submit" disabled={!n || busy} aria-busy={busy || undefined} className="btn btn-primary btn-block">
+        {busy ? <span className="spinner" aria-hidden="true" /> : null}
         {progress ?? (n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kode` : 'Choisis au moins une photo')}
       </button>
     </form>

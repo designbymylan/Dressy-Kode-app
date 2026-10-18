@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth'];
+const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/mot-de-passe'];
 
 /**
  * Rafraîchit la session à chaque navigation et garde les routes privées.

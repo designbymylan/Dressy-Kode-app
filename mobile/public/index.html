@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <title>%WEB_TITLE%</title>
+    <style id="expo-reset">
+      html, body { height: 100%; }
+      body { overflow: hidden; margin: 0; background: #E4DED3; -webkit-font-smoothing: antialiased; }
+      @media (prefers-color-scheme: dark) { body { background: #0B0A09; } }
+      #root { display: flex; height: 100%; flex: 1; }
+      /* Aperçu web : pas de contour de focus navigateur sur les champs (l'app dessine le sien). */
+      input, textarea { outline: none; }
+      /* Les barres de défilement du navigateur n'existent pas sur téléphone. */
+      * { scrollbar-width: none; }
+      *::-webkit-scrollbar { display: none; }
+    </style>
+  </head>
+  <body>
+    <noscript>Il faut activer JavaScript pour ouvrir l’aperçu de Dresskode.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

@@ -5,7 +5,7 @@ import { retryAiJob, dismissAiJob } from '@/app/actions';
 
 const small = {
   minHeight: 44, padding: '0 16px', borderRadius: 999, border: 'none',
-  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  fontSize: 13, fontWeight: 500, cursor: 'pointer',
 } as const;
 
 /** Relancer ou retirer une pièce que l'agent n'a pas pu terminer. */

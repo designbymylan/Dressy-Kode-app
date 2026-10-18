@@ -78,7 +78,7 @@ export default async function Tenues() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingInline: 4 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</p>
+                  <p style={{ fontSize: 13.5, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</p>
                   <p className="piece-kind">
                     {o.items.length} pièce{o.items.length > 1 ? 's' : ''}{o.source === 'kode' ? ' · par Kode' : ''}
                   </p>

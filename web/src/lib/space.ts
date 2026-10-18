@@ -16,6 +16,8 @@ export type Viewer = {
   userId: string;
   email: string | null;
   displayName: string | null;
+  /** Prénom donné par Google ou Apple à la première connexion, s'il y en a un. */
+  givenName: string | null;
   onboardedAt: string | null;
   spaceId: string;
   spaceName: string;
@@ -27,7 +29,7 @@ export type Viewer = {
  *
  * Aucune clause `.eq('owner_id', …)` n'est nécessaire : la RLS ne laisse
  * traverser que les espaces dont on est membre. C'est la base qui garantit
- * le cloisonnement, pas la requête — une requête oubliée ne peut donc pas
+ * le cloisonnement, pas la requête, une requête oubliée ne peut donc pas
  * faire fuiter l'espace d'une autre personne.
  */
 export async function getViewer(): Promise<Viewer | null> {
@@ -56,10 +58,14 @@ export async function getViewer(): Promise<Viewer | null> {
     .eq('id', user.id)
     .maybeSingle();
 
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const full = String(meta.given_name ?? meta.full_name ?? meta.name ?? '').trim();
+
   return {
     userId: user.id,
     email: user.email ?? null,
     displayName: profile?.display_name ?? null,
+    givenName: full ? full.split(/\s+/)[0].slice(0, 30) : null,
     onboardedAt: profile?.onboarded_at ?? null,
     spaceId: space.id,
     spaceName: space.name,

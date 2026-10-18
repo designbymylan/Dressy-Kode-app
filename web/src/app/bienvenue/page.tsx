@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { FlatLay } from '@/components/garments';
-import { Wordmark } from '@/components/AuthShell';
+import { Wordmark } from '@/components/Logo';
 
 /** Écran 1 du brief : collage à plat, une phrase, un seul bouton. */
 export default function Bienvenue() {
@@ -15,20 +15,20 @@ export default function Bienvenue() {
       }}
     >
       <div className="rise" style={{ display: 'flex', justifyContent: 'center', paddingBlock: 6 }}>
-        <Wordmark />
+        <Wordmark mark />
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 26 }}>
         <FlatLay />
 
-        <h1 className="hero-title rise" style={{ '--i': 7, fontSize: 40, lineHeight: 1.05 } as CSSProperties}>
+        <h1 className="hero-title rise" style={{ '--i': 7, fontSize: 34, lineHeight: 1.1 } as CSSProperties}>
           Ton dressing,
           <br />
           <em className="accent">en vitrine.</em>
         </h1>
 
         <p className="lead rise" style={{ '--i': 8 } as CSSProperties}>
-          Tu as déjà tout ce qu&apos;il faut dans ton armoire. Dressy t&apos;aide à le voir,
+          Tu as déjà tout ce qu&apos;il faut dans ton armoire. Dresskode t&apos;aide à le voir,
           et à t&apos;habiller sans y penser une heure.
         </p>
       </div>

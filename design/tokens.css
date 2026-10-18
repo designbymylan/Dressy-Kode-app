@@ -1,7 +1,7 @@
 /* ============================================================
-   Dresskode — tokens de couleur
+   Dresskode, tokens de couleur
    Source de vérité : Brief Dresskode v0.2 (17/09/2026).
-   Direction retenue : le brief fait foi — noir / blanc / crème,
+   Direction retenue : le brief fait foi, noir / blanc / crème,
    la couleur ne vient que des vêtements, laiton en accent très rare.
 
    Deux tokens du brief ont été corrigés : ils échouaient au
@@ -10,23 +10,23 @@
    ============================================================ */
 
 :root {
-  /* — Surfaces — */
+  /*, Surfaces, */
   --dk-desk:    #EEEDEA;  /* fond d'écran de l'app */
   --dk-ground:  #FFFFFF;  /* cartes, feuilles */
   --dk-tile:    #F3F2EF;  /* vignettes, portants */
   --dk-tile-2:  #E7E5E0;  /* dégradé de vignette */
   --dk-line:    #ECEAE6;  /* filets 1 px */
 
-  /* — Texte — */
-  --dk-ink:     #0D0D0E;  /* 18.6:1 / 16.6:1 / 15.9:1 — texte principal, boutons pleins */
+  /*, Texte, */
+  --dk-ink:     #0D0D0E;  /* 18.6:1 / 16.6:1 / 15.9:1, texte principal, boutons pleins */
 
-  /* CORRIGÉ. Le brief donnait #8A8884 : 3.54 / 3.16 / 3.02 — sous le
+  /* CORRIGÉ. Le brief donnait #8A8884 : 3.54 / 3.16 / 3.02, sous le
      seuil AA de 4.5:1 pour du texte normal, et le texte secondaire est
      spécifié à 11,5–13 px. #5F5D59 est déjà la valeur employée dans les
      planches existantes, donc aucun écran n'est à reprendre. */
   --dk-muted:   #5F5D59;  /* 6.57:1 ground / 5.87:1 tile / 5.61:1 desk */
 
-  /* — Accent laiton — */
+  /*, Accent laiton, */
   /* Aplats et éléments décoratifs UNIQUEMENT. 3.22 / 2.87 / 2.75 :
      ne jamais y poser de texte, d'icône fine, ni de bordure porteuse
      de sens (WCAG 1.4.11 exige 3:1 pour un composant signifiant). */
@@ -36,7 +36,7 @@
   --dk-hi-ink:  #766144;  /* 5.89:1 ground / 5.26:1 tile / 5.03:1 desk */
 }
 
-/* — Thème sombre — tokens du brief conservés, tous conformes AA. — */
+/*, Thème sombre, tokens du brief conservés, tous conformes AA., */
 :root[data-theme="dark"] {
   --dk-desk:    #0A0A0B;
   --dk-ground:  #141416;
@@ -45,7 +45,7 @@
   --dk-line:    #262629;
   --dk-ink:     #F2F1EE;
   --dk-muted:   #8E8C88;  /* 5.48:1 ground / 5.12:1 tile */
-  --dk-hi:      #C4A575;  /* 7.87:1 ground / 7.35:1 tile — lisible en texte ici */
+  --dk-hi:      #C4A575;  /* 7.87:1 ground / 7.35:1 tile, lisible en texte ici */
   --dk-hi-ink:  #C4A575;
 }
 

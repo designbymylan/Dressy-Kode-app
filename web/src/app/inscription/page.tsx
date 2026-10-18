@@ -1,17 +1,16 @@
-import { AuthForm } from '@/components/AuthForm';
+import Link from 'next/link';
+import { SignupForms } from '@/components/AuthForm';
 import { AuthShell } from '@/components/AuthShell';
 
 export default function Inscription() {
   return (
     <AuthShell
-      active="inscription"
-      title={<>Ton dressing, <em className="accent">en vitrine.</em></>}
-      lead="Photographie ce que tu possèdes déjà, bijoux et accessoires compris. Kode compose tes tenues selon ton style, la météo et ton agenda."
+      title={<>Crée ton <em className="accent">espace</em></>}
+      lead="Un compte, et Kode commence à t’habiller avec ce que tu as déjà."
+      footer={<>Déjà un compte ? <Link href="/connexion">Me connecter</Link></>}
     >
-      <AuthForm mode="signup" />
-      <p className="small muted center">
-        Ton espace est privé. Personne d&apos;autre ne voit ta garde-robe.
-      </p>
+      <SignupForms />
+      <p className="small muted center">Ton espace est privé : personne d’autre ne voit ta garde-robe.</p>
     </AuthShell>
   );
 }

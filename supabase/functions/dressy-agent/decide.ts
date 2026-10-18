@@ -3,9 +3,13 @@
  * c'est la partie qui décide où va l'argent, elle est donc testée à part.
  */
 
-export const MAX_ATTEMPTS = 3; // 1 essai + 2 reprises
+// Mesuré sur les premières pièces réelles : aucune n'atteignait 95 (les
+// écarts restants tenaient à l'épaisseur d'une police, à l'angle d'une
+// poche), et le troisième essai faisait toujours moins bien que les deux
+// premiers. 88 garde les pièces reconnaissables et divise l'attente par trois.
+export const MAX_ATTEMPTS = 2; // 1 essai + 1 reprise
 export const MAX_RUNS = 6; // passages, plantages compris
-export const THRESHOLD = 95;
+export const THRESHOLD = 88;
 
 export const CRITERIA = ['type_coupe', 'couleurs', 'motifs', 'matiere', 'details', 'proportions'] as const;
 

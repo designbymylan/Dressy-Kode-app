@@ -108,7 +108,7 @@ function Row({
   return (
     <section className="rise" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingInline: 4 }}>
-        <p style={{ fontSize: 13, fontWeight: 600 }}>
+        <p style={{ fontSize: 13, fontWeight: 500 }}>
           {label}
           <span className="muted" style={{ fontWeight: 400 }}> · {current ? current.name : 'aucun'}</span>
         </p>
@@ -174,7 +174,11 @@ function Row({
 
 const pick = (n: number) => Math.floor(Math.random() * n);
 
-export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
+/**
+ * `start` : la pièce d'où l'on part (« Composer avec », depuis sa fiche) ;
+ * elle est posée et verrouillée dans sa rangée, ou ajoutée aux extras.
+ */
+export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; start?: string }) {
   const byCat = useMemo(() => {
     const m = new Map<string, Piece[]>();
     for (const p of pieces) m.set(p.category_id, [...(m.get(p.category_id) ?? []), p]);
@@ -184,7 +188,11 @@ export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
 
   const hasSeparates = list('hauts').length > 0 || list('bas').length > 0;
   const hasDresses = list('robes').length > 0;
-  const [mode, setMode] = useState<'separes' | 'robe'>(hasSeparates || !hasDresses ? 'separes' : 'robe');
+  const first = pieces.find((p) => p.id === startId) ?? null;
+  const firstRow = first ? ((Object.keys(ROW_CATEGORY) as RowKey[]).find((r) => ROW_CATEGORY[r] === first.category_id) ?? null) : null;
+  const [mode, setMode] = useState<'separes' | 'robe'>(
+    firstRow === 'robe' ? 'robe' : firstRow === 'haut' || firstRow === 'bas' ? 'separes' : hasSeparates || !hasDresses ? 'separes' : 'robe',
+  );
 
   const rows: RowKey[] = mode === 'robe' ? ['veste', 'robe', 'chaussures'] : ['veste', 'haut', 'bas', 'chaussures'];
   const visibleRows = rows.filter((r) => list(ROW_CATEGORY[r]).length > 0);
@@ -196,11 +204,17 @@ export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
     bas: list('bas').length ? 1 : 0,
     robe: list('robes').length ? 1 : 0,
     chaussures: list('chaussures').length ? 1 : 0,
+    ...(first && firstRow ? { [firstRow]: list(first.category_id).indexOf(first) + 1 } : {}),
   }));
-  const [locked, setLocked] = useState<Record<RowKey, boolean>>({ veste: false, haut: false, bas: false, robe: false, chaussures: false });
-  const [extras, setExtras] = useState<Set<string>>(new Set());
+  const [locked, setLocked] = useState<Record<RowKey, boolean>>(() => ({
+    veste: false, haut: false, bas: false, robe: false, chaussures: false,
+    ...(firstRow ? { [firstRow]: true } : {}),
+  }));
+  const [extras, setExtras] = useState<Set<string>>(() => new Set(first && !firstRow ? [first.id] : []));
   const [extraTab, setExtraTab] = useState<ExtraKey>(
-    (EXTRAS.find((e) => list(e.key).length)?.key ?? 'bijoux'),
+    first && !firstRow && EXTRAS.some((e) => e.key === first.category_id)
+      ? (first.category_id as ExtraKey)
+      : (EXTRAS.find((e) => list(e.key).length)?.key ?? 'bijoux'),
   );
   const [spin, setSpin] = useState(0);
   const [pending, start] = useTransition();
@@ -383,7 +397,7 @@ export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
             className="btn btn-primary"
             style={{ flex: 1, minHeight: 48 }}
           >
-            {pending ? 'Un instant…' : `Enregistrer · ${chosen.length} pièce${chosen.length > 1 ? 's' : ''}`}
+            {pending ? <><span className="spinner" aria-hidden="true" />Kode range ta tenue</> : `Enregistrer · ${chosen.length} pièce${chosen.length > 1 ? 's' : ''}`}
           </button>
         </div>
       </div>
@@ -424,7 +438,7 @@ function Saved({ onAgain }: { onAgain: () => void }) {
             <path className="check-draw" d={ICON.check} />
           </svg>
         </span>
-        <h2 id="tenue-ok" style={{ fontSize: 28 }}>Tenue <em className="accent">enregistrée</em></h2>
+        <h2 id="tenue-ok" style={{ fontSize: 25 }}>Tenue <em className="accent">enregistrée</em></h2>
         <p className="lead small">Elle t&apos;attend dans tes tenues. Tu pourras la prévoir pour un jour précis.</p>
         <Link href="/tenues" className="btn btn-primary btn-block">Voir mes tenues</Link>
         <button type="button" onClick={onAgain} className="btn btn-glass btn-block">En composer une autre</button>

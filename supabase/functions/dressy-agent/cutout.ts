@@ -5,70 +5,288 @@
 
 export type Raster = { width: number; height: number; data: Uint8Array };
 
+type Rgb = [number, number, number];
+
 /**
- * Rend transparent le fond uni autour d'un vêtement.
- *
- * Le remplissage part des BORDS et progresse vers l'intérieur : seuls les
- * pixels proches du fond ET reliés au bord deviennent transparents. C'est ce
- * qui sauve une chemise ivoire ou un pantalon écru — leur clair n'est pas
- * relié au bord, il est entouré par le vêtement, donc il est conservé.
- *
- * Un seuil global (« tout ce qui est clair devient transparent ») effacerait
- * au contraire l'intérieur de ces pièces, qui sont justement au cœur du
- * dressing visé par le brief.
+ * Teinte du fond : la médiane de TOUT le pourtour de l'image, canal par
+ * canal. Plus robuste que les quatre coins, qu'un pli de la pièce ou un
+ * reste d'ombre suffit à fausser.
  */
-export function cutoutBackground(r: Raster, tolerance = 26): Raster {
+export function borderColour(r: Raster): Rgb {
   const { width: w, height: h, data } = r;
+  const hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)];
+  let n = 0;
+  const add = (x: number, y: number) => {
+    const i = (y * w + x) * 4;
+    hist[0][data[i]]++; hist[1][data[i + 1]]++; hist[2][data[i + 2]]++;
+    n++;
+  };
+  for (let x = 0; x < w; x++) { add(x, 0); add(x, h - 1); }
+  for (let y = 1; y < h - 1; y++) { add(0, y); add(w - 1, y); }
+  const median = (hc: Uint32Array) => {
+    let acc = 0;
+    for (let v = 0; v < 256; v++) { acc += hc[v]; if (acc * 2 >= n) return v; }
+    return 255;
+  };
+  return [median(hist[0]), median(hist[1]), median(hist[2])];
+}
+
+/**
+ * Un fond d'incrustation (vert, magenta…) se reconnaît à sa couleur franche :
+ * un ou deux canaux nettement au-dessus des autres. On garde lesquels, pour
+ * mesurer ensuite à quel point un pixel « tire » vers ce fond.
+ */
+type Chroma = { high: number[]; low: number[]; strength: number };
+
+export function chromaOf(bg: Rgb): Chroma | null {
+  const max = Math.max(...bg), min = Math.min(...bg);
+  if (max - min < 90) return null; // blanc, gris, noir : fond neutre
+  const high = [0, 1, 2].filter((k) => bg[k] - min > (max - min) / 2);
+  const low = [0, 1, 2].filter((k) => !high.includes(k));
+  const c: Chroma = { high, low, strength: 0 };
+  c.strength = tilt(bg, c);
+  return c;
+}
+
+/**
+ * Combien un pixel tire vers la couleur du fond, rapporté à sa luminosité :
+ * une ombre sur fond vert reste « verte » autant que le fond, un tissu menthe
+ * beaucoup moins. 0 = aucune dominante du fond.
+ */
+export function tilt(px: ArrayLike<number>, c: Pick<Chroma, 'high' | 'low'>): number {
+  const hi = Math.min(...c.high.map((k) => px[k]));
+  const lo = Math.max(...c.low.map((k) => px[k]));
+  return Math.max(0, hi - lo) / Math.max(hi, 40);
+}
+
+export type CutoutOptions = {
+  tolerance?: number;
+  /** Les vraies teintes de la pièce : la part de « fond » qu'elles ont elles-mêmes est permise. */
+  garment?: Rgb[];
+};
+
+/**
+ * Rend transparent le fond uni autour d'une pièce, en cinq temps.
+ *
+ * 1. Remplissage depuis les BORDS : seuls les pixels proches du fond ET
+ *    reliés au bord deviennent transparents. C'est ce qui sauve une chemise
+ *    ivoire : son clair n'est pas relié au bord, il est entouré par le
+ *    vêtement, donc il est conservé. Un seuil global effacerait au contraire
+ *    l'intérieur des pièces claires. Sur un fond d'incrustation, « proche »
+ *    se mesure à la dominante de couleur et non à la distance : l'ombre
+ *    portée, plus sombre mais aussi verte que le fond, part avec lui.
+ * 2. Les trous : le fond enfermé dans la pièce (anse d'un sac, intérieur
+ *    d'un collier, d'une ceinture bouclée) n'est pas relié au bord. On le
+ *    vide s'il est parfaitement uni et de la teinte exacte du fond ; un
+ *    imprimé clair, lui, a toujours un grain qui le trahit.
+ * 3. Les poussières : les petits îlots détachés de la pièce disparaissent
+ *    (8-connexité, pour ne pas casser une chaîne fine en diagonale).
+ * 4. Les bords : une bande de deux pixels reçoit une transparence
+ *    progressive et perd la teinte du fond qui s'y mêlait, pour éviter le
+ *    liseré blanc ou gris autour de la pièce.
+ * 5. Les reflets : sur un fond d'incrustation, la couleur du fond déborde
+ *    sur les bords et les franges (le vert sur un jean délavé effiloché).
+ *    Près du fond, on ramène chaque pixel à la dominante que la pièce a
+ *    vraiment, mesurée sur ses teintes.
+ */
+export function cutoutBackground(r: Raster, opts: CutoutOptions | number = {}): Raster {
+  const { tolerance = 26, garment = [] } = typeof opts === 'number' ? { tolerance: opts } : opts;
+  const { width: w, height: h, data } = r;
+  const size = w * h;
   const out = new Uint8Array(data);
-  const seen = new Uint8Array(w * h);
+  const bg = borderColour(r);
+  const tol = tolerance * 3;
+  const chroma = chromaOf(bg);
+  // La dominante que la pièce a d'elle-même (un tissu menthe sur fond vert).
+  const own = chroma ? Math.max(0, ...garment.map((g) => tilt(g, chroma))) : 0;
+  const room = chroma ? Math.max(0.05, chroma.strength - own) : 1;
 
-  // Teinte du fond : moyenne des quatre coins, plus robuste qu'un seul pixel.
-  const corners = [0, (w - 1) * 4, (h - 1) * w * 4, (h * w - 1) * 4];
-  let br = 0, bg = 0, bb = 0;
-  for (const c of corners) { br += data[c]; bg += data[c + 1]; bb += data[c + 2]; }
-  br /= 4; bg /= 4; bb /= 4;
+  const dist = new Uint16Array(size);
+  for (let p = 0; p < size; p++) {
+    const i = p * 4;
+    if (chroma) {
+      // 0 sur le fond, 2 × tol (franchement pièce) dès qu'il ne tire pas plus
+      // vers le fond que la pièce elle-même : même échelle que la distance.
+      const t = Math.max(0, tilt([data[i], data[i + 1], data[i + 2]], chroma) - own) / room;
+      dist[p] = Math.round(Math.max(0, 1 - t) * tol * 2);
+    } else {
+      dist[p] = Math.abs(data[i] - bg[0]) + Math.abs(data[i + 1] - bg[1]) + Math.abs(data[i + 2] - bg[2]);
+    }
+  }
 
-  const near = (i: number) => {
-    const d = Math.abs(data[i] - br) + Math.abs(data[i + 1] - bg) + Math.abs(data[i + 2] - bb);
-    return d <= tolerance * 3;
+  const clear = new Uint8Array(size); // 1 = fond, rendu transparent
+  const stack = new Int32Array(size);
+
+  // 1. remplissage depuis les bords
+  let top = 0;
+  const seed = (p: number) => {
+    if (clear[p] || dist[p] > tol) return;
+    clear[p] = 1;
+    stack[top++] = p;
   };
+  for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+  while (top) {
+    const p = stack[--top];
+    const x = p % w;
+    if (x > 0) seed(p - 1);
+    if (x < w - 1) seed(p + 1);
+    if (p >= w) seed(p - w);
+    if (p < size - w) seed(p + w);
+  }
 
-  // File explicite plutôt que récursion : une image 1024² déborderait la pile.
-  const queue: number[] = [];
-  const push = (x: number, y: number) => {
-    if (x < 0 || y < 0 || x >= w || y >= h) return;
-    const p = y * w + x;
-    if (seen[p]) return;
-    seen[p] = 1;
-    if (near(p * 4)) queue.push(p);
+  // 2. trous de fond enfermés dans la pièce
+  const seen = new Uint8Array(size);
+  const minHole = Math.max(48, Math.round(size * 0.0003));
+  const members: number[] = [];
+  for (let s = 0; s < size; s++) {
+    if (clear[s] || seen[s] || dist[s] > tol) continue;
+    members.length = 0;
+    seen[s] = 1;
+    stack[0] = s;
+    top = 1;
+    let sumD = 0, sumL = 0, sumL2 = 0;
+    while (top) {
+      const p = stack[--top];
+      members.push(p);
+      const i = p * 4;
+      const l = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
+      sumD += dist[p]; sumL += l; sumL2 += l * l;
+      const x = p % w;
+      const next = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p >= w ? p - w : -1, p < size - w ? p + w : -1];
+      for (const q of next) {
+        if (q < 0 || seen[q] || clear[q] || dist[q] > tol) continue;
+        seen[q] = 1;
+        stack[top++] = q;
+      }
+    }
+    const n = members.length;
+    const meanD = sumD / n;
+    const sd = Math.sqrt(Math.max(0, sumL2 / n - (sumL / n) ** 2));
+    // Sur fond d'incrustation, la dominante suffit : un trou garde l'ombre de l'anse.
+    const uniform = chroma ? meanD <= tol * 0.5 : meanD <= 24 && sd <= 4;
+    if (n >= minHole && uniform) for (const p of members) clear[p] = 1;
+  }
+
+  // 3. îlots de poussière
+  const label = new Int32Array(size).fill(-1);
+  const areas: number[] = [];
+  for (let s = 0; s < size; s++) {
+    if (clear[s] || label[s] >= 0) continue;
+    const id = areas.length;
+    let area = 0;
+    label[s] = id;
+    stack[0] = s;
+    top = 1;
+    while (top) {
+      const p = stack[--top];
+      area++;
+      const x = p % w, y = (p / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= w || (!dx && !dy)) continue;
+          const q = yy * w + xx;
+          if (clear[q] || label[q] >= 0) continue;
+          label[q] = id;
+          stack[top++] = q;
+        }
+      }
+    }
+    areas.push(area);
+  }
+  if (areas.length > 1) {
+    const largest = Math.max(...areas);
+    const minIsland = Math.max(24, Math.round(largest * 0.004));
+    for (let p = 0; p < size; p++) if (label[p] >= 0 && areas[label[p]] < minIsland) clear[p] = 1;
+  }
+
+  for (let p = 0; p < size; p++) if (clear[p]) out[p * 4 + 3] = 0;
+
+  // 4. bords doux, sur deux pixels. Seuls les pixels « entre deux » (ni
+  // fond, ni franchement pièce) sont touchés : l'intérieur clair d'une pièce,
+  // même au ras de son contour, garde son opacité.
+  const soft = new Uint8Array(size);
+  const touches = (p: number, mark: (q: number) => boolean) => {
+    const x = p % w;
+    return (x > 0 && mark(p - 1)) || (x < w - 1 && mark(p + 1)) || (p >= w && mark(p - w)) || (p < size - w && mark(p + w));
   };
+  const blend = (p: number) => dist[p] > tol && dist[p] < tol * 2;
+  const soften = (p: number) => {
+    const a = (dist[p] - tol) / tol;
+    const i = p * 4;
+    out[i + 3] = Math.round(255 * a);
+    for (let k = 0; k < 3; k++) {
+      const v = (data[i + k] - (1 - a) * bg[k]) / a;
+      out[i + k] = Math.max(0, Math.min(255, Math.round(v)));
+    }
+  };
+  for (let p = 0; p < size; p++) {
+    if (!clear[p] && blend(p) && touches(p, (q) => clear[q] === 1)) soft[p] = 1;
+  }
+  for (let p = 0; p < size; p++) {
+    if (!clear[p] && !soft[p] && blend(p) && touches(p, (q) => soft[q] === 1)) soft[p] = 2;
+  }
+  // Sur fond d'incrustation, le « démélange » ci-dessus pousserait les
+  // franges vers le blanc ou le noir : le reflet est traité en 5, plus juste.
+  for (let p = 0; p < size; p++) {
+    if (!soft[p]) continue;
+    if (chroma) out[p * 4 + 3] = Math.round((255 * (dist[p] - tol)) / tol);
+    else soften(p);
+  }
 
-  for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
-  for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
-
-  while (queue.length) {
-    const p = queue.pop()!;
-    out[p * 4 + 3] = 0;
-    const x = p % w, y = (p / w) | 0;
-    push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
+  // 5. reflets du fond d'incrustation, sur une bande de quelques pixels
+  if (chroma) {
+    const reach = Math.max(4, Math.round(Math.max(w, h) / 128));
+    const near = new Uint8Array(size).fill(255);
+    const queue = new Int32Array(size);
+    let head = 0, tail = 0;
+    for (let p = 0; p < size; p++) if (clear[p]) { near[p] = 0; queue[tail++] = p; }
+    while (head < tail) {
+      const p = queue[head++];
+      const d = near[p] + 1;
+      if (d > reach) continue;
+      const x = p % w;
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p >= w ? p - w : -1, p < size - w ? p + w : -1]) {
+        if (q < 0 || near[q] <= d) continue;
+        near[q] = d;
+        queue[tail++] = q;
+      }
+    }
+    for (let p = 0; p < size; p++) {
+      if (clear[p] || near[p] > reach) continue;
+      const i = p * 4;
+      const px = [out[i], out[i + 1], out[i + 2]];
+      const hi = Math.min(...chroma.high.map((k) => px[k]));
+      const lo = Math.max(...chroma.low.map((k) => px[k]));
+      // L'excès permis : celui de la pièce elle-même, à cette luminosité.
+      const allowed = own * Math.max(hi, 40) + 4;
+      const excess = hi - lo - allowed;
+      if (excess <= 0) continue;
+      for (const k of chroma.high) out[i + k] = Math.max(0, Math.round(px[k] - excess));
+    }
   }
 
   return { width: w, height: h, data: out };
 }
 
-/** Part des pixels rendus transparents — sert à repérer un détourage raté. */
+/** Part des pixels rendus transparents : sert à repérer un détourage raté. */
 export function alphaRatio(r: Raster): number {
   let clear = 0;
   for (let i = 3; i < r.data.length; i += 4) if (r.data[i] === 0) clear++;
   return clear / (r.width * r.height);
 }
 
+export type Box = { x: number; y: number; w: number; h: number };
+
 /**
- * Recadre sur la pièce, avec une petite marge. Les générateurs laissent des
- * marges très variables : sans ce recadrage, une écharpe et un manteau
- * n'occuperaient pas du tout la même place dans les vignettes du dressing.
+ * Le cadre de la pièce dans l'image, avec une petite marge : là où l'on
+ * recadre. Gardé avec la pièce pour que l'écran puisse superposer exactement
+ * l'image générée (avec son fond) et la pièce détourée.
  */
-export function cropToContent(r: Raster, padRatio = 0.06): Raster {
+export function contentBox(r: Raster, padRatio = 0.06): Box | null {
   const { width: w, height: h, data } = r;
   let minX = w, minY = h, maxX = -1, maxY = -1;
 
@@ -81,19 +299,31 @@ export function cropToContent(r: Raster, padRatio = 0.06): Raster {
       if (y > maxY) maxY = y;
     }
   }
-  if (maxX < 0) return r;
+  if (maxX < 0) return null;
 
   const pad = Math.round(Math.max(maxX - minX + 1, maxY - minY + 1) * padRatio);
   const x0 = Math.max(0, minX - pad), y0 = Math.max(0, minY - pad);
   const x1 = Math.min(w - 1, maxX + pad), y1 = Math.min(h - 1, maxY + pad);
-  const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+  return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
 
-  const out = new Uint8Array(cw * ch * 4);
-  for (let y = 0; y < ch; y++) {
-    const from = ((y0 + y) * w + x0) * 4;
-    out.set(data.subarray(from, from + cw * 4), y * cw * 4);
+export function crop(r: Raster, b: Box): Raster {
+  const out = new Uint8Array(b.w * b.h * 4);
+  for (let y = 0; y < b.h; y++) {
+    const from = ((b.y + y) * r.width + b.x) * 4;
+    out.set(r.data.subarray(from, from + b.w * 4), y * b.w * 4);
   }
-  return { width: cw, height: ch, data: out };
+  return { width: b.w, height: b.h, data: out };
+}
+
+/**
+ * Recadre sur la pièce, avec une petite marge. Les générateurs laissent des
+ * marges très variables : sans ce recadrage, une écharpe et un manteau
+ * n'occuperaient pas du tout la même place dans les vignettes du dressing.
+ */
+export function cropToContent(r: Raster, padRatio = 0.06): Raster {
+  const b = contentBox(r, padRatio);
+  return b ? crop(r, b) : r;
 }
 
 /**
