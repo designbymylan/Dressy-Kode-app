@@ -65,7 +65,7 @@ export default async function Dressing({
 
       {items.length === 0 ? (
         <Card center i={2}>
-          <h2 style={{ fontSize: 22 }}>Ta garde-robe est <em className="accent">vide</em></h2>
+          <h2 className="title-2">Ta garde-robe est <em className="accent">vide</em></h2>
           <p className="lead small">
             C&apos;est normal : rien n&apos;est ajouté pour toi. Commence par une pièce
             que tu portes souvent, un sac ou un bijou : Kode a besoin de deux ou trois
@@ -116,6 +116,7 @@ export default async function Dressing({
                 <Icon d={ICON.sparkle} size={18} /> Composer une tenue
               </Link>
             ) : null}
+            <Link href="/tenues" className="btn btn-ghost btn-block">Voir mes tenues</Link>
           </div>
         </>
       )}

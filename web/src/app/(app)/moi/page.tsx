@@ -8,11 +8,13 @@ import { ThemeChoice } from '@/components/ThemeChoice';
 import { Screen, Title, Card } from '@/components/ui';
 import { labelsFor, colourHex } from '@/lib/onboarding';
 
+const DRESSING_VIEW: Record<string, string> = { portants: 'Par portants', grille: 'En grille' };
+
 function Line({ label, values }: { label: string; values: string[] }) {
   if (!values.length) return null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <dt className="eyebrow" style={{ fontSize: 11, textAlign: 'left' }}>{label}</dt>
+      <dt className="eyebrow" style={{ textAlign: 'left' }}>{label}</dt>
       <dd style={{ fontSize: 14, lineHeight: 1.4 }}>{values.join(' · ')}</dd>
     </div>
   );
@@ -34,7 +36,7 @@ export default async function Moi() {
   return (
     <Screen>
       <Title sub={viewer.email ?? undefined}>
-        {viewer.displayName ? <>Salut, <em className="accent">{viewer.displayName}</em></> : <>Mon <em className="accent">compte</em></>}
+        Mon <em className="accent">compte</em>
       </Title>
 
       <Card i={1}>
@@ -52,7 +54,7 @@ export default async function Moi() {
           <Line label="Ton style" values={labelsFor('styles', sp?.styles ?? [])} />
           {colours.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <dt className="eyebrow" style={{ fontSize: 11, textAlign: 'left' }}>Tes couleurs</dt>
+              <dt className="eyebrow" style={{ textAlign: 'left' }}>Tes couleurs</dt>
               <dd style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 {colours.map((id, i) => (
                   <span
@@ -96,7 +98,7 @@ export default async function Moi() {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <dt className="muted">Vue du dressing</dt>
-            <dd style={{ fontWeight: 500 }}>{viewer.settings.dressing_view}</dd>
+            <dd style={{ fontWeight: 500 }}>{DRESSING_VIEW[viewer.settings.dressing_view] ?? viewer.settings.dressing_view}</dd>
           </div>
         </dl>
       </Card>

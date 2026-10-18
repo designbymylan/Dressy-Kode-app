@@ -10,6 +10,18 @@
    SERVEUR, à partir de settings.theme lu en base : pas de flash au
    chargement, et le réglage suit le compte d'un appareil à l'autre.
      data-theme="light" | "dark" | "auto" (la préférence système décide)
+
+   Revue Apple HIG (skill apple-design, .claude/skills/apple-design) :
+   - le verre (flou d'arrière-plan) est réservé à la couche fonctionnelle
+     qui flotte au-dessus du contenu : barre d'onglets, barres d'action,
+     feuilles (.material). Les cartes, chips et boutons du contenu gardent
+     leur remplissage translucide mais sans flou (liquid-glass.md › Where
+     the material belongs) ; les halos sont déjà floutés, le rendu ne change
+     presque pas et le défilement ne recalcule plus un flou par carte ;
+   - la taille du texte suit le réglage iOS (Dynamic Type) : la racine
+     prend -apple-system-body, les tailles sont en rem sur une base de 17 px
+     (typography.md › Supporting Dynamic Type) ;
+   - Contraste accru et Transparence réduite ont une réponse (bas du fichier).
    ============================================================ */
 
 :root,
@@ -30,8 +42,8 @@
 
   --ink: #0e0f13;
   --ink-soft: #2b2d35;
-  --muted: #5d606b; /* 5,6:1 sur le verre clair */
-  --faint: #8d909b; /* décor uniquement */
+  --muted: #5d606b; /* 5,5:1 sur le verre clair, 4,6:1 au pire sur un halo */
+  --faint: #6f727e; /* textes indicatifs des champs : 4,5:1 sur le champ */
   --on-ink: #ffffff;
   --hi: #a88b61; /* laiton : très rare */
   --danger: #a13a22;
@@ -66,7 +78,7 @@
   --ink: #f4f4f6;
   --ink-soft: #d9dae0;
   --muted: #a3a6b1;
-  --faint: #6c6f7a;
+  --faint: #8e919c;
   --on-ink: #0e0f13;
   --hi: #c4a575;
   --danger: #f0907a;
@@ -95,7 +107,7 @@
     --ink: #f4f4f6;
     --ink-soft: #d9dae0;
     --muted: #a3a6b1;
-    --faint: #6c6f7a;
+    --faint: #8e919c;
     --on-ink: #0e0f13;
     --hi: #c4a575;
     --danger: #f0907a;
@@ -129,11 +141,20 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { min-height: 100%; }
 
+/* 1 rem = 17 px, le corps de texte iOS par défaut. Sur iPhone et iPad, la
+   racine suit le réglage Taille du texte (Dynamic Type) : tout ce qui est
+   en rem grandit avec lui. Le test -webkit-touch-callout écarte Safari sur
+   Mac, où -apple-system-body vaut 13 px. */
+html { font-size: 106.25%; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
+  html { font: -apple-system-body; }
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 15px;
+  font-size: calc(15rem / 17);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -195,15 +216,37 @@ img { display: block; }
 
 /* ---------- surfaces ---------- */
 
+/* Surface de la couche de contenu : translucide, sans flou. */
 .glass {
   background: var(--glass);
-  -webkit-backdrop-filter: blur(22px) saturate(1.5);
-  backdrop-filter: blur(22px) saturate(1.5);
   border: 1px solid var(--glass-edge);
   box-shadow: var(--shadow-glass);
   border-radius: var(--r-card);
 }
 .glass-strong { background: var(--glass-strong); }
+
+/* Verre de la couche fonctionnelle (barres, feuilles) : le seul endroit
+   où le contenu se floute dessous. À garder rare. */
+.material {
+  background: var(--nav-glass);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--shadow-float);
+}
+
+/* Bord de défilement : le contenu s'efface sous la barre d'onglets au lieu
+   de la heurter (layout.md › Visual hierarchy). */
+.scroll-edge {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 19;
+  height: calc(env(safe-area-inset-bottom, 0px) + 104px);
+  pointer-events: none;
+  background: linear-gradient(to top, var(--bg) 22%, transparent);
+}
 
 .card {
   padding: 22px;
@@ -226,10 +269,10 @@ img { display: block; }
   gap: 20px;
 }
 
-.hero-title { font-size: 34px; text-align: center; }
+.hero-title { font-size: 2rem; text-align: center; }
 .hero-title .accent { font-size: 1.08em; }
 .eyebrow {
-  font-size: 12px;
+  font-size: calc(12rem / 17);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -237,7 +280,7 @@ img { display: block; }
   text-align: center;
 }
 .lead {
-  font-size: 15px;
+  font-size: calc(15rem / 17);
   line-height: 1.55;
   color: var(--muted);
   text-align: center;
@@ -249,18 +292,20 @@ img { display: block; }
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  font-size: 17px;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 .section-title a, .section-title small {
-  font-size: 13px;
+  font-size: calc(13rem / 17);
   font-weight: 500;
   color: var(--muted);
   letter-spacing: 0;
 }
 .muted { color: var(--muted); }
-.small { font-size: 13px; line-height: 1.5; }
+.small { font-size: calc(13rem / 17); line-height: 1.5; }
+/* Titre de carte (22 px à la taille par défaut). */
+.title-2 { font-size: calc(22rem / 17); }
 .center { text-align: center; }
 
 /* ---------- boutons ---------- */
@@ -275,7 +320,7 @@ img { display: block; }
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 15px;
+  font-size: calc(15rem / 17);
   font-weight: 600;
   letter-spacing: -0.01em;
   cursor: pointer;
@@ -304,28 +349,24 @@ img { display: block; }
   background: var(--glass-strong);
   color: var(--ink);
   border: 1px solid var(--glass-edge);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
   box-shadow: var(--shadow-glass);
 }
 .btn-ghost { background: transparent; color: var(--muted); min-height: 44px; font-weight: 500; }
-.btn-sm { min-height: 40px; padding: 0 16px; font-size: 13.5px; }
+.btn-sm { min-height: 44px; padding: 0 16px; font-size: calc(13.5rem / 17); }
 .btn-icon { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%; }
 
 /* ---------- chips, segments ---------- */
 
 .chip {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 16px;
   border-radius: 999px;
   border: 1px solid var(--glass-edge);
   background: var(--glass);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: calc(13.5rem / 17);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -346,19 +387,17 @@ img { display: block; }
   border-radius: 999px;
   background: var(--glass);
   border: 1px solid var(--glass-edge);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
 }
 .segment > a, .segment > button {
   position: relative;
   z-index: 1;
   flex: 1;
-  min-height: 42px;
+  min-height: 44px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: calc(14rem / 17);
   font-weight: 500;
   color: var(--muted);
   background: transparent;
@@ -395,7 +434,7 @@ img { display: block; }
 
 .field { display: flex; flex-direction: column; gap: 8px; }
 .field > span {
-  font-size: 12px;
+  font-size: calc(12rem / 17);
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -408,7 +447,8 @@ img { display: block; }
   border-radius: 999px;
   background: var(--glass-strong);
   padding: 0 22px;
-  font-size: 15px;
+  /* 17 px : sous 16 px, Safari iOS zoome la page à chaque focus. */
+  font-size: 1rem;
   outline: none;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
   transition: box-shadow 220ms var(--ease), border-color 220ms var(--ease);
@@ -417,7 +457,7 @@ img { display: block; }
 .input::placeholder { color: var(--faint); }
 
 .note {
-  font-size: 13px;
+  font-size: calc(13rem / 17);
   line-height: 1.5;
   border-radius: 20px;
   padding: 12px 16px;
@@ -457,23 +497,25 @@ img { display: block; }
 }
 .piece:hover .piece-frame img { transform: scale(1.05) rotate(-1deg); }
 .piece:active .piece-frame { transform: scale(0.97); }
-.piece-name { font-size: 12.5px; font-weight: 500; line-height: 1.3; }
-.piece-kind { font-size: 11.5px; color: var(--muted); }
+.piece-name { font-size: calc(12.5rem / 17); font-weight: 500; line-height: 1.3; }
+.piece-kind { font-size: calc(11.5rem / 17); color: var(--muted); }
 
 /* ---------- mouvement ---------- */
 
 /* Entrée d'écran : chaque bloc monte, en cascade. */
+/* Entrées brèves et sans flou : elles rejouent à chaque visite d'onglet
+   (motion.md › Providing feedback : « brevity and precision »). */
 .rise {
-  animation: rise 720ms var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 70ms);
+  animation: rise 440ms var(--ease) both;
+  animation-delay: calc(min(var(--i, 0), 6) * 45ms);
 }
 @keyframes rise {
-  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985); filter: blur(6px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: none; }
 }
-.pop { animation: pop 520ms var(--ease-spring) both; animation-delay: calc(var(--i, 0) * 45ms); }
+.pop { animation: pop 360ms var(--ease) both; animation-delay: calc(min(var(--i, 0), 8) * 30ms); }
 @keyframes pop {
-  from { opacity: 0; transform: scale(0.82); }
+  from { opacity: 0; transform: scale(0.94); }
   to { opacity: 1; transform: none; }
 }
 .float { animation: float 7s ease-in-out infinite; }
@@ -481,7 +523,7 @@ img { display: block; }
   0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--r, 0deg)); }
   50% { transform: translate3d(0, -10px, 0) rotate(calc(var(--r, 0deg) + 1.5deg)); }
 }
-.page { animation: page-in 560ms var(--ease) both; }
+.page { animation: page-in 360ms var(--ease) both; }
 @keyframes page-in {
   from { opacity: 0; transform: translate3d(0, 10px, 0); }
   to { opacity: 1; transform: none; }
@@ -521,6 +563,41 @@ img { display: block; }
     transition-duration: 0.001ms !important;
   }
   .ambient i { animation: none; }
+}
+
+/* Tuiles claires dessinées en dur (collage d'accueil) : adoucies en mode
+   sombre pour ne pas briller (dark-mode.md › Soften the color of white backgrounds). */
+:root[data-theme='dark'] .soften-dark { filter: brightness(0.82); }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='auto'] .soften-dark { filter: brightness(0.82); }
+}
+
+/* Contraste accru : surfaces opaques, filets visibles, texte secondaire plus
+   sombre (accessibility.md › Vision). */
+@media (prefers-contrast: more) {
+  /* [data-theme] : même poids que les blocs de thème, et déclaré après eux. */
+  :root, :root[data-theme] {
+    --glass: var(--tile-solid);
+    --glass-strong: var(--tile-solid);
+    --tile: var(--tile-solid);
+    --nav-glass: var(--tile-solid);
+    --glass-edge: color-mix(in srgb, var(--ink) 35%, transparent);
+    --muted: color-mix(in srgb, var(--ink) 78%, var(--bg));
+    --faint: var(--muted);
+  }
+  .ambient { display: none; }
+}
+
+/* Transparence réduite : le verre devient opaque et les halos s'arrêtent.
+   (Safari ne lit pas encore ce réglage ; Chrome et Edge, si.) */
+@media (prefers-reduced-transparency: reduce) {
+  :root, :root[data-theme] {
+    --glass: var(--tile-solid);
+    --glass-strong: var(--tile-solid);
+    --nav-glass: var(--tile-solid);
+  }
+  .material { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .ambient { display: none; }
 }
 
 /* Image d'une pièce hors vignette (atelier de tenue). */

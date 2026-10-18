@@ -118,7 +118,7 @@ function Row({
           aria-pressed={locked}
           aria-label={locked ? `Déverrouiller ${label.toLowerCase()}` : `Garder ${label.toLowerCase()} au mélange`}
           className="chip"
-          style={{ minHeight: 34, width: 34, padding: 0, justifyContent: 'center' }}
+          style={{ width: 44, padding: 0, justifyContent: 'center' }}
         >
           <Icon d={locked ? ICON.lock : ICON.unlock} size={15} width={1.9} />
         </button>
@@ -147,7 +147,6 @@ function Row({
               borderRadius: 26, border: '1px solid var(--glass-edge)', padding: 12,
               background: i === index ? 'var(--glass-strong)' : 'var(--glass)',
               boxShadow: i === index ? 'var(--shadow-float)' : 'none',
-              backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
               display: 'grid', placeItems: 'center', cursor: 'pointer',
               transition: 'background-color 300ms, box-shadow 300ms',
               willChange: 'transform',
@@ -260,7 +259,7 @@ export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
   if (pieces.length < 2) {
     return (
       <section className="glass card card-center rise" style={{ '--i': 1 } as CSSProperties}>
-        <h2 style={{ fontSize: 22 }}>Encore <em className="accent">une pièce</em></h2>
+        <h2 className="title-2">Encore <em className="accent">une pièce</em></h2>
         <p className="lead small">
           Il faut au moins deux pièces dans ton dressing pour composer une tenue : un haut et un bas,
           une robe et des chaussures, ou ce qui te ressemble.
@@ -344,7 +343,7 @@ export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
                       </span>
                     ) : null}
                   </span>
-                  <span style={{ fontSize: 11.5, lineHeight: 1.25, textAlign: 'center' }}>{p.name}</span>
+                  <span className="piece-kind" style={{ color: 'var(--ink)', lineHeight: 1.25, textAlign: 'center' }}>{p.name}</span>
                 </button>
               );
             })}
@@ -362,10 +361,10 @@ export function OutfitBuilder({ pieces }: { pieces: Piece[] }) {
         }}
       >
         <div
-          className="glass"
+          className="material"
           style={{
             pointerEvents: 'auto', width: '100%', maxWidth: 398, borderRadius: 999, padding: 7,
-            display: 'flex', gap: 8, background: 'var(--nav-glass)', boxShadow: 'var(--shadow-float)',
+            display: 'flex', gap: 8,
           }}
         >
           <Link href="/tenues" className="btn btn-glass btn-icon" aria-label="Retour aux tenues">
@@ -407,9 +406,9 @@ function Saved({ onAgain }: { onAgain: () => void }) {
       }}
     >
       <div
-        className="glass glass-strong card card-center"
+        className="material card card-center"
         style={{
-          width: '100%', maxWidth: 430, borderRadius: '34px 34px 0 0', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+          width: '100%', maxWidth: 430, borderRadius: '34px 34px 0 0', background: 'var(--glass-strong)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
           animation: 'sheet-up 520ms cubic-bezier(.2,.8,.2,1) both', gap: 16,
         }}
       >

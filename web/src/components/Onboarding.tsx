@@ -159,7 +159,7 @@ function Swatches({ selected, toggle }: { selected: string[]; toggle: (id: strin
                 </svg>
               ) : null}
             </span>
-            <span style={{ fontSize: 10.5, color: 'var(--muted)', textAlign: 'center' }}>{c.label}</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{c.label}</span>
           </button>
         );
       })}

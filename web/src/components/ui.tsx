@@ -30,7 +30,8 @@ export function Title({
   return (
     <header className="rise" style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', paddingTop: 8 }}>
       {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-      <h1 className="hero-title" style={{ fontSize: size }}>{children}</h1>
+      {/* En rem (base 17 px) : le titre suit la taille de texte choisie sur l'iPhone. */}
+      <h1 className="hero-title" style={{ fontSize: `${size / 17}rem` }}>{children}</h1>
       {sub ? <p className="lead">{sub}</p> : null}
     </header>
   );

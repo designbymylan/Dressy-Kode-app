@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
 import { loadPieces } from '@/lib/garments';
-import { deleteOutfit } from '@/app/actions';
+import { DeleteOutfit } from '@/components/DeleteOutfit';
 import { PieceArt } from '@/components/PieceArt';
 import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
 
@@ -57,7 +57,7 @@ export default async function Tenues() {
               </span>
             ))}
           </div>
-          <h2 style={{ fontSize: 22 }}>Ta première <em className="accent">tenue</em></h2>
+          <h2 className="title-2">Ta première <em className="accent">tenue</em></h2>
           <p className="lead small">
             Choisis un haut, un bas, des chaussures, puis la touche finale : un sac, un bandeau, tes bijoux.
             Le bouton Mélanger propose une autre combinaison à chaque fois.
@@ -69,7 +69,7 @@ export default async function Tenues() {
             <article
               key={o.id}
               className="glass outfit-card pop"
-              style={{ '--i': Math.min(i, 10), padding: 10, borderRadius: 26, display: 'flex', flexDirection: 'column', gap: 8 } as CSSProperties}
+              style={{ '--i': Math.min(i, 10), position: 'relative', padding: 10, borderRadius: 26, display: 'flex', flexDirection: 'column', gap: 8 } as CSSProperties}
             >
               <div className="board" aria-hidden="true">
                 {o.items.slice(0, 4).map((p) => (
@@ -83,12 +83,7 @@ export default async function Tenues() {
                     {o.items.length} pièce{o.items.length > 1 ? 's' : ''}{o.source === 'kode' ? ' · par Kode' : ''}
                   </p>
                 </div>
-                <form action={deleteOutfit}>
-                  <input type="hidden" name="id" value={o.id} />
-                  <button type="submit" className="btn btn-ghost btn-icon" style={{ width: 36, height: 36, minHeight: 36 }} aria-label={`Supprimer ${o.name}`}>
-                    <Icon d={ICON.trash} size={17} width={1.6} />
-                  </button>
-                </form>
+                <DeleteOutfit id={o.id} name={o.name} />
               </div>
             </article>
           ))}

@@ -80,7 +80,7 @@ export function FlatLay() {
           style={{ position: 'absolute', left: p.x, top: p.y, '--i': i + 1 } as React.CSSProperties}
         >
           <div
-            className="float"
+            className="float soften-dark"
             style={{
               '--r': `${p.r}deg`, animationDelay: `${i * -1.3}s`, animationDuration: `${6.5 + i * 0.5}s`,
               width: p.s, height: p.s, borderRadius: 26,
