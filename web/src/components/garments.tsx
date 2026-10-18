@@ -82,22 +82,24 @@ export function Garment({
 
 /**
  * Le collage de Bienvenue, « la vitrine d'un magasin de vêtements » du brief :
- * de vraies pièces détourées (photos envoyées le
- * 07/10, `mobile/assets/pieces/`, réduites dans `public/pieces/`), chacune
- * posée sur sa tuile, qui flotte à son propre rythme.
+ * les pièces dessinées par Nano Banana (`Image inspiration outfit/`, 18/10),
+ * détourées par `tools/detour-photos.cjs` et réduites dans `public/pieces/`,
+ * chacune posée sur sa tuile, qui flotte à son propre rythme.
  */
 export function FlatLay() {
   const pieces: { src: string; x: number; y: number; r: number; s: number }[] = [
-    { src: 'blouson-court', x: 4, y: 10, r: -11, s: 104 },
-    { src: 'tshirt-ecru', x: 86, y: 0, r: 6, s: 96 },
-    { src: 'cardigan-chocolat', x: 160, y: 14, r: 13, s: 100 },
-    { src: 'jean-large', x: 44, y: 86, r: 7, s: 92 },
-    { src: 'pull-marine', x: 124, y: 92, r: -8, s: 96 },
-    { src: 'blouson-noir', x: 206, y: 104, r: -4, s: 76 },
+    { src: 'veste-survetement', x: 0, y: 14, r: -11, s: 92 },
+    { src: 'jogging-gris', x: 76, y: 0, r: 5, s: 88 },
+    { src: 'sweat-capuche', x: 152, y: 8, r: -6, s: 92 },
+    { src: 'jean-gris', x: 232, y: 2, r: 10, s: 84 },
+    { src: 'sabots', x: 18, y: 104, r: 7, s: 84 },
+    { src: 'sac', x: 96, y: 92, r: -8, s: 90 },
+    { src: 'pantalon-noir', x: 176, y: 100, r: 6, s: 86 },
+    { src: 'ceinture', x: 246, y: 118, r: -5, s: 72 },
   ];
 
   return (
-    <div aria-hidden="true" style={{ position: 'relative', height: 210, width: 284, margin: '0 auto' }}>
+    <div aria-hidden="true" style={{ position: 'relative', height: 214, width: 318, maxWidth: '100%', margin: '0 auto' }}>
       {pieces.map((p, i) => (
         <div
           key={p.src}
