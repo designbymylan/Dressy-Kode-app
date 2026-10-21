@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth'];
+// /apercu ne répond que si DRESSY_APERCU=1 (la page renvoie 404 sinon).
+const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/apercu'];
 
 /**
  * Rafraîchit la session à chaque navigation et garde les routes privées.

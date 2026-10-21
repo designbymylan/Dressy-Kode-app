@@ -6,6 +6,10 @@ const config: NextConfig = {
     // Les Server Actions portent les mutations de réglages et d'inscription.
     serverActions: { bodySizeLimit: '8mb' },
   },
+  // Le styliste s'appelait Kode : les anciens liens mènent à Kodi.
+  async redirects() {
+    return [{ source: '/kode', destination: '/kodi', permanent: true }];
+  },
 };
 
 export default config;

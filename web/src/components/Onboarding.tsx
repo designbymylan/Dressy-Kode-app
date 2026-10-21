@@ -7,7 +7,9 @@ import {
   labelsFor, colourHex, type Answers, type Option,
 } from '@/lib/onboarding';
 import { saveStyleProfile } from '@/app/actions';
-import { buttonPrimary, inputStyle } from '@/components/ui';
+import { btn, ProgressBar } from '@/components/ui';
+import { Icon } from '@/components/icons';
+import { Kodi, type KodiMood } from '@/components/Kodi';
 
 const STEPS = [
   'identite', 'objectifs', 'style', 'pieces',
@@ -23,16 +25,15 @@ function Check({ on }: { on: boolean }) {
       aria-hidden="true"
       style={{
         position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 999,
-        background: on ? 'var(--ink)' : 'transparent',
+        background: on ? 'var(--blue-ink)' : 'transparent',
+        color: 'var(--bg)',
         border: on ? 'none' : '1.5px solid var(--line)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transform: on ? 'scale(1)' : 'scale(.9)',
+        transition: 'transform 380ms var(--spring), background 200ms',
       }}
     >
-      {on ? (
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ground)" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m4 12 5 5 11-11" />
-        </svg>
-      ) : null}
+      {on ? <Icon name="check" size={13} /> : null}
     </span>
   );
 }
@@ -48,18 +49,20 @@ function Tile({
       onClick={onPick}
       style={{
         position: 'relative', minHeight: columns === 3 ? 96 : 104,
-        border: `1.5px solid ${on ? 'var(--ink)' : 'transparent'}`,
-        borderRadius: 20, background: 'var(--ground)', cursor: 'pointer',
+        border: `1.5px solid ${on ? 'var(--blue-ink)' : 'var(--line)'}`,
+        borderRadius: 20, background: on ? 'var(--blue-soft)' : 'var(--surface)', cursor: 'pointer',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 10, padding: '14px 8px', boxShadow: 'var(--shadow-soft)',
-        transition: 'border-color 200ms cubic-bezier(.2,.8,.2,1)',
+        gap: 10, padding: '14px 8px', boxShadow: on ? '0 6px 18px rgba(75,125,165,.18)' : 'var(--shadow-1)',
+        transform: on ? 'translateY(-1px)' : 'none',
+        transition: 'border-color 200ms, background 200ms, transform 380ms var(--spring)',
       }}
+      className="dk-tap"
     >
       <Check on={on} />
       {option.icon ? (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d={option.icon} />
-        </svg>
+        <span className={`dk-bubble-ico ${on ? 'dk-bubble-ico--blue' : 'dk-bubble-ico--tile'}`} style={{ transition: 'background 200ms' }}>
+          <Icon name={option.icon} size={22} />
+        </span>
       ) : null}
       <span style={{ fontSize: 12.5, textAlign: 'center', lineHeight: 1.25 }}>{option.label}</span>
     </button>
@@ -89,23 +92,20 @@ function Row({
       onClick={onPick}
       style={{
         minHeight: 56, width: '100%', textAlign: 'left',
-        border: `1.5px solid ${on ? 'var(--ink)' : 'transparent'}`,
-        borderRadius: 18, background: 'var(--ground)', cursor: 'pointer',
+        border: `1.5px solid ${on ? 'var(--blue-ink)' : 'var(--line)'}`,
+        borderRadius: 18, background: on ? 'var(--blue-soft)' : 'var(--surface)', cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: 14, padding: '0 16px',
-        boxShadow: 'var(--shadow-soft)',
-        transition: 'border-color 200ms cubic-bezier(.2,.8,.2,1)',
+        boxShadow: 'var(--shadow-1)',
+        transition: 'border-color 200ms, background 200ms',
       }}
+      className="dk-tap"
     >
       {option.icon ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }} aria-hidden="true">
-          <path d={option.icon} />
-        </svg>
+        <Icon name={option.icon} size={20} style={{ color: on ? 'var(--blue-ink)' : 'var(--ink)' }} />
       ) : null}
       <span style={{ flex: 1, fontSize: 14.5 }}>{option.label}</span>
       {on ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }} aria-hidden="true">
-          <path d="m4 12 5 5 11-11" />
-        </svg>
+        <Icon name="check" size={18} style={{ color: 'var(--blue-ink)' }} />
       ) : null}
     </button>
   );
@@ -145,7 +145,8 @@ function Swatches({ selected, toggle }: { selected: string[]; toggle: (id: strin
               style={{
                 width: 52, height: 52, borderRadius: 999, background: c.hex,
                 // Le blanc et la crème disparaîtraient sur fond clair sans ce filet.
-                border: `2px solid ${on ? 'var(--ink)' : 'var(--line)'}`,
+                border: `2px solid ${on ? 'var(--blue-ink)' : 'var(--line)'}`,
+                boxShadow: on ? '0 0 0 3px var(--blue-soft)' : 'none',
                 boxSizing: 'border-box',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'border-color 200ms cubic-bezier(.2,.8,.2,1)',
@@ -167,11 +168,27 @@ function Swatches({ selected, toggle }: { selected: string[]; toggle: (id: strin
   );
 }
 
-function Head({ title, lead }: { title: string; lead: string }) {
+/** Kodi pose chaque question ; sa tête change avec le sujet. */
+const STEP_MOOD: Record<(typeof STEPS)[number], KodiMood> = {
+  identite: 'wave',
+  objectifs: 'thinking',
+  style: 'love',
+  pieces: 'wink',
+  couleurs: 'love',
+  eviter: 'thinking',
+  occasions: 'happy',
+  rythme: 'sleepy',
+  aide: 'listening',
+};
+
+function Head({ title, lead, mood = 'idle' }: { title: string; lead: string; mood?: KodiMood }) {
   return (
-    <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <h1 style={{ fontSize: 27 }}>{title}</h1>
-      <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>{lead}</p>
+    <header style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <Kodi mood={mood} size={68} track />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+        <h1 style={{ fontSize: 27 }}>{title}</h1>
+        <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>{lead}</p>
+      </div>
     </header>
   );
 }
@@ -180,8 +197,8 @@ function SummaryCard({ label, children }: { label: string; children: React.React
   return (
     <div
       style={{
-        background: 'var(--ground)', borderRadius: 20, padding: '14px 16px',
-        boxShadow: 'var(--shadow-soft)', display: 'flex', flexDirection: 'column', gap: 4,
+        background: 'var(--surface)', borderRadius: 20, padding: '14px 16px', border: '1px solid var(--line)',
+        boxShadow: 'var(--shadow-1)', display: 'flex', flexDirection: 'column', gap: 4,
       }}
     >
       <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)' }}>
@@ -222,36 +239,17 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
     });
 
   return (
-    <main
-      style={{
-        maxWidth: 390, margin: '0 auto', minHeight: '100dvh',
-        padding: '22px 20px 120px', display: 'flex', flexDirection: 'column', gap: 20,
-      }}
-    >
+    <main className="dk-screen" style={{ ['--screen-pb' as string]: '150px', gap: 20 }}>
       {!done ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            role="progressbar"
-            aria-valuenow={step + 1}
-            aria-valuemin={1}
-            aria-valuemax={TOTAL}
-            aria-label={`Étape ${step + 1} sur ${TOTAL}`}
-            style={{ flex: 1, height: 4, borderRadius: 999, background: 'var(--tile-2)', overflow: 'hidden' }}
-          >
-            <div
-              style={{
-                width: `${((step + 1) / TOTAL) * 100}%`, height: '100%', background: 'var(--ink)',
-                transition: 'width 280ms cubic-bezier(.2,.8,.2,1)',
-              }}
-            />
-          </div>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{step + 1}/{TOTAL}</span>
+          <ProgressBar value={((step + 1) / TOTAL) * 100} size="sm" label={`Étape ${step + 1} sur ${TOTAL}`} style={{ flex: 1 }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{step + 1}/{TOTAL}</span>
         </div>
       ) : null}
 
       {key === 'identite' && !done ? (
         <>
-          <Head title="Salut 👋" lead="Deux choses et on y va." />
+          <Head mood={STEP_MOOD.identite} title="Salut 👋" lead="Deux choses et on y va." />
           <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)' }}>
               Comment tu t&apos;appelles ?
@@ -259,7 +257,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
             <input
               type="text" value={a.display_name} autoFocus
               onChange={(e) => setA({ ...a, display_name: e.target.value })}
-              placeholder="Ton prénom" style={inputStyle}
+              placeholder="Ton prénom" className="dk-input"
             />
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -285,49 +283,49 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
 
       {key === 'objectifs' && !done ? (
         <>
-          <Head title={"Qu’est-ce que tu veux obtenir ?"} lead="Tu peux en choisir plusieurs." />
+          <Head mood={STEP_MOOD.objectifs} title={"Qu’est-ce que tu veux obtenir ?"} lead="Tu peux en choisir plusieurs." />
           <TileGrid options={GOALS} selected={a.goals} toggle={toggle('goals')} />
         </>
       ) : null}
 
       {key === 'style' && !done ? (
         <>
-          <Head title="Ton style, tu le décrirais comment ?" lead="Prends ce qui te ressemble." />
+          <Head mood={STEP_MOOD.style} title="Ton style, tu le décrirais comment ?" lead="Prends ce qui te ressemble." />
           <TileGrid options={STYLES} selected={a.styles} toggle={toggle('styles')} columns={3} />
         </>
       ) : null}
 
       {key === 'pieces' && !done ? (
         <>
-          <Head title={"Qu’est-ce que tu portes le plus ?"} lead="Ce que tu mets vraiment, pas ce qui dort au fond." />
+          <Head mood={STEP_MOOD.pieces} title={"Qu’est-ce que tu portes le plus ?"} lead="Ce que tu mets vraiment, pas ce qui dort au fond." />
           <TileGrid options={ITEMS} selected={a.favourite_items} toggle={toggle('favourite_items')} columns={3} />
         </>
       ) : null}
 
       {key === 'couleurs' && !done ? (
         <>
-          <Head title="Tes couleurs" lead="Celles que tu portes volontiers." />
+          <Head mood={STEP_MOOD.couleurs} title="Tes couleurs" lead="Celles que tu portes volontiers." />
           <Swatches selected={a.colours} toggle={toggle('colours')} />
         </>
       ) : null}
 
       {key === 'eviter' && !done ? (
         <>
-          <Head title="Et ce que tu évites ?" lead={"Ça m’évite de te proposer à côté."} />
+          <Head mood={STEP_MOOD.eviter} title="Et ce que tu évites ?" lead={"Ça m’évite de te proposer à côté."} />
           <RowList options={AVOID} selected={a.avoid} pick={toggle('avoid')} />
         </>
       ) : null}
 
       {key === 'occasions' && !done ? (
         <>
-          <Head title={"Tu t’habilles pour quoi ?"} lead="Plusieurs réponses possibles." />
+          <Head mood={STEP_MOOD.occasions} title={"Tu t’habilles pour quoi ?"} lead="Plusieurs réponses possibles." />
           <TileGrid options={OCCASIONS} selected={a.occasions} toggle={toggle('occasions')} />
         </>
       ) : null}
 
       {key === 'rythme' && !done ? (
         <>
-          <Head title="Ton rythme le matin" lead="Pour savoir si je dois aller vite ou prendre le temps." />
+          <Head mood={STEP_MOOD.rythme} title="Ton rythme le matin" lead="Pour savoir si je dois aller vite ou prendre le temps." />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)' }}>
               Combien de temps pour t&apos;habiller
@@ -345,24 +343,18 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
 
       {key === 'aide' && !done ? (
         <>
-          <Head title={"Comment je peux t’aider ?"} lead="Ce que tu attends de moi en premier." />
+          <Head mood={STEP_MOOD.aide} title={"Comment je peux t’aider ?"} lead="Ce que tu attends de moi en premier." />
           <RowList options={ASSISTANCE} selected={a.assistance ? [a.assistance] : []} pick={choose('assistance')} single />
         </>
       ) : null}
 
       {done ? (
         <>
-          <span
-            style={{
-              width: 40, height: 40, borderRadius: 999, background: 'var(--accent-tint)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z" />
-            </svg>
-          </span>
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 6 }}>
+            <Kodi mood="celebrate" size={120} track shadow />
+          </div>
           <Head
+            mood="love"
             title={`${a.display_name || 'Toi'}, voilà ce que j’ai compris`}
             lead="Tu pourras tout changer depuis ton compte."
           />
@@ -375,7 +367,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
                     {a.colours.slice(0, 5).map((id, i) => (
                       <span key={id} style={{
                         width: 20, height: 20, borderRadius: 999, background: colourHex(id),
-                        border: '1.5px solid var(--ground)', marginLeft: i ? -7 : 0,
+                        border: '1.5px solid var(--surface)', marginLeft: i ? -7 : 0,
                       }} />
                     ))}
                   </span>
@@ -415,43 +407,31 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
       {/* Barre d'action fixe : le pouce la trouve toujours au même endroit. */}
       <div
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0,
-          maxWidth: 390, margin: '0 auto', padding: '14px 20px 22px',
-          background: 'linear-gradient(to top, var(--desk) 62%, transparent)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 20,
+          maxWidth: 430, margin: '0 auto', padding: '18px 20px calc(20px + env(safe-area-inset-bottom))',
+          background: 'linear-gradient(to top, var(--bg) 70%, transparent)',
+          display: 'flex', flexDirection: 'column', gap: 6,
         }}
       >
         {!done && step > 0 ? (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s - 1)}
-            style={{ minHeight: 40, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'var(--muted)' }}
-          >
-            Revenir
-          </button>
-        ) : null}
-
-        {!done && step > 0 ? (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s + 1)}
-            style={{ minHeight: 40, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'var(--muted)', textDecoration: 'underline' }}
-          >
-            Passer
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <button type="button" onClick={() => setStep((s) => s - 1)} className="dk-btn dk-btn--ghost dk-btn--sm dk-tap">
+              <Icon name="chevronLeft" size={16} /> Revenir
+            </button>
+            <button type="button" onClick={() => setStep((s) => s + 1)} className="dk-btn dk-btn--ghost dk-btn--sm dk-tap">
+              Passer <Icon name="chevronRight" size={16} />
+            </button>
+          </div>
         ) : null}
 
         <button
           type="button"
           disabled={(!done && !canAdvance) || pending}
           onClick={() => (done ? submit() : setStep((s) => s + 1))}
-          style={{
-            ...buttonPrimary, width: '100%',
-            opacity: (!done && !canAdvance) || pending ? 0.45 : 1,
-            cursor: (!done && !canAdvance) || pending ? 'not-allowed' : 'pointer',
-          }}
+          className={`${btn.primary} dk-btn--block`}
         >
           {pending ? 'Un instant…' : done ? (adjusting ? 'Enregistrer' : 'Entrer dans mon dressing') : step === TOTAL - 1 ? 'Voir le résumé' : 'Continuer'}
+          {pending ? null : <Icon name="chevronRight" size={18} />}
         </button>
       </div>
     </main>

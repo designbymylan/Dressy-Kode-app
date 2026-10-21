@@ -2,11 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { retryAiJob, dismissAiJob } from '@/app/actions';
-
-const small = {
-  minHeight: 44, padding: '0 16px', borderRadius: 999, border: 'none',
-  fontSize: 13, fontWeight: 600, cursor: 'pointer',
-} as const;
+import { Icon } from '@/components/icons';
 
 /** Relancer ou retirer une pièce que l'agent n'a pas pu terminer. */
 export function JobActions({ jobId, canRetry }: { jobId: string; canRetry: boolean }) {
@@ -28,18 +24,19 @@ export function JobActions({ jobId, canRetry }: { jobId: string; canRetry: boole
             type="button"
             onClick={() => run(retryAiJob)}
             disabled={pending}
-            style={{ ...small, background: 'var(--ink)', color: 'var(--ground)', opacity: pending ? 0.6 : 1 }}
+            className="dk-btn dk-btn--primary dk-btn--sm dk-tap"
           >
-            Réessayer
+            <Icon name="refresh" size={15} /> Réessayer
           </button>
         ) : null}
         <button
           type="button"
           onClick={() => run(dismissAiJob)}
           disabled={pending}
-          style={{ ...small, background: 'var(--tile)', color: 'var(--ink)', fontWeight: 500, opacity: pending ? 0.6 : 1 }}
+          className="dk-btn dk-btn--sm dk-tap"
+          style={{ fontWeight: 500 }}
         >
-          Retirer
+          <Icon name="trash" size={15} /> Retirer
         </button>
       </div>
       {error ? <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)' }}>{error}</p> : null}

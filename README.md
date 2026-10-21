@@ -1,8 +1,8 @@
 # Dressy
 
 Ton dressing, en vitrine. Une application pour voir toute sa garde-robe,
-l'enrichir en photo et laisser **Kode**, le styliste IA, composer des tenues
-avec ce qu'on possède déjà.
+l'enrichir en photo et laisser **Kodi**, la mascotte styliste, composer des
+tenues avec ce qu'on possède déjà. (Kodi s'appelait Kode : `/kode` redirige.)
 
 ## Organisation
 
@@ -26,6 +26,22 @@ npm run build && npm start
 Puis http://localhost:3000. Le mode `npm run dev` existe, mais son bundler
 plante parfois (`__webpack_modules__[moduleId] is not a function`) : le build
 de production est la référence pour vérifier.
+
+## Relire le design sans compte
+
+`/apercu` montre les cinq écrans (Accueil, Dressing, Kodi, Calendrier, Profil)
+avec des données d'exemple, en clair et en sombre. Il est fermé par défaut et
+ne répond que si le serveur tourne avec `DRESSY_APERCU=1` :
+
+```bash
+cd web && DRESSY_APERCU=1 npm start
+```
+
+Puis http://localhost:3000/apercu (`?ecran=dressing`, `&vide=1` pour l'état vide).
+
+Repères du design : palette et contrastes en tête de `web/src/app/globals.css`,
+icônes pleines dans `web/src/components/icons.tsx`, Kodi dans
+`web/src/components/Kodi.tsx`, offres et prix dans `web/src/lib/plans.ts`.
 
 ## L'agent central
 

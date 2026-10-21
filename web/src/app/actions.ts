@@ -1,9 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer, type Theme } from '@/lib/space';
+import { getUsage, signAll, todayParis, daysAgo, WINDOW_DAYS, type GarmentRow } from '@/lib/wardrobe';
+import type { KodiMood } from '@/components/Kodi';
 import {
   GENDERS, GOALS, STYLES, ITEMS, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, type Answers,
@@ -66,16 +69,175 @@ export async function signOut() {
   redirect('/bienvenue');
 }
 
-export async function setTheme(theme: Theme) {
-  const viewer = await getViewer();
-  if (!viewer) return;
+const YEAR = 365 * 24 * 3600;
 
-  const supabase = await createClient();
-  await supabase.from('settings').update({ theme }).eq('space_id', viewer.spaceId);
+export async function setTheme(theme: Theme) {
+  if (!['light', 'dark', 'auto'].includes(theme)) return;
+  const viewer = await getViewer();
+
+  if (viewer) {
+    const supabase = await createClient();
+    await supabase.from('settings').update({ theme }).eq('space_id', viewer.spaceId);
+  } else {
+    // Un visiteur (accueil, connexion) garde son choix sur l'appareil.
+    (await cookies()).set('dk_theme', theme, { path: '/', maxAge: YEAR, sameSite: 'lax' });
+  }
 
   // layout.tsx relit le thème : on invalide tout l'arbre pour que le
   // changement porte sur l'application entière, pas sur l'écran courant.
   revalidatePath('/', 'layout');
+}
+
+/** Affiche ou masque l'encoche clair / sombre (réglage propre à l'appareil). */
+export async function setThemeShortcut(on: boolean) {
+  const jar = await cookies();
+  if (on) jar.delete('dk_theme_tab');
+  else jar.set('dk_theme_tab', '0', { path: '/', maxAge: YEAR, sameSite: 'lax' });
+  revalidatePath('/', 'layout');
+}
+
+/**
+ * « Porté aujourd'hui » : un premier toucher note le port, un second
+ * l'annule. C'est ce qui nourrit la barre de progression du dressing.
+ */
+export async function toggleWear(garmentId: string): Promise<{ worn: boolean } | { error: string }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const supabase = await createClient();
+  const today = todayParis();
+  const { data: existing } = await supabase
+    .from('wears')
+    .select('id')
+    .eq('garment_id', garmentId)
+    .eq('worn_on', today)
+    .limit(1);
+
+  const res = existing?.length
+    ? await supabase.from('wears').delete().eq('id', existing[0].id)
+    : await supabase.from('wears').insert({ garment_id: garmentId, worn_on: today });
+  if (res.error) return { error: "Ça n'a pas été noté. Réessaie." };
+
+  revalidatePath('/dressing');
+  revalidatePath('/accueil');
+  return { worn: !existing?.length };
+}
+
+export type KodiAnswer = {
+  text: string;
+  mood: KodiMood;
+  pieces?: { id: string; name: string; url: string | null }[];
+  link?: { href: string; label: string };
+};
+
+const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+/**
+ * Kodi répond à partir de ce qui est réellement dans le dressing.
+ * Pas de modèle de langage ici : quatre demandes qu'il sait traiter
+ * sérieusement (tenue, pièces oubliées, bilan, ajout), et une réponse
+ * franche pour le reste plutôt qu'une invention.
+ */
+export async function askKodi(question: string): Promise<KodiAnswer> {
+  const viewer = await getViewer();
+  if (!viewer) return { text: 'Ta session a expiré. Reconnecte-toi et je reprends où on en était.', mood: 'sad' };
+
+  const q = norm(String(question ?? '').slice(0, 400));
+  const supabase = await createClient();
+  const [{ data: garments }, { data: categories }] = await Promise.all([
+    supabase.from('garments').select('id, name, category_id, image_path, thumb_path'),
+    supabase.from('categories').select('id, label').order('sort'),
+  ]);
+  const items = (garments ?? []) as GarmentRow[];
+  const usage = await getUsage(supabase, items, categories ?? []);
+  const since = daysAgo(WINDOW_DAYS);
+  const lastOf = (id: string) => usage.wear[id]?.last ?? '';
+  // Les pièces les moins portées d'abord : c'est tout l'intérêt.
+  const byRest = [...items].sort((a, b) => lastOf(a.id).localeCompare(lastOf(b.id)));
+
+  const show = async (list: GarmentRow[]) => {
+    const urls = await signAll(supabase, 'garments', list.map((g) => (g.thumb_path ?? g.image_path) as string).filter(Boolean));
+    return list.map((g) => ({ id: g.id, name: g.name, url: urls.get((g.thumb_path ?? g.image_path) as string) ?? null }));
+  };
+
+  if (!items.length && !/bonjour|salut|hello|coucou|merci/.test(q)) {
+    return {
+      text: 'Ton dressing est encore vide. Ajoute deux ou trois pièces que tu portes souvent, et je compose ta première tenue.',
+      mood: 'wave',
+      link: { href: '/dressing/ajouter', label: 'Ajouter une pièce' },
+    };
+  }
+
+  if (/oubli|dort|jamais|pas porte|delaiss|neglige|reveill/.test(q)) {
+    const asleep = byRest.filter((g) => !usage.wear[g.id]?.last || usage.wear[g.id]!.last! < since);
+    if (!asleep.length) return { text: 'Aucune pièce oubliée : tout ton dressing a servi ces trois derniers mois. Chapeau.', mood: 'celebrate' };
+    return {
+      text: `${asleep.length} pièce${asleep.length > 1 ? 's' : ''} n’${asleep.length > 1 ? 'ont' : 'a'} pas été portée${asleep.length > 1 ? 's' : ''} depuis ${WINDOW_DAYS} jours. Voilà par où je commencerais :`,
+      mood: 'sleepy',
+      pieces: await show(asleep.slice(0, 6)),
+    };
+  }
+
+  if (/combien|bilan|stat|exploit|progress|usage|garde-robe/.test(q)) {
+    const pct = Math.round(usage.pct);
+    const best = [...usage.categories].sort((a, b) => b.pct - a.pct)[0];
+    const low = [...usage.categories].sort((a, b) => a.pct - b.pct)[0];
+    return {
+      text: `Tu as ${usage.total} pièce${usage.total > 1 ? 's' : ''} et tu en as porté ${usage.worn} ces ${WINDOW_DAYS} derniers jours : ${pct} % de ton dressing travaille.`
+        + (best && low && best.id !== low.id ? ` Tes ${best.label.toLowerCase()} tournent bien, tes ${low.label.toLowerCase()} beaucoup moins.` : ''),
+      mood: pct >= 50 ? 'happy' : 'thinking',
+      link: { href: '/dressing', label: 'Voir ma progression' },
+    };
+  }
+
+  if (/ajout|photo|scan|import|range/.test(q)) {
+    return {
+      text: 'Prends la pièce en photo, même posée sur le lit. Je la redessine seule et sans fond, je vérifie qu’elle te ressemble, puis je la range.',
+      mood: 'happy',
+      link: { href: '/dressing/ajouter', label: 'Ajouter une pièce' },
+    };
+  }
+
+  if (/tenue|porter|mets|look|demain|aujourd|habille|soir|rendez|travail|ce matin/.test(q)) {
+    const first = (cats: string[]) => byRest.find((g) => cats.includes(g.category_id));
+    const dress = first(['robes']);
+    const top = first(['hauts']);
+    const bottom = first(['bas']);
+    const pick: GarmentRow[] = [];
+    if (top && bottom) pick.push(top, bottom);
+    else if (dress) pick.push(dress);
+    else if (top || bottom) pick.push((top ?? bottom)!);
+    const layer = first(['vestes']);
+    const shoes = first(['chaussures']);
+    const extra = first(['sacs', 'bijoux', 'accessoires']);
+    for (const g of [layer, shoes, extra]) if (g) pick.push(g);
+
+    if (pick.length < 2) {
+      return {
+        text: 'Il me manque encore des pièces pour une tenue complète : ajoute au moins un haut et un bas, ou une robe.',
+        mood: 'thinking',
+        link: { href: '/dressing/ajouter', label: 'Ajouter une pièce' },
+      };
+    }
+    const names = pick.map((g) => g.name.toLowerCase());
+    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} et ${names.at(-1)}` : names[0];
+    return {
+      text: `Je partirais sur ${list}. J’ai choisi des pièces que tu n’as pas mises depuis un moment : c’est l’occasion de les ressortir.`,
+      mood: 'love',
+      pieces: await show(pick),
+    };
+  }
+
+  if (/bonjour|salut|hello|coucou|hey/.test(q)) {
+    const hello = viewer.displayName ? `Salut ${viewer.displayName} !` : 'Salut !';
+    return { text: `${hello} Demande-moi une tenue, tes pièces oubliées ou ton bilan.`, mood: 'wave' };
+  }
+  if (/merci/.test(q)) return { text: 'Avec plaisir. Je suis là dès que tu ouvres ton dressing.', mood: 'love' };
+
+  return {
+    text: 'Je ne sais pas encore répondre à tout. Aujourd’hui je compose une tenue avec tes pièces, je te montre celles qui dorment et je fais le bilan de ton dressing.',
+    mood: 'thinking',
+  };
 }
 
 export async function addGarment(_prev: FormResult, formData: FormData): Promise<FormResult> {
@@ -140,8 +302,8 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
   if (paths.length > left) {
     return {
       error: left > 0
-        ? `Il te reste ${left} pièce${left > 1 ? 's' : ''} à confier à Kode aujourd'hui : retire ${paths.length - left} photo${paths.length - left > 1 ? 's' : ''}.`
-        : `Tu as confié ${DAILY_QUOTA} pièces à Kode aujourd'hui, c'est la limite du jour. Reviens demain.`,
+        ? `Il te reste ${left} pièce${left > 1 ? 's' : ''} à confier à Kodi aujourd'hui : retire ${paths.length - left} photo${paths.length - left > 1 ? 's' : ''}.`
+        : `Tu as confié ${DAILY_QUOTA} pièces à Kodi aujourd'hui, c'est la limite du jour. Reviens demain.`,
     };
   }
 

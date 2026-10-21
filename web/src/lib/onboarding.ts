@@ -6,38 +6,40 @@
  * libellés. D'où la séparation systématique id / label.
  */
 
-export type Option = { id: string; label: string; icon?: string };
+import type { IconName } from '@/components/icons';
 
-/** Tracés d'icônes, en viewBox 0 0 24 24, trait seul. */
+export type Option = { id: string; label: string; icon?: IconName };
+
+/** Icônes du questionnaire : le jeu d'icônes pleines de l'application. */
 export const ICONS = {
-  cintre: 'M12 5.5a2 2 0 1 1 2 2c-1.1 0-2 .7-2 1.8V11M12 11 3.5 17.2a1 1 0 0 0 .6 1.8h15.8a1 1 0 0 0 .6-1.8L12 11Z',
-  horloge: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 7v5l3.2 2',
-  grille: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
-  feuille: 'M20 4c0 8-5 13-12 13H5c0-8 5-13 12-13ZM5 20c1.5-4 4-6.5 8-8',
-  etoile: 'M12 3.5 14.3 9l6 .5-4.6 4 1.4 5.9L12 16.3 6.9 19.4l1.4-5.9-4.6-4 6-.5Z',
-  scintille: 'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z',
-  carre: 'M5 5h14v14H5z',
-  basket: 'M3 16h11l5 2H3zM3 16v-4l4-2 3 3h4',
-  tshirt: 'M8 4 12 6.5 16 4l5 2.5-2 4-2-1V20H7V9.5l-2 1-2-4Z',
-  couronne: 'M4 17 5 7l4.5 4L12 5l2.5 6L19 7l1 10Z',
-  retour: 'M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.6-6.1M3.5 4.5v4h4',
-  course: 'M13.5 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM8 21l2.5-5.5L8 12l1-5 3.5 2 3 1M6 9l3-2M14 14l2.5 2 1 5',
-  valise: 'M4 8h16v12H4zM9 8V5h6v3',
-  oversize: 'M10 4H4v6M4 4l6 6M14 20h6v-6M20 20l-6-6',
-  moulant: 'M4 10h6V4M10 10 4 4M20 14h-6v6M14 14l6 6',
-  soleil: 'M12 5V3M12 21v-2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z',
-  mallette: 'M4 8h16v12H4zM9 8V5h6v3M4 13h16',
-  fete: 'M4 20 9 7l8 8-13 5ZM14 4v2M18 3l-1.4 1.4M20 8h-2',
-  contraste: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 3v18',
-  motif: 'M12 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM7 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM17 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
-  ciseaux: 'M6 5l12 12M18 5 6 17M6 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM6 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
-  cible: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 11.5a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Z',
-  nuage: 'M7 18a4 4 0 0 1 .6-7.96A5.5 5.5 0 0 1 18 11a3.5 3.5 0 0 1 0 7Z',
-  sac: 'M6 8h12l1 12H5ZM9 8V6a3 3 0 0 1 6 0v2',
-  femme: 'M12 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM9 10h6l2 7h-3l-.5 4h-3L10 17H7Z',
-  homme: 'M12 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM9.5 10h5l1.5 7h-2.5v4h-3v-4H8Z',
-  egal: 'M5 10h14M5 14h14',
-} as const;
+  cintre: 'hanger',
+  horloge: 'clock',
+  grille: 'grid',
+  feuille: 'leaf',
+  etoile: 'star',
+  scintille: 'sparkle',
+  carre: 'square',
+  basket: 'sneaker',
+  tshirt: 'shirt',
+  couronne: 'crown',
+  retour: 'history',
+  course: 'runner',
+  valise: 'suitcase',
+  oversize: 'expand',
+  moulant: 'shrink',
+  soleil: 'sun',
+  mallette: 'briefcase',
+  fete: 'party',
+  contraste: 'contrast',
+  motif: 'pattern',
+  ciseaux: 'scissors',
+  cible: 'target',
+  nuage: 'cloud',
+  sac: 'bag',
+  femme: 'woman',
+  homme: 'man',
+  egal: 'equals',
+} as const satisfies Record<string, IconName>;
 
 export const GENDERS: Option[] = [
   { id: 'femme', label: 'Femme', icon: ICONS.femme },

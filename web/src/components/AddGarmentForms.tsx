@@ -5,12 +5,14 @@ import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { addGarment, requestAiGarments, type FormResult } from '@/app/actions';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
-import { Field, ErrorNote, inputStyle, buttonPrimary, buttonQuiet } from '@/components/ui';
+import { Field, ErrorNote, btn } from '@/components/ui';
+import { Icon } from '@/components/icons';
+import { Kodi } from '@/components/Kodi';
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} style={{ ...buttonPrimary, opacity: pending ? 0.6 : 1 }}>
+    <button type="submit" disabled={pending} className={`${btn.primary} dk-btn--block`}>
       {pending ? 'Un instant…' : label}
     </button>
   );
@@ -24,11 +26,11 @@ export function ManualForm({ categories }: { categories: { id: string; label: st
       {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
 
       <Field label="La pièce">
-        <input name="name" type="text" required placeholder="Blazer noir" style={inputStyle} />
+        <input name="name" type="text" required placeholder="Blazer noir" className="dk-input" />
       </Field>
 
       <Field label="Catégorie">
-        <select name="category_id" required defaultValue="" style={inputStyle}>
+        <select name="category_id" required defaultValue="" className="dk-input">
           <option value="" disabled>Choisir…</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.label}</option>
@@ -37,11 +39,11 @@ export function ManualForm({ categories }: { categories: { id: string; label: st
       </Field>
 
       <Field label="Matière (facultatif)">
-        <input name="material" type="text" placeholder="Laine mélangée" style={inputStyle} />
+        <input name="material" type="text" placeholder="Laine mélangée" className="dk-input" />
       </Field>
 
       <Field label="Prix payé (facultatif)">
-        <input name="price" type="text" inputMode="decimal" placeholder="49,90" style={inputStyle} />
+        <input name="price" type="text" inputMode="decimal" placeholder="49,90" className="dk-input" />
       </Field>
 
       <Submit label="Ajouter au dressing" />
@@ -139,7 +141,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
         paths.push(path);
       }
 
-      setProgress('Kode prend le relais…');
+      setProgress('Kodi prend le relais…');
       const res = await requestAiGarments({ paths, hint });
       if (res?.error) throw new Error(res.error);
 
@@ -185,9 +187,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
-                  <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
-                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                  <Icon name="close" size={14} />
                 </span>
               </button>
             </li>
@@ -196,11 +196,8 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       ) : null}
 
       {n < MAX_PHOTOS ? (
-        <label data-file-pick style={{ ...buttonQuiet, position: 'relative', alignSelf: 'flex-start', opacity: busy ? 0.6 : 1 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 8h3l2-3h6l2 3h3v11H4Z" />
-            <circle cx="12" cy="13" r="3.5" />
-          </svg>
+        <label data-file-pick className={btn.glass} style={{ position: 'relative', alignSelf: 'flex-start', opacity: busy ? 0.6 : 1 }}>
+          <Icon name="camera" size={18} />
           {n ? 'Ajouter des photos' : 'Choisir des photos'}
           <input type="file" accept="image/*" multiple onChange={pick} disabled={busy} />
         </label>
@@ -214,22 +211,26 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
           maxLength={280}
           placeholder="Le pull, pas le jean"
           disabled={busy}
-          style={inputStyle}
+          className="dk-input"
         />
       </Field>
 
-      <p style={{ fontSize: 12.5, lineHeight: 1.45, color: 'var(--muted)' }}>
-        Une photo, une pièce. ChatGPT la décrit, Nano Banana la redessine seule et
-        sans fond, puis Claude vérifie qu&apos;elle ressemble à la tienne à 95 % —
-        jusqu&apos;à trois essais avant de ranger la meilleure dans ton dressing.
-      </p>
+      <div className="kodi-say">
+        <Kodi mood={busy ? 'thinking' : n ? 'happy' : 'idle'} size={44} decorative tap={false} />
+        <p className="kodi-say__bubble" style={{ fontSize: 12.5, color: 'var(--muted)' }}>
+          {busy
+            ? 'Je m’en occupe : tu peux fermer l’écran.'
+            : 'Une photo, une pièce. Je la redessine seule et sans fond, puis je vérifie qu’elle ressemble à la tienne à 95 % avant de la ranger.'}
+        </p>
+      </div>
 
       <button
         type="submit"
         disabled={!n || busy}
-        style={{ ...buttonPrimary, opacity: !n || busy ? 0.6 : 1 }}
+        className={`${btn.primary} dk-btn--block`}
       >
-        {progress ?? (n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kode` : 'Choisis au moins une photo')}
+        {busy ? null : <Icon name="sparkle" size={18} />}
+        {progress ?? (n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kodi` : 'Choisis au moins une photo')}
       </button>
     </form>
   );

@@ -2,55 +2,94 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Icon, NAV_LINES } from '@/components/icons';
+import { Kodi, type KodiLook, type KodiMood } from '@/components/Kodi';
 
 const TABS = [
-  { href: '/accueil', label: 'Accueil', d: 'M3 11.5 12 4l9 7.5M5 10v10h14V10' },
-  { href: '/dressing', label: 'Dressing', d: 'M4 7h16M4 12h16M4 17h16' },
-  { href: '/kode', label: 'Kode', d: 'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z', pill: true },
-  { href: '/calendrier', label: 'Calendrier', d: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4' },
-  { href: '/moi', label: 'Mon compte', d: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8M4 20c0-4 4-6 8-6s8 2 8 6' },
-];
+  { href: '/accueil', label: 'Accueil', icon: 'home' },
+  { href: '/dressing', label: 'Dressing', icon: 'hanger' },
+  { href: '/kodi', label: 'Kodi', icon: null },
+  { href: '/calendrier', label: 'Calendrier', icon: 'calendar' },
+  { href: '/moi', label: 'Profil', icon: 'user' },
+] as const;
 
-export function TabBar() {
+/**
+ * La barre de la référence, élément par élément : barre arrondie, bosse
+ * centrale qui porte le rond, trait au-dessus de l'onglet actif qui glisse
+ * d'un onglet à l'autre, icône au trait qui devient pleine et bleue.
+ * Au centre, Kodi regarde l'onglet choisi et sautille quand on change.
+ */
+const PREVIEW: Record<string, string> = {
+  '/accueil': 'accueil', '/dressing': 'dressing', '/kodi': 'kodi', '/calendrier': 'calendrier', '/moi': 'profil',
+};
+
+export function TabBar({ active, preview = false }: { active?: string; preview?: boolean }) {
   const pathname = usePathname();
+  const current = active ?? pathname;
+  const to = (href: string) => (preview ? `/apercu?ecran=${PREVIEW[href]}` : href);
+  const index = TABS.findIndex((t) => current === t.href || current.startsWith(t.href + '/'));
+  const onKodi = index === 2;
+
+  const [mood, setMood] = useState<KodiMood>('idle');
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setMood(index === 2 ? 'happy' : 'surprised');
+    const t = window.setTimeout(() => setMood('idle'), 900);
+    return () => window.clearTimeout(t);
+  }, [index]);
+
+  const look: KodiLook = index < 0 ? 'center' : index < 2 ? 'left' : index > 2 ? 'right' : 'up';
 
   return (
-    <nav
-      aria-label="Navigation principale"
-      style={{
-        position: 'fixed', left: 20, right: 20, bottom: 12, maxWidth: 350, margin: '0 auto',
-        height: 62, borderRadius: 999, background: 'var(--nav-glass)',
-        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-        boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-around', padding: '0 12px', zIndex: 10,
-      }}
-    >
-      {TABS.map((tab) => {
-        const active = pathname === tab.href || pathname.startsWith(tab.href + '/');
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            aria-label={tab.label}
-            aria-current={active ? 'page' : undefined}
-            style={{
-              display: 'flex', width: tab.pill ? 56 : 44, height: tab.pill ? 56 : 44,
-              alignItems: 'center', justifyContent: 'center',
-              borderRadius: 999,
-              background: tab.pill ? 'var(--ink)' : 'transparent',
-              boxShadow: tab.pill ? '0 10px 24px rgba(13,13,14,.35)' : undefined,
-            }}
-          >
-            <svg
-              width="22" height="22" viewBox="0 0 24 24" fill="none"
-              stroke={tab.pill ? 'var(--ground)' : active ? 'var(--ink)' : 'var(--muted)'}
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+    <nav aria-label="Navigation principale" className="dk-nav">
+      <svg className="dk-nav__bump" viewBox="0 0 132 30" aria-hidden="true">
+        <path d="M0 30C18 30 30 27 38 18 46 8 54 2 66 2s20 6 28 16c8 9 20 12 38 12Z" />
+      </svg>
+      <div className="dk-nav__bar" style={{ '--i': Math.max(index, 0) } as CSSProperties}>
+        <span className="dk-nav__ind" data-hidden={index < 0 || onKodi ? 'true' : 'false'} aria-hidden="true" />
+        {TABS.map((tab, i) => {
+          const on = i === index;
+          if (!tab.icon) {
+            return (
+              <Link
+                key={tab.href}
+                href={to(tab.href)}
+                className="dk-nav__center"
+                aria-current={on ? 'page' : undefined}
+                aria-label="Kodi, ton styliste"
+              >
+                <span className="dk-nav__orb">
+                  <Kodi size={44} mood={on && mood === 'idle' ? 'wink' : mood} look={look} decorative tap={false} />
+                </span>
+                <span className="dk-nav__label">{tab.label}</span>
+              </Link>
+            );
+          }
+          return (
+            <Link
+              key={tab.href}
+              href={to(tab.href)}
+              className="dk-nav__item"
+              aria-current={on ? 'page' : undefined}
             >
-              <path d={tab.d} />
-            </svg>
-          </Link>
-        );
-      })}
+              <span className="dk-nav__icon" aria-hidden="true">
+                <svg className="is-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={NAV_LINES[tab.icon]} />
+                </svg>
+                <span className="is-solid" style={{ position: 'absolute', inset: 0, display: 'grid' }}>
+                  <Icon name={tab.icon} size={24} />
+                </span>
+              </span>
+              <span className="dk-nav__label">{tab.label}</span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }
