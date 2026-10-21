@@ -2,101 +2,150 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Icon, NAV_LINES } from '@/components/icons';
+import { Kodi, type KodiLook, type KodiMood } from '@/components/Kodi';
 
-/**
- * Les icônes de navigation, les mêmes que l'app mobile (mobile/src/ui/Icon.tsx) :
- * une maison, un t-shirt, une bulle, un calendrier, une silhouette. Au trait
- * au repos, pleines (remplissage pair-impair) quand l'onglet est actif.
- */
 const TABS = [
-  {
-    href: '/accueil',
-    label: 'Accueil',
-    d: 'M3.5 11 12 4l8.5 7M5.5 9.4V20h13V9.4M10 20v-5.5h4V20',
-    full: 'M12 3.4 2.9 11h2.6v9.6h13V11h2.6ZM10 20.6v-6.1h4v6.1Z',
-  },
-  {
-    href: '/dressing',
-    label: 'Dressing',
-    // Les tenues se composent à partir du dressing : elles en font partie.
-    also: ['/tenues'],
-    d: 'M8.6 4 3.5 6.6 2.4 11.4l3.4 1.1V20h12.4v-7.5l3.4-1.1-1.1-4.8L15.4 4c-.5 1.7-1.8 2.7-3.4 2.7S9.1 5.7 8.6 4Z',
-    full: 'M8.6 4 3.5 6.6 2.4 11.4l3.4 1.1V20h12.4v-7.5l3.4-1.1-1.1-4.8L15.4 4c-.5 1.7-1.8 2.7-3.4 2.7S9.1 5.7 8.6 4Z',
-  },
-  {
-    href: '/kode',
-    label: 'Kode',
-    d: 'M3.5 4.5h17v12h-10L5.5 20.5v-4h-2ZM12 7.6l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9Z',
-    full: 'M3.5 4.5h17v12h-10L5.5 20.5v-4h-2ZM12 7.6l-.9 2.4-2.4.9 2.4.9.9 2.4.9-2.4 2.4-.9-2.4-.9Z',
-    kode: true,
-  },
-  {
-    href: '/calendrier',
-    label: 'Calendrier',
-    d: 'M3.5 6h17v14.5h-17ZM3.5 10.5h17M8 3.5v4.5M16 3.5v4.5M7.5 13.5h3v3h-3Z',
-    full: 'M3.5 6h17v14.5h-17ZM5 11.5v7.5h14v-7.5ZM8 3.5h1.7V6H8ZM14.3 3.5H16V6h-1.7ZM7.5 13.5h3v3h-3Z',
-  },
-  {
-    href: '/moi',
-    label: 'Mon compte',
-    // Seul l'onglet actif écrit son nom : « Compte », contenu dans le libellé lu.
-    short: 'Compte',
-    d: 'M12 12.2a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM4.5 20.5c.6-3.9 3.6-6 7.5-6s6.9 2.1 7.5 6Z',
-    full: 'M12 12.2a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM4.5 20.5c.6-3.9 3.6-6 7.5-6s6.9 2.1 7.5 6Z',
-  },
-];
-
-function TabIcon({ d, full, on }: { d: string; full: string; on: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      {on ? (
-        <path d={full} fill="currentColor" fillRule="evenodd" stroke="currentColor" strokeWidth="0.6" strokeLinejoin="miter" />
-      ) : (
-        <path d={d} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="square" strokeLinejoin="miter" />
-      )}
-    </svg>
-  );
-}
+  { href: '/accueil', label: 'Accueil', icon: 'home' },
+  // Les tenues se composent à partir du dressing : elles en font partie.
+  { href: '/dressing', label: 'Dressing', icon: 'hanger', also: ['/tenues'] },
+  { href: '/kodi', label: 'Kodi', icon: null },
+  { href: '/calendrier', label: 'Calendrier', icon: 'calendar' },
+  { href: '/moi', label: 'Profil', icon: 'user', also: ['/offres'] },
+] as const;
 
 /**
- * Barre d'onglets de la galerie (mobile : src/ui/TabBar.tsx) : plate, collée
- * en bas sous un filet d'un pixel. Cinq icônes qui se comprennent sans leur
- * nom ; l'onglet actif passe en icône pleine et affiche son nom dessous.
- * Kode au centre, dans un rond noir. Chaque onglet garde son libellé pour les
- * lecteurs d'écran.
+ * La barre de la référence « Inspiration Navbar » (21/10), élément par
+ * élément : barre arrondie, bosse centrale qui porte le rond, petit trait
+ * au-dessus de l'onglet actif qui glisse d'un onglet à l'autre, icône au
+ * trait qui devient pleine et bleue, tous les noms écrits. Au centre, Kodi :
+ * il regarde l'onglet choisi et sursaute quand on change d'onglet. Elle
+ * reste en verre (décision du 03/10).
  */
-export function TabBar() {
-  const pathname = usePathname();
+export function TabBar({ active }: { active?: string } = {}) {
+  const path = usePathname();
+  // `active` : l'aperçu du design (/apercu) montre un onglet choisi.
+  const pathname = active ?? path;
+  const index = TABS.findIndex((t) =>
+    [t.href, ...('also' in t ? t.also : [])].some((h) => pathname === h || pathname.startsWith(h + '/')),
+  );
+
+  // La silhouette (barre et bosse) se mesure : son contour et son ombre suivent la largeur.
+  const navRef = useRef<HTMLElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setWidth(el.offsetWidth));
+    ro.observe(el);
+    setWidth(el.offsetWidth);
+    return () => ro.disconnect();
+  }, []);
+
+  const [mood, setMood] = useState<KodiMood>('idle');
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setMood(index === 2 ? 'happy' : 'surprised');
+    const t = window.setTimeout(() => setMood('idle'), 900);
+    return () => window.clearTimeout(t);
+  }, [index]);
+
   // L'atelier de tenue a sa propre barre d'action : la navigation s'efface.
   if (pathname.startsWith('/tenues/nouvelle')) return null;
 
+  const look: KodiLook = index < 0 ? 'center' : index < 2 ? 'left' : index > 2 ? 'right' : 'up';
+
+  const outline = width ? silhouette(width) : null;
+
   return (
-    <nav aria-label="Navigation principale" className="tabbar">
-      <div className="tabbar-inner">
-        {TABS.map((tab) => {
-          const on = [tab.href, ...(tab.also ?? [])].some((h) => pathname === h || pathname.startsWith(h + '/'));
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-label={tab.label}
-              aria-current={on ? 'page' : undefined}
-              className={tab.kode ? 'tab tab-kode' : 'tab'}
-            >
-              {tab.kode ? (
-                <span className="tab-kode-disc">
-                  <TabIcon d={tab.d} full={tab.full} on={on} />
+    <nav ref={navRef} aria-label="Navigation principale" className="dk-nav">
+      {outline ? (
+        // L'ombre, seulement hors de la silhouette : le verre reste transparent dedans.
+        <svg className="dk-nav__shade" width={width} height={HEIGHT + BUMP} viewBox={`0 ${-BUMP} ${width} ${HEIGHT + BUMP}`} aria-hidden="true">
+          <defs>
+            <filter id="dk-nav-ombre" x="-10%" y="-60%" width="120%" height="240%">
+              {/* Une ombre tout autour, qui dessine la bosse, et une plus large dessous. */}
+              <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="pres" />
+              <feFlood className="is-near" />
+              <feComposite in2="pres" operator="in" result="autour" />
+              <feGaussianBlur in="SourceAlpha" stdDeviation="14" />
+              <feOffset dy="10" result="loin" />
+              <feFlood className="is-far" />
+              <feComposite in2="loin" operator="in" result="dessous" />
+              <feMerge result="ombres">
+                <feMergeNode in="autour" />
+                <feMergeNode in="dessous" />
+              </feMerge>
+              <feComposite in="ombres" in2="SourceAlpha" operator="out" />
+            </filter>
+          </defs>
+          <path d={outline} filter="url(#dk-nav-ombre)" />
+        </svg>
+      ) : null}
+      <span className="dk-nav__bump" aria-hidden="true" />
+      <div className="dk-nav__bar" style={{ '--i': Math.max(index, 0) } as CSSProperties}>
+        <span className="dk-nav__ind" data-hidden={index < 0 || index === 2 ? 'true' : 'false'} aria-hidden="true" />
+        {TABS.map((tab, i) => {
+          const on = i === index;
+          if (!tab.icon) {
+            return (
+              <Link key={tab.href} href={tab.href} className="dk-nav__center" aria-current={on ? 'page' : undefined} aria-label="Kodi, ton styliste">
+                <span className="dk-nav__orb">
+                  <Kodi size={44} mood={on && mood === 'idle' ? 'wink' : mood} look={look} decorative tap={false} />
                 </span>
-              ) : (
-                <TabIcon d={tab.d} full={tab.full} on={on} />
-              )}
-              <span className="tab-name" aria-hidden="true" style={{ visibility: on ? 'visible' : 'hidden' }} key={on ? 'on' : 'off'}>
-                {tab.short ?? tab.label}
+                <span className="dk-nav__label" aria-hidden="true">{tab.label}</span>
+              </Link>
+            );
+          }
+          return (
+            <Link key={tab.href} href={tab.href} className="dk-nav__item" aria-current={on ? 'page' : undefined}>
+              <span className="dk-nav__icon" aria-hidden="true">
+                <svg className="is-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={NAV_LINES[tab.icon]} />
+                </svg>
+                <span className="is-solid">
+                  <Icon name={tab.icon} size={24} />
+                </span>
               </span>
+              <span className="dk-nav__label">{tab.label}</span>
             </Link>
           );
         })}
       </div>
+      {outline ? (
+        <svg className="dk-nav__edge" width={width} height={HEIGHT + BUMP} viewBox={`0 ${-BUMP} ${width} ${HEIGHT + BUMP}`} aria-hidden="true">
+          <path d={outline} />
+        </svg>
+      ) : null}
     </nav>
   );
+}
+
+const HEIGHT = 68;
+const BUMP = 30;
+const RADIUS = 24;
+
+/**
+ * Le contour de la barre et de sa bosse, pour une largeur donnée : la même
+ * courbe que la bosse de globals.css (132 px de large, 26 de haut), posée
+ * au milieu d'un rectangle aux coins de 24 px.
+ */
+function silhouette(w: number): string {
+  const r = RADIUS;
+  const x = w / 2 - 66;
+  return [
+    `M${r} 0H${x}`,
+    // La bosse de globals.css (viewBox 132 × 30) ramenée à ses 28 px de haut.
+    `C${x + 18} 0 ${x + 30} -2.8 ${x + 38} -11.2`,
+    `C${x + 46} -20.53 ${x + 54} -26.13 ${x + 66} -26.13`,
+    `C${x + 78} -26.13 ${x + 86} -20.53 ${x + 94} -11.2`,
+    `C${x + 102} -2.8 ${x + 114} 0 ${x + 132} 0`,
+    `H${w - r}A${r} ${r} 0 0 1 ${w} ${r}V${HEIGHT - r}A${r} ${r} 0 0 1 ${w - r} ${HEIGHT}`,
+    `H${r}A${r} ${r} 0 0 1 0 ${HEIGHT - r}V${r}A${r} ${r} 0 0 1 ${r} 0Z`,
+  ].join('');
 }

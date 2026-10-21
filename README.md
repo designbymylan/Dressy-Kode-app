@@ -1,7 +1,7 @@
 # Dressy
 
 Ton dressing, en vitrine. Une application pour voir toute sa garde-robe,
-l'enrichir en photo et laisser **Kode**, le styliste IA, composer des tenues
+l'enrichir en photo et laisser **Kodi**, le styliste IA, composer des tenues
 avec ce qu'on possède déjà.
 
 ## Organisation
@@ -11,7 +11,7 @@ avec ce qu'on possède déjà.
 | `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, branchée sur Supabase (mode démonstration sans réseau). Voir `mobile/README.md`. |
 | `web/` | L'application web (Next.js App Router, React 19, `@supabase/ssr`), branchée sur Supabase. |
 | `supabase/functions/dressy-agent/` | L'agent central : photo → Opus 5 (toutes les pièces) → Nano Banana (une image par pièce, en parallèle) → Sonnet 5 → dressing. |
-| `supabase/functions/kode/` | Kode, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
+| `supabase/functions/kode/` | Kodi, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
 | `supabase/functions/billing/`, `stripe-webhook/` | Les abonnements : ouverture du paiement Stripe, et le webhook qui active l'offre. |
 | `supabase/migrations/` | Le schéma SQL complet, dans l'ordre où il a été appliqué au projet Supabase. |
 | `design/` | Les maquettes Claude Design (`_projet/*.dc.html`) et la refonte : recherche, design system, vérification du contraste (`refonte/`). |
@@ -29,6 +29,20 @@ npm run build && npm start
 Puis http://localhost:3000. Le mode `npm run dev` existe, mais son bundler
 plante parfois (`__webpack_modules__[moduleId] is not a function`) : le build
 de production est la référence pour vérifier.
+
+## Relire le design sans compte
+
+`/apercu` montre la planche du 21/10 (palette et contrastes, boutons de
+verre, icônes pleines, humeurs de Kodi, barre de progression, tarifs, barre
+de navigation) avec des données d'exemple, en clair et en sombre. Elle est
+fermée par défaut et ne répond que si le serveur tourne avec
+`DRESSY_APERCU=1` :
+
+```bash
+cd web && DRESSY_APERCU=1 npm start
+```
+
+Puis http://localhost:3000/apercu (`?onglet=/kodi` pour changer l'onglet actif).
 
 ## Déployer sur Vercel
 
@@ -66,8 +80,8 @@ Function `dressy-agent`, qui :
 5. détoure l'image retenue (fond, trous enfermés, poussières, bords doux) et
    la range, transparente, dans le dressing.
 
-Rien de tout cela ne se voit à l'écran : la personne ne lit que « Kode repère
-chaque pièce », « Kode dessine ta pièce »… Les erreurs montrées ne nomment
+Rien de tout cela ne se voit à l'écran : la personne ne lit que « Kodi repère
+chaque pièce », « Kodi dessine ta pièce »… Les erreurs montrées ne nomment
 jamais un modèle ; le détail technique part dans les journaux de la fonction.
 
 Les clés `GEMINI_API_KEY` et `ANTHROPIC_API_KEY` se règlent dans
@@ -77,9 +91,9 @@ Supabase > Edge Functions > Secrets, jamais dans le code. Réglages facultatifs 
 `CLAUDE_JUDGE_EFFORT` (`medium` et `low`), `GEMINI_IMAGE_MODEL`. Vérification
 gratuite de la configuration : `GET /functions/v1/dressy-agent?verifier`.
 
-## Kode, le styliste
+## Kodi, le styliste
 
-L'écran `/kode` pose la question à l'Edge Function `kode`, qui relit avec le
+L'écran `/kodi` (l'ancien `/kode` y renvoie) pose la question à l'Edge Function `kode`, qui relit avec le
 jeton de la personne (donc sous RLS) son profil, son dressing (pièces
 disponibles, nombre de ports), son agenda Dressy des 14 jours à venir et la
 conversation en cours, puis fait répondre **Claude** en sortie structurée :
@@ -87,7 +101,7 @@ une réponse courte et, quand la question s'y prête, une tenue.
 
 - Chaque pièce est présentée au modèle sous une référence courte (`p1`,
   `p2`…) ; une référence inventée est écartée, et sous deux pièces valides
-  aucune carte n'est montrée. Kode ne peut donc proposer que ce qui existe.
+  aucune carte n'est montrée. Kodi ne peut donc proposer que ce qui existe.
 - La tenue est enregistrée (`outfits`, source `kode`) : « Prévoir pour
   demain » la pose dans `planned_days`, et l'accueil l'affiche le jour venu
   avec « Je la porte », qui note un port par pièce (`wears`).
@@ -106,18 +120,18 @@ supabase functions deploy kode   # utilise ANTHROPIC_API_KEY, déjà en secret
 
 ## Paiements (Stripe)
 
-Les offres de `Offres.dc.html`, vendues en abonnement mensuel ou annuel
-(le premier mois de l'annuel offert, une fois par espace) :
+Les offres du 21/10, vendues en abonnement mensuel ou annuel (le premier
+mois de l'annuel offert, une fois par espace). Les identifiants internes
+restent `capsule` et `atelier`, parce qu'ils vivent aussi chez Stripe :
 
-| Offre | Mensuel | Annuel | Pièces | Kode |
-|---|---|---|---|---|
-| Découverte (sans abonnement) | · | · | 30 | 5 questions / mois |
-| Capsule | 6,99 € | 59,99 € | 60 | 20 questions / mois |
-| Atelier | 12,99 € | 109,99 € | 200 | sans limite |
-| Couture | 24,99 € | 219,99 € | sans limite | sans limite |
+| Offre | Identifiant | Mensuel | Annuel | Pièces | Kodi |
+|---|---|---|---|---|---|
+| Découverte (sans abonnement) | · | · | · | 30 | 5 questions / mois |
+| Fashion | `capsule` | 6,99 € | 59,99 € (−28 %) | 120 | 30 questions / mois |
+| Sapologue | `atelier` | 14,99 € | 129,99 € (−27 %) | sans limite | sans limite |
 
-Les montants vivent dans `web/src/lib/plans.ts`, les limites dans
-`plan_limits()` (migration `abonnements`) : la base refuse la pièce ou la
+Couture n'est plus vendue. Les montants vivent dans `web/src/lib/plans.ts`,
+les limites dans `plan_limits()` (migration `offres_fashion_sapologue`) : la base refuse la pièce ou la
 question de trop, quel que soit l'écran. Une offre ne s'active **que** par
 le webhook, une fois le paiement confirmé par Stripe ; le navigateur ne peut
 rien s'accorder. Le changement d'offre, la carte, les factures et la
@@ -146,7 +160,7 @@ relancer le script avec la clé live et `--live`, puis remplacer les secrets.
 ## Tests
 
 Sans réseau ni clé : détourage et décisions de l'agent, dressing et
-historique de Kode, lecture des abonnements Stripe et accord des catalogues.
+historique de Kodi, lecture des abonnements Stripe et accord des catalogues.
 
 ```bash
 cd web && npm test

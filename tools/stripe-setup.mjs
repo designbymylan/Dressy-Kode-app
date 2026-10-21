@@ -4,8 +4,9 @@
  *
  *   STRIPE_SECRET_KEY=sk_test_… APP_URL=https://… node tools/stripe-setup.mjs
  *
- *   1. les trois produits (Capsule, Atelier, Couture) ;
- *   2. leurs six prix, retrouvés par lookup_key (dressy_<offre>_<mois|an>) :
+ *   1. les deux produits (Fashion et Sapologue, identifiants dressy_capsule
+ *      et dressy_atelier) ; un nom changé dans plans.ts est repris ;
+ *   2. leurs quatre prix, retrouvés par lookup_key (dressy_<offre>_<mois|an>) :
  *      un montant changé dans web/src/lib/plans.ts crée un nouveau prix, qui
  *      reprend la clé ; les abonnés en cours gardent l'ancien ;
  *   3. le portail client (changer d'offre, résilier, factures, carte) ;
@@ -86,8 +87,14 @@ async function product(plan) {
   const id = `dressy_${plan.id}`;
   try {
     const existing = await api('GET', `/products/${id}`);
-    if (!existing.active) await api('POST', `/products/${id}`, { active: true });
-    console.log(`  produit ${id} : déjà là`);
+    const name = `Dressy ${plan.name}`;
+    // Le nom se lit sur la page de paiement : il suit celui de l'offre.
+    if (!existing.active || existing.name !== name || existing.description !== plan.note) {
+      await api('POST', `/products/${id}`, { active: true, name, description: plan.note });
+      console.log(`  produit ${id} : mis à jour (${name})`);
+    } else {
+      console.log(`  produit ${id} : déjà là`);
+    }
     return id;
   } catch (err) {
     if (err.status !== 404) throw err;

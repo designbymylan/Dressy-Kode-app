@@ -30,7 +30,7 @@ export const SHAPES = {
     out: 'M22 9 L32 16 L42 9 L54 14 L52 40 L46 41 V56 H18 V41 L12 40 L10 14 Z',
     det: ['M32 16 V56', 'M16 34 H48'],
   },
-  // Les suivantes viennent de design/_projet/Kode.dc.html.
+  // Les suivantes viennent de design/_projet/Kodi.dc.html.
   tshirt: {
     out: 'M22 8 L26 6 Q32 11 38 6 L42 8 L55 16 L50 25 L45 21 V56 H19 V21 L14 25 L9 16 Z',
     det: ['M26 7 Q32 12 38 7'],

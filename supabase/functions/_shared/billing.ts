@@ -4,9 +4,11 @@
  * (supabase/functions/_shared/billing.test.ts).
  *
  * Les identifiants et la forme des clés suivent web/src/lib/plans.ts.
+ * Depuis le 21/10, deux offres : `capsule` porte Fashion, `atelier`
+ * Sapologue. Couture n'est plus vendue (aucun abonné ne l'avait).
  */
 
-export const PLAN_IDS = ['capsule', 'atelier', 'couture'] as const;
+export const PLAN_IDS = ['capsule', 'atelier'] as const;
 export const PERIODS = ['mois', 'an'] as const;
 
 export type PlanId = (typeof PLAN_IDS)[number];

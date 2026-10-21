@@ -1,6 +1,6 @@
 /**
- * Ce que Kode voit du dressing, et ce qu'on garde de sa réponse. Logique
- * pure, sans réseau ni base : c'est ici que se joue la règle « Kode ne
+ * Ce que Kodi voit du dressing, et ce qu'on garde de sa réponse. Logique
+ * pure, sans réseau ni base : c'est ici que se joue la règle « Kodi ne
  * propose que des pièces du dressing », elle est donc testée à part.
  */
 

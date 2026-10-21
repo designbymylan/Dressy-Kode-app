@@ -56,9 +56,10 @@ check('prix hors Dressy : ignoré', subscriptionRow(sub({}, 'autre'), SPACE), nu
 check('le prix Dressy est retrouvé parmi plusieurs articles', subscriptionRow(sub({
   items: { data: [
     { current_period_end: T, price: { id: 'price_x', lookup_key: null } },
-    { current_period_end: T, price: { id: 'price_2', lookup_key: 'dressy_couture_an' } },
+    { current_period_end: T, price: { id: 'price_2', lookup_key: 'dressy_atelier_an' } },
   ] },
-}), SPACE)?.plan, 'couture');
+}), SPACE)?.plan, 'atelier');
+check('Couture n’est plus vendue', parseLookupKey('dressy_couture_an'), null);
 
 check('espace pris dans l’abonnement', spaceOf(sub(), null), SPACE);
 check('espace retrouvé par le client', spaceOf(sub({ metadata: {} }), SPACE), SPACE);
@@ -70,10 +71,9 @@ check('mêmes offres affichées et vendues', web.PLANS.map((p) => p.id), [...PLA
 check('mêmes clés de prix', web.PLANS.flatMap((p) => PERIODS.map((d) => web.lookupKey(p.id, d))),
   PLAN_IDS.flatMap((p) => PERIODS.map((d) => lookupKey(p, d))));
 check('même durée d’essai', web.TRIAL_DAYS, TRIAL_DAYS);
-check('prix de la maquette Offres', web.PLANS.map((p) => [web.euros(p.cents.mois), web.euros(p.cents.an), web.perMonth(p)]), [
-  ['6,99 €', '59,99 €', 'soit 5,00 € par mois'],
-  ['12,99 €', '109,99 €', 'soit 9,17 € par mois'],
-  ['24,99 €', '219,99 €', 'soit 18,33 € par mois'],
+check('prix des offres du 21/10 (Fashion, Sapologue)', web.PLANS.map((p) => [p.name, web.euros(p.cents.mois), web.euros(p.cents.an), web.perMonth(p), web.saving(p)]), [
+  ['Fashion', '6,99 €', '59,99 €', 'soit 5,00 € par mois', 28],
+  ['Sapologue', '14,99 €', '129,99 €', 'soit 10,83 € par mois', 27],
 ]);
 check('l’annuel coûte toujours moins que douze mois',
   web.PLANS.every((p) => p.cents.an < p.cents.mois * 12), true);

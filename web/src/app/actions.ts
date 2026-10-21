@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -146,16 +147,59 @@ export async function signOut() {
   redirect('/bienvenue');
 }
 
-export async function setTheme(theme: Theme) {
-  const viewer = await getViewer();
-  if (!viewer) return;
+const YEAR = 365 * 24 * 3600;
 
-  const supabase = await createClient();
-  await supabase.from('settings').update({ theme }).eq('space_id', viewer.spaceId);
+export async function setTheme(theme: Theme) {
+  if (!['light', 'dark', 'auto'].includes(theme)) return;
+  const viewer = await getViewer();
+
+  if (viewer) {
+    const supabase = await createClient();
+    await supabase.from('settings').update({ theme }).eq('space_id', viewer.spaceId);
+  } else {
+    // Un visiteur (bienvenue, connexion) garde son choix sur l'appareil.
+    (await cookies()).set('dk_theme', theme, { path: '/', maxAge: YEAR, sameSite: 'lax' });
+  }
 
   // layout.tsx relit le thème : on invalide tout l'arbre pour que le
   // changement porte sur l'application entière, pas sur l'écran courant.
   revalidatePath('/', 'layout');
+}
+
+/** Montre ou masque l'encoche clair / sombre (réglage propre à l'appareil). */
+export async function setThemeShortcut(on: boolean) {
+  const jar = await cookies();
+  if (on) jar.delete('dk_theme_tab');
+  else jar.set('dk_theme_tab', '0', { path: '/', maxAge: YEAR, sameSite: 'lax' });
+  revalidatePath('/', 'layout');
+}
+
+/**
+ * « Je l'ai portée aujourd'hui », depuis la fiche d'une pièce : un premier
+ * toucher note le port, un second l'annule. C'est ce qui fait avancer la
+ * barre de progression du dressing.
+ */
+export async function togglePieceWear(garmentId: string): Promise<{ error: string } | { worn: boolean }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const supabase = await createClient();
+  const day = parisDay(0);
+  const { data: existing } = await supabase
+    .from('wears')
+    .select('garment_id')
+    .eq('garment_id', garmentId)
+    .eq('worn_on', day)
+    .limit(1);
+
+  const res = existing?.length
+    ? await supabase.from('wears').delete().eq('garment_id', garmentId).eq('worn_on', day)
+    : await supabase.from('wears').insert({ garment_id: garmentId, worn_on: day });
+  if (res.error) return { error: "Le port n'a pas pu être noté." };
+
+  revalidatePath('/dressing');
+  revalidatePath('/accueil');
+  return { worn: !existing?.length };
 }
 
 export async function addGarment(_prev: FormResult, formData: FormData): Promise<FormResult> {
@@ -232,8 +276,8 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
   if (paths.length > left) {
     return {
       error: left > 0
-        ? `Il te reste ${left} photo${left > 1 ? 's' : ''} à confier à Kode aujourd'hui : retire-en ${paths.length - left}.`
-        : `Tu as confié ${DAILY_QUOTA} photos à Kode aujourd'hui, c'est la limite du jour. Reviens demain.`,
+        ? `Il te reste ${left} photo${left > 1 ? 's' : ''} à confier à Kodi aujourd'hui : retire-en ${paths.length - left}.`
+        : `Tu as confié ${DAILY_QUOTA} photos à Kodi aujourd'hui, c'est la limite du jour. Reviens demain.`,
     };
   }
 
@@ -296,7 +340,7 @@ export type KodeResult =
   | { messages: KodeMessage[]; usage: KodeUsage };
 
 /**
- * Pose une question à Kode. L'Edge Function `kode` compte le quota, fait
+ * Pose une question à Kodi. L'Edge Function `kode` compte le quota, fait
  * répondre le modèle et enregistre les deux bulles ; on les relit ensuite par
  * la RLS, avec les vignettes signées, pour les afficher telles quelles.
  */
@@ -305,7 +349,7 @@ export async function askKode(question: string): Promise<KodeResult> {
   if (!viewer) return { error: 'Session expirée.', code: null };
 
   const q = String(question ?? '').trim().slice(0, 600);
-  if (!q) return { error: 'Écris ta question à Kode.', code: null };
+  if (!q) return { error: 'Écris ta question à Kodi.', code: null };
 
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke<{ question_id: string; reply_id: string }>('kode', {
@@ -318,7 +362,7 @@ export async function askKode(question: string): Promise<KodeResult> {
       ? await (error.context as Response).json().catch(() => null)
       : null;
     return {
-      error: body?.error ?? "Kode n'a pas pu répondre. Réessaie dans un instant.",
+      error: body?.error ?? "Kodi n'a pas pu répondre. Réessaie dans un instant.",
       code: body?.code ?? null,
     };
   }
@@ -335,7 +379,7 @@ export async function resetKode(): Promise<FormResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc('kode_reset');
   if (error) return { error: "La conversation n'a pas pu être remise à zéro." };
-  revalidatePath('/kode');
+  revalidatePath('/kodi');
   return undefined;
 }
 
@@ -411,7 +455,7 @@ async function billingPage(body: Record<string, string>): Promise<{ url: string 
   return { url: data.url };
 }
 
-/** « Continuer avec Atelier » : ouvre le paiement Stripe (ou le portail si déjà abonné). */
+/** « Continuer avec Sapologue » : ouvre le paiement Stripe (ou le portail si déjà abonné). */
 export async function startCheckout(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const viewer = await getViewer();
   if (!viewer) return { error: 'Session expirée.' };

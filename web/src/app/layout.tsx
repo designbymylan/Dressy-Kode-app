@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { getTheme } from '@/lib/space';
+import { getTheme, getThemeShortcut } from '@/lib/space';
 import { Intro, INTRO_SCRIPT } from '@/components/Intro';
+import { ThemeNotch } from '@/components/ThemeNotch';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Le thème est résolu AVANT le premier octet de HTML : c'est ce qui fait
   // qu'il vaut pour toute l'application et non pour un seul écran.
-  const theme = await getTheme();
+  const [theme, shortcut] = await Promise.all([getTheme(), getThemeShortcut()]);
 
   return (
     <html lang="fr" data-theme={theme}>
@@ -43,6 +44,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <i />
         </div>
         {children}
+        {/* L'encoche clair / sombre, en haut à droite (21/10), masquable dans Mon compte. */}
+        {shortcut ? <ThemeNotch key={theme} theme={theme} /> : null}
         <Intro />
       </body>
     </html>

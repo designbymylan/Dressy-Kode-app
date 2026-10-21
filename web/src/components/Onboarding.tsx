@@ -435,7 +435,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
 
   const showBack = done || step > 0 || editing;
   const primaryLabel = pending
-    ? 'Kode prépare ton espace'
+    ? 'Kodi prépare ton espace'
     : done
       ? (adjusting ? 'Enregistrer' : 'Entrer dans mon dressing')
       : editing ? 'Revenir au résumé' : step === TOTAL - 1 ? 'Voir le résumé' : 'Continuer';
@@ -540,7 +540,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
 
         {key === 'bijoux' && !done ? (
           <>
-            <Head title={<>Et tes <em className="accent">bijoux</em> ?</>} lead="Pour que Kode les glisse dans tes tenues, ou te suggère ceux qui leur manquent." />
+            <Head title={<>Et tes <em className="accent">bijoux</em> ?</>} lead="Pour que Kodi les glisse dans tes tenues, ou te suggère ceux qui leur manquent." />
             <Legend />
             <WearGrid
               groups={JEWELRY_GROUPS}

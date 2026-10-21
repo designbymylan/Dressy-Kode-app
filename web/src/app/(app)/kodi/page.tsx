@@ -5,11 +5,11 @@ import { parisDay } from '@/lib/dates';
 import { loadMessages, loadUsage } from '@/lib/kode';
 import { KodeChat } from '@/components/KodeChat';
 
-// La réponse de Kode prend souvent 10 à 30 s : la valeur par défaut de
+// La réponse de Kodi prend souvent 10 à 30 s : la valeur par défaut de
 // certains hébergeurs (10 s) couperait l'action serveur avant la fin.
 export const maxDuration = 60;
 
-export default async function Kode() {
+export default async function KodiPage() {
   const viewer = await getViewer();
   if (!viewer) redirect('/bienvenue');
   const supabase = await createClient();

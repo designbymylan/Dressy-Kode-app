@@ -15,7 +15,7 @@ export default async function Ajouter() {
       </Title>
 
       <Card i={1}>
-        <h2 className="section-title" style={{ justifyContent: 'center' }}>Kode la prend en photo</h2>
+        <h2 className="section-title" style={{ justifyContent: 'center' }}>Kodi la prend en photo</h2>
         <PhotoForm spaceId={viewer.spaceId} />
       </Card>
 

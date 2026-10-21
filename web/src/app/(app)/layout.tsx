@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const viewer = await getViewer();
   if (!viewer) redirect('/bienvenue');
   // Tant que le questionnaire n'est pas passé, l'application reste fermée :
-  // Kode n'aurait rien sur quoi s'appuyer pour proposer quoi que ce soit.
+  // Kodi n'aurait rien sur quoi s'appuyer pour proposer quoi que ce soit.
   if (!viewer.onboardedAt) redirect('/demarrage');
 
   return (

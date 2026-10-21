@@ -3,7 +3,7 @@ import type { OutfitView } from '@/lib/kode';
 import { Garment, SHAPE_BY_CATEGORY } from '@/components/garments';
 
 /**
- * Pose des pièces, légèrement basculées, comme dans design/_projet/Kode.dc.html.
+ * Pose des pièces, légèrement basculées, comme dans design/_projet/Kodi.dc.html.
  * Les grandes d'abord, les petites devant : l'ordre vient de lib/kode.ts.
  */
 const SPOTS = [
@@ -19,7 +19,7 @@ const SPOTS = [
  * `assemble` : la tenue qui s'assemble. Les pièces arrivent de l'extérieur de
  * la planche, chacune de son côté, se posent l'une après l'autre, puis le
  * titre s'écrit. À réserver au moment où la tenue apparaît (tenue du jour,
- * nouvelle réponse de Kode), pas aux tenues qu'on relit.
+ * nouvelle réponse de Kodi), pas aux tenues qu'on relit.
  */
 export function OutfitCard({ outfit, children, assemble }: { outfit: OutfitView; children?: ReactNode; assemble?: boolean }) {
   const shown = outfit.pieces.slice(0, SPOTS.length);

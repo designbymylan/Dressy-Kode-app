@@ -1,28 +1,28 @@
 /**
- * Les phrases de Kode pendant qu'il travaille. Hors du composant client
+ * Les phrases de Kodi pendant qu'il travaille. Hors du composant client
  * KodeThinking, pour que les pages serveur (écrans de chargement) puissent
  * les lire elles aussi.
  */
 export const THINKING = {
   chat: [
-    'Kode fouille ton dressing',
-    'Kode assemble les couleurs',
-    'Kode pense à la météo',
-    'Kode essaie une association',
-    'Kode peaufine la tenue',
+    'Kodi fouille ton dressing',
+    'Kodi assemble les couleurs',
+    'Kodi pense à la météo',
+    'Kodi essaie une association',
+    'Kodi peaufine la tenue',
   ],
   page: [
-    'Kode ouvre ton dressing',
-    'Kode range tes portants',
-    'Kode prépare la page',
+    'Kodi ouvre ton dressing',
+    'Kodi range tes portants',
+    'Kodi prépare la page',
   ],
   send: [
-    'Kode reçoit tes photos',
-    'Kode les regarde de près',
+    'Kodi reçoit tes photos',
+    'Kodi les regarde de près',
   ],
   save: [
-    'Kode note tout ça',
-    'Kode prépare ton espace',
+    'Kodi note tout ça',
+    'Kodi prépare ton espace',
   ],
 } as const;
 

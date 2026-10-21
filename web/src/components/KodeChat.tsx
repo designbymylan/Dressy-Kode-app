@@ -5,8 +5,10 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { askKode, planTomorrow, resetKode } from '@/app/actions';
 import type { KodeMessage, KodeUsage } from '@/lib/kode';
 import { OutfitCard } from '@/components/OutfitCard';
-import { ErrorNote, buttonPrimary } from '@/components/ui';
+import { ErrorNote, buttonPrimary, buttonQuiet } from '@/components/ui';
 import { KodeThinking } from '@/components/KodeThinking';
+import { Icon } from '@/components/icons';
+import { Kodi, type KodiLook, type KodiMood } from '@/components/Kodi';
 import { THINKING } from '@/lib/thinking';
 
 const SUGGESTIONS = [
@@ -15,13 +17,6 @@ const SUGGESTIONS = [
   'Quelque chose pour ce soir',
   "Je n'ai rien à me mettre",
 ];
-
-const SPARK = 'M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2Z';
-
-const round = {
-  width: 44, height: 44, border: 'none', borderRadius: 999, background: 'var(--tile)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none',
-} as const;
 
 const bubble = {
   maxWidth: '84%', borderRadius: 22, padding: '12px 16px', fontSize: 15, lineHeight: 1.45, whiteSpace: 'pre-wrap',
@@ -55,6 +50,18 @@ export function KodeChat({
   const left = unlimited ? Infinity : Math.max(0, usage.quota! - usage.used);
   const tooFew = pieces < 2;
   const closed = tooFew || left === 0;
+
+  // La tête de Kodi : il fait coucou en arrivant, écoute quand on écrit,
+  // réfléchit pendant la réponse, puis réagit à ce qu'il a trouvé.
+  const [react, setReact] = useState<KodiMood | null>('wave');
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!react) return;
+    const t = setTimeout(() => setReact(null), 2600);
+    return () => clearTimeout(t);
+  }, [react]);
+  const mood: KodiMood = busy ? 'thinking' : error ? 'sad' : react ?? (closed ? 'sleepy' : focused || text ? 'listening' : 'idle');
+  const look: KodiLook | undefined = busy ? 'up-left' : focused || text ? 'down' : undefined;
 
   // La dernière bulle reste visible au-dessus du champ de saisie.
   useEffect(() => {
@@ -92,6 +99,8 @@ export function KodeChat({
     } else {
       setMessages((m) => [...m.filter((x) => x.id !== temp.id), ...res.messages]);
       setUsage(res.usage);
+      // Une tenue trouvée le ravit ; une simple réponse le rend content.
+      setReact(res.messages.some((m) => m.outfit) ? 'love' : 'happy');
     }
     setBusy(false);
   }
@@ -139,59 +148,56 @@ export function KodeChat({
     <main
       style={{
         maxWidth: 390, margin: '0 auto', minHeight: '100dvh',
-        padding: '20px 20px 250px', display: 'flex', flexDirection: 'column', gap: 16,
+        padding: 'calc(env(safe-area-inset-top, 0px) + 44px) 20px 250px', display: 'flex', flexDirection: 'column', gap: 16,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span
-          aria-hidden="true"
+      <header style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
+        <div
           style={{
-            width: 38, height: 38, borderRadius: 999, background: 'var(--ink)', flex: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 132, height: 132, display: 'grid', placeItems: 'center', borderRadius: '50%',
+            background: 'radial-gradient(circle, color-mix(in srgb, var(--butter) 55%, transparent) 0%, transparent 68%)',
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ground)" strokeWidth="1.8" strokeLinejoin="round">
-            <path d={SPARK} />
-          </svg>
-        </span>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <h1 style={{ fontSize: 22 }}>Kode</h1>
-            <span
-              style={{
-                height: 20, padding: '0 8px', borderRadius: 999, background: 'var(--accent-tint)',
-                color: 'var(--accent-ink)', fontSize: 12, fontWeight: 500, letterSpacing: 0,
-                display: 'inline-flex', alignItems: 'center',
-              }}
-            >
-              IA
-            </span>
-          </span>
-          <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>
-            {unlimited
-              ? 'Questions illimitées'
-              : `${left} question${left > 1 ? 's' : ''} restante${left > 1 ? 's' : ''} ce mois-ci`}
-          </span>
+          <Kodi mood={mood} look={look} track={!look} size={104} enter shadow />
         </div>
-        <button type="button" onClick={reset} disabled={busy} aria-label="Nouvelle conversation" style={round}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <h1 style={{ fontSize: 26 }}>Kodi</h1>
+          <span className="dk-tag dk-tag--butter">IA</span>
+        </span>
+        <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>
+          {busy
+            ? 'Kodi réfléchit…'
+            : unlimited
+              ? 'Ton styliste de poche · questions illimitées'
+              : `${left} question${left > 1 ? 's' : ''} restante${left > 1 ? 's' : ''} ce mois-ci`}
+        </span>
+        <button
+          type="button"
+          onClick={reset}
+          disabled={busy}
+          aria-label="Nouvelle conversation"
+          className="btn btn-glass btn-icon"
+          style={{ position: 'absolute', top: 0, right: 0, width: 44, height: 44, minHeight: 44 }}
+        >
+          <Icon name="plus" size={18} />
         </button>
       </header>
 
       <div role="log" aria-live="polite" aria-busy={busy} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <p style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px' }}>
-          {name ? `Salut ${name}. ` : 'Salut. '}
-          Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà.
-        </p>
+        <div className="kodi-say" style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
+          <Kodi mood="wave" size={34} decorative tap={false} />
+          <p className="kodi-say__bubble">
+            {name ? `Salut ${name}. ` : 'Salut. '}
+            Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà.
+          </p>
+        </div>
 
         {messages.map((m) =>
           m.author === 'user' ? (
             <p
               key={m.id}
               style={{
-                ...bubble, alignSelf: 'flex-end', background: 'var(--ink)', color: 'var(--ground)',
+                ...bubble, alignSelf: 'flex-end', background: 'var(--blue)', color: '#000000',
                 borderRadius: '22px 22px 6px 22px',
               }}
             >
@@ -199,9 +205,10 @@ export function KodeChat({
             </p>
           ) : (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px' }}>
-                {m.body}
-              </p>
+              <div className="kodi-say" style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
+                <Kodi mood={m.outfit ? 'love' : 'idle'} size={34} decorative tap={false} />
+                <p className="kodi-say__bubble" style={{ whiteSpace: 'pre-wrap', animation: 'none' }}>{m.body}</p>
+              </div>
               {m.outfit ? (
                 <OutfitCard outfit={m.outfit} assemble={!known.has(m.id)}>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -211,18 +218,17 @@ export function KodeChat({
                       aria-pressed={planned === m.outfit.id}
                       style={{
                         ...buttonPrimary, flex: 1, minHeight: 46, fontSize: 13.5, padding: '0 10px', whiteSpace: 'nowrap',
-                        ...(planned === m.outfit.id ? { background: 'var(--tile)', color: 'var(--muted)' } : {}),
                       }}
                     >
-                      {planned === m.outfit.id ? 'Prévue pour demain' : 'Prévoir pour demain'}
+                      {planned === m.outfit.id ? <><Icon name="check" size={16} />Prévue pour demain</> : 'Prévoir pour demain'}
                     </button>
                     <button
                       type="button"
                       onClick={() => adjust(m.outfit!.title)}
                       disabled={closed}
                       style={{
-                        ...buttonPrimary, flex: 1, minHeight: 46, fontSize: 14, fontWeight: 500, padding: '0 12px',
-                        background: 'var(--tile)', color: 'var(--ink)', opacity: closed ? 0.5 : 1,
+                        ...buttonQuiet, flex: 1, minHeight: 46, fontSize: 14, fontWeight: 500, padding: '0 12px',
+                        opacity: closed ? 0.5 : 1,
                       }}
                     >
                       Ajuster
@@ -237,7 +243,7 @@ export function KodeChat({
         {busy ? (
           <div
             className="pop"
-            style={{ alignSelf: 'flex-start', background: 'var(--tile)', borderRadius: '22px 22px 22px 6px', padding: '10px 16px 10px 12px' }}
+            style={{ alignSelf: 'flex-start', background: 'var(--butter)', color: 'var(--butter-ink)', borderRadius: '22px 22px 22px 6px', padding: '8px 16px 8px 10px' }}
           >
             <KodeThinking phrases={THINKING.chat} size={24} every={1800} />
           </div>
@@ -258,7 +264,7 @@ export function KodeChat({
           {tooFew ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 22, padding: 16 }}>
               <p style={{ fontSize: 13.5, lineHeight: 1.45 }}>
-                Kode compose avec tes pièces : il lui en faut au moins deux pour proposer une tenue.
+                Kodi compose avec tes pièces : il lui en faut au moins deux pour proposer une tenue.
               </p>
               <Link href="/dressing/ajouter" style={{ ...buttonPrimary, minHeight: 46, fontSize: 14 }}>
                 Ajouter une pièce
@@ -270,7 +276,7 @@ export function KodeChat({
                 Tes {usage.quota} questions du mois sont utilisées. Elles reviennent le 1er du mois.
               </p>
               <Link href="/offres" style={{ ...buttonPrimary, minHeight: 46, fontSize: 14 }}>
-                Kode sans limite
+                Kodi sans limite
               </Link>
             </div>
           ) : (
@@ -282,10 +288,8 @@ export function KodeChat({
                       key={s}
                       type="button"
                       onClick={() => send(s)}
-                      style={{
-                        flex: 'none', minHeight: 38, padding: '0 15px', border: 'none', borderRadius: 999,
-                        background: 'var(--ground)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-                      }}
+                      className="chip"
+                      style={{ flex: 'none', minHeight: 38, padding: '0 15px', fontSize: 13 }}
                     >
                       {s}
                     </button>
@@ -302,7 +306,7 @@ export function KodeChat({
                 }}
               >
                 <label htmlFor="kode-question" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}>
-                  Ta question à Kode
+                  Ta question à Kodi
                 </label>
                 <textarea
                   id="kode-question"
@@ -315,7 +319,9 @@ export function KodeChat({
                     grow();
                   }}
                   onKeyDown={onKey}
-                  placeholder="Écris à Kode…"
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  placeholder="Écris à Kodi…"
                   style={{
                     flex: 1, border: 'none', outline: 'none', resize: 'none', background: 'transparent',
                     fontSize: 16, lineHeight: 1.4, padding: '11px 0', maxHeight: 120,
@@ -325,11 +331,10 @@ export function KodeChat({
                   type="submit"
                   disabled={busy || !text.trim()}
                   aria-label="Envoyer"
-                  style={{ ...round, background: 'var(--ink)', opacity: busy || !text.trim() ? 0.5 : 1 }}
+                  className="btn btn-primary btn-icon"
+                  style={{ width: 44, height: 44, minHeight: 44 }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ground)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M12 19V5M5 12l7-7 7 7" />
-                  </svg>
+                  <Icon name="arrowUp" size={19} />
                 </button>
               </form>
             </>

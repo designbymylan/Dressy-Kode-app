@@ -15,7 +15,7 @@ export type Subscription = {
 
 // Même règle que public.space_plan() : past_due garde les droits pendant les relances.
 const ENTITLED = ['active', 'trialing', 'past_due'];
-const RANK: Record<PlanId, number> = { capsule: 1, atelier: 2, couture: 3 };
+const RANK: Record<PlanId, number> = { capsule: 1, atelier: 2 };
 
 /** L'abonnement qui ouvre les droits, ou null : l'espace est alors en Découverte. */
 export async function loadSubscription(supabase: Db, spaceId: string): Promise<Subscription | null> {

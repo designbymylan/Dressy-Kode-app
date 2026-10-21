@@ -120,7 +120,7 @@ export function ManualForm() {
         <input name="price" type="text" inputMode="decimal" placeholder="49,90" className="input" />
       </Field>
 
-      <SubmitButton label="Ranger dans mon dressing" pending="Kode range ta pièce" />
+      <SubmitButton label="Ranger dans mon dressing" pending="Kodi range ta pièce" />
     </form>
   );
 }
@@ -221,7 +221,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       ));
       if (sent.some((r) => r.error)) throw new Error("Une photo n'a pas pu être envoyée. Vérifie ta connexion et réessaie.");
 
-      setProgress('Kode prend le relais');
+      setProgress('Kodi prend le relais');
       const res = await requestAiGarments({ paths, hint });
       if (res?.error) {
         setCode(res.code);
@@ -303,7 +303,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       </Field>
 
       <p className="small muted center" style={{ paddingInline: 6 }}>
-        Kode repère chaque pièce de ta photo, vêtements, chaussures, sacs et bijoux compris, puis les
+        Kodi repère chaque pièce de ta photo, vêtements, chaussures, sacs et bijoux compris, puis les
         redessine une par une, sans fond, et les range sur tes portants. Tu n’en veux que certaines ?
         Dis-le juste au-dessus.
       </p>
@@ -312,7 +312,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
 
       <button type="submit" disabled={!n || busy} aria-busy={busy || undefined} className="btn btn-primary btn-block">
         {busy ? <span className="spinner" aria-hidden="true" /> : null}
-        {progress ?? (n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kode` : 'Choisis au moins une photo')}
+        {progress ?? (n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kodi` : 'Choisis au moins une photo')}
       </button>
     </form>
   );

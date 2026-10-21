@@ -41,12 +41,12 @@ export class AgentError extends Error {
 
 /** Les messages que la personne peut lire. Aucun ne nomme un modèle ni un fournisseur. */
 export const SAY = {
-  notReady: "Kode n'est pas encore prêt à dessiner tes pièces. Réessaie un peu plus tard.",
-  busy: 'Kode est très demandé en ce moment. Réessaie dans quelques minutes.',
-  failed: "Kode n'a pas pu finir cette pièce. Réessaie dans un moment.",
-  refused: "Kode n'a pas pu dessiner cette pièce. Essaie avec une autre photo.",
-  nothing: "Kode n'a trouvé aucune pièce à ranger sur cette photo. Essaie avec une photo où elle se voit en entier.",
-  photo: 'Kode ne retrouve plus ta photo. Confie-la de nouveau.',
+  notReady: "Kodi n'est pas encore prêt à dessiner tes pièces. Réessaie un peu plus tard.",
+  busy: 'Kodi est très demandé en ce moment. Réessaie dans quelques minutes.',
+  failed: "Kodi n'a pas pu finir cette pièce. Réessaie dans un moment.",
+  refused: "Kodi n'a pas pu dessiner cette pièce. Essaie avec une autre photo.",
+  nothing: "Kodi n'a trouvé aucune pièce à ranger sur cette photo. Essaie avec une photo où elle se voit en entier.",
+  photo: 'Kodi ne retrouve plus ta photo. Confie-la de nouveau.',
 } as const;
 
 const env = (name: string) => Deno.env.get(name)?.trim() || undefined;

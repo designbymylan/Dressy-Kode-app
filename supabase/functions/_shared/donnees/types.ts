@@ -1,7 +1,7 @@
 /**
  * Les données du monde réel (météo, jours fériés, vacances, tendances…)
  * arrivent toutes dans le même emballage, quelle que soit la source qui a
- * répondu : l'app et Kode n'ont jamais à savoir d'où elles viennent pour
+ * répondu : l'app et Kodi n'ont jamais à savoir d'où elles viennent pour
  * les lire, seulement pour les créditer.
  */
 

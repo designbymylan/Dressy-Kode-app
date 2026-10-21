@@ -54,7 +54,7 @@ export const POLITIQUE: Section[] = [
       },
       {
         "titre": "Ton dressing",
-        "texte": "Les photos que tu confies à Kode, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires."
+        "texte": "Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires."
       },
       {
         "titre": "Ton style",
@@ -65,8 +65,8 @@ export const POLITIQUE: Section[] = [
         "texte": "Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé."
       },
       {
-        "titre": "Ton agenda et Kode",
-        "texte": "Tes rendez-vous, voyages, tenues prévues et conversations avec Kode. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées)."
+        "titre": "Ton agenda et Kodi",
+        "texte": "Tes rendez-vous, voyages, tenues prévues et conversations avec Kodi. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées)."
       },
       {
         "titre": "Tes « Pas pour moi »",
@@ -87,12 +87,12 @@ export const POLITIQUE: Section[] = [
     ]
   },
   {
-    "titre": "Kode est une intelligence artificielle",
+    "titre": "Kodi est une intelligence artificielle",
     "texte": [
-      "Pour te répondre, Kode envoie à un prestataire d’intelligence artificielle : la liste de tes pièces, ton profil de style, ton agenda des deux semaines à venir et tes tenues écartées ; ta silhouette et ta taille si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.",
+      "Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces, ton profil de style, ton agenda des deux semaines à venir et tes tenues écartées ; ta silhouette et ta taille si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.",
       "Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle.",
       "Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.",
-      "Kode peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.",
+      "Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.",
       "Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous."
     ]
   },
@@ -118,11 +118,11 @@ export const POLITIQUE: Section[] = [
         "texte": "Tant que ton compte existe. Supprimé, tout est effacé aussitôt (les copies de sauvegarde disparaissent d’elles-mêmes sous quelques jours)."
       },
       {
-        "titre": "Les photos confiées à Kode",
+        "titre": "Les photos confiées à Kodi",
         "texte": "30 jours après l’envoi."
       },
       {
-        "titre": "Les conversations avec Kode",
+        "titre": "Les conversations avec Kodi",
         "texte": "12 mois, 2 mois une fois archivées."
       },
       {

@@ -27,15 +27,43 @@
      data-theme="light" | "dark" | "auto" (la préférence système décide)
    ============================================================ */
 
+/* ============================================================
+   Palette du 21/10 (« Palette de couleur officiel ») : fond blanc pur,
+   texte noir pur, et trois couleurs sobres mais pétillantes.
+     Blue      #c4dae8  ce qui est choisi, l'action principale (texte noir 14,5:1)
+     Butter    #feefb8  bandeaux de Kodi, étiquettes, corps de Kodi (texte noir 18:1)
+     Chocopie  #432f2e  le rond de Kodi, les points forts (texte blanc 12,5:1)
+   #c4dae8 ne se lit pas sur blanc (1,4:1) : une icône ou un texte choisi
+   prend le bleu profond #2b5f86 (6,8:1 sur blanc, 4,7:1 sur l'aplat bleu).
+   En sombre, le bleu clair d'origine redevient lisible (11,8:1).
+   ============================================================ */
+
 :root,
 :root[data-theme='light'] {
   --bg: #ffffff;
   --rule: #e9e9e9; /* filets d'un pixel */
   --rule-strong: #6b7280; /* bord d'un champ, d'une case */
   --stage: #f3f3f3; /* gris studio : vignettes et champs */
-  --butter: #f8e9e4; /* bandeaux de service, seule couleur : rose poudré pâle (le nom « beurre » est resté) */
-  --butter-ink: #090909;
+  --butter: #feefb8; /* bandeaux de service : le beurre de la palette du 21/10 */
+  --butter-ink: #000000;
   --butter-danger: #a13a22;
+
+  --blue: #c4dae8;
+  --blue-ink: #2b5f86;
+  --blue-soft: #edf4f9;
+  --blue-glass: linear-gradient(180deg, #d6e7f2 0%, #bad3e5 100%);
+  --blue-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -3px 8px rgba(43, 95, 134, 0.14), 0 8px 22px -6px rgba(75, 125, 165, 0.45);
+  --choco: #432f2e;
+  --choco-soft: #f1ecea;
+  --panel: #000000; /* la section découpée */
+  --on-panel: #ffffff;
+  --on-panel-muted: #a6a6a6;
+  --nav-idle: #6b7480; /* gris bleuté, 4,7:1 : libellés de la barre */
+  --nav-idle-icon: #8a939d;
+  --nav-active: #2b5f86;
+  --nav-ind: #432f2e;
+  --orb-glow: 0 8px 22px rgba(67, 47, 46, 0.42);
+  --orb-label: #432f2e;
 
   --ink: #000000;
   --ink-soft: #1f1f1f;
@@ -55,11 +83,11 @@
   --shadow-glass: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 18px 40px -18px rgba(17, 17, 17, 0.22);
   --shadow-float: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 24px 60px -24px rgba(17, 17, 17, 0.32);
   --shadow-press: 0 6px 18px -8px rgba(0, 0, 0, 0.45);
-  /* Les halos derrière le verre : crème, très discrets. */
-  --halo-1: #f6efe1;
-  --halo-2: #f2ebdd;
-  --halo-3: #f8f4ea;
-  --halo-4: #efe9de;
+  /* Les halos derrière le verre : un souffle de bleu et de beurre, très discret. */
+  --halo-1: #eaf2f8;
+  --halo-2: #fdf6dc;
+  --halo-3: #f1f6fa;
+  --halo-4: #fbf5e4;
   --halo-opacity: 0.6;
 
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -103,6 +131,18 @@
   --halo-3: #171717;
   --halo-4: #0e0e0e;
   --halo-opacity: 0.5;
+  --blue-ink: #c4dae8;
+  --blue-soft: rgba(196, 218, 232, 0.14);
+  --blue-glass: linear-gradient(180deg, #d3e5f1 0%, #aecbe0 100%);
+  --blue-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(196, 218, 232, 0.35);
+  --choco-soft: #2b2120;
+  --panel: #161618;
+  --nav-idle: #9aa1aa;
+  --nav-idle-icon: #c9cdd3;
+  --nav-active: #c4dae8;
+  --nav-ind: #feefb8;
+  --orb-glow: 0 0 0 2px rgba(254, 239, 184, 0.16), 0 8px 24px rgba(254, 239, 184, 0.2);
+  --orb-label: #feefb8;
   color-scheme: dark;
 }
 
@@ -133,6 +173,18 @@
     --halo-3: #171717;
     --halo-4: #0e0e0e;
     --halo-opacity: 0.5;
+    --blue-ink: #c4dae8;
+    --blue-soft: rgba(196, 218, 232, 0.14);
+    --blue-glass: linear-gradient(180deg, #d3e5f1 0%, #aecbe0 100%);
+    --blue-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(196, 218, 232, 0.35);
+    --choco-soft: #2b2120;
+    --panel: #161618;
+    --nav-idle: #9aa1aa;
+    --nav-idle-icon: #c9cdd3;
+    --nav-active: #c4dae8;
+    --nav-ind: #feefb8;
+    --orb-glow: 0 0 0 2px rgba(254, 239, 184, 0.16), 0 8px 24px rgba(254, 239, 184, 0.2);
+    --orb-label: #feefb8;
     color-scheme: dark;
   }
 }
@@ -209,12 +261,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 img { display: block; }
 
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--blue-ink);
   outline-offset: 3px;
   border-radius: 999px;
 }
 
-/* Le champ de Kode n'a pas de bord : c'est le cadre entier qui prend le focus. */
+/* Le champ de Kodi n'a pas de bord : c'est le cadre entier qui prend le focus. */
 [data-composer] textarea:focus-visible { outline: none; }
 [data-composer]:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
 
@@ -282,7 +334,8 @@ img { display: block; }
   max-width: 430px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top, 0px) + 24px) 16px calc(env(safe-area-inset-bottom, 0px) + 124px);
+  /* En haut, la place de l'encoche clair / sombre ; en bas, celle de la barre et de sa bosse. */
+  padding: calc(env(safe-area-inset-top, 0px) + 44px) 16px calc(env(safe-area-inset-bottom, 0px) + 132px);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -328,9 +381,12 @@ img { display: block; }
 
 /* ---------- boutons ---------- */
 
-/* Toujours en capsule, libellé en capitales ; l'action principale en noir plein. */
+/* Boutons « verre » (21/10), fixes, nets, à la manière d'Apple : toujours en
+   capsule, libellé en casse normale, un reflet spéculaire en haut, un liseré
+   clair, une ombre courte. L'action principale en verre bleu, texte noir. */
 .btn {
   position: relative;
+  isolation: isolate;
   min-height: 52px;
   padding: 0 24px;
   border: 1px solid transparent;
@@ -339,37 +395,62 @@ img { display: block; }
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
   overflow: hidden;
-  transition: transform 260ms var(--ease-spring), box-shadow 260ms var(--ease), background-color 200ms var(--ease), opacity 200ms var(--ease);
+  transition: transform 420ms var(--ease-spring), box-shadow 260ms var(--ease), background-color 200ms var(--ease), opacity 200ms var(--ease);
 }
-.btn:active:not(:disabled) { transform: scale(0.965); }
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(120% 90% at 28% -10%, rgba(255, 255, 255, 0.55), transparent 58%);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+}
+.btn:active:not(:disabled) { transform: scale(0.965); transition-duration: 120ms; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-block { display: flex; width: 100%; }
-.btn-primary { background: var(--ink); color: var(--on-ink); box-shadow: var(--shadow-press); }
-.btn-primary:hover:not(:disabled) { opacity: 0.9; }
-/* Les autres : une capsule de verre. */
+.btn-primary {
+  background: var(--blue-glass);
+  color: #000000;
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: var(--blue-shadow);
+}
+.btn-primary::before { background: radial-gradient(120% 90% at 28% -10%, rgba(255, 255, 255, 0.8), transparent 55%); }
+/* Les autres : une capsule de verre clair. */
 .btn-glass {
   background: var(--glass-strong);
   color: var(--ink);
   border-color: var(--glass-edge);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
   box-shadow: var(--shadow-glass);
 }
-/* Ou du texte en capitales, souligné. */
+/* Le noir plein, pour une action forte posée sur du verre clair. */
+.btn-dark { background: var(--ink); color: var(--on-ink); box-shadow: var(--shadow-press); }
+.btn-dark::before { background: radial-gradient(120% 90% at 28% -10%, rgba(255, 255, 255, 0.2), transparent 55%); }
+/* Le beurre, sur une carte sombre. */
+.btn-butter { background: linear-gradient(180deg, #fff6d2 0%, #fde9a2 100%); color: #432f2e; border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.35); }
+/* Ou du texte, souligné. */
 .btn-ghost {
   background: transparent;
   color: var(--ink);
   min-height: 44px;
+  font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.btn-ghost::before { display: none; }
 .btn-sm { min-height: 40px; padding: 0 16px; }
 .btn-icon { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%; }
 
@@ -393,10 +474,13 @@ img { display: block; }
   transition: background-color 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
 .chip:active { transform: scale(0.95); }
+/* Ce qui est choisi passe en bleu (21/10) : puces, segments, pastilles, onglets. */
 .chip[aria-pressed='true'], .chip[aria-checked='true'], .chip[aria-current='page'] {
-  background: var(--ink);
-  color: var(--on-ink);
-  border-color: var(--ink);
+  background: var(--blue-glass);
+  color: #000000;
+  border-color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 4px 14px -4px rgba(75, 125, 165, 0.4);
 }
 .chip svg { flex: none; }
 
@@ -420,27 +504,27 @@ img { display: block; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--muted);
   background: transparent;
   border: none;
   cursor: pointer;
   transition: color 240ms var(--ease);
 }
-.segment > [aria-current='page'], .segment > [aria-pressed='true'] { color: var(--on-ink); }
+.segment > [aria-current='page'], .segment > [aria-pressed='true'], .segment > [aria-checked='true'] { color: #000000; font-weight: 600; }
 /* Avant la mesure du curseur (premier rendu serveur), l'option active porte son propre fond. */
-.segment:not([data-ready]) > [data-on='true'] { background: var(--ink); }
+.segment:not([data-ready]) > [data-on='true'] { background: var(--blue); }
 .segment-thumb {
   position: absolute;
   z-index: 0;
   top: 4px;
   bottom: 4px;
   border-radius: 999px;
-  background: var(--ink);
-  box-shadow: var(--shadow-press);
-  transition: left 420ms var(--ease-spring), width 420ms var(--ease-spring);
+  background: var(--blue-glass);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 12px -2px rgba(75, 125, 165, 0.4);
+  transition: left 520ms var(--ease-spring), width 520ms var(--ease-spring);
 }
 
 .scroll-x {
@@ -476,7 +560,7 @@ img { display: block; }
   outline: none;
   transition: border-color 200ms var(--ease);
 }
-.input:focus { border-color: var(--ink); }
+.input:focus { border-color: var(--blue-ink); box-shadow: 0 0 0 4px var(--blue-soft); }
 textarea.input { border-radius: 22px; padding: 14px 18px; }
 .input::placeholder { color: var(--muted); }
 
@@ -632,18 +716,18 @@ textarea.input { border-radius: 22px; padding: 14px 18px; }
 [aria-checked='true'] > .gloss,
 [aria-pressed='true'] > .gloss,
 .gloss[data-on='true'] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--on-ink);
+  background: var(--blue-glass);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #000000;
   transform: scale(1.06);
 }
 
 /* ============================================================
-   Chargement : Kode réfléchit
+   Chargement : Kodi réfléchit
    ============================================================ */
 
-/* L'anneau de Kode : un cercle en pointillé qui tourne autour d'un cœur
-   noir qui respire. Le seul rond avec le bouton de Kode. Monochrome. */
+/* L'anneau de Kodi : un cercle en pointillé qui tourne autour d'un cœur
+   noir qui respire. Le seul rond avec le bouton de Kodi. Monochrome. */
 .kode-orb {
   position: relative;
   flex: none;
@@ -1084,54 +1168,116 @@ textarea.input { border-radius: 22px; padding: 14px 18px; }
 }
 
 /* ============================================================
-   La barre d'onglets : une capsule de verre qui flotte en bas, comme sur
-   iOS 26. L'onglet actif montre son icône pleine et son nom dessous ; Kode
-   au centre, dans un rond noir.
+   La barre de navigation (21/10), reprise élément par élément de la
+   référence « Inspiration Navbar » : une barre arrondie, une bosse au
+   centre qui porte le rond de Kodi, un petit trait au-dessus de l'onglet
+   actif qui glisse d'un onglet à l'autre, l'icône au trait qui devient
+   pleine et bleue, tous les noms écrits. Elle reste en verre (décision du
+   03/10) : la barre et la bosse sont deux plaques floutées jointives.
    ============================================================ */
 
-.tabbar {
+.dk-nav {
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index: 20;
-  max-width: 398px;
-  height: 66px;
+  max-width: 406px;
   margin: 0 auto;
-  padding: 0 6px;
-  border-radius: 999px;
+}
+.dk-nav__bump {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  width: 132px;
+  height: 28px; /* bord à bord avec la barre : pas de double épaisseur de verre */
+  transform: translateX(-50%);
   background: var(--nav-glass);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
   backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--glass-edge);
-  box-shadow: var(--shadow-float);
+  /* La forme de la bosse ; la barre dessous ferme le bas. */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 132 30'%3E%3Cpath d='M0 31C18 31 30 27 38 18 46 8 54 2 66 2s20 6 28 16c8 9 20 13 38 13Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 132 30'%3E%3Cpath d='M0 31C18 31 30 27 38 18 46 8 54 2 66 2s20 6 28 16c8 9 20 13 38 13Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
-.tabbar-inner { height: 100%; display: flex; }
-.tab {
+.dk-nav__bar {
+  --i: 0;
   position: relative;
-  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 68px;
+  border-radius: 24px;
+  background: var(--nav-glass);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+}
+/* Le contour et l'ombre de la silhouette entière (barre et bosse), tracés par TabBar.tsx. */
+.dk-nav__shade, .dk-nav__edge { position: absolute; left: 0; top: -30px; overflow: visible; pointer-events: none; }
+.dk-nav__shade { z-index: -1; }
+.dk-nav__shade feFlood { flood-color: #000000; }
+.dk-nav__shade .is-near { flood-opacity: 0.13; }
+.dk-nav__shade .is-far { flood-opacity: 0.14; }
+.dk-nav__edge path { fill: none; stroke: rgba(0, 0, 0, 0.09); stroke-width: 1; }
+:root[data-theme='dark'] .dk-nav__shade .is-near { flood-opacity: 0.5; }
+:root[data-theme='dark'] .dk-nav__shade .is-far { flood-opacity: 0.6; }
+:root[data-theme='dark'] .dk-nav__edge path { stroke: rgba(255, 255, 255, 0.12); }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='auto'] .dk-nav__shade .is-near { flood-opacity: 0.5; }
+  :root[data-theme='auto'] .dk-nav__shade .is-far { flood-opacity: 0.6; }
+  :root[data-theme='auto'] .dk-nav__edge path { stroke: rgba(255, 255, 255, 0.12); }
+}
+.dk-nav__ind {
+  position: absolute;
+  top: 7px;
+  left: calc(var(--i) * 20% + 10%);
+  width: 16px;
+  height: 3px;
+  margin-left: -8px;
+  border-radius: 999px;
+  background: var(--nav-ind);
+  transition: left 560ms var(--ease-spring), opacity 200ms, transform 300ms var(--ease-spring);
+}
+.dk-nav__ind[data-hidden='true'] { opacity: 0; transform: scaleX(0.2); }
+.dk-nav__item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  border-radius: 999px;
-  color: var(--muted);
+  gap: 4px;
+  padding-top: 6px;
+  color: var(--nav-idle-icon);
 }
-.tab[aria-current='page'] { color: var(--ink); }
-.tab:focus-visible { outline-offset: -4px; }
-.tab-name { height: 15px; font-size: 12px; font-weight: 500; line-height: 15px; color: var(--ink); animation: fade-in 180ms var(--ease) both; }
-.tab-kode { gap: 1px; }
-.tab-kode-disc {
-  width: 42px;
-  height: 42px;
+.dk-nav__item:focus-visible, .dk-nav__center:focus-visible { outline-offset: -4px; border-radius: 18px; }
+.dk-nav__icon { position: relative; width: 24px; height: 24px; transition: transform 420ms var(--ease-spring); }
+.dk-nav__icon > * { position: absolute; inset: 0; transition: opacity 220ms, transform 460ms var(--ease-spring); }
+.dk-nav__icon .is-solid { display: grid; opacity: 0; transform: scale(0.5); }
+.dk-nav__item[aria-current='page'] { color: var(--nav-active); }
+.dk-nav__item[aria-current='page'] .dk-nav__icon { transform: translateY(-2px); }
+.dk-nav__item[aria-current='page'] .is-solid { opacity: 1; transform: scale(1); }
+.dk-nav__item[aria-current='page'] .is-line { opacity: 0; transform: scale(1.3); }
+.dk-nav__item:active .dk-nav__icon { transform: scale(0.84); }
+.dk-nav__label { font-size: 11.5px; font-weight: 500; color: var(--nav-idle); transition: color 240ms; }
+.dk-nav__item[aria-current='page'] .dk-nav__label { color: var(--nav-active); font-weight: 600; }
+.dk-nav__center { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 13px; }
+.dk-nav__orb {
+  position: absolute;
+  left: 50%;
+  top: -24px;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
   border-radius: 50%;
-  background: var(--ink);
-  color: var(--on-ink);
+  background: radial-gradient(circle at 35% 25%, #5b4342, var(--choco) 62%);
+  box-shadow: var(--orb-glow);
   display: grid;
   place-items: center;
-  box-shadow: var(--shadow-press);
+  transition: transform 460ms var(--ease-spring);
 }
+.dk-nav__center:active .dk-nav__orb { transform: scale(0.9); }
+@media (hover: hover) {
+  .dk-nav__center:hover .dk-nav__orb { transform: translateY(-2px) scale(1.04); }
+}
+.dk-nav__center[aria-current='page'] .dk-nav__label { color: var(--orb-label); font-weight: 600; }
 
 /* ============================================================
    Le fil de progression du questionnaire : couture et nœuds
@@ -1253,3 +1399,363 @@ textarea.input { border-radius: 22px; padding: 14px 18px; }
   .intro { animation: intro-out 0.4s ease 0.7s both; }
   .intro-stage, .intro-mark, .intro-stroke, .intro-spark, .intro-glint, .intro-seam, .intro-word { animation: none; }
 }
+
+/* ============================================================
+   L'encoche clair / sombre (21/10), en haut à droite. Elle se masque
+   dans Mon compte › Paramètres (réglage propre à l'appareil).
+   ============================================================ */
+.dk-notch {
+  position: fixed;
+  top: 0;
+  right: max(12px, calc((100vw - 430px) / 2 + 12px));
+  z-index: 45;
+  height: calc(34px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 7px 0;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 0 0 18px 18px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: inset 0 -1px 0 var(--glass-line), 0 6px 16px -6px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: transform 420ms var(--ease-spring);
+}
+.dk-notch:active { transform: translateY(2px) scale(0.97); }
+.dk-notch__track { position: relative; width: 50px; height: 26px; border-radius: 999px; background: #e7e7ea; transition: background 320ms; }
+.dk-notch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #feefb8;
+  color: #432f2e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 520ms var(--ease-spring), background 320ms, color 320ms;
+}
+.dk-notch__thumb .is-moon { display: none; }
+.dk-notch[data-mode='dark'] .dk-notch__track { background: #2a2a2e; }
+.dk-notch[data-mode='dark'] .dk-notch__thumb { transform: translateX(24px) rotate(-30deg); background: #c4dae8; color: #000000; }
+.dk-notch[data-mode='dark'] .dk-notch__thumb .is-sun { display: none; }
+.dk-notch[data-mode='dark'] .dk-notch__thumb .is-moon { display: inline-block; }
+@media (prefers-color-scheme: dark) {
+  .dk-notch[data-mode='auto'] .dk-notch__track { background: #2a2a2e; }
+  .dk-notch[data-mode='auto'] .dk-notch__thumb { transform: translateX(24px) rotate(-30deg); background: #c4dae8; color: #000000; }
+  .dk-notch[data-mode='auto'] .dk-notch__thumb .is-sun { display: none; }
+  .dk-notch[data-mode='auto'] .dk-notch__thumb .is-moon { display: inline-block; }
+}
+/* La bascule de thème s'ouvre en cercle depuis l'encoche (View Transitions). */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* ============================================================
+   Barre de progression (21/10), reprise de la référence : une gélule
+   cernée d'un trait épais, et une gélule pleine qui porte le %.
+   ============================================================ */
+@keyframes dk-grow { from { width: 0; } }
+@keyframes dk-slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(270%); } }
+.dk-pbar { --h: 48px; position: relative; height: var(--h); padding: 4px; border: 3px solid currentColor; border-radius: 999px; color: var(--ink); }
+.dk-pbar__fill {
+  height: 100%;
+  min-width: 3.6em;
+  max-width: 100%;
+  border-radius: 999px;
+  background: currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px;
+  animation: dk-grow 1300ms var(--ease) both;
+  transition: width 520ms var(--ease-spring);
+}
+.dk-pbar__val { color: var(--bg); font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dk-pbar--sm { --h: 28px; padding: 3px; border-width: 2.5px; }
+.dk-pbar--sm .dk-pbar__fill { padding: 0 7px; min-width: 3.3em; }
+.dk-pbar--sm .dk-pbar__val { font-size: 11px; }
+.dk-pbar--busy { overflow: hidden; }
+.dk-pbar--busy .dk-pbar__fill { width: 38%; min-width: 0; animation: dk-slide 1.15s var(--ease) infinite; }
+.dk-cut .dk-pbar { color: var(--on-panel); }
+.dk-cut .dk-pbar__val { color: var(--panel); }
+
+/* ============================================================
+   Section découpée (21/10, référence « découpage de section ») : un
+   panneau noir qui coule dans la page. Le coin haut gauche remonte en
+   congé creux, le coin haut droit est bombé : la ligne fait un S.
+   ============================================================ */
+.dk-cut {
+  --r: 40px;
+  position: relative;
+  margin-top: var(--r);
+  margin-inline: -16px;
+  padding: 26px 16px 28px;
+  background: var(--panel);
+  color: var(--on-panel);
+  border-top-right-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dk-cut::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(-1 * var(--r) + 1px);
+  width: var(--r);
+  height: var(--r);
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--r) - 0.5px), var(--panel) var(--r));
+}
+.dk-cut--flip { border-top-right-radius: 0; border-top-left-radius: var(--r); }
+.dk-cut--flip::before { left: auto; right: 0; background: radial-gradient(circle at 0 0, transparent calc(var(--r) - 0.5px), var(--panel) var(--r)); }
+.dk-cut--close { margin-bottom: var(--r); border-bottom-left-radius: var(--r); }
+.dk-cut--close::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: calc(-1 * var(--r) + 1px);
+  width: var(--r);
+  height: var(--r);
+  background: radial-gradient(circle at 0 100%, transparent calc(var(--r) - 0.5px), var(--panel) var(--r));
+}
+.dk-cut .eyebrow, .dk-cut .muted, .dk-cut .lead { color: var(--on-panel-muted); }
+
+/* ============================================================
+   Profil (21/10, référence « exemple page Profile ») : groupes de lignes
+   à pastille de couleur, compteur et chevron.
+   ============================================================ */
+.dk-group { background: var(--stage); border-radius: var(--r-card); padding: 6px; display: flex; flex-direction: column; }
+.dk-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 200ms var(--ease);
+}
+.dk-row::-webkit-details-marker { display: none; }
+@media (hover: hover) { .dk-row:hover { background: var(--glass-strong); } }
+.dk-row:active { background: var(--glass-strong); }
+.dk-row__label { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; }
+.dk-row__value { font-size: 13px; color: var(--muted); text-align: right; }
+details[open] > .dk-row .dk-ico[data-anim='nudge'] { transform: rotate(90deg); }
+.dk-row-body { padding: 2px 12px 14px 66px; font-size: 14px; line-height: 1.5; color: var(--muted); animation: sheet-rise 380ms var(--ease) both; }
+.dk-bubble-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #432f2e; background: var(--butter); }
+.dk-bubble-ico--blue { background: var(--blue); color: #000000; }
+.dk-bubble-ico--choco { background: var(--choco-soft); color: var(--ink); }
+.dk-bubble-ico--plain { background: var(--glass-strong); color: var(--ink); }
+.dk-count {
+  flex: none;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--stage);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dk-tag--butter { background: var(--butter); color: #000000; }
+.dk-tag--blue { background: var(--blue); color: #000000; }
+
+/* Interrupteur en verre : bleu quand il est ouvert. */
+.dk-switch {
+  position: relative;
+  flex: none;
+  width: 54px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-line);
+  background: var(--rule);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 260ms var(--ease);
+}
+.dk-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff, #f2f3f5);
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 460ms var(--ease-spring), background 260ms, width 260ms var(--ease);
+}
+.dk-switch[aria-checked='true'] { background: var(--blue-soft); border-color: rgba(43, 95, 134, 0.25); }
+.dk-switch[aria-checked='true']::after { transform: translateX(22px); background: linear-gradient(180deg, #8fb6d3, #5e8fb5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 3px 10px rgba(43, 95, 134, 0.4); }
+.dk-switch:active::after { width: 30px; }
+.dk-switch[aria-checked='true']:active::after { transform: translateX(18px); }
+
+/* Feuille du bas (offres). */
+.dk-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.32); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: fade-in 260ms var(--ease); }
+.dk-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  max-width: 430px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  margin: 0 auto;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 32px 32px 0 0;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.18);
+  animation: sheet-up 560ms var(--ease-spring);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dk-sheet__grip { width: 40px; height: 5px; margin: 0 auto; border-radius: 999px; background: var(--rule); }
+
+/* ============================================================
+   Icônes pleines (21/10, planche « Micro icons (solid) ») et leurs
+   micro-interactions : chaque icône porte son geste (data-anim), joué au
+   survol d'un bouton, d'un lien ou d'un .dk-tap, et à l'appui.
+   ============================================================ */
+.dk-ico { flex: none; display: inline-block; vertical-align: middle; transition: transform 420ms var(--ease-spring); }
+.dk-ico[data-anim='bell'] { transform-origin: 50% 10%; }
+@keyframes dk-ring { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(16deg); } 40% { transform: rotate(-14deg); } 60% { transform: rotate(9deg); } 80% { transform: rotate(-5deg); } }
+@keyframes dk-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.25) rotate(18deg); } }
+@keyframes dk-beat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.28); } 60% { transform: scale(0.94); } }
+@keyframes dk-fly { 0% { transform: translate(0, 0); } 45% { transform: translate(5px, -5px); opacity: 0; } 55% { transform: translate(-5px, 5px); opacity: 0; } 100% { transform: translate(0, 0); opacity: 1; } }
+@media (hover: hover) {
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='nudge'] { transform: translateX(3px); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='back'] { transform: translateX(-3px); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='spin'] { transform: rotate(90deg); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='gear'] { transform: rotate(60deg); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='bell'] { animation: dk-ring 700ms ease; }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='pop'] { transform: scale(1.18); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='beat'] { animation: dk-beat 700ms ease; }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='tilt'] { transform: rotate(-14deg); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='lift'] { transform: translateY(-2px); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='twinkle'] { animation: dk-twinkle 800ms ease; }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='swing'] { transform: rotate(-18deg); }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='fly'] { animation: dk-fly 650ms ease; }
+  :is(.dk-tap, a, button, summary):hover .dk-ico[data-anim='drop'] { transform: translateY(2px); }
+}
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='nudge'] { transform: translateX(3px); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='back'] { transform: translateX(-3px); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='spin'] { transform: rotate(90deg); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='gear'] { transform: rotate(60deg); }
+:is(.dk-tap, a, button, summary):active .dk-ico:is([data-anim='pop'], [data-anim='beat']) { transform: scale(1.2); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='tilt'] { transform: rotate(-14deg); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='lift'] { transform: translateY(-2px); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='twinkle'] { transform: scale(1.2) rotate(18deg); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='swing'] { transform: rotate(-18deg); }
+:is(.dk-tap, a, button, summary):active .dk-ico[data-anim='fly'] { transform: translate(3px, -3px); }
+/* Dans la barre, l'icône a déjà son propre mouvement. */
+.dk-nav .dk-ico { transform: none !important; animation: none !important; }
+
+/* ============================================================
+   Kodi (21/10), la mascotte et le visage de l'IA. Ses humeurs se posent
+   par data-mood ; le composant (components/Kodi.tsx) ne gère que la
+   forme des yeux et de la bouche, le regard et le toucher.
+   ============================================================ */
+.kodi { display: block; overflow: visible; flex: none; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+.kodi[data-tap='true'] { cursor: pointer; }
+.dk-cut .kodi { color: var(--on-panel); }
+.dk-nav__orb .kodi { color: #feefb8; }
+.kodi [class^='kodi__'] { transform-box: fill-box; }
+.kodi__all { transform-origin: 50% 100%; transition: transform 420ms var(--ease-spring); }
+.kodi__body { transform-origin: 50% 100%; animation: kodi-breathe 3.4s ease-in-out infinite; }
+.kodi__eyes { transform-origin: 50% 50%; animation: kodi-blink 4.8s infinite; animation-delay: var(--kodi-blink, 0s); }
+.kodi__look { transform: translate(var(--kx, 0px), var(--ky, 0px)); transition: transform 260ms var(--ease); }
+.kodi__hook { transform-origin: 50% 100%; }
+.kodi__awning { transform-origin: 50% 0%; }
+.kodi__arm-l { transform-origin: 100% 20%; transition: transform 460ms var(--ease-spring); }
+.kodi__arm-r { transform-origin: 0% 20%; transition: transform 460ms var(--ease-spring); }
+.kodi__fx { pointer-events: none; }
+@keyframes kodi-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.012, 1.03); } }
+@keyframes kodi-blink { 0%, 93%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } 97% { transform: scaleY(1); } }
+@keyframes kodi-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 18% { transform: translateY(0) scale(1.06, 0.92); } 45% { transform: translateY(-9%) scale(0.96, 1.05); } 70% { transform: translateY(0) scale(1.04, 0.96); } }
+@keyframes kodi-jump { 0%, 100% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(0) scale(1.1, 0.88); } 40% { transform: translateY(-16%) scale(0.94, 1.08); } 62% { transform: translateY(0) scale(1.08, 0.92); } 80% { transform: translateY(-3%) scale(1, 1); } }
+@keyframes kodi-wave { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-50deg); } 40% { transform: rotate(-20deg); } 60% { transform: rotate(-50deg); } 80% { transform: rotate(-20deg); } }
+@keyframes kodi-arms-up { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(var(--up, -60deg)); } }
+@keyframes kodi-tilt { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-5deg); } }
+@keyframes kodi-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes kodi-hook { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-18deg); } 65% { transform: rotate(12deg); } }
+@keyframes kodi-sink { 0%, 100% { transform: translateY(2%) scale(1.02, 0.97); } 50% { transform: translateY(3%) scale(1.03, 0.95); } }
+@keyframes kodi-squash { 0% { transform: scale(1, 1); } 25% { transform: scale(1.14, 0.84); } 55% { transform: scale(0.92, 1.1); } 80% { transform: scale(1.03, 0.98); } 100% { transform: scale(1, 1); } }
+@keyframes kodi-dots { 0%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@keyframes kodi-z { 0% { opacity: 0; transform: translate(0, 0) scale(0.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -22px) scale(1.1); } }
+@keyframes kodi-confetti { 0% { opacity: 0; transform: translate(0, 0) rotate(0); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--cx), var(--cy)) rotate(220deg); } }
+@keyframes kodi-heart { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.25); } }
+@keyframes kodi-mouth { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes kodi-in { 0% { opacity: 0; transform: translateY(30%) scale(0.5); } 60% { opacity: 1; transform: translateY(-6%) scale(1.06, 0.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes kodi-unroll { from { transform: scaleY(0); } }
+@keyframes kodi-hands { from { opacity: 0; transform: translateY(40%); } }
+.kodi[data-mood='happy'] .kodi__all, .kodi[data-mood='love'] .kodi__all { animation: kodi-hop 1.1s var(--ease) infinite; }
+.kodi[data-mood='happy'] .kodi__hook, .kodi[data-mood='celebrate'] .kodi__hook, .kodi[data-mood='wave'] .kodi__hook { animation: kodi-hook 1.1s ease-in-out infinite; }
+.kodi[data-mood='celebrate'] .kodi__all, .kodi[data-mood='surprised'] .kodi__all { animation: kodi-jump 1s var(--ease) infinite; }
+.kodi[data-mood='surprised'] .kodi__all { animation-iteration-count: 1; }
+.kodi[data-mood='celebrate'] .kodi__arm-l { --up: 70deg; animation: kodi-arms-up 0.5s ease-in-out infinite; }
+.kodi[data-mood='celebrate'] .kodi__arm-r { --up: -70deg; animation: kodi-arms-up 0.5s ease-in-out infinite; }
+.kodi[data-mood='wave'] .kodi__arm-r { animation: kodi-wave 1.6s ease-in-out infinite; }
+.kodi[data-mood='wave'] .kodi__all { animation: kodi-tilt 1.6s ease-in-out infinite; }
+.kodi[data-mood='thinking'] .kodi__awning, .kodi[data-mood='thinking'] .kodi__hook { animation: kodi-sway 2.4s ease-in-out infinite; }
+.kodi[data-mood='listening'] .kodi__all { transform: rotate(-7deg); }
+.kodi[data-mood='sad'] .kodi__all { animation: kodi-sink 3s ease-in-out infinite; }
+.kodi[data-mood='sleepy'] .kodi__body { animation-duration: 5s; }
+.kodi[data-mood='love'] .kodi__heart { transform-origin: 50% 50%; animation: kodi-heart 0.9s ease-in-out infinite; }
+.kodi[data-mood='talking'] .kodi__mouth-a { animation: kodi-mouth 0.38s infinite; }
+.kodi[data-mood='talking'] .kodi__mouth-b { animation: kodi-mouth 0.38s infinite reverse; }
+.kodi[data-mood='shy'] .kodi__arm-l, .kodi[data-mood='shy'] .kodi__arm-r { opacity: 0; }
+.kodi.is-tapped .kodi__all { animation: kodi-squash 560ms var(--ease); }
+.kodi__dot { animation: kodi-dots 1.2s ease-in-out infinite; }
+.kodi__z { animation: kodi-z 2.4s ease-out infinite; }
+.kodi__bit { animation: kodi-confetti 1.4s ease-out infinite; }
+.kodi__hands { transform-origin: 50% 100%; animation: kodi-hands 420ms var(--ease-spring) both; }
+.kodi--enter { animation: kodi-in 820ms var(--ease-spring) both; }
+.kodi--enter .kodi__awning { animation: kodi-unroll 620ms var(--ease-spring) 260ms both; }
+
+/* Kodi qui parle : la mascotte et sa bulle beurre. */
+.kodi-say { display: flex; align-items: flex-end; gap: 10px; }
+.kodi-say__bubble {
+  position: relative;
+  min-width: 0;
+  padding: 11px 15px;
+  border-radius: 20px 20px 20px 6px;
+  background: var(--butter);
+  color: var(--butter-ink);
+  font-size: 15px;
+  line-height: 1.45;
+  animation: rise 460ms var(--ease) both;
+  animation-delay: 120ms;
+}
+
+/* Kodi à l'intro : il arrive sous la marque, fait coucou, puis la caméra plonge. */
+.intro-kodi { animation: kodi-in 820ms var(--ease-spring) 0.75s both, intro-fade 0.2s ease 1.95s forwards; }
+@media (prefers-reduced-motion: reduce) { .intro-kodi { animation: none; } }

@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 /**
  * Le logo de Dresskode (piste A validée le 13/10, `design/logo/`) : un K fin
- * dont la branche haute s'arrête sur l'étincelle de Kode. Le K suit la
+ * dont la branche haute s'arrête sur l'étincelle de Kodi. Le K suit la
  * couleur du texte (noir en clair, blanc en sombre) ; l'étincelle aussi, sauf
  * sur fond noir où elle peut passer en rose poudré (`sparkle="var(--butter)"`).
  */
