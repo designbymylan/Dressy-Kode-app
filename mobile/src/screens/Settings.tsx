@@ -28,7 +28,7 @@ import { AccountSheet } from '../ui/account';
 import { NOTIF_LABEL, NotifChoices } from '../ui/rappels';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { glassSurface } from '../ui/Glass';
-import { PLANS } from './Offers';
+import { planOf } from './Offers';
 import type { Nav } from '../navigation/types';
 
 const MODE = { montrer: 'Partage avec', preter: 'Prêt à', donner: 'Don proposé à' } as const;
@@ -37,14 +37,14 @@ export function Settings() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { c, scheme, pref, setPref, solidGlass, setSolidGlass } = useTheme();
+  const { c, scheme, pref, setPref, solidGlass, setSolidGlass, themeSwitch, setThemeSwitch } = useTheme();
   const { y, onScroll } = useHeaderScroll();
   const top = useStackTop();
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [sharesOpen, setSharesOpen] = useState(false);
   const [account, setAccount] = useState(false);
   const p = s.profile;
-  const plan = PLANS.find((x) => x.id === s.plan)!;
+  const plan = planOf(s.plan);
   const loans = s.shares.filter((x) => x.mode === 'preter');
   const who = [p.username ? `@${p.username}` : null, p.email ?? (s.account === 'nouveau' ? 'Sans compte' : null)].filter(Boolean).join(' · ');
 
@@ -104,6 +104,7 @@ export function Settings() {
               ]}
             />
           </View>
+          <Row icon="moon" title="Bouton clair / sombre" detail="En haut à droite des onglets" right={<Toggle testID="theme-switch-setting" value={themeSwitch} onChange={setThemeSwitch} label="Bouton clair / sombre" />} />
           <Row icon="layers" title="Verre plus opaque" detail="Barres et boutons pleins" right={<Toggle testID="solid-glass" value={solidGlass} onChange={setSolidGlass} label="Verre plus opaque" />} last />
         </Group>
 
@@ -112,7 +113,7 @@ export function Settings() {
           {online && s.account === 'nouveau' && <Row testID="me-account" icon="lock" title={s.pendingEmail ? 'J’ai confirmé mon e-mail : me connecter' : 'Créer mon compte'} onPress={() => setAccount(true)} />}
           <Row testID="settings-offer" icon="gift" title="Mon offre" onPress={() => nav.navigate('Offers')} right={<View className="flex-row items-center" style={{ gap: 8 }}><Badge label={plan.name} tone="neutral" /><Icon name="chevron" size={18} color={c.ink2} /></View>} />
           <Row testID="me-shop" icon="bag" title="La boutique" onPress={() => nav.navigate('Shop')} />
-          <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Kode te connaît à ${precision(p)} %`} onPress={() => nav.navigate('Silhouette')} />
+          <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Kodi te connaît à ${precision(p)} %`} onPress={() => nav.navigate('Silhouette')} />
           <Row
             testID="me-loans"
             icon="share"

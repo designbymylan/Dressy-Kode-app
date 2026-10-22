@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { FlatLay } from '@/components/garments';
 import { Wordmark } from '@/components/Logo';
+import { Kodi } from '@/components/Kodi';
 
 /** Écran 1 du brief : collage à plat, une phrase, un seul bouton. */
 export default function Bienvenue() {
@@ -19,7 +20,17 @@ export default function Bienvenue() {
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 26 }}>
-        <FlatLay />
+        {/* Kodi devant sa vitrine (21/10) : il fait coucou et suit le doigt du regard. */}
+        <div style={{ position: 'relative' }}>
+          <FlatLay />
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: -34, display: 'flex', justifyContent: 'center' }}>
+            <Kodi mood="wave" size={132} track enter shadow />
+          </div>
+        </div>
+
+        <p className="kodi-say__bubble" style={{ alignSelf: 'center', marginTop: 30, borderRadius: 20, textAlign: 'center' }}>
+          Salut ! Moi c’est <strong>Kodi</strong>, ton styliste de poche.
+        </p>
 
         <h1 className="hero-title rise" style={{ '--i': 7, fontSize: 34, lineHeight: 1.1 } as CSSProperties}>
           Ton dressing,

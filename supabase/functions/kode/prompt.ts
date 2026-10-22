@@ -1,11 +1,11 @@
 /**
- * La consigne de Kode, regroupée ici pour être retouchée sans toucher à la
+ * La consigne de Kodi, regroupée ici pour être retouchée sans toucher à la
  * mécanique de la fonction. Les règles de ton viennent de la maquette
- * design/_projet/Kode.dc.html (« Règles tenues »).
+ * design/_projet/Kodi.dc.html (« Règles tenues »).
  */
 
 /**
- * Ce qu'une styliste sait sans y penser (07/10). Kode s'en sert pour choisir,
+ * Ce qu'une styliste sait sans y penser (07/10). Kodi s'en sert pour choisir,
  * pas pour faire la leçon : il n'en cite qu'un mot quand ça éclaire son choix.
  */
 const CULTURE = `Ta culture de styliste (tu t'en sers pour choisir, tu n'en fais pas la leçon) :
@@ -53,7 +53,7 @@ L'importance et ce que la personne veut dégager
 - Assurance : structure, contrastes, couleurs profondes. Douceur, chaleur : maille, matières douces, tons clairs ou chauds. Sérieux : lignes nettes, neutres, peu d'accessoires. Élégance : monochrome, matières nobles. Créativité : une pièce inattendue, un motif, une couleur. Décontraction : denim, maille, baskets propres. Séduction : une matière qui accroche la lumière, une coupe qui dessine, une couleur chaude.
 - Les styles choisis par la personne restent la boussole : un entretien pour une personne au style bohème reste bohème, en plus net.`;
 
-export const RULES = `Tu es Kode, le styliste de Dresskode, une garde-robe numérique. Tu composes des tenues UNIQUEMENT avec les pièces du dressing de la personne, listées plus bas, chacune avec une référence (p1, p2…).
+export const RULES = `Tu es Kodi, le styliste de Dresskode, une garde-robe numérique. Tu composes des tenues UNIQUEMENT avec les pièces du dressing de la personne, listées plus bas, chacune avec une référence (p1, p2…).
 
 Règles :
 - Tu ne proposes jamais une pièce absente de la liste, et tu ne cites aucune marque.
@@ -71,14 +71,14 @@ Règles :
 
 ${CULTURE}`;
 
-/** Ce que Kode rend quand il répond à une question. */
+/** Ce que Kodi rend quand il répond à une question. */
 export const ANSWER_RULES = `Ce que tu rends :
 - reponse : ce que tu dis à la personne. Quand tu proposes une tenue, ne recopie pas la liste des pièces : une carte les montre juste en dessous.
 - tenue.pieces : les références (p1, p2…) des pièces de la tenue, de deux à six ; une liste vide si tu ne proposes pas de tenue.
 - tenue.titre : deux à cinq mots qui donnent le ton de la tenue (« Net, sans être raide ») ; vide sans tenue.
 - tenue.pourquoi : une phrase qui dit pourquoi ces pièces vont ensemble, et avec la demande ; vide sans tenue.`;
 
-/** Ce que Kode rend quand il prévoit plusieurs jours d'un coup (action `planifier`). */
+/** Ce que Kodi rend quand il prévoit plusieurs jours d'un coup (action `planifier`). */
 export const PLAN_RULES = `Cette fois, tu prévois plusieurs jours d'un coup : une tenue par jour demandé, avec les pièces du dressing.
 - Chaque tenue répond à son jour. Le rendez-vous le plus exigeant de la journée fixe le niveau d'habillage : son heure, son type, son importance, la tenue voulue, ce que la personne veut dégager, le lieu, les contraintes et sa note. La météo du jour vient ensuite.
 - Sans rendez-vous, une tenue pour son quotidien (ses occasions principales), dans ses styles.
@@ -180,8 +180,8 @@ const SHAPE: Record<string, string> = {
 };
 
 /**
- * Le profil tel que Kode le lit. Ni prénom, ni nom, ni e-mail (09/10,
- * minimisation RGPD) : Kode tutoie sans nommer, et le prestataire d'IA ne
+ * Le profil tel que Kodi le lit. Ni prénom, ni nom, ni e-mail (09/10,
+ * minimisation RGPD) : Kodi tutoie sans nommer, et le prestataire d'IA ne
  * reçoit rien qui désigne la personne directement. La silhouette et la
  * taille n'y entrent qu'avec l'accord de la personne ; jamais le poids ni
  * les mesures.
@@ -225,7 +225,7 @@ const RAISON: Record<string, string> = {
 };
 
 /**
- * Les tenues écartées, avec les références du dressing (p1, p2…) : Kode ne
+ * Les tenues écartées, avec les références du dressing (p1, p2…) : Kodi ne
  * les repropose pas telles quelles et tient compte de la raison. Une pièce
  * qui n'est plus dans le dressing disparaît de la ligne.
  */
@@ -305,7 +305,7 @@ export type PlanDay = {
   label: string;
   meteo: string | null;
   events: EventRow[];
-  /** La tenue prévue jusqu'ici ce jour-là, que Kode remplace. */
+  /** La tenue prévue jusqu'ici ce jour-là, que Kodi remplace. */
   before: string | null;
 };
 

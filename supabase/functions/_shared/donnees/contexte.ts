@@ -1,6 +1,6 @@
 /**
  * Le contexte du jour pour une ville : tout ce que l'app affiche et ce
- * que Kode lit avant de répondre. Chaque morceau passe par la chaîne de
+ * que Kodi lit avant de répondre. Chaque morceau passe par la chaîne de
  * repli (repli.ts) et arrive dans le même emballage (types.ts).
  */
 import type { Air, Bloc, Fete, Ferie, Meteo, Pont, Soleil, Tendance, Vacances, Ville } from './types.ts';

@@ -168,7 +168,7 @@ export type Target = {
   description: string;
   prompt: string;
   identification?: Identification | null;
-  /** Kode juge utile de retrouver le modèle exact sur le web. */
+  /** Kodi juge utile de retrouver le modèle exact sur le web. */
   recherche?: boolean;
   /** Résultat de la recherche : null si elle a été faite sans rien trouver de sûr. */
   reference?: Reference | null;
@@ -248,7 +248,7 @@ export function productLine(t: Pick<Target, 'identification' | 'reference'>): st
   return id ? [id.marque, id.modele, id.coloris].filter(Boolean).join(' ') : '';
 }
 
-/** La recherche vaut le coup : Kode l'a demandée et sait au moins un peu ce qu'il cherche. */
+/** La recherche vaut le coup : Kodi l'a demandée et sait au moins un peu ce qu'il cherche. */
 export const wantsResearch = (t: Target) =>
   t.recherche === true && !!t.identification && t.identification.certitude !== 'faible' && t.reference === undefined;
 

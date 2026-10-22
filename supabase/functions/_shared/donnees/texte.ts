@@ -1,7 +1,7 @@
 /**
- * Le contexte du jour en quelques lignes de français, pour Kode. Seules
+ * Le contexte du jour en quelques lignes de français, pour Kodi. Seules
  * les données connues y figurent ; une valeur ancienne porte son heure.
- * Kode ne cite pas ses sources dans la conversation : la mention reste à
+ * Kodi ne cite pas ses sources dans la conversation : la mention reste à
  * l'écran, à côté de la donnée.
  */
 import type { Bloc } from './types.ts';

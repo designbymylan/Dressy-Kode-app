@@ -62,7 +62,7 @@ export function SilhouetteScreen() {
         <View style={{ gap: 8 }}>
           <Tag label="Ma silhouette" />
           <T v="title" accessibilityRole="header">
-            Ce qui aide Kode{'\n'}
+            Ce qui aide Kodi{'\n'}
             <T v="title" style={{ ...F.accent }}>
               à viser juste.
             </T>
@@ -79,9 +79,9 @@ export function SilhouetteScreen() {
             </T>
           </Ring>
           <View style={{ flex: 1, gap: 4 }}>
-            <T v="bodyStrong">Précision de Kode</T>
+            <T v="bodyStrong">Précision de Kodi</T>
             <T v="caption" tone="ink2">
-              {next ? `Ajoute ${next.label} : +${next.gain} %.` : 'Kode a tout ce qu’il lui faut.'}
+              {next ? `Ajoute ${next.label} : +${next.gain} %.` : 'Kodi a tout ce qu’il lui faut.'}
             </T>
             {next && (
               <T testID="sil-affiner" v="label" onPress={() => nav.navigate('Affiner')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10 }}>
@@ -97,7 +97,7 @@ export function SilhouetteScreen() {
             <Tag label="Ton corps" />
             <T v="cardTitle">Taille, silhouette et mesures</T>
             <T v="body" tone="ink2">
-              Elles aident Kode à choisir tes coupes. Elles touchent à ton corps : on te demande ton accord avant de les noter. Kode reçoit ta silhouette et ta taille, sans ton nom ; jamais tes mesures.
+              Elles aident Kodi à choisir tes coupes. Elles touchent à ton corps : on te demande ton accord avant de les noter. Kodi reçoit ta silhouette et ta taille, sans ton nom ; jamais tes mesures.
             </T>
             <Button testID="sil-consent-yes" label="J’accepte" size="m" onPress={() => void a.setBodyConsent(true)} />
             <T v="label" tone="ink2" onPress={() => nav.navigate('TesDonnees')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10 }}>
@@ -194,7 +194,7 @@ export function SilhouetteScreen() {
             })}
           </View>
           <T v="caption" tone="ink2">
-            {p.silhouette && p.silhouette !== 'inconnue' ? SILHOUETTES.find((x) => x.id === p.silhouette)?.note : 'Un doute ? Laisse vide : Kode apprendra de ce que tu portes.'}
+            {p.silhouette && p.silhouette !== 'inconnue' ? SILHOUETTES.find((x) => x.id === p.silhouette)?.note : 'Un doute ? Laisse vide : Kodi apprendra de ce que tu portes.'}
           </T>
         </View>
       </Sheet>

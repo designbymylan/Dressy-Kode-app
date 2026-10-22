@@ -1,10 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties, type RefObject } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Piece } from '@/lib/garments';
+import { togglePieceWear } from '@/app/actions';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Icon, ICON } from '@/components/ui';
+
+/** Le jour à Paris, comme ceux de la base (lib/dates.ts, côté serveur). */
+const todayParis = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
 
 export type RailView = { id: string; label: string; icon: string; pieces: Piece[] };
 export type WearStat = { wears: number; last: string | null };
@@ -108,6 +113,11 @@ export function DressingRails({ rails, stats }: { rails: RailView[]; stats: Reco
               >
                 <div className="piece-frame" style={{ aspectRatio: 'auto', height: 124, padding: 10 }}>
                   <PieceArt piece={p} size={46} />
+                  {stats[p.id]?.wears ? null : (
+                    <span className="dk-tag dk-tag--butter" style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 9.5, padding: '2px 7px' }}>
+                      Jamais portée
+                    </span>
+                  )}
                 </div>
                 <span className="piece-name">{p.name}</span>
               </button>
@@ -239,7 +249,8 @@ function PieceSheet({
           ) : null}
         </div>
         <div className="piece-sheet-facts" style={{ display: 'grid', gap: 10 }}>
-          <Link href={`/tenues/nouvelle?avec=${piece.id}`} className="btn btn-primary btn-block">
+          <WornToday id={piece.id} initial={stat?.last === todayParis()} />
+          <Link href={`/tenues/nouvelle?avec=${piece.id}`} className="btn btn-glass btn-block">
             <Icon d={ICON.sparkle} size={18} /> Composer une tenue avec
           </Link>
           <button ref={closeBtn} type="button" className="btn btn-glass btn-block" onClick={close}>
@@ -248,5 +259,45 @@ function PieceSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * « Je l'ai portée aujourd'hui » : un toucher note le port (bleu, la
+ * couleur de ce qui est choisi), un second l'annule. La page se relit
+ * ensuite, et la barre de progression du dressing avance.
+ */
+function WornToday({ id, initial }: { id: string; initial: boolean }) {
+  const router = useRouter();
+  const [on, setOn] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`btn btn-block ${on ? 'btn-primary' : 'btn-glass'}`}
+        aria-pressed={on}
+        disabled={pending}
+        onClick={() => {
+          const next = !on;
+          setOn(next);
+          setError(null);
+          navigator.vibrate?.(8);
+          start(async () => {
+            const res = await togglePieceWear(id);
+            if ('error' in res) {
+              setOn(!next);
+              setError(res.error);
+            } else router.refresh();
+          });
+        }}
+      >
+        <Icon name={on ? 'check' : 'hanger'} size={18} />
+        {on ? 'Portée aujourd’hui' : 'Je l’ai portée aujourd’hui'}
+      </button>
+      {error ? <p role="alert" className="small" style={{ color: 'var(--danger)' }}>{error}</p> : null}
+    </>
   );
 }

@@ -97,11 +97,11 @@ export function Shop() {
               </T>
             )}
           </FeatureCard>
-          <FeatureCard testID="shop-questions" icon="kode" title="Questions à Kode" right={quota === null ? 'Sans limite' : `${used} / ${quota}`}>
+          <FeatureCard testID="shop-questions" icon="kode" title="Questions à Kodi" right={quota === null ? 'Sans limite' : `${used} / ${quota}`}>
             {quota !== null && bar(used, quota)}
             {quota !== null && (
               <T testID="shop-more-questions" v="small" tone="ink2" onPress={() => nav.navigate('Offers')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 6 }}>
-                Sans limite avec Atelier
+                Sans limite avec Sapologue
               </T>
             )}
           </FeatureCard>
@@ -127,7 +127,7 @@ export function Shop() {
 
         <Reassure
           items={[
-            { icon: 'check', text: 'Occasion et voyage déjà inclus dans Atelier et Couture : rien à payer deux fois.' },
+            { icon: 'check', text: 'Occasion et voyage déjà inclus dans Sapologue : rien à payer deux fois.' },
             { icon: 'lock', text: 'Paiement sécurisé, sans date limite d’utilisation.' },
           ]}
         />
@@ -164,7 +164,7 @@ export function Shop() {
               />
               {pack.included && !inPlan && (
                 <T v="small" tone="ink2" style={{ textAlign: 'center' }}>
-                  Déjà inclus dans Atelier et Couture.
+                  Déjà inclus dans Sapologue.
                 </T>
               )}
             </View>

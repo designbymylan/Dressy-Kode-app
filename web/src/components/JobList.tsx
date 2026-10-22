@@ -22,7 +22,7 @@ const POLL_MS = 2000;
 const ACTIVE = new Set<string>(ACTIVE_STATUSES);
 
 /**
- * Les photos confiées à Kode et leurs pièces.
+ * Les photos confiées à Kodi et leurs pièces.
  *
  * Chaque photo s'affiche en grand (scan de repérage) avec, dessous, une
  * ligne par pièce. On relit l'état des tâches toutes les 2 s (quelques
@@ -165,7 +165,7 @@ export function JobList({ initial }: { initial: JobView[] }) {
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {failedPhoto.map((j) => (
                 <li key={j.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{j.error ?? 'Kode n’a pas pu lire cette photo.'}</span>
+                  <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{j.error ?? 'Kodi n’a pas pu lire cette photo.'}</span>
                   <JobActions jobId={j.id} canRetry={j.retries < 2} />
                 </li>
               ))}
@@ -192,7 +192,7 @@ export function JobList({ initial }: { initial: JobView[] }) {
                       {failed ? (
                         <>
                           <span style={{ fontSize: 12.5, lineHeight: 1.45, color: 'var(--muted)' }}>
-                            {j.error ?? 'Kode n’a pas pu finir cette pièce.'}
+                            {j.error ?? 'Kodi n’a pas pu finir cette pièce.'}
                           </span>
                           <JobActions jobId={j.id} canRetry={j.retries < 2} />
                         </>
@@ -202,7 +202,7 @@ export function JobList({ initial }: { initial: JobView[] }) {
                           Rangée sur ton portant, sans fond
                         </span>
                       ) : reveal ? (
-                        <KodeThinking phrases={['Kode enlève le fond', 'Kode la pose sur ton portant']} step="store" size={18} every={1400} style={{ minHeight: 24, gap: 8 }} />
+                        <KodeThinking phrases={['Kodi enlève le fond', 'Kodi la pose sur ton portant']} step="store" size={18} every={1400} style={{ minHeight: 24, gap: 8 }} />
                       ) : (
                         <KodeThinking phrases={jobPhrases(j)} step={jobStep(j)} size={18} every={2600} style={{ minHeight: 24, gap: 8 } as CSSProperties} />
                       )}

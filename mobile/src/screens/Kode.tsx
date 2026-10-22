@@ -22,6 +22,7 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
+import { Kodi } from '../ui/Kodi';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -93,7 +94,7 @@ export function Kode() {
 
   const top = useTabTop();
   const { y: scrollY, onScroll } = useHeaderScroll();
-  // Ce que Kode sait déjà, en puces : la météo, la prochaine date qui compte, demain, le dressing.
+  // Ce que Kodi sait déjà, en puces : la météo, la prochaine date qui compte, demain, le dressing.
   const known: { label: string; swatch?: string }[] = [
     w ? { label: `${p.city ? `${p.city} · ` : ''}${w.low}° à ${w.t}°, ${w.label}` } : null,
     prochain ? { label: prochain.text } : null,
@@ -105,15 +106,21 @@ export function Kode() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-kode">
       <Ambient />
-      <TabHeader title="Kode" y={scrollY} meta={quota === null ? 'sans limite' : `${left} / ${quota}`} />
+      <TabHeader title="Kodi" y={scrollY} meta={quota === null ? 'sans limite' : `${left} / ${quota}`} />
       <Animated.ScrollView ref={list as never} onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
             <Card style={{ padding: 16, gap: 12 }}>
-              <Tag label="Kode" icon="kode" />
-              <T v="cardTitle" style={{ fontSize: 22, lineHeight: 27 }} accessibilityRole="header">
-                Une question, une tenue.
-              </T>
+              {/* Kodi en personne (21/10) : il fait coucou, un toucher le fait réagir. */}
+              <View className="flex-row items-center" style={{ gap: 12 }}>
+                <Kodi mood="wave" size={72} track enter shadow />
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Tag label="Kodi" icon="kode" />
+                  <T v="cardTitle" style={{ fontSize: 22, lineHeight: 27 }} accessibilityRole="header">
+                    Une question, une tenue.
+                  </T>
+                </View>
+              </View>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {starters.map((q, i) => (
                   <DotChip key={q} testID={`starter-${i}`} label={q} onPress={() => send(q)} disabled={out} />
@@ -122,7 +129,7 @@ export function Kode() {
             </Card>
             <View style={{ gap: 8, paddingHorizontal: 4 }}>
               <T v="kicker" tone="ink2">
-                Ce que Kode sait
+                Ce que Kodi sait
               </T>
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {known.map((k) => (
@@ -133,7 +140,7 @@ export function Kode() {
             </View>
             {/* Transparence (09/10, règlement européen sur l'IA, art. 50) : on sait qu'on parle à une IA. */}
             <T v="small" tone="ink2" style={{ paddingHorizontal: 4 }} testID="kode-ai">
-              Kode est une intelligence artificielle : ses tenues sont des idées, il peut se tromper. Il reçoit ton dressing, ton style et ton agenda, jamais ton nom.
+              Kodi est une intelligence artificielle : ses tenues sont des idées, il peut se tromper. Il reçoit ton dressing, ton style et ton agenda, jamais ton nom.
             </T>
             {!ready && <Button testID="kode-add" label="Ajouter mes premières pièces" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
           </Animated.View>
@@ -144,10 +151,15 @@ export function Kode() {
 
         {out && (
           <Card testID="kode-quota" style={{ gap: 10, padding: 14 }}>
-            <Tag label={`${quota} questions posées`} />
-            <T v="body" tone="ink2">
-              Elles reviennent le 1er du mois. Atelier rend Kode sans limite.
-            </T>
+            <View className="flex-row items-center" style={{ gap: 12 }}>
+              <Kodi mood="sleepy" size={48} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Tag label={`${quota} questions posées`} />
+                <T v="body" tone="ink2">
+                  Elles reviennent le 1er du mois. Sapologue rend Kodi sans limite.
+                </T>
+              </View>
+            </View>
             <Button label="Voir les offres" variant="secondary" size="m" onPress={() => nav.navigate('Offers')} />
           </Card>
         )}
@@ -166,7 +178,7 @@ export function Kode() {
             onSubmitEditing={() => send(text)}
             blurOnSubmit
             returnKeyType="send"
-            accessibilityLabel="Ta question à Kode"
+            accessibilityLabel="Ta question à Kodi"
             style={{ flex: 1, color: c.ink, ...F.s400, fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
           />
           <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} onPress={() => send(text)} />
@@ -179,8 +191,9 @@ export function Kode() {
 function Mine({ m }: { m: KodeMessage }) {
   return (
     <Animated.View entering={FadeInDown.springify().damping(18)} style={{ alignSelf: 'flex-end', maxWidth: '82%' }}>
-      <View className="bg-primary-bg" style={{ borderRadius: 22, borderBottomRightRadius: 6, paddingHorizontal: 16, paddingVertical: 11 }}>
-        <T v="body" tone="primary-fg">
+      {/* Ta question, en bleu (21/10), texte noir en clair comme en sombre. */}
+      <View className="bg-blue" style={{ borderRadius: 22, borderBottomRightRadius: 6, paddingHorizontal: 16, paddingVertical: 11 }}>
+        <T v="body" tone="on-blue">
           {m.text}
         </T>
       </View>
@@ -196,14 +209,15 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const pieces = (m.outfit?.pieces ?? []).map((id) => byId.get(id)).filter(Boolean) as Piece[];
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   return (
-    <Animated.View entering={FadeInDown.duration(320)} style={{ alignSelf: 'flex-start', width: '94%' }} accessibilityLiveRegion="polite">
-      {/* La réponse de Kode : un bandeau de service rose poudré, texte noir en clair comme en sombre. */}
-      <Card className="bg-butter" style={{ padding: 14, gap: 12, borderBottomLeftRadius: 8 }}>
+    <Animated.View entering={FadeInDown.duration(320)} style={{ alignSelf: 'flex-start', width: '100%', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }} accessibilityLiveRegion="polite">
+      <Kodi mood={m.outfit ? 'love' : 'idle'} size={34} decorative tap={false} />
+      {/* La réponse de Kodi : un bandeau de service beurre, texte noir en clair comme en sombre. */}
+      <Card className="bg-butter" style={{ flex: 1, padding: 14, gap: 12, borderBottomLeftRadius: 8 }}>
         <T v="body">{m.text}</T>
         {m.outfit && pieces.length > 0 && (
           <>
             <View className="bg-paper" style={{ borderRadius: 18, padding: 10 }}>
-              <OutfitBoard pieces={pieces} width={width * 0.94 - space.gutter * 2 - 28 - 20} onPiece={open} assemble={fresh} numbered={false} />
+              <OutfitBoard pieces={pieces} width={width - space.gutter * 2 - 42 - 28 - 20} onPiece={open} assemble={fresh} numbered={false} />
             </View>
             <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length)).duration(520) : undefined} style={{ gap: 4 }}>
               <T v="cardTitle">{m.outfit.title}</T>
@@ -225,14 +239,14 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   );
 }
 
-/** Ce que Kode dit pendant qu'il compose (web : lib/thinking.ts, `chat`). */
-const COMPOSING = ['Kode fouille ton dressing', 'Kode assemble les couleurs', 'Kode pense à la météo', 'Kode essaie une association', 'Kode peaufine la tenue'];
+/** Ce que Kodi dit pendant qu'il compose (web : lib/thinking.ts, `chat`). */
+const COMPOSING = ['Kodi fouille ton dressing', 'Kodi assemble les couleurs', 'Kodi pense à la météo', 'Kodi essaie une association', 'Kodi peaufine la tenue'];
 
 function Typing() {
   return (
     <View style={{ gap: 8 }}>
       <T v="kicker" tone="ink2">
-        Kode
+        Kodi
       </T>
       <KodeThinking phrases={COMPOSING} every={2000} />
     </View>

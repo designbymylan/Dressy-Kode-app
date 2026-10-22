@@ -30,7 +30,7 @@ export function missingForOutfit(pieces: Piece[]): string | null {
 }
 
 export function suggestOutfits(pieces: Piece[], w: Weather | null = WEATHER[0], av: Evite = RIEN): Outfit[] {
-  // Les moins portées d'abord : Kode fait tourner le dressing. Une pièce écartée seule (« Pas pour moi ») passe en dernier.
+  // Les moins portées d'abord : Kodi fait tourner le dressing. Une pièce écartée seule (« Pas pour moi ») passe en dernier.
   const by = (c: Piece['category']) =>
     pieces.filter((p) => p.category === c).sort((a, b) => Number(av.retrait.has(a.id)) - Number(av.retrait.has(b.id)) || (b.lastWorn ?? 999) - (a.lastWorn ?? 999));
   // Un cardigan se porte par-dessus : il compte comme une couche, pas comme le haut.

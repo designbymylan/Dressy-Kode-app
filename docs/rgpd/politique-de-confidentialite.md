@@ -18,24 +18,24 @@ Pour toute question sur tes données, ou pour exercer tes droits, écris à l’
 ## Ce que nous gardons, et pourquoi
 
 - **Ton compte.** E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).
-- **Ton dressing.** Les photos que tu confies à Kode, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.
+- **Ton dressing.** Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.
 - **Ton style.** Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat.
 - **Ta silhouette.** Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé.
-- **Ton agenda et Kode.** Tes rendez-vous, voyages, tenues prévues et conversations avec Kode. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).
+- **Ton agenda et Kodi.** Tes rendez-vous, voyages, tenues prévues et conversations avec Kodi. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).
 - **Tes « Pas pour moi ».** Les tenues que tu écartes et leur raison. Pour ne plus te proposer ce qui ne te plaît pas. Base : le contrat. Gardées 6 mois.
 - **Ton abonnement.** Ton offre et ton historique de paiement. Pour te facturer. Base : le contrat et nos obligations comptables. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez le prestataire de paiement, qui garde les factures 10 ans comme la loi l’exige.
 - **Les rappels.** Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning. Rien ne part de nos serveurs. Base : ton accord, que tu changes dans Réglages.
 - **La sécurité.** Des journaux techniques (erreurs, connexions) gardés quelques jours chez notre hébergeur. Pour faire fonctionner et protéger le service. Base : notre intérêt légitime.
 
-## Kode est une intelligence artificielle
+## Kodi est une intelligence artificielle
 
-Pour te répondre, Kode envoie à un prestataire d’intelligence artificielle : la liste de tes pièces, ton profil de style, ton agenda des deux semaines à venir et tes tenues écartées ; ta silhouette et ta taille si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
+Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces, ton profil de style, ton agenda des deux semaines à venir et tes tenues écartées ; ta silhouette et ta taille si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
 
 Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle.
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
-Kode peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.
+Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.
 
 Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous.
 
@@ -54,8 +54,8 @@ Les prestataires d’intelligence artificielle et de paiement peuvent traiter de
 ## Combien de temps
 
 - **Ton compte et ton dressing.** Tant que ton compte existe. Supprimé, tout est effacé aussitôt (les copies de sauvegarde disparaissent d’elles-mêmes sous quelques jours).
-- **Les photos confiées à Kode.** 30 jours après l’envoi.
-- **Les conversations avec Kode.** 12 mois, 2 mois une fois archivées.
+- **Les photos confiées à Kodi.** 30 jours après l’envoi.
+- **Les conversations avec Kodi.** 12 mois, 2 mois une fois archivées.
 - **Les tenues écartées.** 6 mois.
 - **Les demandes de dessin.** 90 jours (la pièce dessinée reste dans ton dressing).
 - **Les factures.** 10 ans, chez le prestataire de paiement, comme le code de commerce l’exige.

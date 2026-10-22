@@ -19,6 +19,9 @@ import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { Kodi } from '../ui/Kodi';
+import { Cut, ProgressBar } from '../ui/progress';
+import { WINDOW_DAYS, usageMood, usageOf } from '../state/usage';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -132,6 +135,7 @@ export function Dressing() {
           </T>
         </Animated.View>
       )}
+      {s.pieces.length > 0 && !searching && !category && !active && !query.trim() && <UsagePanel />}
       <Circles value={category} onChange={setCategory} />
       {/* Le nombre de pièces à gauche ; la vue (grille, portants) et les filtres à droite. */}
       <View className="flex-row items-center" style={{ gap: 4, marginTop: -6 }}>
@@ -308,6 +312,54 @@ export function Dressing() {
   );
 }
 
+/**
+ * La barre de progression du dressing (21/10, web : dressing/page.tsx) : la
+ * part des pièces portées ces 90 derniers jours, en tout et par catégorie,
+ * dans la section noire découpée en S. Kodi commente, et « Je la porte »
+ * dans la fiche d'une pièce la fait avancer.
+ */
+function UsagePanel() {
+  const { s } = useStore();
+  const { c } = useTheme();
+  const { width } = useScreen();
+  const u = usageOf(s.pieces);
+  const kodi = usageMood(u);
+  const half = (width - space.gutter * 2 - 14) / 2;
+  return (
+    <Cut close>
+      <View testID="dressing-usage" className="flex-row" style={{ gap: 12, alignItems: 'flex-start' }}>
+        <View style={{ flex: 1, gap: 6 }}>
+          <T v="label" tone="on-panel-muted">
+            Garde-robe exploitée
+          </T>
+          <T v="stat" tone="on-panel">{`${u.worn} sur ${u.total} pièce${u.total > 1 ? 's' : ''}`}</T>
+          <T v="small" tone="on-panel-muted">{`portée${u.worn > 1 ? 's' : ''} ces ${WINDOW_DAYS} derniers jours`}</T>
+        </View>
+        <Kodi mood={kodi.mood} size={66} track color={c['on-panel']} />
+      </View>
+      <ProgressBar value={u.pct} label={`Part de ta garde-robe portée ces ${WINDOW_DAYS} derniers jours`} on={c['on-panel']} under={c.panel} />
+      <T v="caption" tone="on-panel-muted">
+        {kodi.line}
+      </T>
+      {u.categories.length > 1 && (
+        <View className="flex-row flex-wrap" style={{ columnGap: 14, rowGap: 16 }}>
+          {u.categories.map((k) => (
+            <View key={k.id} style={{ width: half, gap: 7 }}>
+              <View className="flex-row justify-between" style={{ gap: 6 }}>
+                <T v="caption" tone="on-panel" numberOfLines={1} style={[F.s600, { flexShrink: 1 }]}>
+                  {k.label}
+                </T>
+                <T v="caption" tone="on-panel-muted">{`${k.worn}/${k.total}`}</T>
+              </View>
+              <ProgressBar small value={k.pct} label={`${k.label} : part portée`} on={c['on-panel']} under={c.panel} />
+            </View>
+          ))}
+        </View>
+      )}
+    </Cut>
+  );
+}
+
 /** Un dressing vide : le portant attend, et on dit par quoi commencer. */
 function EmptyWardrobe() {
   const nav = useNavigation<Nav>();
@@ -318,7 +370,7 @@ function EmptyWardrobe() {
       </View>
       <T v="section">Tes portants sont vides.</T>
       <T v="body" tone="ink2">
-        Une photo suffit : Kode la dessine et la range ici.
+        Une photo suffit : Kodi la dessine et la range ici.
       </T>
       <Button testID="dressing-empty-add" label="Ajouter ma première pièce" icon="plus" onPress={() => nav.navigate('AddPiece')} />
     </View>

@@ -2,10 +2,10 @@
  * Le ménage de la nuit (RGPD art. 5.1.e), réveillé par pg_cron
  * (`rgpd-menage`, 3 h 41). Il applique les durées du registre (docs/rgpd/) :
  *
- * - photos confiées à Kode : effacées 30 jours après l'envoi (la photo de
+ * - photos confiées à Kodi : effacées 30 jours après l'envoi (la photo de
  *   profil reste tant que la personne la garde) ;
  * - exports de données : deux jours ;
- * - conversations avec Kode : archivées, deux mois (le quota se compte au
+ * - conversations avec Kodi : archivées, deux mois (le quota se compte au
  *   mois) ; toutes, douze mois ;
  * - demandes de dessin terminées ou en échec : 90 jours (la pièce dessinée
  *   reste dans le dressing).

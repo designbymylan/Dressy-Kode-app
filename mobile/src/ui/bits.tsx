@@ -45,7 +45,7 @@ export function Skeleton({ w, h, r = 12, style }: { w: number | `${number}%`; h:
   return <Animated.View style={[{ width: w, height: h, borderRadius: r, backgroundColor: c.sunk }, anim, style]} />;
 }
 
-/** Anneau de progression (précision de Kode, jauge de places). */
+/** Anneau de progression (précision de Kodi, jauge de places). */
 export function Ring({ value, size = 96, stroke = 7, children }: { value: number; size?: number; stroke?: number; children?: ReactNode }) {
   const { c } = useTheme();
   const r = (size - stroke) / 2;
@@ -230,7 +230,7 @@ export function Badge({ label, tone = 'positive', icon }: { label: string; tone?
 /**
  * Étiquette (09/10, codes des grandes enseignes de mode) : un ou deux mots en
  * capitales espacées, sans fond, qui ouvrent une carte (« TENUE DU JOUR »).
- * Posée sur une image (`glass`) ou en service de Kode (`butter`), elle
+ * Posée sur une image (`glass`) ou en service de Kodi (`butter`), elle
  * devient une petite pastille en casse normale (« Nouveau », « 12× »).
  * `icon` ou `swatch` (pastille de couleur) peuvent la précéder.
  */
@@ -273,7 +273,7 @@ export function Struck({ label, tone = 'ink2' }: { label: string; tone?: 'ink2' 
 /**
  * Puce (09/10) : un mot ou deux sur gris studio, précédés d'une pastille de
  * couleur quand il s'agit d'une teinte. Sans `onPress`, elle se lit
- * (l'étiquette d'une pièce) ; avec, elle se touche (les suggestions de Kode).
+ * (l'étiquette d'une pièce) ; avec, elle se touche (les suggestions de Kodi).
  */
 export function DotChip({ label, onPress, swatch, testID, disabled }: { label: string; onPress?: () => void; swatch?: string; testID?: string; disabled?: boolean }) {
   const { c } = useTheme();

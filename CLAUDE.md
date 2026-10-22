@@ -1,8 +1,9 @@
 # Dressy, consignes pour Claude
 
 Dressy (appelée **Dresskode** dans l'app et le brief v0.2) : garde-robe
-numérique et styliste IA, **Kode**. Projet entièrement en français :
-interface, textes, commentaires, documentation.
+numérique et styliste IA, **Kodi** (il s'appelait Kode jusqu'au 21/10 ; les
+décisions plus anciennes plus bas gardent l'ancien nom). Projet entièrement
+en français : interface, textes, commentaires, documentation.
 
 ## État du projet
 
@@ -319,6 +320,89 @@ sur noir selon le thème ; un toucher la passe ; « Réduire les animations »
 la réduit à un fondu. Web : `components/Intro.tsx` et `.intro` dans
 `globals.css` ; mobile : `src/ui/Intro.tsx` (Reanimated, react-native-svg).
 
+**Refonte du 21/10 (web), demandée par l'utilisateur** sur ses images de
+référence (`Design app inspiration/`). Elle remplace, sur le web, ce qui
+la contredit plus haut ; couleurs mises à part, verre, arrondis et
+transparence restent. Le mobile l'a suivie le 22/10 (voir plus bas).
+
+- **Palette** (« Palette de couleur officiel ») : fond blanc pur, texte noir
+  pur ; Blue `#c4dae8` pour ce qui est choisi et l'action principale (texte
+  noir), son bleu profond `#2b5f86` pour une icône ou un texte choisi (le bleu
+  clair ne se lit pas sur blanc) ; Butter `#feefb8` pour les bandeaux de Kodi
+  et les étiquettes (le jeton `--butter`) ; Chocopie `#432f2e` pour le rond de
+  Kodi et les points forts. Contrastes en tête de `globals.css`.
+- **Ce qui est choisi passe en bleu** : puces, segments, pastilles, onglet
+  actif, bouton enfoncé, interrupteur.
+- **Boutons « verre »** façon Apple : reflet en haut, liseré clair, ombre
+  courte, libellé en casse normale (15 px, 600). L'action principale en
+  verre bleu, texte noir ; les autres en verre clair ; `btn-dark` (noir)
+  pour une action forte posée sur du verre.
+- **Icônes pleines** (planche « Micro icons (solid) »,
+  `components/icons.tsx`), chacune avec son geste au survol et à l'appui
+  (`data-anim`). L'ancien composant `Icon` (`ui.tsx`) montre la version
+  pleine dès qu'elle existe ; les types de bijoux ou d'accessoires sans
+  version pleine restent au trait, arrondi.
+- **Barre de navigation** (« Inspiration Navbar 1 ») : barre de verre
+  arrondie, bosse au centre qui porte le rond chocopie de Kodi, petit trait
+  au-dessus de l'onglet actif qui glisse, icône au trait qui devient pleine
+  et bleue, tous les noms écrits (Accueil, Dressing, Kodi, Calendrier,
+  Profil). Clair et sombre.
+- **Kodi, la mascotte** (`components/Kodi.tsx`) : une petite boutique vivante
+  (auvent rayé bleu et blanc, crochet de cintre, corps beurre, yeux
+  chocopie). Ses humeurs (`data-mood`, styles dans `globals.css`) : idle,
+  wave, happy, love, thinking, listening, surprised, wink, sleepy, sad, shy,
+  celebrate, talking ; ses yeux suivent le doigt, un toucher le fait réagir.
+  Il est le visage de l'IA : intro, attentes (`KodeThinking`), conversation
+  (`/kodi`, l'ancien `/kode` y renvoie), connexion (il se cache les yeux sur
+  le mot de passe), bienvenue, accueil, dressing, erreurs.
+- **Encoche clair / sombre** en haut à droite (`ThemeNotch.tsx`), masquable
+  dans Mon compte › Paramètres ; réglage d'appareil (cookie `dk_theme_tab`).
+  Un visiteur garde son thème dans le cookie `dk_theme`.
+- **Barre de progression du dressing** (« Inspiration progress bar ») : la
+  part des pièces portées ces 90 jours, en tout et par catégorie, dans une
+  **section découpée** noire qui coule en S dans la page (« Image découpage
+  de section 2 », `Cut` dans `ui.tsx`). « Je l'ai portée aujourd'hui » dans
+  la fiche d'une pièce la fait avancer.
+- **Mon compte** sur le modèle « Image exemple Page Profile » : photo et
+  pastille d'édition, nom sur deux lignes, trois chiffres, pastille de
+  l'offre, groupes de lignes à pastille de couleur, compteur et chevron, puis
+  Tarifs et Paramètres.
+- **Offres** (`lib/plans.ts`, `components/Pricing.tsx`, sur « App design
+  price ») : **Fashion** 6,99 € par mois ou 59,99 € par an (identifiant
+  `capsule`), **Sapologue** 14,99 € par mois ou 129,99 € par an
+  (identifiant `atelier`) ; Couture n'est plus vendue. Tableau de
+  comparaison à deux colonnes, feuille mois ou année, remise affichée
+  arrondie vers le bas et prix barré. Limites dans la migration
+  `offres_fashion_sapologue`. Ceci remplace « plus aucune pastille de
+  réduction » du 09/10 pour les offres du web.
+
+**Refonte du 21/10 reportée sur le mobile** (22/10, branche
+`claude/musing-dhawan-e295a5`) : web et mobile sont de nouveau alignés,
+sauf **Mon compte**, dont le mobile garde la disposition de Moi du 07/10.
+
+- **Palette** dans `palette.json` (jetons `blue`, `blue-ink`, `blue-soft`,
+  `on-blue`, `choco`, `butter`, `panel`…) ; `contraste.py` vérifie aussi la
+  barre d'onglets en verre dense.
+- **Verre bleu** `BlueGlass` (`ui/Glass.tsx`) : `Button` principal et
+  `IconButton` `solid` ; `dark` garde le noir plein. `Chip`, segments,
+  `Toggle`, `UnderlineTabs` et lignes des offres : le choix en bleu.
+- **Icônes pleines** dans `ui/Icon.tsx` (mêmes tracés que le web), le trait
+  pour celles qui n'en ont pas ; leur geste se joue à l'appui du `Tap` qui
+  les porte (`PressContext`, `ui/press.ts`).
+- **Kodi** (`ui/Kodi.tsx`) : mêmes tracés et humeurs que le web, chaque
+  partie sur son calque `Animated.View` (Reanimated n'anime pas les tracés).
+  Sans souris, il regarde autour de lui (`track`). Intro, Bienvenue,
+  accueil, conversation, attentes (`KodeThinking`), erreurs, dressing.
+- **Barre d'onglets** (`ui/TabBar.tsx`) : silhouette du web, flou sous la
+  barre et sous la bosse (pas de Liquid Glass natif : la forme n'est pas un
+  rectangle) ; elle ne se replie plus au défilement.
+- **Interrupteur clair / sombre** `ThemeSwitch` (`ui/layout.tsx`) à droite
+  de la capsule des onglets, masquable dans Réglages › Apparence.
+- **Progression** : `ui/progress.tsx` (`ProgressBar`, `Cut`) et
+  `state/usage.ts`, en tête du Dressing.
+- **Offres** : `PLANS` et `planOf` dans `screens/Offers.tsx`, `LIMITS` dans
+  `state/store.tsx` (120 pièces et 30 questions, puis sans limite).
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 
@@ -385,15 +469,16 @@ Ordre de priorité, du plus fort au plus faible :
 - **Les arrondis** (03/10) : cartes 28, vignettes 22, feuilles 32 ; tout ce
   qui se clique est en capsule (boutons, puces, sélecteurs, champs) ; boutons
   icônes et Kode en rond.
-- Une seule couleur : le **rose poudré pâle** (`#f8e9e4`, adouci du beurre
-  `#faedbc` le 03/10 ; le jeton garde le nom `butter`), réservé aux bandeaux
-  de service (messages de Kode, offres, informations), avec texte noir en
-  clair comme en sombre. Le reste est noir, blanc et gris. Gris studio
-  (`#f3f3f3`) pour les vignettes de vêtements et les champs de saisie.
-- Boutons (02/10, revenus le 04/10) : l'action principale en capsule noire
-  avec son ombre, libellé en casse normale ; les autres en capsule de verre,
-  en pastille ou en texte gris. Liens de section (« Tout voir »,
-  « Agenda ») : texte gris discret, sans flèche.
+- Couleurs (21/10, web et mobile) : Blue `#c4dae8` pour ce qui est choisi et l'action
+  principale, Butter `#feefb8` (le jeton `butter`) pour les bandeaux de
+  service (messages de Kodi, offres, informations) avec texte noir en clair
+  comme en sombre, Chocopie `#432f2e` pour le rond de Kodi. Le reste est
+  noir, blanc et gris. Gris studio (`#f3f3f3`) pour les vignettes de
+  vêtements et les champs de saisie.
+- Boutons (21/10, web et mobile) : en verre, libellé en casse normale ; l'action
+  principale en verre bleu, texte noir ; les autres en verre clair, en
+  pastille ou en texte. Liens de section (« Tout voir », « Agenda ») : texte
+  discret.
 - Typographie (charte v2, 09/10) : **Inter Tight** 300 pour les titres
   d'écran (casse normale, légèrement resserrés), les grands chiffres et la
   promesse des offres, 400 pour la marque (DRESSKODE, capitales espacées de
@@ -417,11 +502,11 @@ Ordre de priorité, du plus fort au plus faible :
 - Vêtements : illustrations vectorielles plates ou détourages de Kode, posés
   sur gris studio dans des vignettes arrondies ; jamais de photo produit, pas
   de 3D.
-- Icônes : au trait (jeu du 02/10 sur le mobile), des formes qui se
-  comprennent sans leur nom, avec un reflet chromé depuis le 09/10 (dégradé
-  métal sombre en clair, clair en sombre). Dans la barre d'onglets mobile,
-  l'onglet actif se signale par un point ; tous gardent leur libellé pour
-  les lecteurs d'écran.
+- Icônes : pleines depuis le 21/10 (`components/icons.tsx` sur le web,
+  `ui/Icon.tsx` sur le mobile), avec leur micro-interaction ; celles qui
+  n'ont pas de version pleine gardent le trait du 02/10 et son reflet
+  chromé. Des formes qui se comprennent sans leur nom ; toutes gardent leur
+  libellé pour les lecteurs d'écran.
 - Mouvement : discret (fondus, ressorts courts), jamais bloquant, coupé par
   « Réduire les animations ».
 - Accessibilité : contraste AA (`contraste.py` après toute retouche de
@@ -501,7 +586,9 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   vêtement de marque, le logo reste visible tel quel (décision du 07/10).
 - Jamais de pop-up : les offres apparaissent en contexte, les feuilles ne
   s'ouvrent que sur un geste.
-- Les noms « Dresskode » et « Kode » ne changent pas.
+- Le nom « Dresskode » ne change pas. Le styliste s'appelle **Kodi** depuis
+  le 21/10 (demande de l'utilisateur) ; la fonction `kode` et les noms de
+  code internes (`KodeChat`, `askKode`…) gardent l'ancien nom.
 
 ## Sécurité et données
 

@@ -1,4 +1,4 @@
-/** La conversation avec Kode et les tenues qu'il propose, telles que les écrans les affichent. */
+/** La conversation avec Kodi et les tenues qu'il propose, telles que les écrans les affichent. */
 import type { createClient } from '@/lib/supabase/server';
 import { signAll } from '@/lib/storage';
 import { colourHex } from '@/lib/onboarding';
@@ -23,7 +23,7 @@ export type KodeMessage = {
   outfit: OutfitView | null;
 };
 
-/** quota null : questions illimitées (offres Atelier et Couture). */
+/** quota null : questions illimitées (offre Sapologue). */
 export type KodeUsage = { used: number; quota: number | null };
 
 // Ordre de pose dans la carte : les grandes pièces d'abord, les petites devant.

@@ -28,18 +28,23 @@ export type HomeModule = 'tenue' | 'semaine' | 'kode' | 'oubliees' | 'tendance' 
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
 export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
 
-/** Mêmes valeurs que public.plan_limits() côté base. null : sans limite. */
+/**
+ * Mêmes valeurs que public.plan_limits() côté base (migration
+ * offres_fashion_sapologue, 21/10). null : sans limite. `capsule` porte
+ * Fashion, `atelier` Sapologue ; Couture n'est plus vendue, ses limites
+ * restent pour un abonnement qui existerait encore.
+ */
 export const LIMITS: Record<PlanId, { pieces: number | null; questions: number | null }> = {
   decouverte: { pieces: 30, questions: 5 },
-  capsule: { pieces: 60, questions: 20 },
-  atelier: { pieces: 200, questions: null },
+  capsule: { pieces: 120, questions: 30 },
+  atelier: { pieces: null, questions: null },
   couture: { pieces: null, questions: null },
 };
 
 export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> = {
   tenue: { title: 'Tenue du jour', note: 'Ta tenue, de la tête aux pieds' },
   semaine: { title: 'Ta semaine', note: 'Tes tenues prévues, jour par jour, avec la météo' },
-  kode: { title: 'Demande à Kode', note: 'Des questions prêtes, selon ta journée' },
+  kode: { title: 'Demande à Kodi', note: 'Des questions prêtes, selon ta journée' },
   oubliees: { title: 'À redécouvrir', note: 'Les pièces qui dorment' },
   tendance: { title: 'Tendance', note: 'Ce qui se porte, déjà dans ton dressing' },
   porte: { title: 'Le plus porté', note: 'Tes pièces fétiches' },
@@ -124,11 +129,11 @@ type State = {
   shares: Share[];
   toast: Toast | null;
   undo: Piece[] | null;
-  /** Les photos confiées à Kode pendant cette session, et leurs pièces. */
+  /** Les photos confiées à Kodi pendant cette session, et leurs pièces. */
   jobs: JobRow[];
   /**
    * Photos choisies pendant le questionnaire, avant que le compte existe :
-   * elles partent chez Kode dès que la session s'ouvre (création du compte,
+   * elles partent chez Kodi dès que la session s'ouvre (création du compte,
    * ou première connexion si l'e-mail était à confirmer).
    */
   pendingPhotos: Photo[];
@@ -178,7 +183,7 @@ const initial: State = {
 
 const fresh: State = { ...initial, booting: false };
 
-/** Le compte d'Alice : 37 pièces, deux tenues prévues, l'offre Capsule entamée. */
+/** Le compte d'Alice : 37 pièces, deux tenues prévues, l'offre Fashion entamée. */
 const demo: State = {
   ...fresh,
   onboarded: true,
@@ -238,7 +243,7 @@ type Action =
   | { t: 'contexte'; contexte: Contexte; at: number };
 
 let toastId = 0;
-/** Dernière lecture des tâches de Kode : l'écran d'ajout lit toutes les 2 s, le suivi de fond n'a pas à doubler. */
+/** Dernière lecture des tâches de Kodi : l'écran d'ajout lit toutes les 2 s, le suivi de fond n'a pas à doubler. */
 let lastJobsRead = 0;
 
 function reducer(s: State, a: Action): State {
@@ -505,7 +510,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
     };
 
     /**
-     * Les photos du questionnaire partent chez Kode, une fois le compte prêt :
+     * Les photos du questionnaire partent chez Kodi, une fois le compte prêt :
      * l'agent repère et dessine leurs pièces, qui arrivent sur les portants
      * (suivies en tâche de fond, voir plus bas).
      */
@@ -515,10 +520,10 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       dispatch({ t: 'pendingPhotos', photos: [] });
       if (!r.ok) {
         console.warn('[supabase] photos du questionnaire :', r.message);
-        return dispatch({ t: 'toast', text: 'Tes photos n’ont pas pu partir chez Kode. Tu peux les ajouter depuis ton dressing.', warn: true });
+        return dispatch({ t: 'toast', text: 'Tes photos n’ont pas pu partir chez Kodi. Tu peux les ajouter depuis ton dressing.', warn: true });
       }
       dispatch({ t: 'jobs', jobs: r.jobs });
-      dispatch({ t: 'toast', text: photos.length > 1 ? `Kode dessine les pièces de tes ${photos.length} photos` : 'Kode dessine les pièces de ta photo' });
+      dispatch({ t: 'toast', text: photos.length > 1 ? `Kodi dessine les pièces de tes ${photos.length} photos` : 'Kodi dessine les pièces de ta photo' });
     };
 
     return {
@@ -694,7 +699,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       nextOutfit: () => dispatch({ t: 'nextOutfit' }),
       /**
        * « Pas pour moi » : la tenue montrée est écartée, avec sa raison. Elle
-       * ne revient plus ; la raison part chez Kode avec le compte. Rend vrai
+       * ne revient plus ; la raison part chez Kodi avec le compte. Rend vrai
        * s'il reste d'autres tenues à proposer aujourd'hui.
        */
       ecarter: (pieces: string[], raison: Raison, cibles: string[] = [], proposee?: string[]) => {
@@ -707,7 +712,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         const left = todayOutfits(before.pieces, meteoDe(before).jours[0], evite(garder([ecart, ...before.ecarts])));
         const gone = new Set([cleTenue(pieces), ...(proposee ? [cleTenue(proposee)] : [])]);
         const more = left.some((o) => !gone.has(cleTenue(o.pieces)));
-        dispatch({ t: 'toast', text: more ? 'Noté. Kode ne te la proposera plus.' : 'Noté. Ajoute une pièce ou deux : Kode aura plus de choix.' });
+        dispatch({ t: 'toast', text: more ? 'Noté. Kodi ne te la proposera plus.' : 'Noté. Ajoute une pièce ou deux : Kodi aura plus de choix.' });
         return more;
       },
       addPiece: (piece: Piece) => {
@@ -775,7 +780,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         if (quota !== null && s.kodeUsed >= quota) return false;
         dispatch({ t: 'ask', message: { id: `m${Date.now()}`, from: 'me', text } });
         if (live()) {
-          // Kode répond depuis la fonction `kode` ; sans réponse, la question ne compte pas.
+          // Kodi répond depuis la fonction `kode` ; sans réponse, la question ne compte pas.
           remote
             .askKode(text)
             .then(({ reply: { id, ...reply }, counted }) => dispatch({ t: 'answer', message: { id: id ?? `k${Date.now()}`, from: 'kode', ...reply }, refund: !counted }))
@@ -811,10 +816,10 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
 
       /** Sans compte : les photos attendent sur le téléphone (10 au plus) et partent à sa création. */
       queuePhotos: (photos: Photo[]) => dispatch({ t: 'pendingPhotos', photos: [...getState().pendingPhotos, ...photos].slice(0, 10) }),
-      /** Confie des photos à Kode ; rend les chemins des photos à suivre. */
+      /** Confie des photos à Kodi ; rend les chemins des photos à suivre. */
       sendPhotos: async (photos: Photo[], hint: string): Promise<remote.Result<{ paths: string[] }>> => {
         const session = live();
-        if (!session) return { ok: false, message: 'Connecte-toi pour confier tes photos à Kode.' };
+        if (!session) return { ok: false, message: 'Connecte-toi pour confier tes photos à Kodi.' };
         const r = await remote.sendPhotos(session, photos, hint);
         if (!r.ok) return r;
         dispatch({ t: 'jobs', jobs: r.jobs });
@@ -836,7 +841,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         if (!r.ok) return dispatch({ t: 'toast', text: r.message, warn: true });
         dispatch({ t: 'dropJob', id });
       },
-      /** Relit les pièces : celles que Kode vient de ranger apparaissent, avec leur vignette. */
+      /** Relit les pièces : celles que Kodi vient de ranger apparaissent, avec leur vignette. */
       refreshPieces: async () => {
         const session = live();
         if (!session) return;
@@ -926,7 +931,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [s]);
 
-  // Retour dans l'app (après un paiement, par exemple) : l'offre et le compteur de Kode sont relus.
+  // Retour dans l'app (après un paiement, par exemple) : l'offre et le compteur de Kodi sont relus.
   useEffect(() => {
     if (!supabase) return;
     const sub = AppState.addEventListener('change', (state) => {
@@ -949,7 +954,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Tant que Kode travaille sur une photo, on suit ses pièces même hors de l'écran
+  // Tant que Kodi travaille sur une photo, on suit ses pièces même hors de l'écran
   // d'ajout ; quand tout est rangé, le dressing est relu une fois.
   const working = s.jobs.some(isActive);
   useEffect(() => {

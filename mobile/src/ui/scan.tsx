@@ -23,7 +23,7 @@ const VEIL = 'rgba(14,15,19,0.12)';
 const VEIL_SCANNING = 'rgba(14,15,19,0.24)';
 
 /**
- * Le scan de repérage : la photo confiée, en grand. Tant que Kode la
+ * Le scan de repérage : la photo confiée, en grand. Tant que Kodi la
  * regarde, un faisceau de lumière la balaie ; dès que les pièces sont
  * repérées, leurs cadres se tracent l'un après l'autre, chacun avec son nom.
  * Une pièce rangée passe en trait plein, avec une coche.
@@ -60,7 +60,7 @@ export function PhotoScan({
   const framed = pieces.filter((p) => p.box);
   const done = framed.filter((p) => p.state === 'done').length;
   const label = scanning
-    ? 'Kode regarde ta photo et repère chaque pièce'
+    ? 'Kodi regarde ta photo et repère chaque pièce'
     : framed.length
       ? `Photo avec ${framed.length} pièce${framed.length > 1 ? 's' : ''} repérée${framed.length > 1 ? 's' : ''}, ${done} rangée${done > 1 ? 's' : ''}`
       : 'Ta photo';
@@ -313,7 +313,7 @@ function Checker({ w, h, ink }: { w: number; h: number; ink: string }) {
 }
 
 /**
- * Le dessin de Kode, découpé comme la pièce détourée : l'image entière est
+ * Le dessin de Kodi, découpé comme la pièce détourée : l'image entière est
  * agrandie et décalée pour que le cadre de découpe remplisse `frame`.
  */
 export function RawCrop({ reveal, frame }: { reveal: Reveal; frame: [number, number] }) {

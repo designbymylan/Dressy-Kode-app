@@ -84,7 +84,7 @@ export function bestByScore(candidates: Candidate[]): Candidate {
  */
 export function planRun(runs: number, candidates: Candidate[]): Plan {
   if (runs > MAX_RUNS) {
-    return { kind: 'fail', reason: "Kode n'a pas réussi à terminer cette pièce. Réessaie dans un moment." };
+    return { kind: 'fail', reason: "Kodi n'a pas réussi à terminer cette pièce. Réessaie dans un moment." };
   }
 
   const sorted = [...candidates].sort((a, b) => a.attempt - b.attempt);

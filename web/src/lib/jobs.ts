@@ -50,7 +50,7 @@ export function jobTitle(j: Pick<JobRow, 'target' | 'analysis'>): string {
 }
 
 /**
- * L'étape de Kode, pour la couleur de son orbe : lavande quand il repère,
+ * L'étape de Kodi, pour la couleur de son orbe : lavande quand il repère,
  * pêche quand il dessine, ciel quand il compare, menthe quand il range.
  */
 export type OrbStep = 'look' | 'draw' | 'check' | 'store';
@@ -71,40 +71,40 @@ export function jobStep(j: Pick<JobRow, 'status' | 'target'>): OrbStep {
 }
 
 /**
- * Ce que Kode dit pendant qu'il travaille, étape par étape. Les phrases
+ * Ce que Kodi dit pendant qu'il travaille, étape par étape. Les phrases
  * tournent à l'écran ; aucune ne nomme un modèle ni un service.
  */
 export function jobPhrases(j: Pick<JobRow, 'status' | 'attempts' | 'target'>): string[] {
   switch (j.status) {
     case 'queued':
-      if (j.attempts >= MAX_ATTEMPTS) return ['Kode choisit le meilleur rendu'];
-      if (!j.target) return ['Kode regarde ta photo', 'Kode s’installe'];
-      return j.attempts > 0 ? ['Kode prépare un nouvel essai'] : ['Kode sort ses crayons'];
+      if (j.attempts >= MAX_ATTEMPTS) return ['Kodi choisit le meilleur rendu'];
+      if (!j.target) return ['Kodi regarde ta photo', 'Kodi s’installe'];
+      return j.attempts > 0 ? ['Kodi prépare un nouvel essai'] : ['Kodi sort ses crayons'];
     case 'prompting':
       return j.target
-        ? ['Kode affine son dessin', 'Kode corrige les détails']
-        : ['Kode repère chaque pièce', 'Kode regarde les couleurs', 'Kode note chaque détail'];
+        ? ['Kodi affine son dessin', 'Kodi corrige les détails']
+        : ['Kodi repère chaque pièce', 'Kodi regarde les couleurs', 'Kodi note chaque détail'];
     case 'generating':
-      return ['Kode dessine ta pièce', 'Kode soigne les couleurs', 'Kode ajuste la coupe', 'Kode peaufine les détails'];
+      return ['Kodi dessine ta pièce', 'Kodi soigne les couleurs', 'Kodi ajuste la coupe', 'Kodi peaufine les détails'];
     case 'verifying':
-      return ['Kode compare avec ta photo', 'Kode vérifie chaque détail'];
+      return ['Kodi compare avec ta photo', 'Kodi vérifie chaque détail'];
     case 'selecting':
-      return ['Kode choisit le meilleur rendu'];
+      return ['Kodi choisit le meilleur rendu'];
     case 'cutout':
-      return ['Kode enlève le fond', 'Kode détoure ta pièce'];
+      return ['Kodi enlève le fond', 'Kodi détoure ta pièce'];
     case 'uploading':
-      return ['Kode la range sur ton portant'];
+      return ['Kodi la range sur ton portant'];
     default:
-      return ['Kode travaille'];
+      return ['Kodi travaille'];
   }
 }
 
-/** Sous la photo d'origine : combien de pièces Kode y a trouvées. */
+/** Sous la photo d'origine : combien de pièces Kodi y a trouvées. */
 export function jobNote(j: Pick<JobRow, 'analysis' | 'parent_id'>): string | null {
   const inv = j.analysis?.inventory;
   if (j.parent_id || !inv) return null;
   const n = inv.pieces.length;
-  const found = n > 1 ? `Kode a repéré ${n} pièces sur cette photo.` : n === 1 ? 'Kode a repéré 1 pièce sur cette photo.' : null;
+  const found = n > 1 ? `Kodi a repéré ${n} pièces sur cette photo.` : n === 1 ? 'Kodi a repéré 1 pièce sur cette photo.' : null;
   const skipped = inv.skipped
     ? `${inv.skipped} autre${inv.skipped > 1 ? 's' : ''} n’${inv.skipped > 1 ? 'ont' : 'a'} pas pu être ajoutée${inv.skipped > 1 ? 's' : ''} : ton dressing est plein.`
     : null;

@@ -4,7 +4,7 @@ import { THINKING } from '@/lib/thinking';
 
 /**
  * Entre deux écrans de l'application : la silhouette de la page en verre,
- * traversée d'un reflet, et Kode qui prépare la suite. Rien ne saute quand
+ * traversée d'un reflet, et Kodi qui prépare la suite. Rien ne saute quand
  * le vrai contenu arrive, les blocs ont la même place.
  */
 export default function Loading() {

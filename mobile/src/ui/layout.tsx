@@ -1,13 +1,15 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
-import { material, space } from '../theme/tokens';
+import { material, motion, space } from '../theme/tokens';
 import { T } from './T';
 import { BrandMark } from './Logo';
 import { IconButton } from './Button';
+import { Icon } from './Icon';
+import { Tap } from './Tap';
 import { BlurView } from 'expo-blur';
 import type { IconName } from './Icon';
 
@@ -188,9 +190,45 @@ export function TabHeader({ title, brand, meta, lead, actions = [], y }: { title
             ) : null}
           </View>
           <Actions list={actions} />
+          <ThemeSwitch />
         </View>
       </HeaderShell>
     </View>
+  );
+}
+
+/**
+ * L'interrupteur clair / sombre (21/10, web : ThemeNotch), en haut à droite
+ * de chaque onglet, toujours à portée de pouce : un soleil sur beurre, ou une
+ * lune sur bleu qui glisse et tourne. Il fixe le thème (Réglages peut
+ * revenir à Auto) et se masque dans Réglages › Apparence.
+ */
+export function ThemeSwitch() {
+  const { c, scheme, setPref, themeSwitch } = useTheme();
+  const reduced = useReducedMotion();
+  const dark = scheme === 'dark';
+  const x = useSharedValue(dark ? 1 : 0);
+  useEffect(() => {
+    x.value = reduced ? (dark ? 1 : 0) : withSpring(dark ? 1 : 0, motion.spring);
+  }, [dark, reduced, x]);
+  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: 24 * x.value }, { rotate: `${-30 * x.value}deg` }] }));
+  if (!themeSwitch) return null;
+  return (
+    <Tap
+      testID="theme-switch"
+      onPress={() => setPref(dark ? 'light' : 'dark')}
+      feedback="select"
+      scaleTo={0.94}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: dark }}
+      accessibilityLabel={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+      hitSlop={9}
+      style={{ width: 50, height: 26, borderRadius: 13, backgroundColor: c.rule, padding: 2, marginRight: 6 }}
+    >
+      <Animated.View style={[{ width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: dark ? c.blue : c.butter, shadowColor: '#000000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 2 } }, thumb]}>
+        <Icon name={dark ? 'moon' : 'sun'} size={dark ? 13 : 14} color={dark ? c['on-blue'] : c.choco} still />
+      </Animated.View>
+    </Tap>
   );
 }
 

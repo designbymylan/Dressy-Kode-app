@@ -80,7 +80,7 @@ export default async function Tenues() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13.5, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</p>
                   <p className="piece-kind">
-                    {o.items.length} pièce{o.items.length > 1 ? 's' : ''}{o.source === 'kode' ? ' · par Kode' : ''}
+                    {o.items.length} pièce{o.items.length > 1 ? 's' : ''}{o.source === 'kode' ? ' · par Kodi' : ''}
                   </p>
                 </div>
                 <DeleteOutfit id={o.id} name={o.name} />

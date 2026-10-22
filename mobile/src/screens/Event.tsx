@@ -91,7 +91,7 @@ export function EventScreen() {
 
         <Card style={{ gap: 12 }}>
           <T v="kicker" tone="ink2">
-            L’idée de Kode
+            L’idée de Kodi
           </T>
           <OutfitBoard pieces={first} width={W} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
           <Legend pieces={first} />
@@ -156,7 +156,7 @@ export function EventScreen() {
             </T>
             <Button testID="pack-buy" label={`Préparer mon occasion · ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />
             <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
-              Déjà inclus dans Atelier et Couture.
+              Déjà inclus dans Sapologue.
             </T>
           </Card>
         )}

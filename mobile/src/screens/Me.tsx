@@ -3,7 +3,7 @@
  * et des applis de banque envoyées en exemple. En haut, ta photo et le nom
  * que tu as choisi ; puis tes chiffres, quatre raccourcis, ta carte de
  * membre (l'offre, les places, les questions ; seulement après la première
- * tenue, depuis le 09/10), ton style tel que Kode le retient, et tes pièces
+ * tenue, depuis le 09/10), ton style tel que Kodi le retient, et tes pièces
  * les plus portées. Les réglages sont derrière la
  * roue de l'en-tête ; l'icône Personnaliser reste à l'accueil.
  */
@@ -30,7 +30,7 @@ import { Ambient } from '../ui/Ambient';
 import { AccountSheet } from '../ui/account';
 import { Avatar, Card, DotChip, Ring, Tag } from '../ui/bits';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
-import { PLANS, price } from './Offers';
+import { planOf, price } from './Offers';
 import type { Nav } from '../navigation/types';
 
 export function Me() {
@@ -45,7 +45,7 @@ export function Me() {
   const p = s.profile;
   const name = displayName(p);
   const handle = p.username && p.nameDisplay !== 'pseudo' ? `@${p.username}` : null;
-  const plan = PLANS.find((x) => x.id === s.plan)!;
+  const plan = planOf(s.plan);
   const limit = pieceLimit(s);
   const left = questionsLeft(s);
   const quota = LIMITS[s.plan].questions;
@@ -58,7 +58,7 @@ export function Me() {
   const next = nextBestAnswer(p);
   const hex = (n: string) => COLOR_CHOICES.find((x) => x.name === n)?.hex;
   const hasStyle = p.styles.length > 0 || p.love.length > 0 || p.avoid.length > 0;
-  // L'offre attend la première tenue (09/10) : on ne vend rien à qui n'a pas encore vu Kode à l'œuvre.
+  // L'offre attend la première tenue (09/10) : on ne vend rien à qui n'a pas encore vu Kodi à l'œuvre.
   const ready = canCompose(s.pieces);
   const showOffer = ready || s.plan !== 'decouverte';
   const sizes = [p.sizes.haut && `Haut ${p.sizes.haut}`, p.sizes.bas && `Bas ${p.sizes.bas}`, p.sizes.pointure && `Pointure ${p.sizes.pointure}`].filter(Boolean) as string[];
@@ -111,7 +111,7 @@ export function Me() {
               <View style={{ height: 3, width: `${Math.round((s.pieces.length / 3) * 100)}%`, backgroundColor: c.ink }} />
             </View>
             <T v="caption" tone="ink2">
-              Un haut, un bas, des chaussures : Kode compose ta première tenue.
+              Un haut, un bas, des chaussures : Kodi compose ta première tenue.
             </T>
             <Button testID="me-first-add" label="Ajouter une pièce" icon="plus" size="m" onPress={() => nav.navigate('AddPiece')} />
           </Card>
@@ -169,14 +169,14 @@ export function Me() {
           </View>
           <View className="flex-row items-center justify-between">
             <T v="caption" tone="primary-fg" style={F.s600}>
-              {s.plan === 'couture' ? 'Voir mon offre' : 'Voir les offres'}
+              {s.plan === 'atelier' || s.plan === 'couture' ? 'Voir mon offre' : 'Voir les offres'}
             </T>
             <Icon name="arrow" size={16} color={c['primary-fg']} />
           </View>
         </Tap>
         )}
 
-        {/* Ton style, tel que Kode le retient : il se modifie dans le profil. */}
+        {/* Ton style, tel que Kodi le retient : il se modifie dans le profil. */}
         <Card style={{ gap: 14 }} testID="me-style">
           <View className="flex-row items-center justify-between">
             <Tag label="Ton style" />
@@ -211,16 +211,16 @@ export function Me() {
             </View>
           ) : (
             <T v="body" tone="ink2">
-              Dis à Kode ce que tu aimes : tes tenues lui ressembleront davantage.
+              Dis à Kodi ce que tu aimes : tes tenues lui ressembleront davantage.
             </T>
           )}
-          <Tap testID="me-precision" onPress={() => nav.navigate(knows < 50 ? 'Affiner' : 'Silhouette')} scaleTo={0.99} accessibilityLabel={`Kode te connaît à ${knows} %`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderColor: c.rule }}>
+          <Tap testID="me-precision" onPress={() => nav.navigate(knows < 50 ? 'Affiner' : 'Silhouette')} scaleTo={0.99} accessibilityLabel={`Kodi te connaît à ${knows} %`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderColor: c.rule }}>
             <Ring value={knows} size={40} stroke={3}>
               <T v="kicker">{`${knows}`}</T>
             </Ring>
             <View style={{ flex: 1 }}>
               <T v="body" style={F.s500}>
-                Kode te connaît à {knows} %
+                Kodi te connaît à {knows} %
               </T>
               {next && (
                 <T v="caption" tone="ink2">

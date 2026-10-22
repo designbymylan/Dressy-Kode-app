@@ -141,8 +141,16 @@ APP_PAIRS = [
     ('control', 'paper', L, 'contour d’un interrupteur, d’une case, d’un champ'),
     ('control', 'raised', L, 'contour de contrôle sur carte'),
     ('ink2', 'raised', L, 'icône secondaire'),
-    ('butter-ink', 'butter', N, 'bandeau de service rose poudré'),
-    ('butter-ink', 'butter-field', N, 'champ et suggestions dans la bulle de Kode (06/10)'),
+    ('butter-ink', 'butter', N, 'bandeau de service beurre (21/10)'),
+    ('butter-ink', 'butter-field', N, 'champ et suggestions dans la bulle de Kodi (06/10)'),
+    ('on-blue', 'blue', N, 'action principale et sélection en bleu (21/10)'),
+    ('on-blue', 'blue-bottom', N, 'bas du verre bleu (dégradé du bouton principal)'),
+    ('blue-ink', 'paper', N, 'icône ou texte choisi, en bleu profond (21/10)'),
+    ('blue-ink', 'raised', N, 'icône ou texte choisi sur carte'),
+    ('blue-ink', 'blue-soft', N, 'texte choisi sur la teinte bleue douce'),
+    ('ink', 'blue-soft', N, 'texte sur la teinte bleue douce (offres)'),
+    ('on-panel', 'panel', N, 'texte de la section découpée (dressing)'),
+    ('on-panel-muted', 'panel', N, 'texte secondaire de la section découpée'),
     ('tab-off', 'paper', N, 'onglet inactif sur la barre'),
     ('ink', 'stage', L, 'illustration noire sur gris studio'),
     ('ink', 'glass-strong', N, 'étiquette à point posée sur une image (05/10)'),
@@ -160,6 +168,11 @@ def app_checks(theme, t):
         return over(c, a, base) if a < 1 else c
 
     checks = []
+    # La barre d'onglets (21/10) est en verre dense (glass-strong) : libellés et onglet choisi.
+    nav, nav_alpha = parse(t['glass-strong'])
+    for fg, use in (('tab-off', 'libellé d’un onglet'), ('blue-ink', 'onglet choisi, en bleu'), ('orb-label', 'libellé de Kodi sous son rond')):
+        worst = min(ratio(rgb(t[fg]), over(nav, nav_alpha, rgb(b))) for b in BACKDROPS.values())
+        checks.append((f'{fg} / barre d’onglets {int(nav_alpha * 100)} %, {use} (pire fond)', worst, N))
     for fg, bg, need, use in APP_PAIRS:
         back = resolve(bg)
         front = resolve(fg, back)

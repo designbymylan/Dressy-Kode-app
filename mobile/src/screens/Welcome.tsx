@@ -16,9 +16,10 @@ import { Garment, type GarmentKind } from '../ui/Garment';
 import { photo } from '../data/photos';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { Kodi } from '../ui/Kodi';
 import type { Nav } from '../navigation/types';
 
-// De vraies pièces, détourées (07/10) : le portant montre ce que Kode fera des tiennes.
+// De vraies pièces, détourées (07/10) : le portant montre ce que Kodi fera des tiennes.
 const RAIL: { kind: GarmentKind; image: string; label: string }[] = [
   { kind: 'veste', image: photo('blouson-noir'), label: 'Blouson zippé noir' },
   { kind: 'pull', image: photo('pull-marine'), label: 'Pull marine en maille' },
@@ -30,7 +31,7 @@ const CHIPS = ['détourage', 'tenue du jour', 'météo', 'agenda', 'coût par po
 
 /**
  * L'accueil avant le compte (version cartes, 05/10) : la capsule en haut, un
- * grand titre, deux boutons empilés, le portant en carte, ce que fait Kode
+ * grand titre, deux boutons empilés, le portant en carte, ce que fait Kodi
  * en puces. Peu de mots : le portant parle.
  */
 export function Welcome() {
@@ -55,12 +56,14 @@ export function Welcome() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6 + 56 + 36, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 24, gap: 16, alignItems: 'center' }}>
+        {/* Kodi arrive en rebond, déroule son auvent et fait coucou (21/10). */}
+        <Kodi mood="wave" size={104} track enter shadow />
         <Animated.View entering={FadeInDown.delay(200).duration(500)} style={{ gap: 12, alignItems: 'center' }}>
           <T v="hero" style={{ fontSize: 40, lineHeight: 44, textAlign: 'center' }} accessibilityRole="header">
             Porte mieux ce que tu as.
           </T>
           <T v="body" tone="ink2" style={{ textAlign: 'center' }}>
-            Une photo, et Kode range ta pièce.
+            Une photo, et Kodi range ta pièce.
           </T>
         </Animated.View>
 

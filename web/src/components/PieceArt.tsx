@@ -4,7 +4,7 @@ import { colourHex } from '@/lib/onboarding';
 import type { Piece } from '@/lib/garments';
 
 /**
- * L'image d'une pièce : sa vignette détourée si Kode l'a préparée, sinon le
+ * L'image d'une pièce : sa vignette détourée si Kodi l'a préparée, sinon le
  * pictogramme de son type teinté de sa couleur (pièce saisie à la main).
  */
 export function PieceArt({ piece, size = 56 }: { piece: Pick<Piece, 'url' | 'category_id' | 'kind' | 'colors'>; size?: number }) {

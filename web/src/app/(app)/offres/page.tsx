@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
 import { loadSubscription } from '@/lib/billing';
-import { OffersPicker } from '@/components/OffersPicker';
+import { Pricing } from '@/components/Pricing';
+import { Screen, Title } from '@/components/ui';
 
 export default async function Offres() {
   const viewer = await getViewer();
@@ -16,5 +17,10 @@ export default async function Offres() {
 
   // Le mois offert ne vaut qu'une fois : l'Edge Function billing applique la
   // même règle, cet affichage ne fait que l'annoncer.
-  return <OffersPicker current={subscription?.plan ?? null} trial={!count} />;
+  return (
+    <Screen>
+      <Title>Porte mieux, achète moins.</Title>
+      <Pricing current={subscription?.plan ?? null} trial={!count} />
+    </Screen>
+  );
 }

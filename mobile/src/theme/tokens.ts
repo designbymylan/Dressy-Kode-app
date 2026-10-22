@@ -1,9 +1,10 @@
 /**
  * Jetons du design system Dresskode. Les formes et les composants sont ceux
  * du 02/10 (revenus le 04/10 à la demande de Mylan) : verre dépoli, arrondis,
- * capsules, boutons en casse normale. Les couleurs restent celles de la
- * « galerie » (fond blanc, texte noir, gris studio sous les vêtements, rose
- * poudré pour les bandeaux de service, halos crème, noirs en sombre) ; la
+ * capsules, boutons en casse normale. Les couleurs sont celles de la palette
+ * du 21/10 (fond blanc, texte noir, gris studio sous les vêtements, bleu pour
+ * ce qui est choisi, beurre pour les bandeaux de service, chocopie pour le
+ * rond de Kodi, halos bleu et beurre, noirs en sombre) ; la
  * typographie est celle de la charte v2 du 09/10 (Inter Tight et Inter,
  * design/charte-typographique-v2.md, polices dans fonts.ts). La disposition des écrans reste celle de la
  * refonte (design/refonte/).
@@ -78,8 +79,9 @@ export const type = {
  */
 export const material = {
   blur: 24,
-  tabHeight: 66,
-  tabBottom: 12,
+  /** La barre d'onglets du 21/10 : 68 de haut, et sa bosse de 28 au-dessus. */
+  tabHeight: 68,
+  tabBottom: 10,
   shadow: {
     light: { shadowColor: '#111111', shadowOpacity: 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 8 },
     dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 24, shadowOffset: { width: 0, height: 14 }, elevation: 8 },
@@ -93,6 +95,11 @@ export const material = {
   press: {
     light: { shadowColor: '#000000', shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
     dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  },
+  /** Ombre du verre bleu (--blue-shadow, 21/10) : bleutée, courte. */
+  blue: {
+    light: { shadowColor: '#4B7DA5', shadowOpacity: 0.42, shadowRadius: 11, shadowOffset: { width: 0, height: 7 }, elevation: 4 },
+    dark: { shadowColor: '#C4DAE8', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 7 }, elevation: 4 },
   },
 } as const;
 

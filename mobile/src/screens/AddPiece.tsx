@@ -31,7 +31,7 @@ import { F } from '../theme/fonts';
 
 /** Une photo choisie sur le téléphone, avec ses proportions. */
 type Picked = Shot;
-/** Une photo confiée à Kode : son chemin une fois envoyée, ou ce qui l'a arrêtée. */
+/** Une photo confiée à Kodi : son chemin une fois envoyée, ou ce qui l'a arrêtée. */
 type Sent = { picked: Picked; path: string | null; error?: string };
 
 const STEPS = ['Détourage de la pièce', 'Type de pièce', 'Couleur dominante', 'Matière probable', 'Illustration pour tes portants'];
@@ -48,7 +48,7 @@ export function AddPiece() {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Found | null>(null);
   const [photo, setPhoto] = useState<Picked | null>(null);
-  // Compte connecté : les photos partent vraiment chez Kode, qui repère et dessine chaque pièce.
+  // Compte connecté : les photos partent vraiment chez Kodi, qui repère et dessine chaque pièce.
   const live = s.account === 'connecte' && remote.online;
   // Le compte de démonstration seul garde la galerie d'exemples ; un espace sans compte n'a aucune pièce fictive.
   const demo = s.account === 'demo';
@@ -85,7 +85,7 @@ export function AddPiece() {
     setPhase('analyse');
   };
 
-  /** Les photos partent chez Kode ; l'écran les montre tout de suite, balayées par le scan. */
+  /** Les photos partent chez Kodi ; l'écran les montre tout de suite, balayées par le scan. */
   const confide = async (picked: Picked[]) => {
     setSent((prev) => [...(prev ?? []), ...picked.map((p) => ({ picked: p, path: null }))]);
     setPhase('suivi');
@@ -108,7 +108,7 @@ export function AddPiece() {
   };
 
   /**
-   * Une vraie photo (appareil ou galerie). Connectée, elle part chez Kode ;
+   * Une vraie photo (appareil ou galerie). Connectée, elle part chez Kodi ;
    * sans compte, elle attend sur le téléphone et la création du compte est
    * proposée ; dans la démonstration seule, la reconnaissance est simulée.
    */
@@ -123,7 +123,7 @@ export function AddPiece() {
         return setError(CAMERA_BLOCKED);
       }
       if (camera && native && live) {
-        // En rafale : chaque photo part chez Kode pendant qu'on prend la suivante.
+        // En rafale : chaque photo part chez Kodi pendant qu'on prend la suivante.
         const sending: ReturnType<typeof confide>[] = [];
         const shots = await shootBurst({ max: 10, quality: 0.5, onShot: (shot) => sending.push(confide([shot])) });
         if (!shots.length) return;
@@ -185,7 +185,7 @@ export function AddPiece() {
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-add">
       <Ambient />
       <StackHeader title="Ajouter une pièce" close />
-      {/* Sans compte : les photos choisies attendent ; une fois le compte créé, elles partent chez Kode. */}
+      {/* Sans compte : les photos choisies attendent ; une fois le compte créé, elles partent chez Kodi. */}
       <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => { setAccount(false); setTimeout(() => nav.goBack(), 320); }} initial={s.pendingEmail ? 'login' : 'signup'} />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {phase === 'source' && (
@@ -195,7 +195,7 @@ export function AddPiece() {
                 Une photo suffit.
               </T>
               <T v="body" tone="ink2">
-                Kode la détoure, la reconnaît et la range.
+                Kodi la détoure, la reconnaît et la range.
               </T>
             </View>
 
@@ -220,7 +220,7 @@ export function AddPiece() {
               <Card className="bg-butter" style={{ gap: 10 }} testID="add-full">
                 <T v="cardTitle">Ton dressing est plein.</T>
                 <T v="body" tone="ink2">
-                  Tu pourrais ajouter 30 places, ou passer à Atelier : 200 pièces.
+                  Tu pourrais ajouter 30 places, ou passer à Sapologue : pièces illimitées.
                 </T>
                 <View className="flex-row" style={{ gap: 8 }}>
                   <Button label="+30 places · 4,99 €" size="m" grow onPress={a.buyPlaces} />
@@ -278,22 +278,22 @@ export function AddPiece() {
                       maxLength={280}
                       placeholder="Par exemple : seulement la veste et le jean"
                       placeholderTextColor={c.ink2}
-                      accessibilityLabel="Les pièces que Kode doit dessiner, si tu ne veux pas toute la photo"
+                      accessibilityLabel="Les pièces que Kodi doit dessiner, si tu ne veux pas toute la photo"
                       className="bg-sunk"
                       style={{ minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
                     />
                     <T v="small" tone="ink2">
-                      Sinon, Kode dessine tout ce qu’il voit.
+                      Sinon, Kodi dessine tout ce qu’il voit.
                     </T>
                   </View>
                 ) : !demo ? (
                   // Sans compte : aucune pièce d'exemple, l'invitation à créer le compte.
                   <Card className="bg-butter" style={{ gap: 10 }} testID="add-account">
-                    <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kode dessine tes pièces avec ton compte.'}</T>
+                    <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kodi dessine tes pièces avec ton compte.'}</T>
                     <T v="body" tone="ink2">
                       {remote.online
-                        ? 'Gratuit, en une minute : Kode range chaque vêtement de tes photos.'
-                        : 'Dans cet aperçu, Kode ne reçoit pas les photos.'}
+                        ? 'Gratuit, en une minute : Kodi range chaque vêtement de tes photos.'
+                        : 'Dans cet aperçu, Kodi ne reçoit pas les photos.'}
                     </T>
                     {remote.online && <Button testID="add-create-account" label="Créer mon compte" size="m" onPress={() => setAccount(true)} />}
                   </Card>
@@ -323,7 +323,7 @@ export function AddPiece() {
 
         {phase === 'analyse' && found && (
           <Animated.View entering={FadeIn.duration(200)} style={{ gap: 20 }} accessibilityLiveRegion="polite">
-            <T v="title">Kode regarde ta pièce…</T>
+            <T v="title">Kodi regarde ta pièce…</T>
             <DemoScan found={found} photo={photo} step={step} width={width - space.gutter * 2} />
             <View style={{ gap: 10 }}>
               {STEPS.map((label, i) => (
@@ -365,7 +365,7 @@ export function AddPiece() {
                 Reconnue avec confiance
               </T>
               <T v="body" tone="ink2">
-                Vérifie la matière : c’est ce que Kode devine le moins bien sur une photo.
+                Vérifie la matière : c’est ce que Kodi devine le moins bien sur une photo.
               </T>
               {photo && Platform.OS === 'web' && (
                 <T v="small" tone="ink2">
@@ -483,7 +483,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
   const seen = useRef(new Map<string, string>());
   const working = sent.some((x) => !x.path && !x.error) || jobs.some(isActive);
 
-  // Toutes les deux secondes tant que Kode travaille (quelques octets).
+  // Toutes les deux secondes tant que Kodi travaille (quelques octets).
   useEffect(() => {
     if (!paths.length || !working) return;
     const t = setInterval(() => a.readJobs(paths).catch(() => undefined), 2000);
@@ -529,7 +529,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
     <Animated.View entering={FadeIn.duration(200)} style={{ gap: 22 }} accessibilityLiveRegion="polite">
       <View style={{ gap: 8 }}>
         <T v="title" accessibilityRole="header">
-          {working || playing ? 'Kode s’occupe\n' : 'Tout est\n'}
+          {working || playing ? 'Kodi s’occupe\n' : 'Tout est\n'}
           <T v="title" style={{ ...F.accent }}>
             {working || playing ? 'de tes photos.' : 'rangé.'}
           </T>
@@ -545,7 +545,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
         const list = x.path ? groups.get(x.path) : undefined;
         // Une photo retirée (« Retirer ») quitte le suivi.
         if (x.path && !list) return null;
-        // Pas encore arrivée chez Kode (ou arrêtée en route) : la photo seule.
+        // Pas encore arrivée chez Kodi (ou arrêtée en route) : la photo seule.
         if (!list) {
           return (
             <View key={x.picked.uri} style={{ gap: 12 }}>
@@ -555,7 +555,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
                   {x.error}
                 </T>
               ) : (
-                <KodeThinking phrases={['Kode reçoit ta photo', 'Kode la regarde de près']} step="look" center every={2000} />
+                <KodeThinking phrases={['Kodi reçoit ta photo', 'Kodi la regarde de près']} step="look" center every={2000} />
               )}
             </View>
           );
@@ -582,7 +582,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
             {failedPhoto.map((j) => (
               <View key={j.id} style={{ gap: 8 }}>
                 <T v="body" tone="ink2">
-                  {j.error ?? 'Kode n’a pas pu lire cette photo.'}
+                  {j.error ?? 'Kodi n’a pas pu lire cette photo.'}
                 </T>
                 <JobActions job={j} />
               </View>
@@ -611,7 +611,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
   );
 }
 
-/** Une pièce repérée : son dessin (ou son détourage qui se joue), son nom, où en est Kode. */
+/** Une pièce repérée : son dessin (ou son détourage qui se joue), son nom, où en est Kodi. */
 function PieceRow({ job, reveal, cut, onRevealed }: { job: JobRow; reveal?: Reveal; cut?: string; onRevealed: () => void }) {
   const { c, scheme } = useTheme();
   const reduced = useReducedMotion();
@@ -660,7 +660,7 @@ function PieceRow({ job, reveal, cut, onRevealed }: { job: JobRow; reveal?: Reve
         {failed ? (
           <>
             <T v="caption" tone="ink2">
-              {job.error ?? 'Kode n’a pas pu finir cette pièce.'}
+              {job.error ?? 'Kodi n’a pas pu finir cette pièce.'}
             </T>
             <JobActions job={job} />
           </>
@@ -672,7 +672,7 @@ function PieceRow({ job, reveal, cut, onRevealed }: { job: JobRow; reveal?: Reve
             </T>
           </View>
         ) : reveal ? (
-          <KodeThinking phrases={['Kode enlève le fond', 'Kode la pose sur ton portant']} step="store" size={18} every={1400} style={{ minHeight: 24, gap: 8 }} />
+          <KodeThinking phrases={['Kodi enlève le fond', 'Kodi la pose sur ton portant']} step="store" size={18} every={1400} style={{ minHeight: 24, gap: 8 }} />
         ) : (
           <KodeThinking phrases={jobPhrases(job)} step={jobStep(job)} size={18} every={2600} style={{ minHeight: 24, gap: 8 }} />
         )}

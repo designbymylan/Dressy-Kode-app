@@ -12,12 +12,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // legal.ts est dans un paquet sans « type » : Node le relit en module, sans que ce soit une erreur.
 process.removeAllListeners('warning');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { EDITEUR, POLITIQUE, POLITIQUE_VERSION } = await import(path.join(root, 'mobile/src/data/legal.ts'));
+// Une URL file:// et non un chemin : sous Windows, import() refuse « C:\… ».
+const { EDITEUR, POLITIQUE, POLITIQUE_VERSION } = await import(pathToFileURL(path.join(root, 'mobile/src/data/legal.ts')).href);
 
 const editeur = [EDITEUR.nom, EDITEUR.forme, EDITEUR.adresse, EDITEUR.siren && `SIREN ${EDITEUR.siren}`].filter(Boolean).join(' · ');
 const contact = EDITEUR.contact ?? 'L’adresse de contact sera indiquée ici avant la sortie de l’app.';

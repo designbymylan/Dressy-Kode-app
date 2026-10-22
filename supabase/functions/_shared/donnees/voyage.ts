@@ -1,6 +1,6 @@
 /**
  * Les voyages (07/10) : trouver un lieu dans le monde, sa photo et sa météo
- * jour par jour, pour que Kode prépare une tenue par jour sur place.
+ * jour par jour, pour que Kodi prépare une tenue par jour sur place.
  *
  * - Lieux : géocodage d'Open-Meteo (noms en français), secours Nominatim.
  * - Photo : l'image de l'article Wikipédia du lieu (Wikimedia Commons).

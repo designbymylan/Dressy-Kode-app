@@ -202,7 +202,7 @@ type DressProps = {
  * La tenue du jour en rangées (06/10, sur le modèle « Dress me » des apps de
  * garde-robe) : une rangée par niveau, de la tête aux pieds, la pièce au
  * centre et ses voisines coupées par le bord. Toucher une voisine la prend ;
- * le cadenas garde la pièce quand Kode propose une autre tenue.
+ * le cadenas garde la pièce quand Kodi propose une autre tenue.
  */
 export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, onPiece }: DressProps) {
   const { c, scheme } = useTheme();

@@ -224,7 +224,7 @@ export function AccountSheet({
       <View style={{ gap: 12 }}>
         <T v="body" tone="ink2">
           {mode === 'login'
-            ? 'Ton dressing, tes tenues et tes échanges avec Kode t’attendent.'
+            ? 'Ton dressing, tes tenues et tes échanges avec Kodi t’attendent.'
             : 'Ton profil et tes pièces sont enregistrés sur ton compte : tu les retrouves sur tous tes appareils.'}
         </T>
         <EmailField testID="login-email" value={email} onChange={setEmail} />

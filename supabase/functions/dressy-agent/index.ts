@@ -374,7 +374,7 @@ async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string
       kind: t.kind ?? null,
       name: t.name,
       colors: t.colors,
-      // La teinte mesurée par Kode : la pastille de couleur de la fiche.
+      // La teinte mesurée par Kodi : la pastille de couleur de la fiche.
       tint: t.hex?.[0] ?? null,
       material: t.material || null,
       image_path: imagePath,

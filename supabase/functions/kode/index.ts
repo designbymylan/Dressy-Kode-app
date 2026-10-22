@@ -1,5 +1,5 @@
 /**
- * Kode, le styliste de Dresskode.
+ * Kodi, le styliste de Dresskode.
  *
  * Reçoit une question de la personne connectée, relit son dressing, son
  * profil et son agenda, et fait répondre Claude, avec, quand la question
@@ -18,7 +18,7 @@
  * Déployée AVEC vérification JWT : l'appel porte le jeton de la personne,
  * et toutes les lectures passent par la RLS avec ce jeton. La clé service ne
  * sert qu'à ce que le navigateur ne doit pas pouvoir faire : compter la
- * question dans le quota et écrire la réponse de Kode.
+ * question dans le quota et écrire la réponse de Kodi.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -194,7 +194,7 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
 
   return {
     today,
-    // Une table absente ou illisible ne prive pas Kode de répondre.
+    // Une table absente ou illisible ne prive pas Kodi de répondre.
     ecarts: ecarts.error ? [] : ((ecarts.data ?? []) as EcartRow[]),
     corps: accord.data === true && silhouette.data ? (silhouette.data as Corps) : null,
     city: (settings.data?.city as string | null | undefined) ?? null,
@@ -211,7 +211,7 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
 /** L'identifiant d'une pièce vers sa référence courte (p1, p2…). */
 const refOf = (refs: Map<string, Garment>) => new Map([...refs].map(([ref, g]) => [g.id, ref]));
 
-/** Une promesse qui ne bloque jamais Kode : sans réponse à temps, ou en erreur, elle rend `null`. */
+/** Une promesse qui ne bloque jamais Kodi : sans réponse à temps, ou en erreur, elle rend `null`. */
 function within<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> {
   return Promise.race([p, new Promise<null>((ok) => setTimeout(() => ok(null), ms))])
     .catch((e) => (console.warn(`${label} :`, e instanceof Error ? e.message : e), null));
@@ -225,7 +225,7 @@ async function askClaude(system: string, context: string, turns: Turn[], schema:
   const apiKey = anthropicKey();
   if (!apiKey) {
     console.error('ANTHROPIC_API_KEY absent des secrets Supabase');
-    throw new KodeError('Kode n’est pas encore disponible. Réessaie un peu plus tard.', 503);
+    throw new KodeError('Kodi n’est pas encore disponible. Réessaie un peu plus tard.', 503);
   }
 
   const client = new Anthropic({ apiKey, timeout: opts.timeout, maxRetries: opts.retries });
@@ -248,18 +248,18 @@ async function askClaude(system: string, context: string, turns: Turn[], schema:
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
       console.error('Claude refuse la clé :', err.message);
-      throw new KodeError('Kode n’est pas disponible pour le moment. Réessaie un peu plus tard.', 503);
+      throw new KodeError('Kodi n’est pas disponible pour le moment. Réessaie un peu plus tard.', 503);
     }
     if (err instanceof Anthropic.RateLimitError) {
-      throw new KodeError('Kode est très demandé en ce moment. Réessaie dans une minute.', 503);
+      throw new KodeError('Kodi est très demandé en ce moment. Réessaie dans une minute.', 503);
     }
     if (err instanceof Anthropic.APIConnectionTimeoutError) {
-      throw new KodeError('Kode a mis trop de temps à répondre. Réessaie.', 504);
+      throw new KodeError('Kodi a mis trop de temps à répondre. Réessaie.', 504);
     }
     if (err instanceof Anthropic.APIError) {
       // Un crédit épuisé arrive ici (400) : le détail part dans les journaux.
       console.error(`Claude ${err.status} :`, err.message);
-      throw new KodeError('Kode n’a pas pu répondre. Réessaie dans un moment.', 502);
+      throw new KodeError('Kodi n’a pas pu répondre. Réessaie dans un moment.', 502);
     }
     throw err;
   }
@@ -267,14 +267,14 @@ async function askClaude(system: string, context: string, turns: Turn[], schema:
 
 function readJson<T>(res: Anthropic.Beta.BetaMessage): Partial<T> {
   if (res.stop_reason === 'refusal') {
-    throw new KodeError('Kode ne peut pas répondre à cette question. Reformule-la autour de tes vêtements.', 422);
+    throw new KodeError('Kodi ne peut pas répondre à cette question. Reformule-la autour de tes vêtements.', 422);
   }
   const text = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
   try {
     return JSON.parse(text);
   } catch {
     console.error(`réponse illisible (${res.stop_reason}) :`, text.slice(0, 300));
-    throw new KodeError('La réponse de Kode est arrivée incomplète. Réessaie.', 502);
+    throw new KodeError('La réponse de Kodi est arrivée incomplète. Réessaie.', 502);
   }
 }
 
@@ -323,11 +323,11 @@ async function reply(token: string, question: string) {
   // Vérifié avant le quota : une question sans pièces à combiner ne doit
   // pas coûter une des questions du mois.
   if (ctx.wardrobe.length < MIN_PIECES) {
-    throw new KodeError('Kode a besoin d’au moins deux pièces dans ton dressing pour composer une tenue.', 409, 'wardrobe');
+    throw new KodeError('Kodi a besoin d’au moins deux pièces dans ton dressing pour composer une tenue.', 409, 'wardrobe');
   }
 
   // Météo, fériés, vacances, tendances : lus en même temps que le quota, par
-  // le cache partagé. Jamais bloquant : sans réponse en 9 s, Kode répond sans.
+  // le cache partagé. Jamais bloquant : sans réponse en 9 s, Kodi répond sans.
   const monde = within(contexteDuJour(cachePostgres(admin), ctx.city).then(contexteTexte), 9000, 'contexte du jour');
 
   const questionId = await countQuestion(space.id, question);
@@ -406,7 +406,7 @@ function readPlanInput(input: PlanInput, today: string) {
     .filter((d) => DAY.test(d) && !Number.isNaN(Date.parse(`${d}T12:00:00Z`)) && d >= shift(today, -1) && d <= shift(today, 400))
     .sort();
   if (!days.length) throw new KodeError('Choisis au moins un jour à venir.');
-  if (days.length > MAX_DAYS) throw new KodeError(`Kode prépare ${MAX_DAYS} jours au plus d’un coup.`);
+  if (days.length > MAX_DAYS) throw new KodeError(`Kodi prépare ${MAX_DAYS} jours au plus d’un coup.`);
 
   const v = input.voyage && typeof input.voyage === 'object' ? (input.voyage as Record<string, unknown>) : null;
   const destination = text(v?.destination, 80);
@@ -458,7 +458,7 @@ async function plan(token: string, input: PlanInput) {
   // Les jours voisins aussi, pour ne pas remettre la tenue de la veille.
   const ctx = await loadContext(db, space.id, { from: shift(from, -3), to: shift(to, 3) });
   if (ctx.wardrobe.length < MIN_PIECES) {
-    throw new KodeError('Kode a besoin d’au moins deux pièces dans ton dressing pour composer une tenue.', 409, 'wardrobe');
+    throw new KodeError('Kodi a besoin d’au moins deux pièces dans ton dressing pour composer une tenue.', 409, 'wardrobe');
   }
 
   const cache = cachePostgres(admin);
@@ -542,13 +542,13 @@ Deno.serve(async (req) => {
     const input = await req.json().catch(() => ({}));
     if (input?.action === 'planifier') return Response.json(await plan(token, input));
     const question = String(input?.question ?? '').trim().slice(0, MAX_QUESTION);
-    if (!question) throw new KodeError('Écris ta question à Kode.');
+    if (!question) throw new KodeError('Écris ta question à Kodi.');
     return Response.json(await reply(token, question));
   } catch (err) {
     if (err instanceof KodeError) {
       return Response.json({ error: err.message, code: err.code ?? null }, { status: err.status });
     }
     console.error('kode :', err instanceof Error ? err.message : err);
-    return Response.json({ error: 'Kode n’a pas pu répondre. Réessaie dans un instant.', code: null }, { status: 500 });
+    return Response.json({ error: 'Kodi n’a pas pu répondre. Réessaie dans un instant.', code: null }, { status: 500 });
   }
 });

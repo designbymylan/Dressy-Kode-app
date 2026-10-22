@@ -4,11 +4,12 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { Tap } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
+import { BlueGlass } from './Glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { material, motion } from '../theme/tokens';
 import { F } from '../theme/fonts';
 
-/** Puce de filtre ou de choix (globals.css : `.chip`) : verre clair, encre pleine quand elle est active. */
+/** Puce de filtre ou de choix (globals.css : `.chip`) : verre clair, verre bleu et texte noir quand elle est choisie (21/10). */
 export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: string; on?: boolean; onPress: () => void; icon?: IconName; count?: number; testID?: string; dot?: string }) {
   const { c, scheme } = useTheme();
   return (
@@ -23,21 +24,22 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
       style={[
         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 40, borderRadius: 20, borderWidth: 1 },
         on
-          ? { backgroundColor: c['primary-bg'], borderColor: 'transparent', ...material.press[scheme] }
+          ? { backgroundColor: c.blue, borderColor: 'transparent', ...material.blue[scheme] }
           : { backgroundColor: c['glass-strong'], borderColor: c['glass-border'] },
       ]}
     >
+      {on && <BlueGlass radius={20} />}
       {icon && (
         <View style={{ marginRight: 6 }}>
-          <Icon name={icon} size={16} color={on ? c['primary-fg'] : c.ink} strokeWidth={1.8} />
+          <Icon name={icon} size={16} color={on ? c['on-blue'] : c.ink} strokeWidth={1.8} />
         </View>
       )}
-      {dot && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: dot, marginRight: 7, borderWidth: 1, borderColor: on ? c['primary-fg'] : c.rule }} />}
-      <T v="caption" tone={on ? 'primary-fg' : 'ink'} style={[F.s500, { fontSize: 13.5 }]}>
+      {dot && <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: dot, marginRight: 7, borderWidth: 1, borderColor: on ? c['on-blue'] : c.rule }} />}
+      <T v="caption" tone={on ? 'on-blue' : 'ink'} style={[on ? F.s600 : F.s500, { fontSize: 13.5 }]}>
         {label}
       </T>
       {count !== undefined && (
-        <T v="caption" tone={on ? 'primary-fg' : 'ink2'} style={{ marginLeft: 6 }}>
+        <T v="caption" tone={on ? 'on-blue' : 'ink2'} style={{ marginLeft: 6 }}>
           {count}
         </T>
       )}
@@ -46,15 +48,16 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
 }
 
 /**
- * Segment de verre à curseur encre (globals.css : `.segment`), pour basculer
- * entre deux vues (Portants / Grille). Le curseur glisse d'une option à l'autre.
+ * Segment de verre à curseur bleu (globals.css : `.segment`, 21/10), pour
+ * basculer entre deux vues (Portants / Grille). Le curseur glisse d'une
+ * option à l'autre.
  */
 export function Segmented<V extends string>({ options, value, onChange, label }: { options: { value: V; label: string }[]; value: V; onChange: (v: V) => void; label: string }) {
   return <SegmentTrack options={options} value={value} onChange={onChange} label={label} role="tablist" idPrefix="seg" compact />;
 }
 
 function SegmentTrack<V extends string>({ options, value, onChange, label, role, idPrefix, compact }: { options: { value: V; label: string; icon?: IconName }[]; value: V; onChange: (v: V) => void; label: string; role: 'tablist' | 'radiogroup'; idPrefix: string; compact?: boolean }) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   const w = useSharedValue(0);
   const x = useSharedValue(index);
@@ -71,7 +74,9 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
       className="flex-row"
       style={[{ padding: 3, borderRadius: 999, backgroundColor: c.pill }, compact && { alignSelf: 'flex-start', width: options.length * 108 + 6 }]}
     >
-      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 3, bottom: 3, left: 3, borderRadius: 999, backgroundColor: c['primary-bg'] }, thumb]} />
+      <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 3, bottom: 3, left: 3, borderRadius: 999, backgroundColor: c.blue, shadowColor: '#4B7DA5', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }, thumb]}>
+        <BlueGlass radius={h / 2} />
+      </Animated.View>
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -89,10 +94,10 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
           >
             {o.icon && (
               <View style={{ marginRight: 6 }}>
-                <Icon name={o.icon} size={16} color={on ? c['primary-fg'] : c.ink2} />
+                <Icon name={o.icon} size={16} color={on ? c['on-blue'] : c.ink2} />
               </View>
             )}
-            <T v="caption" tone={on ? 'primary-fg' : 'ink2'}>
+            <T v="caption" tone={on ? 'on-blue' : 'ink2'} style={on ? F.s600 : undefined}>
               {o.label}
             </T>
           </Tap>
@@ -104,8 +109,8 @@ function SegmentTrack<V extends string>({ options, value, onChange, label, role,
 
 /**
  * Onglets soulignés (05/10, en capitales espacées depuis le 09/10, comme les
- * rayons d'une grande enseigne) : le libellé actif en encre, un trait sous
- * lui ; les autres en gris. `right` accueille une action (filtres).
+ * rayons d'une grande enseigne) : le libellé actif en encre, un trait bleu
+ * sous lui (21/10) ; les autres en gris. `right` accueille une action (filtres).
  */
 export function UnderlineTabs<V extends string>({ options, value, onChange, label, right }: { options: { value: V; label: string }[]; value: V; onChange: (v: V) => void; label: string; right?: ReactNode }) {
   const { c } = useTheme();
@@ -129,7 +134,7 @@ export function UnderlineTabs<V extends string>({ options, value, onChange, labe
               <T v="label" tone={on ? 'ink' : 'ink2'}>
                 {o.label}
               </T>
-              <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 1.5, backgroundColor: on ? c.ink : 'transparent' }} />
+              <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, borderRadius: 1, backgroundColor: on ? c['blue-ink'] : 'transparent' }} />
             </Tap>
           );
         })}
@@ -144,7 +149,7 @@ export function SegmentedPill<V extends string>({ options, value, onChange, labe
   return <SegmentTrack options={options} value={value} onChange={onChange} label={label} role="radiogroup" idPrefix="pill" />;
 }
 
-/** Interrupteur maison : contour à 3:1 quand il est éteint (WCAG 1.4.11). */
+/** Interrupteur maison : contour à 3:1 quand il est éteint (WCAG 1.4.11), bleu quand il est allumé (21/10). */
 export function Toggle({ value, onChange, label, testID }: { value: boolean; onChange: (v: boolean) => void; label: string; testID?: string }) {
   const { c } = useTheme();
   const x = useSharedValue(value ? 1 : 0);
@@ -162,9 +167,9 @@ export function Toggle({ value, onChange, label, testID }: { value: boolean; onC
       accessibilityState={{ checked: value }}
       accessibilityLabel={label}
       hitSlop={8}
-      style={{ width: 51, height: 31, borderRadius: 16, borderWidth: 1.5, borderColor: value ? c['primary-bg'] : c.control, backgroundColor: value ? c['primary-bg'] : c['glass-strong'], justifyContent: 'center', paddingHorizontal: 2 }}
+      style={{ width: 51, height: 31, borderRadius: 16, borderWidth: 1.5, borderColor: value ? c['blue-ink'] : c.control, backgroundColor: value ? c.blue : c['glass-strong'], justifyContent: 'center', paddingHorizontal: 2 }}
     >
-      <Animated.View style={[{ width: 24, height: 24, borderRadius: 12, backgroundColor: value ? c['primary-fg'] : c.control, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }, knob]} />
+      <Animated.View style={[{ width: 24, height: 24, borderRadius: 12, backgroundColor: value ? c['blue-ink'] : c.control, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }, knob]} />
     </Tap>
   );
 }
@@ -200,7 +205,7 @@ export function Stepper({ value, onChange, min, max, step = 1, unit, label }: { 
 export function Swatch({ hex, on, onPress, label, size = 44 }: { hex: string; on: boolean; onPress: () => void; label: string; size?: number }) {
   const { c } = useTheme();
   return (
-    <Tap onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, padding: 3, borderWidth: 2, borderColor: on ? c.ink : 'transparent' }}>
+    <Tap onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, padding: 3, borderWidth: 2, borderColor: on ? c['blue-ink'] : 'transparent' }}>
       <View style={{ flex: 1, borderRadius: size / 2, backgroundColor: hex, borderWidth: 1, borderColor: c.rule }} className="items-center justify-center">
         {on && <Icon name="check" size={16} color={isLight(hex) ? '#1C1A17' : '#FFFFFF'} strokeWidth={2.4} />}
       </View>

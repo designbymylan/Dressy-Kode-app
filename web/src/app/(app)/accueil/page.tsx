@@ -8,6 +8,7 @@ import { outfitViews, OUTFIT_SELECT, type OutfitRow } from '@/lib/kode';
 import { OutfitCard } from '@/components/OutfitCard';
 import { WearButton } from '@/components/WearButton';
 import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
+import { Kodi } from '@/components/Kodi';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -20,7 +21,7 @@ export default async function Accueil() {
 
   const [{ count }, { data: planned }] = await Promise.all([
     supabase.from('garments').select('id', { count: 'exact', head: true }),
-    // La tenue prévue pour aujourd'hui (par Kode ou à la main) passe avant tout le reste.
+    // La tenue prévue pour aujourd'hui (par Kodi ou à la main) passe avant tout le reste.
     supabase
       .from('planned_days')
       .select(`worn, outfits(${OUTFIT_SELECT})`)
@@ -61,10 +62,11 @@ export default async function Accueil() {
         </section>
       ) : n === 0 ? (
         <Card center i={1}>
+          <Kodi mood="wave" size={104} track shadow />
           <h2 style={{ fontSize: 22 }}>On commence par <em className="accent">tes vêtements</em></h2>
           <p className="lead small">
             Ton espace est prêt et il est vide : rien n&apos;y est ajouté sans toi.
-            Dès que deux ou trois pièces y seront, Kode pourra composer une tenue
+            Dès que deux ou trois pièces y seront, Kodi pourra composer une tenue
             avec ce que tu as déjà.
           </p>
           <Link href="/dressing/ajouter" className="btn btn-primary btn-block">
@@ -73,12 +75,13 @@ export default async function Accueil() {
         </Card>
       ) : (
         <Card center i={1}>
+          <Kodi mood={n < 2 ? 'wink' : 'happy'} size={96} track shadow />
           <h2 style={{ fontSize: 22 }}>Tenue du <em className="accent">jour</em></h2>
           <p className="lead small">
             {n} pièce{n > 1 ? 's' : ''} dans ton dressing.{' '}
             {n < 2
               ? 'Encore une ou deux et tu pourras composer une tenue complète.'
-              : 'Compose ta tenue en quelques gestes, ou demande à Kode.'}
+              : 'Compose ta tenue en quelques gestes, ou demande à Kodi.'}
           </p>
           {n < 2 ? (
             <Link href="/dressing/ajouter" className="btn btn-primary btn-block">Ajouter une pièce</Link>
@@ -87,7 +90,7 @@ export default async function Accueil() {
               <Link href="/tenues/nouvelle" className="btn btn-primary btn-block">
                 <Icon d={ICON.sparkle} size={18} /> Composer ma tenue
               </Link>
-              <Link href="/kode" className="btn btn-glass btn-block">Demander à Kode</Link>
+              <Link href="/kodi" className="btn btn-glass btn-block">Demander à Kodi</Link>
             </>
           )}
         </Card>

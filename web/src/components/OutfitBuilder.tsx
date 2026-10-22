@@ -397,7 +397,7 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
             className="btn btn-primary"
             style={{ flex: 1, minHeight: 48 }}
           >
-            {pending ? <><span className="spinner" aria-hidden="true" />Kode range ta tenue</> : `Enregistrer · ${chosen.length} pièce${chosen.length > 1 ? 's' : ''}`}
+            {pending ? <><span className="spinner" aria-hidden="true" />Kodi range ta tenue</> : `Enregistrer · ${chosen.length} pièce${chosen.length > 1 ? 's' : ''}`}
           </button>
         </div>
       </div>

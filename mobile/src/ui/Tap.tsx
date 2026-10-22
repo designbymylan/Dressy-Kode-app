@@ -3,6 +3,7 @@ import { Platform, Pressable, type PressableProps, type StyleProp, type ViewStyl
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { motion } from '../theme/tokens';
+import { PressContext } from './press';
 
 export type Feedback = 'none' | 'light' | 'medium' | 'success' | 'select';
 
@@ -28,12 +29,14 @@ type Props = Omit<PressableProps, 'style' | 'children'> & {
 /**
  * Tout ce qui se touche passe par ici : un ressort court à l'appui (désactivé
  * si « Réduire les animations » est actif), un retour haptique discret, et
- * le rôle d'accessibilité « bouton » par défaut. Le style passe par `style`
+ * le rôle d'accessibilité « bouton » par défaut. Les icônes posées dessus
+ * jouent leur geste pendant l'appui (`PressContext`, 21/10). Le style passe par `style`
  * (jetons de `useTheme().c`), jamais par des classes NativeWind.
  */
 export function Tap({ style, outerStyle, children, scaleTo = motion.pressScale, feedback = 'light', onPressIn, onPressOut, onPress, accessibilityRole = 'button', ...rest }: Props) {
   const reduced = useReducedMotion();
   const s = useSharedValue(1);
+  const pressed = useSharedValue(0);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
     <Pressable
@@ -41,10 +44,12 @@ export function Tap({ style, outerStyle, children, scaleTo = motion.pressScale, 
       accessibilityRole={accessibilityRole}
       onPressIn={(e) => {
         if (!reduced && scaleTo !== 1) s.value = withSpring(scaleTo, motion.press);
+        if (!reduced) pressed.value = withSpring(1, motion.spring);
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
         s.value = withSpring(1, motion.press);
+        pressed.value = withSpring(0, motion.spring);
         onPressOut?.(e);
       }}
       onPress={(e) => {
@@ -56,7 +61,7 @@ export function Tap({ style, outerStyle, children, scaleTo = motion.pressScale, 
       {/* Pas de className ici : sur iPhone, NativeWind fusionnerait le style
           fixe et le style animé, et Reanimated ne garderait que l'animé. */}
       <Animated.View style={[style, anim]}>
-        {children}
+        <PressContext.Provider value={pressed}>{children}</PressContext.Provider>
       </Animated.View>
     </Pressable>
   );

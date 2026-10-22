@@ -5,7 +5,7 @@ import type { ScanPiece } from '@/lib/jobs';
 import { ICON, Icon } from '@/components/ui';
 
 /**
- * Le scan de repérage : la photo confiée, en grand. Tant que Kode la
+ * Le scan de repérage : la photo confiée, en grand. Tant que Kodi la
  * regarde, un faisceau de lumière la balaie ; dès que les pièces sont
  * repérées, leurs cadres se tracent l'un après l'autre, chacun avec son nom.
  * Une pièce rangée passe en trait plein, avec une coche.
@@ -28,7 +28,7 @@ export function PhotoScan({
   const done = framed.filter((p) => p.state === 'done').length;
 
   const label = scanning
-    ? 'Kode regarde ta photo et repère chaque pièce'
+    ? 'Kodi regarde ta photo et repère chaque pièce'
     : framed.length
       ? `Photo avec ${framed.length} pièce${framed.length > 1 ? 's' : ''} repérée${framed.length > 1 ? 's' : ''}, ${done} rangée${done > 1 ? 's' : ''}`
       : 'Ta photo';
