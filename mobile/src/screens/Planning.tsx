@@ -280,7 +280,7 @@ export function Planning() {
               </T>
             </View>
             <Button testID="planning-notifs-tout" label="Oui, préviens-moi" size="m" onPress={() => choisirNotifs('tout')} />
-            {/* Sur le rose poudré, les autres réponses en texte noir : lisibles en clair comme en sombre. */}
+            {/* Sur le beurre, les autres réponses en texte noir : lisibles en clair comme en sombre. */}
             <View className="flex-row justify-center flex-wrap">
               {([['planning', 'Seulement mon planning'], ['non', 'Non merci']] as const).map(([id, label]) => (
                 <T key={id} testID={`planning-notifs-${id}`} v="bodyStrong" onPress={() => choisirNotifs(id)} accessibilityRole="button" suppressHighlighting style={{ color: c['butter-ink'], paddingVertical: 12, paddingHorizontal: 12 }}>

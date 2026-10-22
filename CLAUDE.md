@@ -323,8 +323,7 @@ la réduit à un fondu. Web : `components/Intro.tsx` et `.intro` dans
 **Refonte du 21/10 (web), demandée par l'utilisateur** sur ses images de
 référence (`Design app inspiration/`). Elle remplace, sur le web, ce qui
 la contredit plus haut ; couleurs mises à part, verre, arrondis et
-transparence restent. **Le mobile n'est pas encore aligné** (mêmes choix à y
-reporter : palette, Kodi, barre, icônes, offres).
+transparence restent. Le mobile l'a suivie le 22/10 (voir plus bas).
 
 - **Palette** (« Palette de couleur officiel ») : fond blanc pur, texte noir
   pur ; Blue `#c4dae8` pour ce qui est choisi et l'action principale (texte
@@ -376,6 +375,33 @@ reporter : palette, Kodi, barre, icônes, offres).
   arrondie vers le bas et prix barré. Limites dans la migration
   `offres_fashion_sapologue`. Ceci remplace « plus aucune pastille de
   réduction » du 09/10 pour les offres du web.
+
+**Refonte du 21/10 reportée sur le mobile** (22/10, branche
+`claude/musing-dhawan-e295a5`) : web et mobile sont de nouveau alignés,
+sauf **Mon compte**, dont le mobile garde la disposition de Moi du 07/10.
+
+- **Palette** dans `palette.json` (jetons `blue`, `blue-ink`, `blue-soft`,
+  `on-blue`, `choco`, `butter`, `panel`…) ; `contraste.py` vérifie aussi la
+  barre d'onglets en verre dense.
+- **Verre bleu** `BlueGlass` (`ui/Glass.tsx`) : `Button` principal et
+  `IconButton` `solid` ; `dark` garde le noir plein. `Chip`, segments,
+  `Toggle`, `UnderlineTabs` et lignes des offres : le choix en bleu.
+- **Icônes pleines** dans `ui/Icon.tsx` (mêmes tracés que le web), le trait
+  pour celles qui n'en ont pas ; leur geste se joue à l'appui du `Tap` qui
+  les porte (`PressContext`, `ui/press.ts`).
+- **Kodi** (`ui/Kodi.tsx`) : mêmes tracés et humeurs que le web, chaque
+  partie sur son calque `Animated.View` (Reanimated n'anime pas les tracés).
+  Sans souris, il regarde autour de lui (`track`). Intro, Bienvenue,
+  accueil, conversation, attentes (`KodeThinking`), erreurs, dressing.
+- **Barre d'onglets** (`ui/TabBar.tsx`) : silhouette du web, flou sous la
+  barre et sous la bosse (pas de Liquid Glass natif : la forme n'est pas un
+  rectangle) ; elle ne se replie plus au défilement.
+- **Interrupteur clair / sombre** `ThemeSwitch` (`ui/layout.tsx`) à droite
+  de la capsule des onglets, masquable dans Réglages › Apparence.
+- **Progression** : `ui/progress.tsx` (`ProgressBar`, `Cut`) et
+  `state/usage.ts`, en tête du Dressing.
+- **Offres** : `PLANS` et `planOf` dans `screens/Offers.tsx`, `LIMITS` dans
+  `state/store.tsx` (120 pièces et 30 questions, puis sans limite).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
@@ -443,14 +469,13 @@ Ordre de priorité, du plus fort au plus faible :
 - **Les arrondis** (03/10) : cartes 28, vignettes 22, feuilles 32 ; tout ce
   qui se clique est en capsule (boutons, puces, sélecteurs, champs) ; boutons
   icônes et Kode en rond.
-- Couleurs (21/10, web) : Blue `#c4dae8` pour ce qui est choisi et l'action
+- Couleurs (21/10, web et mobile) : Blue `#c4dae8` pour ce qui est choisi et l'action
   principale, Butter `#feefb8` (le jeton `butter`) pour les bandeaux de
   service (messages de Kodi, offres, informations) avec texte noir en clair
   comme en sombre, Chocopie `#432f2e` pour le rond de Kodi. Le reste est
   noir, blanc et gris. Gris studio (`#f3f3f3`) pour les vignettes de
-  vêtements et les champs de saisie. (Le mobile garde le rose poudré
-  `#f8e9e4` jusqu'à son alignement.)
-- Boutons (21/10, web) : en verre, libellé en casse normale ; l'action
+  vêtements et les champs de saisie.
+- Boutons (21/10, web et mobile) : en verre, libellé en casse normale ; l'action
   principale en verre bleu, texte noir ; les autres en verre clair, en
   pastille ou en texte. Liens de section (« Tout voir », « Agenda ») : texte
   discret.
@@ -477,11 +502,11 @@ Ordre de priorité, du plus fort au plus faible :
 - Vêtements : illustrations vectorielles plates ou détourages de Kode, posés
   sur gris studio dans des vignettes arrondies ; jamais de photo produit, pas
   de 3D.
-- Icônes : pleines sur le web depuis le 21/10 (`components/icons.tsx`), avec
-  leur micro-interaction ; au trait sur le mobile (jeu du 02/10, reflet
-  chromé depuis le 09/10) jusqu'à son alignement. Des formes qui se
-  comprennent sans leur nom ; toutes gardent leur libellé pour les lecteurs
-  d'écran.
+- Icônes : pleines depuis le 21/10 (`components/icons.tsx` sur le web,
+  `ui/Icon.tsx` sur le mobile), avec leur micro-interaction ; celles qui
+  n'ont pas de version pleine gardent le trait du 02/10 et son reflet
+  chromé. Des formes qui se comprennent sans leur nom ; toutes gardent leur
+  libellé pour les lecteurs d'écran.
 - Mouvement : discret (fondus, ressorts courts), jamais bloquant, coupé par
   « Réduire les animations ».
 - Accessibilité : contraste AA (`contraste.py` après toute retouche de

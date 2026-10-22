@@ -1,9 +1,10 @@
 /**
  * Jetons du design system Dresskode. Les formes et les composants sont ceux
  * du 02/10 (revenus le 04/10 à la demande de Mylan) : verre dépoli, arrondis,
- * capsules, boutons en casse normale. Les couleurs restent celles de la
- * « galerie » (fond blanc, texte noir, gris studio sous les vêtements, rose
- * poudré pour les bandeaux de service, halos crème, noirs en sombre) ; la
+ * capsules, boutons en casse normale. Les couleurs sont celles de la palette
+ * du 21/10 (fond blanc, texte noir, gris studio sous les vêtements, bleu pour
+ * ce qui est choisi, beurre pour les bandeaux de service, chocopie pour le
+ * rond de Kodi, halos bleu et beurre, noirs en sombre) ; la
  * typographie est celle de la charte v2 du 09/10 (Inter Tight et Inter,
  * design/charte-typographique-v2.md, polices dans fonts.ts). La disposition des écrans reste celle de la
  * refonte (design/refonte/).
