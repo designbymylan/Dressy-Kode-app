@@ -27,12 +27,15 @@ import type { Nav } from '../navigation/types';
 
 type Feature = { label: string; note: string; icon: IconName; soon?: boolean };
 
-/** Mêmes montants que web/src/lib/plans.ts (source unique côté serveur). */
+/**
+ * Mêmes montants et mêmes limites que web/src/lib/plans.ts (offres du
+ * 21/10) : Fashion (`capsule`) et Sapologue (`atelier`). Couture n'est plus
+ * vendue ; un abonnement qui l'aurait encore garde ses droits.
+ */
 export const PLANS: { id: PlanId; name: string; note: string; cents: Record<Period, number>; features: Feature[]; flagged?: boolean }[] = [
   { id: 'decouverte', name: 'Découverte', note: 'Pour essayer, sans carte', cents: { mois: 0, an: 0 }, features: [{ label: 'Jusqu’à 30 pièces', note: 'De quoi commencer ton dressing.', icon: 'hanger' }, { label: '5 questions à Kodi par mois', note: 'Une tenue quand tu hésites.', icon: 'kode' }] },
-  { id: 'capsule', name: 'Capsule', note: '60 pièces · 20 questions par mois', cents: { mois: 699, an: 5999 }, features: [{ label: 'Jusqu’à 60 pièces', note: 'Ton quotidien, rangé et détouré.', icon: 'hanger' }, { label: '20 questions à Kodi', note: 'Chaque mois, pour les jours où tu hésites.', icon: 'kode' }, { label: 'Tenue du jour et agenda', note: 'Kodi prépare ta semaine avec la météo.', icon: 'calendar' }] },
-  { id: 'atelier', name: 'Atelier', note: '200 pièces · Kodi sans limite', cents: { mois: 1299, an: 10999 }, flagged: true, features: [{ label: 'Kodi sans limite', note: 'Une tenue pour chaque jour, sans compter tes questions.', icon: 'kode' }, { label: 'Jusqu’à 200 pièces', note: 'Tout ton dressing, rangé et détouré par Kodi.', icon: 'hanger' }, { label: 'Tenue du jour et agenda', note: 'Kodi prépare ta semaine avec la météo.', icon: 'calendar' }, { label: 'Les cinq packs inclus', note: 'Occasion, voyage, audit, couleurs, défi.', icon: 'gift', soon: true }] },
-  { id: 'couture', name: 'Couture', note: 'Pièces illimitées · tous les packs', cents: { mois: 2499, an: 21999 }, features: [{ label: 'Pièces illimitées', note: 'Aucune limite, même pour les grandes garde-robes.', icon: 'hanger' }, { label: 'Kodi sans limite', note: 'Une tenue pour chaque jour, sans compter tes questions.', icon: 'kode' }, { label: 'Audit chaque trimestre', note: 'Ce qui dort, ce qui manque, tous les trois mois.', icon: 'chart', soon: true }, { label: 'Prêts entre amies', note: 'Prête et emprunte sans compter.', icon: 'share', soon: true }] },
+  { id: 'capsule', name: 'Fashion', note: 'Ton dressing rangé, et enfin porté', cents: { mois: 699, an: 5999 }, features: [{ label: 'Jusqu’à 120 pièces', note: 'Ton quotidien, rangé et détouré.', icon: 'hanger' }, { label: '30 questions à Kodi par mois', note: 'Pour les jours où tu hésites.', icon: 'kode' }, { label: 'Tenue du jour et agenda', note: 'Kodi prépare ta semaine avec la météo.', icon: 'calendar' }, { label: 'Suivi de ta garde-robe', note: 'Ce que tu portes vraiment, pièce par pièce.', icon: 'chart' }] },
+  { id: 'atelier', name: 'Sapologue', note: 'Kodi devient ton styliste personnel', cents: { mois: 1499, an: 12999 }, flagged: true, features: [{ label: 'Pièces illimitées', note: 'Tout ton dressing, rangé et détouré par Kodi.', icon: 'hanger' }, { label: 'Kodi sans limite', note: 'Une tenue pour chaque jour, sans compter tes questions.', icon: 'kode' }, { label: 'Tenues d’occasion et valise de voyage', note: 'Kodi prépare la tenue et la valise.', icon: 'suitcase' }, { label: 'Audit de garde-robe chaque trimestre', note: 'Doublons, oublis et manques.', icon: 'layers', soon: true }] },
 ];
 
 export const price = (cents: number) => euros(cents / 100);
@@ -55,13 +58,14 @@ export function Offers() {
   const [choice, setChoice] = useState<PlanId | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [all, setAll] = useState(false);
-  const rank = (id: PlanId) => PLANS.findIndex((p) => p.id === id);
+  // Couture, qui n'est plus vendue, compte comme l'offre du dessus.
+  const rank = (id: PlanId) => (id === 'couture' ? PLANS.length : PLANS.findIndex((p) => p.id === id));
   const flagged = PLANS.find((p) => p.flagged)!;
   // Sans choix : l'offre recommandée pour qui est en dessous, sinon l'offre du dessus.
   const fallback = rank(s.plan) < rank(flagged.id) ? flagged.id : PAID.find((p) => rank(p.id) > rank(s.plan))?.id ?? null;
   const pick = choice ?? fallback;
   const picked = PLANS.find((p) => p.id === pick);
-  const shown = picked ?? PLANS.find((p) => p.id === s.plan)!;
+  const shown = picked ?? PLANS.find((p) => p.id === s.plan) ?? flagged;
   const year = period === 'an';
   // Le mois offert vaut pour une première souscription annuelle (web/src/lib/plans.ts).
   const firstYear = s.plan === 'decouverte';

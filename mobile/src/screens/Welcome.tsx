@@ -16,6 +16,7 @@ import { Garment, type GarmentKind } from '../ui/Garment';
 import { photo } from '../data/photos';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { Kodi } from '../ui/Kodi';
 import type { Nav } from '../navigation/types';
 
 // De vraies pièces, détourées (07/10) : le portant montre ce que Kodi fera des tiennes.
@@ -54,7 +55,17 @@ export function Welcome() {
         </HeaderShell>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6 + 56 + 36, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 24, gap: 16, alignItems: 'center' }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6 + 56 + 24, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 24, gap: 16, alignItems: 'center' }}>
+        {/* Kodi se présente (refonte du 21/10, comme Bienvenue sur le web). */}
+        <View style={{ alignItems: 'center', gap: 12, alignSelf: 'stretch' }}>
+          <Kodi mood="wave" size={96} track shadow enter testID="welcome-kodi" />
+          <View style={{ backgroundColor: c.butter, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 12 }}>
+            <T v="body" style={{ color: c['butter-ink'], textAlign: 'center' }}>
+              Salut ! Moi c’est <T v="bodyStrong" style={{ color: c['butter-ink'] }}>Kodi</T>, ton styliste de poche.
+            </T>
+          </View>
+        </View>
+
         <Animated.View entering={FadeInDown.delay(200).duration(500)} style={{ gap: 12, alignItems: 'center' }}>
           <T v="hero" style={{ fontSize: 40, lineHeight: 44, textAlign: 'center' }} accessibilityRole="header">
             Porte mieux ce que tu as.

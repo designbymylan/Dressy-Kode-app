@@ -16,8 +16,8 @@ const K = {
   spark: 'M71 3C72 13 75 16 85 17C75 18 72 21 71 31C70 21 67 18 57 17C67 16 70 13 71 3Z',
 };
 
-/** Les deux couleurs du logo : celle du texte, ou celle posée sur un bouton plein (carte de membre). */
-type LogoTone = 'ink' | 'primary-fg';
+/** Les couleurs du logo : celle du texte, celle posée sur un bouton plein, celle d'un panneau noir (carte de membre, 21/10). */
+type LogoTone = 'ink' | 'primary-fg' | 'on-panel';
 
 export function Monogram({ size = 22, tone = 'ink' }: { size?: number; tone?: LogoTone }) {
   const { c } = useTheme();

@@ -137,8 +137,8 @@ export function Planning() {
                 return (
                   <>
                     {main ? (
-                      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: on ? c['primary-fg'] : c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        <Garment kind={main.kind} tint={main.tint} image={main.image} size={24} dark={scheme === 'dark' && !on} label={main.name} />
+                      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: on ? c.paper : c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <Garment kind={main.kind} tint={main.tint} image={main.image} size={24} dark={scheme === 'dark'} label={main.name} />
                       </View>
                     ) : tripOn(iso)?.start === iso ? (
                       <Icon name="plane" size={16} color={fg} />

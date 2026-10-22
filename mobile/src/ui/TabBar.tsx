@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -100,7 +100,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             <BlurView intensity={material.blur * 2} tint={scheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           </View>
         )}
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, material.shadow[scheme]]}>
+        {/* Sur iPhone, l'ombre suit la silhouette dessinée ; dans l'aperçu web, une ombre CSS de la même forme. */}
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, Platform.OS === 'web' ? ({ filter: `drop-shadow(0 10px 18px rgba(0,0,0,${scheme === 'dark' ? 0.55 : 0.14}))` } as object) : material.shadow[scheme]]}>
           <Svg width={full} height={HEIGHT + BUMP}>
             <Path d={silhouette(full)} fill={fill} stroke={edge} strokeWidth={1} />
           </Svg>

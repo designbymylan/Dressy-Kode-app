@@ -265,7 +265,7 @@ export function Agenda() {
         )}
       </Animated.ScrollView>
       <TabHeader
-        title="Agenda"
+        title="Calendrier"
         meta={cap(relativeDay(day))}
         y={edge}
         actions={[

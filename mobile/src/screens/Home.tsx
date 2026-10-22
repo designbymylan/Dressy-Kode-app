@@ -26,6 +26,7 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
+import { Kodi } from '../ui/Kodi';
 import { isActive } from '../state/jobs';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
@@ -582,7 +583,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'semaine') return <Week />;
 
-  // Kodi : une bulle de message rose poudré, son coin bas presque droit.
+  // Kodi : une bulle de message beurre, son coin bas presque droit, et Kodi qui salue (21/10).
   if (id === 'kode') {
     const tomorrow = eventsOn(s.events, isoOf(1))[0];
     const asks = [
@@ -594,9 +595,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     return (
       <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="home-kode">
         <View className="flex-row items-center" style={{ gap: 10 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: ink, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="kode" size={18} color={c.butter} />
-          </View>
+          <Kodi mood="wave" size={44} track />
           <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
             {title}
           </T>
@@ -822,9 +821,10 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     { v: `${usageRate(s.pieces)} %`, l: 'du dressing porté' },
     ...(cpw !== null ? [{ v: euros(cpw), l: 'par port' }] : []),
   ];
-  const fg = c['primary-fg'];
+  // Un bloc plein, sur le panneau noir du 21/10 (la section découpée du web).
+  const fg = c['on-panel'];
   return (
-    <View testID="home-month" style={[{ borderRadius: 28, backgroundColor: c['primary-bg'], padding: 20, gap: 18 }, material.card[scheme]]}>
+    <View testID="home-month" style={[{ borderRadius: 28, backgroundColor: c.panel, padding: 20, gap: 18 }, material.card[scheme]]}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center" style={{ gap: 6 }}>
           <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: fg }} />

@@ -28,11 +28,15 @@ export type HomeModule = 'tenue' | 'semaine' | 'kode' | 'oubliees' | 'tendance' 
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
 export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
 
-/** Mêmes valeurs que public.plan_limits() côté base. null : sans limite. */
+/**
+ * Mêmes valeurs que public.plan_limits() côté base (migration
+ * offres_fashion_sapologue, 21/10). null : sans limite. `capsule` porte
+ * Fashion, `atelier` Sapologue ; Couture n'est plus vendue.
+ */
 export const LIMITS: Record<PlanId, { pieces: number | null; questions: number | null }> = {
   decouverte: { pieces: 30, questions: 5 },
-  capsule: { pieces: 60, questions: 20 },
-  atelier: { pieces: 200, questions: null },
+  capsule: { pieces: 120, questions: 30 },
+  atelier: { pieces: null, questions: null },
   couture: { pieces: null, questions: null },
 };
 
@@ -178,7 +182,7 @@ const initial: State = {
 
 const fresh: State = { ...initial, booting: false };
 
-/** Le compte d'Alice : 37 pièces, deux tenues prévues, l'offre Capsule entamée. */
+/** Le compte d'Alice : 37 pièces, deux tenues prévues, l'offre Fashion entamée. */
 const demo: State = {
   ...fresh,
   onboarded: true,

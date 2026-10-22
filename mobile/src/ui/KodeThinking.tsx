@@ -1,22 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import { Kodi, type KodiMood } from './Kodi';
 import Svg, { Circle } from 'react-native-svg';
 import type { OrbStep } from '../state/jobs';
 import { useTheme } from '../theme/ThemeProvider';
 import { T } from './T';
-import { Icon, type IconName } from './Icon';
 import { F } from '../theme/fonts';
 
-/** L'étape en cours se lit à l'icône au centre du rond : repérer, dessiner, comparer, ranger. */
-const STEP_ICON: Record<OrbStep | 'kode', IconName> = { kode: 'kode', look: 'eye', draw: 'edit', check: 'check', store: 'hanger' };
+/** La tête de Kodi selon l'étape (21/10, comme le web) : il cherche, il dessine, il vérifie, il range. */
+const STEP_MOOD: Partial<Record<OrbStep | 'kode', KodiMood>> = { look: 'listening', check: 'surprised', store: 'happy' };
 
 /**
- * L'orbe de Kodi, en noir et blanc comme toute la galerie : le rond noir de
- * Kodi (le même que dans la barre d'onglets), l'icône de l'étape au centre,
- * et un arc fin qui tourne autour tant que Kodi travaille. Quand l'étape
- * change, la nouvelle icône apparaît en fondu. Immobile si les animations
- * sont réduites.
+ * L'orbe de Kodi : Kodi en personne qui réfléchit, entouré d'un arc fin qui
+ * tourne tant qu'il travaille. Sa tête dit l'étape (il regarde, il dessine,
+ * il vérifie, il range). Immobile si les animations sont réduites.
  */
 export function KodeOrb({ size = 28, step = 'kode' }: { size?: number; step?: OrbStep | 'kode' }) {
   const { c } = useTheme();
@@ -29,21 +27,17 @@ export function KodeOrb({ size = 28, step = 'kode' }: { size?: number; step?: Or
   }, [reduced, spin]);
 
   const ring = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
-  const inset = Math.round(size * 0.14);
-  const r = size / 2 - 1;
+  const big = Math.round(size * 1.45);
+  const r = big / 2 - 1;
 
   return (
-    <View style={{ width: size, height: size }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Animated.View style={[{ position: 'absolute', width: size, height: size }, ring]}>
-        <Svg width={size} height={size}>
-          <Circle cx={size / 2} cy={size / 2} r={r} stroke={c.ink} strokeWidth={1.4} fill="none" strokeDasharray={`${r * 1.6} ${r * 6.4}`} />
+    <View style={{ width: big, height: big, alignItems: 'center', justifyContent: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Animated.View style={[{ position: 'absolute', width: big, height: big }, ring]}>
+        <Svg width={big} height={big}>
+          <Circle cx={big / 2} cy={big / 2} r={r} stroke={c['blue-ink']} strokeWidth={1.4} fill="none" strokeDasharray={`${r * 1.6} ${r * 6.4}`} />
         </Svg>
       </Animated.View>
-      <View style={{ position: 'absolute', left: inset, top: inset, right: inset, bottom: inset, borderRadius: size, backgroundColor: c['primary-bg'] }} className="items-center justify-center">
-        <Animated.View key={step} entering={reduced ? undefined : FadeIn.duration(300)}>
-          <Icon name={STEP_ICON[step]} size={Math.round(size * 0.4)} color={c['primary-fg']} strokeWidth={1.9} />
-        </Animated.View>
-      </View>
+      <Kodi mood={STEP_MOOD[step] ?? 'thinking'} size={Math.round(big * 0.86)} tap={false} decorative />
     </View>
   );
 }

@@ -80,7 +80,7 @@ export function Me() {
     <View style={{ flex: 1 }} className="bg-paper">
       <Ambient />
       <ScrollEdge y={edge} />
-      <TabHeader title="Moi" y={edge} actions={[{ icon: 'gear', label: 'Réglages', onPress: () => nav.navigate('Settings'), testID: 'me-settings' }]} />
+      <TabHeader title="Profil" y={edge} actions={[{ icon: 'gear', label: 'Réglages', onPress: () => nav.navigate('Settings'), testID: 'me-settings' }]} />
       <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top + 4, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 14 }}>
         {/* Toi (09/10) : la photo à gauche, le nom choisi en fin, le pseudo dessous. */}
         <Tap testID="me-avatar" onPress={() => nav.navigate('ProfileEdit')} accessibilityLabel="Modifier mon profil" scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 4 }}>
@@ -146,20 +146,20 @@ export function Me() {
           ))}
         </View>
 
-        {/* La carte de membre : l'offre, les places, les questions ; elle ouvre les offres. Seulement après la première tenue. */}
+        {/* La carte de membre, sur le panneau noir du 21/10 : l'offre, les places, les questions ; elle ouvre les offres. Seulement après la première tenue. */}
         {showOffer && (
-        <Tap testID="me-offer" onPress={() => nav.navigate('Offers')} scaleTo={0.99} accessibilityLabel={`Ton offre ${plan.name}. Voir les offres`} style={{ borderRadius: 28, padding: 18, gap: 14, backgroundColor: c['primary-bg'] }}>
+        <Tap testID="me-offer" onPress={() => nav.navigate('Offers')} scaleTo={0.99} accessibilityLabel={`Ton offre ${plan.name}. Voir les offres`} style={{ borderRadius: 28, padding: 18, gap: 14, backgroundColor: c.panel }}>
           <View className="flex-row items-center justify-between">
-            <BrandMark tone="primary-fg" size={18} textStyle={{ fontSize: 11, letterSpacing: 3.3 }} />
-            <T v="label" tone="primary-fg" style={{ opacity: 0.75 }}>
+            <BrandMark tone="on-panel" size={18} textStyle={{ fontSize: 11, letterSpacing: 3.3 }} />
+            <T v="label" tone="on-panel" style={{ opacity: 0.75 }}>
               Carte de membre
             </T>
           </View>
           <View style={{ gap: 2 }}>
-            <T v="title" tone="primary-fg" style={{ fontSize: 30, lineHeight: 34 }}>
+            <T v="title" tone="on-panel" style={{ fontSize: 30, lineHeight: 34 }}>
               {plan.name}
             </T>
-            <T v="caption" tone="primary-fg" style={{ opacity: 0.8 }}>
+            <T v="caption" tone="on-panel" style={{ opacity: 0.8 }}>
               {plan.cents.mois === 0 ? 'Gratuit, sans carte' : `${price(plan.cents[s.period])} par ${s.period}`}
             </T>
           </View>
@@ -168,10 +168,10 @@ export function Me() {
             <Meter label="Questions" value={quota === null ? null : quota - (left ?? 0)} max={quota} />
           </View>
           <View className="flex-row items-center justify-between">
-            <T v="caption" tone="primary-fg" style={F.s600}>
+            <T v="caption" tone="on-panel" style={F.s600}>
               {s.plan === 'couture' ? 'Voir mon offre' : 'Voir les offres'}
             </T>
-            <Icon name="arrow" size={16} color={c['primary-fg']} />
+            <Icon name="arrow" size={16} color={c['on-panel']} />
           </View>
         </Tap>
         )}
@@ -268,15 +268,15 @@ function Meter({ label, value, max }: { label: string; value: number | null; max
   return (
     <View style={{ flex: 1, gap: 6 }} accessibilityLabel={max === null ? `${label} sans limite` : `${label} : ${value} sur ${max}`}>
       <View className="flex-row items-baseline justify-between">
-        <T v="kicker" tone="primary-fg" style={{ opacity: 0.75 }} numberOfLines={1}>
+        <T v="kicker" tone="on-panel" style={{ opacity: 0.75 }} numberOfLines={1}>
           {label}
         </T>
-        <T v="kicker" tone="primary-fg">
+        <T v="kicker" tone="on-panel">
           {max === null ? '∞' : `${value}/${max}`}
         </T>
       </View>
-      <View style={{ height: 4, borderRadius: 2, backgroundColor: c['primary-fg'], opacity: 0.25 }} />
-      <View style={{ position: 'absolute', left: 0, bottom: 0, height: 4, borderRadius: 2, width: `${pct}%`, backgroundColor: c['primary-fg'] }} />
+      <View style={{ height: 4, borderRadius: 2, backgroundColor: c['on-panel'], opacity: 0.25 }} />
+      <View style={{ position: 'absolute', left: 0, bottom: 0, height: 4, borderRadius: 2, width: `${pct}%`, backgroundColor: c['on-panel'] }} />
     </View>
   );
 }

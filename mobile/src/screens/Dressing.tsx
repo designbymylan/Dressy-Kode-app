@@ -19,6 +19,7 @@ import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
+import { UsagePanel } from '../ui/usage';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -131,6 +132,12 @@ export function Dressing() {
             Annuler
           </T>
         </Animated.View>
+      )}
+      {/* La garde-robe exploitée, dans sa section découpée pleine largeur (21/10, comme le web). */}
+      {!searching && s.pieces.length > 0 && (
+        <View style={{ marginHorizontal: -space.gutter, marginTop: -26, marginBottom: 4 }}>
+          <UsagePanel pieces={s.pieces} />
+        </View>
       )}
       <Circles value={category} onChange={setCategory} />
       {/* Le nombre de pièces à gauche ; la vue (grille, portants) et les filtres à droite. */}

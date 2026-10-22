@@ -22,6 +22,7 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
+import { Kodi } from '../ui/Kodi';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -109,6 +110,10 @@ export function Kode() {
       <Animated.ScrollView ref={list as never} onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
+            {/* Kodi en personne, qui salue (refonte du 21/10). */}
+            <View className="items-center" style={{ paddingTop: 4 }}>
+              <Kodi mood="wave" size={104} track shadow enter testID="kode-mascot" />
+            </View>
             <Card style={{ padding: 16, gap: 12 }}>
               <Tag label="Kodi" icon="kode" />
               <T v="cardTitle" style={{ fontSize: 22, lineHeight: 27 }} accessibilityRole="header">
@@ -146,7 +151,7 @@ export function Kode() {
           <Card testID="kode-quota" style={{ gap: 10, padding: 14 }}>
             <Tag label={`${quota} questions posées`} />
             <T v="body" tone="ink2">
-              Elles reviennent le 1er du mois. Atelier rend Kodi sans limite.
+              Elles reviennent le 1er du mois. Sapologue rend Kodi sans limite.
             </T>
             <Button label="Voir les offres" variant="secondary" size="m" onPress={() => nav.navigate('Offers')} />
           </Card>
@@ -189,6 +194,7 @@ function Mine({ m }: { m: KodeMessage }) {
 }
 
 function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
+  const { c } = useTheme();
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const { width } = useScreen();
@@ -197,17 +203,23 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
   return (
     <Animated.View entering={FadeInDown.duration(320)} style={{ alignSelf: 'flex-start', width: '94%' }} accessibilityLiveRegion="polite">
-      {/* La réponse de Kodi : un bandeau de service rose poudré, texte noir en clair comme en sombre. */}
+      {/* La réponse de Kodi : un bandeau de service beurre (21/10), texte noir en clair comme en sombre. */}
       <Card className="bg-butter" style={{ padding: 14, gap: 12, borderBottomLeftRadius: 8 }}>
-        <T v="body">{m.text}</T>
+        <View className="flex-row items-center" style={{ gap: 8 }}>
+          <Kodi mood={fresh ? 'talking' : 'idle'} size={30} tap={false} decorative />
+          <T v="label" style={{ color: c['butter-ink'] }}>
+            Kodi
+          </T>
+        </View>
+        <T v="body" style={{ color: c['butter-ink'] }}>{m.text}</T>
         {m.outfit && pieces.length > 0 && (
           <>
             <View className="bg-paper" style={{ borderRadius: 18, padding: 10 }}>
               <OutfitBoard pieces={pieces} width={width * 0.94 - space.gutter * 2 - 28 - 20} onPiece={open} assemble={fresh} numbered={false} />
             </View>
             <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length)).duration(520) : undefined} style={{ gap: 4 }}>
-              <T v="cardTitle">{m.outfit.title}</T>
-              <T v="caption">
+              <T v="cardTitle" style={{ color: c['butter-ink'] }}>{m.outfit.title}</T>
+              <T v="caption" style={{ color: c['butter-ink'] }}>
                 {m.outfit.why}
               </T>
             </Animated.View>
