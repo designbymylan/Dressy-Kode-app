@@ -156,7 +156,7 @@ export function EventScreen() {
             </T>
             <Button testID="pack-buy" label={`Préparer mon occasion · ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />
             <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
-              Déjà inclus dans Atelier et Couture.
+              Déjà inclus dans Sapologue.
             </T>
           </Card>
         )}

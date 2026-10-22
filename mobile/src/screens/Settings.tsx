@@ -28,7 +28,7 @@ import { AccountSheet } from '../ui/account';
 import { NOTIF_LABEL, NotifChoices } from '../ui/rappels';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { glassSurface } from '../ui/Glass';
-import { PLANS } from './Offers';
+import { planOf } from './Offers';
 import type { Nav } from '../navigation/types';
 
 const MODE = { montrer: 'Partage avec', preter: 'Prêt à', donner: 'Don proposé à' } as const;
@@ -44,7 +44,7 @@ export function Settings() {
   const [sharesOpen, setSharesOpen] = useState(false);
   const [account, setAccount] = useState(false);
   const p = s.profile;
-  const plan = PLANS.find((x) => x.id === s.plan)!;
+  const plan = planOf(s.plan);
   const loans = s.shares.filter((x) => x.mode === 'preter');
   const who = [p.username ? `@${p.username}` : null, p.email ?? (s.account === 'nouveau' ? 'Sans compte' : null)].filter(Boolean).join(' · ');
 

@@ -12,12 +12,14 @@ import Animated, {
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { type } from '../theme/tokens';
+import { Kodi, type KodiMood } from './Kodi';
 
 /**
  * L'intro (13/10), une fois par lancement, la même que sur le web
  * (`web/src/components/Intro.tsx`) : le K se coud trait par trait,
- * l'étincelle de Kodi s'allume, une couture se pique, DRESSKODE se resserre,
- * puis la caméra plonge dans le K et l'app apparaît derrière. Noir sur blanc
+ * l'étincelle de Kodi s'allume, une couture se pique, DRESSKODE se resserre ;
+ * Kodi arrive alors en rebond sous la marque, déroule son auvent et fait
+ * coucou (21/10), puis la caméra plonge dans le K et l'app apparaît derrière. Noir sur blanc
  * en clair, blanc sur noir en sombre. Un toucher la passe ; « Réduire les
  * animations » la réduit à un fondu.
  */
@@ -63,6 +65,18 @@ function Curtain({ onDone }: { onDone: () => void }) {
   const zoom = useSharedValue(0);
   const tail = useSharedValue(0); // la couture et le mot s'effacent avant la plongée
   const curtain = useSharedValue(1);
+  // Kodi arrive (0,75 s), puis fait coucou tant que l'intro dure.
+  const [kodi, setKodi] = useState<KodiMood | null>(null);
+
+  useEffect(() => {
+    if (reduced) return;
+    const a = setTimeout(() => setKodi('idle'), 750);
+    const b = setTimeout(() => setKodi('wave'), 1300);
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
+  }, [reduced]);
 
   useEffect(() => {
     shown = true;
@@ -113,6 +127,7 @@ function Curtain({ onDone }: { onDone: () => void }) {
     // L'espace après la dernière lettre est compensé à gauche : le mot reste centré.
     return { opacity: word.value * (1 - tail.value), letterSpacing: spacing, paddingLeft: spacing };
   });
+  const kodiStyle = useAnimatedStyle(() => ({ opacity: 1 - tail.value }));
 
   const px = (n: number) => (n / 100) * SIZE;
 
@@ -150,6 +165,7 @@ function Curtain({ onDone }: { onDone: () => void }) {
           </Animated.View>
 
           <Animated.Text style={[type.brand, { color: c.ink }, wordStyle]}>DRESSKODE</Animated.Text>
+          <Animated.View style={[styles.kodi, kodiStyle]}>{kodi && <Kodi mood={kodi} size={84} enter shadow decorative tap={false} />}</Animated.View>
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -165,4 +181,5 @@ const styles = StyleSheet.create({
   glint: { position: 'absolute', borderWidth: 1, borderRadius: 999 },
   seam: { width: 132, height: 1, flexDirection: 'row', gap: 2, transformOrigin: 'left' },
   dash: { width: 2, height: 1 },
+  kodi: { width: 84, height: 84 },
 });

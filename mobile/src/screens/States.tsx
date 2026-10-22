@@ -13,6 +13,7 @@ import { StackHeader, useHeaderScroll, useStackTop, Rule } from '../ui/layout';
 import { Card, EmptyState, Skeleton } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
+import { Kodi } from '../ui/Kodi';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
@@ -119,7 +120,7 @@ export function States() {
 
         <Block n="04" title="Erreurs">
           <Card className="flex-row" style={{ gap: 12 }}>
-            <Icon name="offline" size={24} color={c.caution} />
+            <Kodi mood="sleepy" size={44} decorative tap={false} />
             <View style={{ flex: 1, gap: 4 }}>
               <T v="bodyStrong">Pas de réseau</T>
               <T v="body" tone="ink2">
@@ -128,7 +129,8 @@ export function States() {
             </View>
           </Card>
           <Card className="bg-butter flex-row" style={{ gap: 12 }}>
-            <Icon name="kode" size={24} color={c['butter-ink']} />
+            {/* Kodi est le visage des erreurs aussi (21/10) : un peu triste, jamais alarmant. */}
+            <Kodi mood="sad" size={44} decorative tap={false} />
             <View style={{ flex: 1, gap: 4 }}>
               <T v="bodyStrong">Kodi n’a pas pu répondre</T>
               <T v="body" tone="ink2">

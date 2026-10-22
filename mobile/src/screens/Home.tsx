@@ -23,6 +23,7 @@ import { NotForMeSheet } from '../ui/ecart';
 import { bilanDe, jourDeBilan } from '../state/bilan';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
+import { Kodi } from '../ui/Kodi';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
@@ -364,8 +365,11 @@ function EmptyToday() {
 
       {/* Tes premiers pas (09/10) : ce qui manque pour la première tenue, et deux gestes qui aident Kodi. */}
       <Card style={{ gap: 14, padding: 16 }} testID="home-first-steps">
-        <View className="flex-row items-center justify-between">
-          <Tag label="Tes premiers pas" />
+        <View className="flex-row items-center" style={{ gap: 12 }}>
+          <Kodi mood={n ? 'happy' : 'wave'} size={56} track shadow />
+          <View style={{ flex: 1 }}>
+            <Tag label="Tes premiers pas" />
+          </View>
           <T v="kicker" tone="ink2">{`${done}/3`}</T>
         </View>
         <View style={{ marginHorizontal: -16 }}>
@@ -385,8 +389,8 @@ function EmptyToday() {
               accessibilityLabel={`${x.title}${x.done ? ', fait' : ''}`}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, borderTopWidth: 1, borderColor: c.rule }}
             >
-              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: x.done ? 0 : 1.5, borderColor: c.control, backgroundColor: x.done ? c['primary-bg'] : 'transparent' }}>
-                {x.done ? <Icon name="check" size={14} color={c['primary-fg']} strokeWidth={2.4} /> : <T v="small" tone="ink2">{String(k + 1)}</T>}
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: x.done ? 0 : 1.5, borderColor: c.control, backgroundColor: x.done ? c.blue : 'transparent' }}>
+                {x.done ? <Icon name="check" size={14} color={c['on-blue']} strokeWidth={2.4} /> : <T v="small" tone="ink2">{String(k + 1)}</T>}
               </View>
               <View style={{ flex: 1, paddingVertical: 8 }}>
                 <T v="body" style={[F.s500, x.done && { textDecorationLine: 'line-through', color: c.ink2 }]}>
@@ -582,7 +586,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'semaine') return <Week />;
 
-  // Kodi : une bulle de message rose poudré, son coin bas presque droit.
+  // Kodi : une bulle de message beurre, son coin bas presque droit, et Kodi en personne (21/10).
   if (id === 'kode') {
     const tomorrow = eventsOn(s.events, isoOf(1))[0];
     const asks = [
@@ -594,10 +598,8 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     return (
       <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="home-kode">
         <View className="flex-row items-center" style={{ gap: 10 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: ink, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="kode" size={18} color={c.butter} />
-          </View>
-          <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
+          <Kodi mood="wave" size={52} track />
+          <T v="cardTitle" accessibilityRole="header" style={{ flex: 1, color: ink, ...F.s600 }}>
             {title}
           </T>
         </View>

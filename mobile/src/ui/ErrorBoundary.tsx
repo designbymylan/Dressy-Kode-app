@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '../theme/tokens';
 import { Button } from './Button';
 import { T } from './T';
+import { Kodi } from './Kodi';
 
 type State = { error: Error | null };
 
@@ -35,6 +36,7 @@ function Oups({ error, onRetry }: { error: Error; onRetry: () => void }) {
   const insets = useSafeAreaInsets();
   return (
     <View className="bg-paper" style={{ flex: 1, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16, paddingHorizontal: space.gutter, gap: 16 }} testID="oups">
+      <Kodi mood="sad" size={88} shadow />
       <T v="title" accessibilityRole="header">Un souci{'\n'}d’ouverture</T>
       <T v="body" tone="ink2">
         Dresskode n’a pas pu afficher cet écran. Réessaie ; si ça recommence, ferme l’app et rouvre-la.

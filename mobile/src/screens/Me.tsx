@@ -30,7 +30,7 @@ import { Ambient } from '../ui/Ambient';
 import { AccountSheet } from '../ui/account';
 import { Avatar, Card, DotChip, Ring, Tag } from '../ui/bits';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
-import { PLANS, price } from './Offers';
+import { planOf, price } from './Offers';
 import type { Nav } from '../navigation/types';
 
 export function Me() {
@@ -45,7 +45,7 @@ export function Me() {
   const p = s.profile;
   const name = displayName(p);
   const handle = p.username && p.nameDisplay !== 'pseudo' ? `@${p.username}` : null;
-  const plan = PLANS.find((x) => x.id === s.plan)!;
+  const plan = planOf(s.plan);
   const limit = pieceLimit(s);
   const left = questionsLeft(s);
   const quota = LIMITS[s.plan].questions;
@@ -169,7 +169,7 @@ export function Me() {
           </View>
           <View className="flex-row items-center justify-between">
             <T v="caption" tone="primary-fg" style={F.s600}>
-              {s.plan === 'couture' ? 'Voir mon offre' : 'Voir les offres'}
+              {s.plan === 'atelier' || s.plan === 'couture' ? 'Voir mon offre' : 'Voir les offres'}
             </T>
             <Icon name="arrow" size={16} color={c['primary-fg']} />
           </View>

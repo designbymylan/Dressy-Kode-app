@@ -140,9 +140,10 @@ export function RadioRow({ name, note, price, struck, on, mine, onPress, testID,
       accessibilityRole="radio"
       accessibilityState={{ checked: on, disabled: !!mine }}
       accessibilityLabel={`${name}, ${price}${struck ? ` au lieu de ${struck}` : ''}${mine ? ', ton offre actuelle' : ''}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: c.card, borderWidth: on ? 1.5 : 1, borderColor: on ? c.ink : c['card-edge'] }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: on ? c['blue-soft'] : c.card, borderWidth: on ? 2 : 1, borderColor: on ? c['blue-ink'] : c['card-edge'] }}
     >
-      <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: on ? 6 : 1.5, borderColor: on ? c.ink : mine ? c.faint : c.control }} />
+      {/* Ce qui est choisi passe en bleu (21/10). */}
+      <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: on ? 6 : 1.5, borderColor: on ? c['blue-ink'] : mine ? c.faint : c.control }} />
       <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
         <View className="flex-row items-center" style={{ gap: 8 }}>
           <T v="body" style={F.s500}>
