@@ -1,7 +1,7 @@
 /**
  * Un voyage (07/10) : la destination, ses dates, pourquoi on part ; une
  * photo du lieu, sa météo jour par jour, et une tenue par jour proposée par
- * Kode, que l'on change à volonté. La valise suit.
+ * Kodi, que l'on change à volonté. La valise suit.
  */
 import { useEffect, useRef, useState } from 'react';
 import { Image, Linking, TextInput, View } from 'react-native';
@@ -206,7 +206,7 @@ function TripNew() {
 
         {busy ? (
           <Card className="bg-butter" style={{ padding: 18, borderBottomLeftRadius: 8 }}>
-            <KodeThinking phrases={['Kode regarde la météo sur place', 'Kode fait ta valise', 'Kode compose chaque jour']} />
+            <KodeThinking phrases={['Kodi regarde la météo sur place', 'Kodi fait ta valise', 'Kodi compose chaque jour']} />
           </Card>
         ) : (
           <Button testID="trip-go" label={canCompose(s.pieces) ? 'Préparer mes tenues' : 'Ajoute d’abord quelques pièces'} icon="kode" disabled={!ok} onPress={go} />
@@ -253,7 +253,7 @@ function TripView({ trip }: { trip: Trip }) {
     try {
       const out = await planifier(days, { trip, meteo, consigne: trip.activities.length ? `Activités prévues : ${trip.activities.join(', ')}.` : '' });
       a.saveTrip(trip, out);
-      a.toast('Kode a refait tes tenues');
+      a.toast('Kodi a refait tes tenues');
     } finally {
       setBusy(false);
     }
@@ -316,11 +316,11 @@ function TripView({ trip }: { trip: Trip }) {
           {live ? <Credit blocs={[infos?.prevision, infos?.saison]} /> : null}
         </Card>
 
-        {/* Une tenue par jour : la proposition de Kode, à changer à volonté. */}
+        {/* Une tenue par jour : la proposition de Kodi, à changer à volonté. */}
         <Card style={{ padding: 14, gap: 12 }} testID="trip-days">
           <Tag label="Une tenue par jour" />
           {busy ? (
-            <KodeThinking phrases={['Kode refait chaque jour']} />
+            <KodeThinking phrases={['Kodi refait chaque jour']} />
           ) : (
             days.map((d, i) => {
               const o = s.planned[d];
@@ -354,7 +354,7 @@ function TripView({ trip }: { trip: Trip }) {
               );
             })
           )}
-          <Button testID="trip-redo" label="Kode refait les tenues" variant="quiet" size="m" icon="kode" disabled={busy || !canCompose(s.pieces)} onPress={refaire} />
+          <Button testID="trip-redo" label="Kodi refait les tenues" variant="quiet" size="m" icon="kode" disabled={busy || !canCompose(s.pieces)} onPress={refaire} />
         </Card>
 
         {/* La valise : les pièces qui partent, une seule fois chacune. */}

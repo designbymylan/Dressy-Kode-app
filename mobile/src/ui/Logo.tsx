@@ -5,7 +5,7 @@ import { T } from './T';
 
 /**
  * Le logo (piste A validée le 13/10, `../../design/logo/`) : un K fin dont la
- * branche haute s'arrête sur l'étincelle de Kode. Mêmes tracés que le web
+ * branche haute s'arrête sur l'étincelle de Kodi. Mêmes tracés que le web
  * (`web/src/components/Logo.tsx`). Il prend la couleur du texte qu'il
  * accompagne : noir en clair, blanc en sombre.
  */

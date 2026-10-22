@@ -15,11 +15,11 @@ export type Piece = {
   name: string;
   kind: GarmentKind;
   tint?: string;
-  /** La vignette détourée que Kode a dessinée d'après une photo (URL signée) ; sinon l'illustration de `kind`. */
+  /** La vignette détourée que Kodi a dessinée d'après une photo (URL signée) ; sinon l'illustration de `kind`. */
   image?: string;
   category: CategoryId;
   color: string;
-  /** L'identifiant de couleur de Kode (« vert », « creme »…), pour les pièces du compte. */
+  /** L'identifiant de couleur de Kodi (« vert », « creme »…), pour les pièces du compte. */
   colorId?: string;
   swatch: string;
   material: string;
@@ -41,7 +41,7 @@ export const CATEGORIES: { id: CategoryId; title: string; short: string }[] = [
 ];
 
 /**
- * Les couleurs que Kode note sur une photo (supabase/functions/dressy-agent/prompts.ts,
+ * Les couleurs que Kodi note sur une photo (supabase/functions/dressy-agent/prompts.ts,
  * COLOUR_RGB) : identifiant en base, libellé, teinte de référence.
  */
 export const COLOURS: { id: string; label: string; hex: string }[] = [
@@ -283,7 +283,7 @@ const FEMININE = new Set<GarmentKind>(['chemise', 'mariniere', 'jupe', 'robe', '
 const PLURAL = new Set<GarmentKind>(['baskets', 'bottines', 'mocassins', 'escarpins']);
 
 /**
- * Le genre se lit d'abord sur le nom de la pièce : Kode range un polo parmi
+ * Le genre se lit d'abord sur le nom de la pièce : Kodi range un polo parmi
  * les chemises (illustration), mais on dit « un polo », pas « une ».
  * f : féminin, m : masculin ; s : pluriel.
  */

@@ -1,15 +1,18 @@
 /**
- * Jeu d'icônes original, dessiné pour Dresskode : trait 1,6 sur une grille
- * de 24, bouts ronds (le jeu du 02/10, revenu le 04/10). Aucune icône n'est
- * reprise d'un jeu propriétaire.
+ * Les icônes de Dresskode, grille de 24.
  *
- * Reflet chromé (09/10) : une icône noire, grise ou blanche est tracée d'un
- * dégradé métal (sombre sur fond clair, clair sur fond sombre), tiré de sa
- * couleur. Une icône de couleur (vert de « validé », rouge d'alerte, teinte
- * d'un vêtement) garde sa couleur pleine, comme une icône `flat`.
+ * Depuis la refonte du 21/10, une icône se montre **pleine** dès qu'elle a sa
+ * version pleine (`iconsSolid.ts`, la planche « Micro icons (solid) » du
+ * web), dans la couleur demandée, sans reflet. Les autres restent au trait
+ * 1,6, bouts ronds (le jeu du 02/10). `line` force le trait : la barre
+ * d'onglets montre le trait au repos et le plein sur l'onglet choisi.
+ *
+ * `chromeStops` (reflet métal du 09/10) reste pour les rares dessins qui
+ * l'utilisent encore (ui/shop.tsx).
  */
 import { memo, useId } from 'react';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import { SOLID } from './iconsSolid';
 
 const PATHS = {
   home: 'M4 11.5 12 5l8 6.5V20H4ZM10 20v-5h4v5',
@@ -71,7 +74,9 @@ const PATHS = {
 
 export type IconName = keyof typeof PATHS;
 
-type Props = { name: IconName; size?: number; color: string; strokeWidth?: number; flat?: boolean };
+type Props = { name: IconName; size?: number; color: string; strokeWidth?: number; flat?: boolean; line?: boolean };
+
+const RAYS = [0, 45, 90, 135, 180, 225, 270, 315];
 
 const rgb = (color: string): [number, number, number] | null => {
   const h = color.trim();
@@ -95,7 +100,27 @@ export function chromeStops(color: string): string[] | null {
 
 const OFFSETS = ['0', '0.38', '0.52', '0.68', '1'];
 
-function IconBase({ name, size = 22, color, strokeWidth = 1.6, flat }: Props) {
+function IconBase({ name, size = 22, color, strokeWidth = 1.6, flat = true, line }: Props) {
+  const solid = line ? undefined : SOLID[name];
+  if (!line && name === 'sun') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no">
+        <Circle cx={12} cy={12} r={4.6} fill={color} />
+        <G>
+          {RAYS.map((a) => (
+            <Rect key={a} x={10.9} y={1.6} width={2.2} height={3.6} rx={1.1} fill={color} rotation={a} origin="12, 12" />
+          ))}
+        </G>
+      </Svg>
+    );
+  }
+  if (solid) {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no">
+        <Path d={solid.d} fill={color} fillRule={solid.evenodd ? 'evenodd' : 'nonzero'} />
+      </Svg>
+    );
+  }
   const dots = name === 'more';
   // Un identifiant par icône : sur le web, les dégradés partagent la même page.
   const id = `chrome${useId().replace(/[^a-zA-Z0-9]/g, '')}`;

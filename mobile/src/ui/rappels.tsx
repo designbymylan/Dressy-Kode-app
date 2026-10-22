@@ -32,7 +32,7 @@ export function useChoisirNotifs() {
       return;
     }
     a.setNotifs(choix);
-    a.toast(choix === 'tout' ? 'C’est noté, Kode te prévient' : 'C’est noté : seulement ton planning');
+    a.toast(choix === 'tout' ? 'C’est noté, Kodi te prévient' : 'C’est noté : seulement ton planning');
   };
 }
 

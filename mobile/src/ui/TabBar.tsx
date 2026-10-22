@@ -1,147 +1,194 @@
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
-import Animated, { interpolate, useAnimatedStyle, useReducedMotion, withSpring, withTiming, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import Svg, { Path } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme/ThemeProvider';
 import { material, motion } from '../theme/tokens';
-import { Glass } from './Glass';
+import { F } from '../theme/fonts';
 import { Icon, type IconName } from './Icon';
+import { Kodi, type KodiMood } from './Kodi';
+import { T } from './T';
 import { Tap } from './Tap';
-import { useTabCompact } from './layout';
 import { useScreen } from './screen';
 
-const TABS: Record<string, { label: string; icon: IconName }> = {
+const TABS: Record<string, { label: string; icon: IconName | null }> = {
   Home: { label: 'Accueil', icon: 'home' },
   Dressing: { label: 'Dressing', icon: 'hanger' },
-  Kode: { label: 'Kode', icon: 'kode' },
-  Agenda: { label: 'Agenda', icon: 'calendar' },
-  Me: { label: 'Moi', icon: 'person' },
+  Kode: { label: 'Kodi', icon: null },
+  Agenda: { label: 'Calendrier', icon: 'calendar' },
+  Me: { label: 'Profil', icon: 'person' },
 };
 
+const HEIGHT = material.tabHeight;
+const BUMP = 30;
+const RADIUS = 24;
+
 /**
- * Barre d'onglets flottante en verre (web : components/TabBar.tsx), revenue
- * au dessin du 02/10 à la demande de l'utilisateur (04/10) : une capsule,
- * cinq icônes ; Kode au centre en pastille encre, l'onglet actif marqué par
- * son icône encre et un point dessous. Les libellés restent pour les
- * lecteurs d'écran. Elle se resserre quand on descend dans une page
- * et revient dès qu'on remonte ; elle ne porte que de la navigation.
- *
- * Le point est liquide : quand on change d'onglet, il s'étire vers l'onglet
- * visé puis se resserre, comme une goutte ; sous la pastille de Kode, il
- * s'y fond.
+ * Le contour de la barre et de sa bosse (même tracé que le web,
+ * components/TabBar.tsx) : une bosse de 132 × 26 au milieu d'un rectangle
+ * aux coins de 24.
+ */
+function silhouette(w: number): string {
+  const r = RADIUS;
+  const x = w / 2 - 66;
+  const top = BUMP;
+  const y = (v: number) => v + top;
+  return [
+    `M${r} ${y(0)}H${x}`,
+    `C${x + 18} ${y(0)} ${x + 30} ${y(-2.8)} ${x + 38} ${y(-11.2)}`,
+    `C${x + 46} ${y(-20.53)} ${x + 54} ${y(-26.13)} ${x + 66} ${y(-26.13)}`,
+    `C${x + 78} ${y(-26.13)} ${x + 86} ${y(-20.53)} ${x + 94} ${y(-11.2)}`,
+    `C${x + 102} ${y(-2.8)} ${x + 114} ${y(0)} ${x + 132} ${y(0)}`,
+    `H${w - r}A${r} ${r} 0 0 1 ${w} ${y(r)}V${y(HEIGHT - r)}A${r} ${r} 0 0 1 ${w - r} ${y(HEIGHT)}`,
+    `H${r}A${r} ${r} 0 0 1 0 ${y(HEIGHT - r)}V${y(r)}A${r} ${r} 0 0 1 ${r} ${y(0)}Z`,
+  ].join('');
+}
+
+/**
+ * La barre du 21/10 (« Inspiration Navbar 1 », même dessin que le web) :
+ * barre de verre arrondie, bosse au centre qui porte le rond chocopie de
+ * Kodi, petit trait au-dessus de l'onglet actif qui glisse d'un onglet à
+ * l'autre, icône au trait qui devient pleine et bleue, tous les noms écrits.
+ * Kodi regarde l'onglet choisi et sursaute quand on change d'onglet.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
-  const { c, scheme } = useTheme();
+  const { c, scheme, solidGlass } = useTheme();
   const insets = useSafeAreaInsets();
-  const compact = useTabCompact();
+  const reduced = useReducedMotion();
   const { width } = useScreen();
-  const full = Math.min(width - 40, 390);
+  const full = Math.min(width - 24, 406);
   const bottom = (insets.bottom > 0 ? insets.bottom - 8 : 0) + material.tabBottom;
-  const [centers, setCenters] = useState<number[]>([]);
+  const index = state.index;
+  const col = full / state.routes.length;
 
+  // Kodi réagit au changement d'onglet.
+  const [mood, setMood] = useState<KodiMood>('idle');
+  const first = useRef(true);
   useEffect(() => {
-    if (compact) compact.value = withTiming(0, { duration: 200 });
-  }, [state.index, compact]);
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setMood(state.routes[index]?.name === 'Kode' ? 'happy' : 'surprised');
+    const t = setTimeout(() => setMood('idle'), 900);
+    return () => clearTimeout(t);
+  }, [index, state.routes]);
 
-  const bar = useAnimatedStyle(() => {
-    const k = compact?.value ?? 0;
-    return { height: interpolate(k, [0, 1], [material.tabHeight, 56]), width: interpolate(k, [0, 1], [full, full - 48]) };
-  });
+  // Le petit trait au-dessus de l'onglet actif, qui glisse.
+  const centerIndex = state.routes.findIndex((r) => r.name === 'Kode');
+  const ind = useSharedValue(index * col + col / 2 - 8);
+  const indShown = useSharedValue(index === centerIndex ? 0 : 1);
+  useEffect(() => {
+    const to = index * col + col / 2 - 8;
+    ind.value = reduced ? to : withSpring(to, { damping: 16, stiffness: 180, mass: 0.9 });
+    indShown.value = withTiming(index === centerIndex ? 0 : 1, { duration: 200 });
+  }, [index, col, centerIndex, reduced, ind, indShown]);
+  const indStyle = useAnimatedStyle(() => ({ transform: [{ translateX: ind.value }, { scaleX: 0.2 + 0.8 * indShown.value }], opacity: indShown.value }));
+
+  const fill = solidGlass ? c.raised : scheme === 'dark' ? 'rgba(28,28,30,0.78)' : 'rgba(255,255,255,0.80)';
+  const edge = scheme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.09)';
 
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom, alignItems: 'center' }}>
-      <Animated.View style={bar}>
-        <Glass radius={999} style={{ flex: 1 }}>
-          <View accessibilityRole="tablist" className="flex-row items-center" style={{ flex: 1, paddingHorizontal: 12, justifyContent: 'space-around' }}>
-            <Drop index={state.index} centers={centers} color={c.ink} compact={compact} />
-            {state.routes.map((route, i) => {
-              const on = state.index === i;
-              const tab = TABS[route.name];
-              const pill = route.name === 'Kode';
+      <View style={{ width: full, height: HEIGHT + BUMP }}>
+        {/* Le verre : flou sous la barre, puis la silhouette teintée et son contour ; l'ombre suit la forme. */}
+        {!solidGlass && (
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: HEIGHT, borderRadius: RADIUS, overflow: 'hidden' }}>
+            <BlurView intensity={material.blur * 2} tint={scheme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          </View>
+        )}
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, material.shadow[scheme]]}>
+          <Svg width={full} height={HEIGHT + BUMP}>
+            <Path d={silhouette(full)} fill={fill} stroke={edge} strokeWidth={1} />
+          </Svg>
+        </View>
+
+        <View accessibilityRole="tablist" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: HEIGHT, flexDirection: 'row' }}>
+          <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 7, left: 0, width: 16, height: 3, borderRadius: 2, backgroundColor: c['nav-ind'] }, indStyle]} />
+          {state.routes.map((route, i) => {
+            const on = index === i;
+            const tab = TABS[route.name] ?? { label: route.name, icon: 'home' as IconName };
+            const press = () => {
+              const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!on && !e.defaultPrevented) navigation.navigate(route.name, route.params);
+            };
+            if (!tab.icon) {
+              const look = index < i ? 'left' : index > i ? 'right' : 'up';
               return (
                 <Tap
                   key={route.key}
-                  onLayout={(e) => {
-                    const { x, width: w } = e.nativeEvent.layout;
-                    setCenters((prev) => {
-                      const next = [...prev];
-                      next[i] = x + w / 2;
-                      return next;
-                    });
-                  }}
                   testID={`tab-${route.name}`}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: on }}
-                  accessibilityLabel={tab.label}
-                  feedback="select"
+                  accessibilityLabel="Kodi, ton styliste"
+                  feedback="medium"
                   scaleTo={0.92}
-                  onPress={() => {
-                    if (compact) compact.value = withTiming(0, { duration: 200 });
-                    const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                    if (!on && !e.defaultPrevented) navigation.navigate(route.name, route.params);
-                  }}
-                  style={[
-                    { width: pill ? 54 : 46, height: pill ? 54 : 46, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-                    pill && { backgroundColor: c['primary-bg'], ...material.press[scheme] },
-                  ]}
+                  onPress={press}
+                  outerStyle={{ flex: 1 }}
+                  style={{ height: HEIGHT, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 }}
                 >
-                  <TabIcon icon={tab.icon} on={on} color={pill ? c['primary-fg'] : on ? c.ink : c['tab-off']} />
+                  <View
+                    style={[
+                      { position: 'absolute', top: -24, alignSelf: 'center', width: 56, height: 56, borderRadius: 28, backgroundColor: c.choco, alignItems: 'center', justifyContent: 'center' },
+                      scheme === 'dark'
+                        ? { borderWidth: 2, borderColor: 'rgba(254,239,184,0.16)', shadowColor: c.butter, shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } }
+                        : { shadowColor: c.choco, shadowOpacity: 0.42, shadowRadius: 11, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+                    ]}
+                  >
+                    <Kodi size={44} mood={on && mood === 'idle' ? 'wink' : mood} track={look !== 'up'} tap={false} decorative />
+                  </View>
+                  <T v="tab" style={[{ fontSize: 11.5, color: on ? (scheme === 'dark' ? c.butter : c.choco) : c['nav-idle'] }, on && F.s600]}>
+                    {tab.label}
+                  </T>
                 </Tap>
               );
-            })}
-          </View>
-        </Glass>
-      </Animated.View>
+            }
+            return (
+              <Tap
+                key={route.key}
+                testID={`tab-${route.name}`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={tab.label}
+                feedback="select"
+                scaleTo={0.9}
+                onPress={press}
+                outerStyle={{ flex: 1 }}
+                style={{ height: HEIGHT, alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 6 }}
+              >
+                <TabIcon icon={tab.icon} on={on} idle={c['nav-idle-icon']} active={c['nav-active']} />
+                <T v="tab" style={[{ fontSize: 11.5, color: on ? c['nav-active'] : c['nav-idle'] }, on && F.s600]} numberOfLines={1}>
+                  {tab.label}
+                </T>
+              </Tap>
+            );
+          })}
+        </View>
+      </View>
     </View>
   );
 }
 
-/** L'icône grossit d'un rien quand l'onglet devient actif. */
-function TabIcon({ icon, on, color }: { icon: IconName; on: boolean; color: string }) {
+/** L'icône au trait devient pleine et bleue, en remontant d'un rien. */
+function TabIcon({ icon, on, idle, active }: { icon: IconName; on: boolean; idle: string; active: string }) {
   const k = useSharedValue(on ? 1 : 0);
   useEffect(() => {
     k.value = withSpring(on ? 1 : 0, motion.spring);
   }, [on, k]);
-  const grow = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.08 * k.value }] }));
+  const lift = useAnimatedStyle(() => ({ transform: [{ translateY: -2 * k.value }] }));
+  const lineStyle = useAnimatedStyle(() => ({ opacity: 1 - k.value, transform: [{ scale: 1 + 0.3 * k.value }] }));
+  const solidStyle = useAnimatedStyle(() => ({ opacity: k.value, transform: [{ scale: 0.5 + 0.5 * k.value }] }));
   return (
-    <Animated.View style={grow}>
-      <Icon name={icon} size={23} color={color} strokeWidth={on ? 1.9 : 1.7} />
+    <Animated.View style={[{ width: 24, height: 24 }, lift]}>
+      <Animated.View style={[StyleSheet.absoluteFill, lineStyle]}>
+        <Icon name={icon} size={24} color={idle} strokeWidth={1.8} line />
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, solidStyle]}>
+        <Icon name={icon} size={24} color={active} />
+      </Animated.View>
     </Animated.View>
   );
-}
-
-const DOT = 4;
-/** Le bord qui mène file vite, celui qui suit traîne : la goutte s'étire puis se resserre. */
-const LEAD = { damping: 18, stiffness: 420, mass: 0.6 };
-const TRAIL = { damping: 20, stiffness: 150, mass: 0.9 };
-
-/** Le point de l'onglet actif, commun à toute la barre. */
-function Drop({ index, centers, color, compact }: { index: number; centers: number[]; color: string; compact: SharedValue<number> | null }) {
-  const reduced = useReducedMotion();
-  const left = useSharedValue(0);
-  const right = useSharedValue(0);
-  const seen = useSharedValue(0);
-  const last = useRef<number | null>(null);
-  const cx = centers[index];
-  useEffect(() => {
-    if (cx === undefined) return;
-    const l = cx - DOT / 2;
-    const r = cx + DOT / 2;
-    const from = last.current;
-    last.current = index;
-    // Premier placement, barre qui se resserre, ou animations réduites : le point se pose sans voyager.
-    if (from === null || from === index || reduced) {
-      left.value = l;
-      right.value = r;
-      seen.value = withTiming(1, { duration: 200 });
-      return;
-    }
-    const goingRight = index > from;
-    left.value = withSpring(l, goingRight ? TRAIL : LEAD);
-    right.value = withSpring(r, goingRight ? LEAD : TRAIL);
-  }, [cx, index, reduced, left, right, seen]);
-  // Barre resserrée : les onglets se rapprochent, le point s'efface le temps qu'elle revienne.
-  const style = useAnimatedStyle(() => ({ opacity: seen.value * (1 - (compact?.value ?? 0)), left: left.value, width: Math.max(DOT, right.value - left.value) }));
-  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: '50%', marginTop: 15, height: DOT, borderRadius: DOT / 2, backgroundColor: color }, style]} />;
 }

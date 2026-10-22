@@ -2,7 +2,7 @@
  * Le bilan du dimanche (09/10) : ta semaine en tenues, sur le modèle d'une
  * page de magazine. Le titre dit combien de jours tu t'es habillée avec ton
  * dressing ; la bande des sept jours montre les couleurs portées ; puis tes
- * chiffres, ta pièce de la semaine, ce qui dort, ce que Kode a retenu de tes
+ * chiffres, ta pièce de la semaine, ce qui dort, ce que Kodi a retenu de tes
  * « Pas pour moi » et la semaine qui vient. Une semaine vide se tourne vers
  * la suivante, sans reproche.
  */
@@ -65,7 +65,7 @@ export function Bilan() {
             .
           </T>
           <T v="body" tone="ink2">
-            {vide ? 'Pas de tenue notée cette semaine. Touche « Je la porte » le matin : Kode apprend de ce que tu portes vraiment.' : `${b.habilles} jour${b.habilles > 1 ? 's' : ''} sur 7 habillée avec ton dressing.`}
+            {vide ? 'Pas de tenue notée cette semaine. Touche « Je la porte » le matin : Kodi apprend de ce que tu portes vraiment.' : `${b.habilles} jour${b.habilles > 1 ? 's' : ''} sur 7 habillée avec ton dressing.`}
           </T>
         </View>
 
@@ -125,14 +125,14 @@ export function Bilan() {
           </Tap>
         )}
 
-        {/* Ce que Kode a retenu : la preuve que « Pas pour moi » sert à quelque chose. */}
+        {/* Ce que Kodi a retenu : la preuve que « Pas pour moi » sert à quelque chose. */}
         {b.ecartees > 0 && (
           <Card className="bg-butter" style={{ gap: 6 }} testID="bilan-kode">
             <T v="label" style={{ color: c['butter-ink'] }}>
-              Kode a retenu
+              Kodi a retenu
             </T>
             <T v="body" style={{ color: c['butter-ink'] }}>
-              {`Tu as écarté ${b.ecartees} tenue${b.ecartees > 1 ? 's' : ''} cette semaine. ${b.raison && b.raison !== 'sans' ? `Kode te proposera ${RETENU[b.raison]}.` : 'Il ne te les proposera plus.'}`}
+              {`Tu as écarté ${b.ecartees} tenue${b.ecartees > 1 ? 's' : ''} cette semaine. ${b.raison && b.raison !== 'sans' ? `Kodi te proposera ${RETENU[b.raison]}.` : 'Il ne te les proposera plus.'}`}
             </T>
           </Card>
         )}
@@ -163,7 +163,7 @@ export function Bilan() {
           </Card>
         )}
 
-        {/* La semaine qui vient : la météo connue, les rendez-vous, et Kode qui prépare tout. */}
+        {/* La semaine qui vient : la météo connue, les rendez-vous, et Kodi qui prépare tout. */}
         <Card style={{ gap: 12 }} testID="bilan-suite">
           <Tag label="La semaine qui vient" />
           <View className="flex-row justify-between">
@@ -191,7 +191,7 @@ export function Bilan() {
               .filter(Boolean)
               .join(' · ')}
           </T>
-          <Button testID="bilan-plan" label="Préparer ma semaine avec Kode" icon="kode" size="m" onPress={() => nav.navigate('Planning', { choisir: true, date: isoOf(Math.max(1, offsetOf(b.fin) + 1)) })} />
+          <Button testID="bilan-plan" label="Préparer ma semaine avec Kodi" icon="kode" size="m" onPress={() => nav.navigate('Planning', { choisir: true, date: isoOf(Math.max(1, offsetOf(b.fin) + 1)) })} />
         </Card>
       </Animated.ScrollView>
     </View>

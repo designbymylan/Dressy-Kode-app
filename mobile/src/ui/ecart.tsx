@@ -1,7 +1,7 @@
 /**
  * « Pas pour moi » (09/10) : la feuille qui s'ouvre sous une tenue qu'on ne
  * veut pas. Une raison en un geste (facultative), la pièce visée si c'est
- * elle, et une autre tenue tout de suite. La raison part chez Kode : c'est la
+ * elle, et une autre tenue tout de suite. La raison part chez Kodi : c'est la
  * réponse à « l'IA ne me comprend pas ».
  */
 import { useEffect, useState } from 'react';
@@ -34,14 +34,14 @@ export function NotForMeSheet({ visible, pieces, onClose, onConfirm }: { visible
     <Sheet
       visible={visible}
       onClose={onClose}
-      kicker="Dis-le à Kode"
+      kicker="Dis-le à Kodi"
       title="Pas pour moi"
       testID="not-for-me-sheet"
       footer={<Button testID="not-for-me-confirm" label={waiting ? 'Choisis la pièce' : 'Une autre tenue'} icon="refresh" disabled={waiting} onPress={() => onConfirm(raison ?? 'sans', raison === 'piece' ? cibles : [])} />}
     >
       <View style={{ gap: 16 }}>
         <T v="body" tone="ink2">
-          Pourquoi ? Kode s’en souviendra pour tes prochaines tenues. Tu peux aussi passer sans rien dire.
+          Pourquoi ? Kodi s’en souviendra pour tes prochaines tenues. Tu peux aussi passer sans rien dire.
         </T>
         <View className="flex-row flex-wrap" style={{ gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="La raison">
           {RAISONS.map((r) => {

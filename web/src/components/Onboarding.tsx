@@ -444,7 +444,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
     <main
       style={{
         maxWidth: 430, margin: '0 auto', minHeight: '100dvh',
-        padding: 'calc(env(safe-area-inset-top, 0px) + 22px) 20px 190px', display: 'flex', flexDirection: 'column', gap: 20,
+        padding: 'calc(env(safe-area-inset-top, 0px) + 56px) 20px 190px', display: 'flex', flexDirection: 'column', gap: 20,
       }}
     >
       {!done ? (

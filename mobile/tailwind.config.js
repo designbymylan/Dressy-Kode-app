@@ -34,6 +34,13 @@ module.exports = {
         'caution-soft': color('caution-soft'),
         butter: color('butter'),
         'butter-ink': color('butter-ink'),
+        // Palette du 21/10 : le bleu de ce qui est choisi, le chocopie de Kodi, la section découpée.
+        blue: color('blue'),
+        'blue-ink': color('blue-ink'),
+        'blue-soft': color('blue-soft'),
+        choco: color('choco'),
+        panel: color('panel'),
+        'on-panel': color('on-panel'),
       },
     },
   },

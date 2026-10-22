@@ -1,6 +1,6 @@
 /**
- * « Kode, prévois ces jours » : une tenue par jour choisi. Un compte connecté
- * passe par Kode (fonction `kode`, action `planifier`), qui lit les
+ * « Kodi, prévois ces jours » : une tenue par jour choisi. Un compte connecté
+ * passe par Kodi (fonction `kode`, action `planifier`), qui lit les
  * rendez-vous, la météo, le profil et toute sa culture de styliste ; sans
  * réponse, ou sans compte, la version du téléphone prend le relais.
  */

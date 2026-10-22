@@ -335,7 +335,7 @@ img { display: block; }
   margin: 0 auto;
   min-height: 100dvh;
   /* En haut, la place de l'encoche clair / sombre ; en bas, celle de la barre et de sa bosse. */
-  padding: calc(env(safe-area-inset-top, 0px) + 44px) 16px calc(env(safe-area-inset-bottom, 0px) + 132px);
+  padding: calc(env(safe-area-inset-top, 0px) + 52px) 16px calc(env(safe-area-inset-bottom, 0px) + 132px);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -807,7 +807,7 @@ textarea.input { border-radius: 22px; padding: 14px 18px; }
   max-width: 400px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top, 0px) + 40px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  padding: calc(env(safe-area-inset-top, 0px) + 56px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1403,14 +1403,19 @@ textarea.input { border-radius: 22px; padding: 14px 18px; }
 /* ============================================================
    L'encoche clair / sombre (21/10), en haut à droite. Elle se masque
    dans Mon compte › Paramètres (réglage propre à l'appareil).
+   22/10 : 44 px de haut (cible du pouce) et posée en haut de la page, pas
+   fixée : elle part avec le défilement et ne recouvre jamais un texte. Elle
+   tient dans la bande de 44 px que .screen réserve en haut.
    ============================================================ */
 .dk-notch {
-  position: fixed;
+  position: absolute;
   top: 0;
   right: max(12px, calc((100vw - 430px) / 2 + 12px));
   z-index: 45;
-  height: calc(34px + env(safe-area-inset-top, 0px));
+  min-width: 64px;
+  height: calc(44px + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) 7px 0;
+  justify-content: center;
   display: flex;
   align-items: center;
   border: none;

@@ -77,7 +77,7 @@ export function Agenda() {
   const outfits = useTodayOutfits();
   const ready = canCompose(s.pieces);
   const todayOutfit = day === 0 && s.wornToday ? { title: 'Portée aujourd’hui', pieces: s.wornToday } : null;
-  const proposed = day === 0 && outfits.length ? { title: 'Tenue du jour, proposée par Kode', pieces: outfits[s.outfitIndex % outfits.length].pieces } : null;
+  const proposed = day === 0 && outfits.length ? { title: 'Tenue du jour, proposée par Kodi', pieces: outfits[s.outfitIndex % outfits.length].pieces } : null;
   const planned = todayOutfit ?? s.planned[iso] ?? proposed;
   const pieces = planned ? (planned.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : [];
   const later = s.events.filter((e) => e.date > iso).slice(0, 4);
@@ -227,7 +227,7 @@ export function Agenda() {
               <>
                 <Tag label="Pas encore de tenue" />
                 <T v="body" tone="ink2">
-                  Dès trois pièces, Kode prépare chaque jour.
+                  Dès trois pièces, Kodi prépare chaque jour.
                 </T>
                 <Button testID="agenda-add" label="Ajouter des pièces" size="m" icon="plus" onPress={() => nav.navigate('AddPiece')} />
               </>
@@ -239,7 +239,7 @@ export function Agenda() {
                 </T>
                 <View style={{ gap: 8 }}>
                   <Button testID="agenda-compose" label="Composer" icon="layers" onPress={() => nav.navigate('Compose', { date: iso })} />
-                  <Button testID="agenda-ask" label="Demander à Kode" variant="quiet" icon="kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: events[0] ? `Une tenue pour « ${events[0].title} »` : `Une tenue pour ${relativeDay(day).toLowerCase()}`, nonce: Date.now() } })} />
+                  <Button testID="agenda-ask" label="Demander à Kodi" variant="quiet" icon="kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: events[0] ? `Une tenue pour « ${events[0].title} »` : `Une tenue pour ${relativeDay(day).toLowerCase()}`, nonce: Date.now() } })} />
                 </View>
               </>
             )}

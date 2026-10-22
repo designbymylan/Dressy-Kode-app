@@ -50,10 +50,10 @@ export function TesDonnees() {
 
   const kept: { icon: 'person' | 'hanger' | 'ruler' | 'calendar' | 'kode' | 'close'; title: string; detail: string }[] = [
     { icon: 'person', title: 'Ton compte', detail: compte ? `${p.email ?? 'E-mail'} · prénom, pseudo, photo si tu les as donnés` : demo ? 'Compte de démonstration : rien n’est à toi ici' : 'Sans compte : tout reste sur ce téléphone' },
-    { icon: 'hanger', title: 'Ton dressing', detail: `${plural(s.pieces.length, 'pièce', 'pièces')} · photos confiées à Kode effacées ${DUREES.photos}` },
+    { icon: 'hanger', title: 'Ton dressing', detail: `${plural(s.pieces.length, 'pièce', 'pièces')} · photos confiées à Kodi effacées ${DUREES.photos}` },
     { icon: 'ruler', title: 'Ta silhouette', detail: p.bodyConsent ? `Accord donné le ${date(p.bodyConsent)}` : hasBody ? 'Des valeurs sans accord : décide ci-dessous' : 'Rien d’enregistré' },
     { icon: 'calendar', title: 'Ton agenda', detail: `${plural(s.events.length, 'rendez-vous', 'rendez-vous')} · ${plural(s.trips.length, 'voyage', 'voyages')}` },
-    { icon: 'kode', title: 'Tes échanges avec Kode', detail: `${plural(s.messages.length, 'message', 'messages')} · gardés ${DUREES.conversations}` },
+    { icon: 'kode', title: 'Tes échanges avec Kodi', detail: `${plural(s.messages.length, 'message', 'messages')} · gardés ${DUREES.conversations}` },
     { icon: 'close', title: 'Tes « Pas pour moi »', detail: `${plural(s.ecarts.length, 'tenue écartée', 'tenues écartées')} · gardées ${DUREES.ecarts}` },
   ];
 
@@ -110,7 +110,7 @@ export function TesDonnees() {
                 Silhouette et mesures
               </T>
               <T v="small" tone="ink2">
-                Taille, silhouette et mesures, pour tes coupes. Kode reçoit ta silhouette et ta taille, sans ton nom.
+                Taille, silhouette et mesures, pour tes coupes. Kodi reçoit ta silhouette et ta taille, sans ton nom.
               </T>
             </View>
             <Toggle testID="consent-silhouette" value={!!p.bodyConsent} onChange={(v) => void consent(v)} label="Accord pour la silhouette et les mesures" />
@@ -187,7 +187,7 @@ export function TesDonnees() {
         }
       >
         <T v="body" tone="ink2">
-          Ta taille, ta silhouette et tes mesures sont effacées aussitôt, sur ce téléphone et dans ton compte. Kode ne s’en servira plus. Tu pourras les redonner quand tu veux.
+          Ta taille, ta silhouette et tes mesures sont effacées aussitôt, sur ce téléphone et dans ton compte. Kodi ne s’en servira plus. Tu pourras les redonner quand tu veux.
         </T>
       </Sheet>
 
@@ -218,7 +218,7 @@ export function TesDonnees() {
         <View style={{ gap: 12 }}>
           {(compte
             ? [
-                'Ton dressing, tes photos, tes tenues, ton agenda, tes échanges avec Kode et ta silhouette sont effacés.',
+                'Ton dressing, tes photos, tes tenues, ton agenda, tes échanges avec Kodi et ta silhouette sont effacés.',
                 'Ton abonnement s’arrête aussitôt : plus aucun prélèvement.',
                 'Tes factures restent chez notre prestataire de paiement, comme la loi l’exige (10 ans).',
               ]

@@ -78,7 +78,7 @@ export const type = {
  */
 export const material = {
   blur: 24,
-  tabHeight: 66,
+  tabHeight: 68,
   tabBottom: 12,
   shadow: {
     light: { shadowColor: '#111111', shadowOpacity: 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 8 },

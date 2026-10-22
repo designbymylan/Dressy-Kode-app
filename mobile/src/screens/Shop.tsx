@@ -97,7 +97,7 @@ export function Shop() {
               </T>
             )}
           </FeatureCard>
-          <FeatureCard testID="shop-questions" icon="kode" title="Questions à Kode" right={quota === null ? 'Sans limite' : `${used} / ${quota}`}>
+          <FeatureCard testID="shop-questions" icon="kode" title="Questions à Kodi" right={quota === null ? 'Sans limite' : `${used} / ${quota}`}>
             {quota !== null && bar(used, quota)}
             {quota !== null && (
               <T testID="shop-more-questions" v="small" tone="ink2" onPress={() => nav.navigate('Offers')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 6 }}>

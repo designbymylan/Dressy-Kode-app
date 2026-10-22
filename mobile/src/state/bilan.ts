@@ -1,6 +1,6 @@
 /**
  * Le bilan du dimanche (09/10) : la semaine en tenues, ce qui a été porté,
- * ce qui dort, ce que Kode a retenu des « Pas pour moi », et la semaine qui
+ * ce qui dort, ce que Kodi a retenu des « Pas pour moi », et la semaine qui
  * vient. Une raison de revenir chaque semaine, sans culpabiliser : une
  * semaine sans tenue notée se tourne vers la suivante.
  *
@@ -96,7 +96,7 @@ export function bilanDe(
   };
 }
 
-/** « Ce que Kode a retenu » : la raison la plus donnée, dite simplement. */
+/** « Ce que Kodi a retenu » : la raison la plus donnée, dite simplement. */
 export const RETENU: Record<Exclude<Raison, 'sans'>, string> = {
   style: 'des tenues plus proches de ton style',
   couleurs: 'des couleurs mieux accordées',

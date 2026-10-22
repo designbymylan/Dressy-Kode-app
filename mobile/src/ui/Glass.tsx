@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { material } from '../theme/tokens';
 
@@ -66,3 +67,34 @@ export function glassSurface(c: Record<string, string>, scheme: 'light' | 'dark'
     ...material.card[scheme],
   };
 }
+
+/**
+ * Le verre bleu du 21/10 (boutons principaux, ce qui est choisi) : un
+ * dégradé de bleu clair, un reflet en haut et un liseré blanc, comme
+ * `--blue-glass` et `--blue-shadow` sur le web. Se pose en fond, sous le
+ * contenu, dans une vue arrondie.
+ */
+export function BlueGlassFill({ radius }: { radius: number }) {
+  const { c } = useTheme();
+  return (
+    <View pointerEvents="none" style={{ ...FILL, borderRadius: radius, overflow: 'hidden' }}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="dk-blue-glass" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={c['blue-top']} />
+            <Stop offset="1" stopColor={c['blue-bottom']} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#dk-blue-glass)" />
+      </Svg>
+      <View style={{ ...FILL, borderRadius: radius, borderWidth: 1, borderColor: 'rgba(255,255,255,0.75)' }} />
+      <View style={{ position: 'absolute', left: radius * 0.6, right: radius * 0.6, top: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.95)' }} />
+    </View>
+  );
+}
+
+/** L'ombre bleutée du verre bleu (--blue-shadow). */
+export const blueShadow = {
+  light: { shadowColor: '#4B7DA5', shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
+  dark: { shadowColor: '#C4DAE8', shadowOpacity: 0.28, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
+} as const;

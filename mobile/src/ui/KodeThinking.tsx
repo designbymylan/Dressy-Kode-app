@@ -12,9 +12,9 @@ import { F } from '../theme/fonts';
 const STEP_ICON: Record<OrbStep | 'kode', IconName> = { kode: 'kode', look: 'eye', draw: 'edit', check: 'check', store: 'hanger' };
 
 /**
- * L'orbe de Kode, en noir et blanc comme toute la galerie : le rond noir de
- * Kode (le même que dans la barre d'onglets), l'icône de l'étape au centre,
- * et un arc fin qui tourne autour tant que Kode travaille. Quand l'étape
+ * L'orbe de Kodi, en noir et blanc comme toute la galerie : le rond noir de
+ * Kodi (le même que dans la barre d'onglets), l'icône de l'étape au centre,
+ * et un arc fin qui tourne autour tant que Kodi travaille. Quand l'étape
  * change, la nouvelle icône apparaît en fondu. Immobile si les animations
  * sont réduites.
  */
@@ -49,8 +49,8 @@ export function KodeOrb({ size = 28, step = 'kode' }: { size?: number; step?: Or
 }
 
 /**
- * « Kode réfléchit » : l'orbe et une phrase qui change toutes les deux
- * secondes environ, comme si Kode commentait ce qu'il fait. Aucun nom de
+ * « Kodi réfléchit » : l'orbe et une phrase qui change toutes les deux
+ * secondes environ, comme si Kodi commentait ce qu'il fait. Aucun nom de
  * modèle ni de service n'apparaît jamais à l'écran.
  */
 export function KodeThinking({

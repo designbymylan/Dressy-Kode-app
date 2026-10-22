@@ -1,7 +1,7 @@
 /**
  * L'onboarding (raccourci le 09/10, diagnostic UX) : quatre écrans avant
  * l'app (prénom, rayon, style, premier portant), le compte seulement si des
- * photos attendent Kode, puis la préparation, et on entre. Seuls le prénom
+ * photos attendent Kodi, puis la préparation, et on entre. Seuls le prénom
  * et le rayon sont obligatoires.
  *
  * Tout le reste (taille, silhouette, mesures, tailles, couleurs, quotidien,
@@ -46,9 +46,9 @@ const CHAPTERS: { label: string; steps: StepId[] }[] = [
   { label: 'Style', steps: ['styles'] },
   { label: 'Dressing', steps: ['pieces', 'compte'] },
 ];
-/** Le compte ne se demande que si des photos attendent Kode (voir `order`). */
+/** Le compte ne se demande que si des photos attendent Kodi (voir `order`). */
 const ORDER: StepId[] = ['prenom', 'rayon', 'styles', 'pieces', 'compte', 'generation'];
-/** « Affiner » : ce qui aide Kode, demandé une fois l'app découverte. Tout se passe. */
+/** « Affiner » : ce qui aide Kodi, demandé une fois l'app découverte. Tout se passe. */
 const AFFINER_CHAPTERS: { label: string; steps: StepId[] }[] = [
   { label: 'Silhouette', steps: ['confiance', 'corps', 'silhouette', 'mesures', 'tailles'] },
   { label: 'Goûts', steps: ['couleurs', 'quotidien', 'ville', 'age'] },
@@ -77,7 +77,7 @@ const SKIP: Partial<Record<StepId, Partial<Profile>>> = {
 type Ctx = {
   draft: Profile;
   set: (patch: Partial<Profile>) => void;
-  /** Les vraies photos choisies au premier portant : Kode les dessine une fois le compte créé. */
+  /** Les vraies photos choisies au premier portant : Kodi les dessine une fois le compte créé. */
   photos: Photo[];
   setPhotos: (p: Photo[]) => void;
   next: () => void;
@@ -87,7 +87,7 @@ type Ctx = {
 /** Photos confiées d'un coup, comme sur l'écran d'ajout. */
 const MAX_PHOTOS = 10;
 
-/** « Affiner mon profil » : les questions qui aident Kode, ouvertes depuis l'app. */
+/** « Affiner mon profil » : les questions qui aident Kodi, ouvertes depuis l'app. */
 export function Affiner() {
   return <Onboarding affiner />;
 }
@@ -115,7 +115,7 @@ export function Onboarding({ affiner }: { affiner?: boolean }) {
   const finish = () => {
     if (!affiner) return a.completeOnboarding(draft, [], photos);
     a.setProfile(Object.fromEntries(AFFINE.map((k) => [k, draft[k]])) as Partial<Profile>);
-    a.toast(`Kode te connaît à ${precision(draft)} %`);
+    a.toast(`Kodi te connaît à ${precision(draft)} %`);
     nav.goBack();
   };
   const go = (to: number) => {
@@ -325,7 +325,7 @@ function Prenom({ draft, set, next }: Ctx) {
         accessibilityLabel="Ton prénom"
         style={{ ...F.display, fontSize: 30, color: c.ink, paddingVertical: 8, borderBottomWidth: 1.5, borderColor: ok ? c.ink : c.control }}
       />
-      <Why>Kode t’appellera comme ça. Rien n’est public.</Why>
+      <Why>Kodi t’appellera comme ça. Rien n’est public.</Why>
     </Frame>
   );
 }
@@ -403,7 +403,7 @@ function Confiance({ set, next }: Ctx) {
   const [busy, setBusy] = useState(false);
   const rows: { icon: IconName; text: string }[] = [
     { icon: 'lock', text: 'Elles restent dans ton espace, protégées. Personne d’autre ne les voit.' },
-    { icon: 'kode', text: 'Kode reçoit ta silhouette et ta taille, sans ton nom, pour choisir tes coupes. Jamais tes mesures.' },
+    { icon: 'kode', text: 'Kodi reçoit ta silhouette et ta taille, sans ton nom, pour choisir tes coupes. Jamais tes mesures.' },
     { icon: 'trash', text: 'Tu retires ton accord quand tu veux, dans Réglages › Tes données : tout est effacé aussitôt.' },
   ];
   return (
@@ -411,7 +411,7 @@ function Confiance({ set, next }: Ctx) {
       kicker="Avant de continuer"
       lead={'Ta silhouette,\n'}
       em="en confiance."
-      intro="Ta taille, ta silhouette et tes mesures aident Kode à choisir tes coupes. Elles touchent à ton corps : on te demande ton accord."
+      intro="Ta taille, ta silhouette et tes mesures aident Kodi à choisir tes coupes. Elles touchent à ton corps : on te demande ton accord."
       footer={
         <>
           <Button
@@ -441,7 +441,7 @@ function Confiance({ set, next }: Ctx) {
           </View>
         ))}
       </View>
-      <Why icon="help">On ne te demande plus ton poids : Kode n’en a pas besoin pour t’habiller.</Why>
+      <Why icon="help">On ne te demande plus ton poids : Kodi n’en a pas besoin pour t’habiller.</Why>
       <T testID="onb-policy" v="label" tone="ink2" onPress={() => nav.navigate('Confidentialite')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12 }}>
         Politique de confidentialité
       </T>
@@ -486,9 +486,9 @@ function SilhouetteStep({ draft, set, next }: Ctx) {
           <ChoiceCard key={x.id} testID={`onb-sil-${x.id}`} title={`En ${x.id}`} note={x.note} on={picked === x.id} art={<SilhouetteShape id={x.id} size={30} color={c.ink} fill={picked === x.id ? c.raised : 'transparent'} />} onPress={() => setPicked(x.id)} />
         ))}
       </View>
-      <Tap testID="onb-sil-unknown" onPress={() => { set({ silhouette: 'inconnue', silhouetteSource: null }); next(); }} scaleTo={1} accessibilityLabel="Je ne sais pas encore : Kode apprendra" style={{ minHeight: 44, justifyContent: 'center' }}>
+      <Tap testID="onb-sil-unknown" onPress={() => { set({ silhouette: 'inconnue', silhouetteSource: null }); next(); }} scaleTo={1} accessibilityLabel="Je ne sais pas encore : Kodi apprendra" style={{ minHeight: 44, justifyContent: 'center' }}>
         <T v="bodyStrong" style={{ textDecorationLine: 'underline' }}>
-          Je ne sais pas encore : Kode apprendra
+          Je ne sais pas encore : Kodi apprendra
         </T>
       </Tap>
     </Frame>
@@ -565,7 +565,7 @@ function Mesures({ draft, set, next }: Ctx) {
           </T>
         </Ring>
         <T v="caption" tone="ink2" style={{ flex: 1 }}>
-          Précision de Kode. Mètre ruban souple, à même la peau, sans serrer.
+          Précision de Kodi. Mètre ruban souple, à même la peau, sans serrer.
         </T>
       </Card>
     </Frame>
@@ -626,7 +626,7 @@ function Styles({ draft, set, next, W }: Ctx) {
     <Frame
       lead={'Ton style,\n'}
       em="en 1 à 3 mots."
-      intro="Choisis ceux qui te ressemblent aujourd’hui. Kode s’ajustera à ce que tu portes vraiment."
+      intro="Choisis ceux qui te ressemblent aujourd’hui. Kodi s’ajustera à ce que tu portes vraiment."
       footer={
         <>
           {warn && (
@@ -701,7 +701,7 @@ function Quotidien({ draft, set, next, W }: Ctx) {
   const { c } = useTheme();
   const w = (W - 10) / 2;
   return (
-    <Frame lead={'Ton\n'} em="quotidien." intro="Ce qui remplit tes semaines. Kode prépare la bonne tenue au bon moment." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
+    <Frame lead={'Ton\n'} em="quotidien." intro="Ce qui remplit tes semaines. Kodi prépare la bonne tenue au bon moment." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
       <View className="flex-row flex-wrap" style={{ gap: 10 }}>
         {OCCASIONS.map((o) => {
           const on = draft.occasions.includes(o.label);
@@ -768,7 +768,7 @@ function Ville({ draft, set, next }: Ctx) {
             <View style={{ flex: 1 }}>
               <T v="bodyStrong">{draft.city}, c’est noté</T>
               <T v="caption" tone="ink2">
-                Kode regardera sa météo chaque matin, dès ton compte créé.
+                Kodi regardera sa météo chaque matin, dès ton compte créé.
               </T>
             </View>
           </Card>
@@ -779,7 +779,7 @@ function Ville({ draft, set, next }: Ctx) {
         <View style={{ flex: 1, gap: 2 }}>
           <T v="bodyStrong">Relier mon agenda</T>
           <T v="caption" tone="ink2">
-            Kode prépare les jours chargés : réunion, dîner, mariage. Tu choisis les agendas, et tu arrêtes quand tu veux.
+            Kodi prépare les jours chargés : réunion, dîner, mariage. Tu choisis les agendas, et tu arrêtes quand tu veux.
           </T>
         </View>
         <Toggle testID="onb-agenda" value={draft.agenda} onChange={(agenda) => set({ agenda })} label="Relier mon agenda" />
@@ -793,7 +793,7 @@ function Ville({ draft, set, next }: Ctx) {
 /**
  * Le premier portant : de vraies photos (une tenue entière ou une pièce à
  * plat), jamais de pièces d'exemple. Elles restent sur l'appareil jusqu'à la
- * création du compte, puis partent chez Kode, qui repère chaque vêtement et
+ * création du compte, puis partent chez Kodi, qui repère chaque vêtement et
  * le dessine pour les portants (state/store.tsx : sendPending).
  */
 function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
@@ -823,10 +823,10 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
     <Frame
       lead={'Ton premier\n'}
       em="portant."
-      intro={`Ajoute des photos des pièces que tu portes souvent${draft.name ? `, ${draft.name}` : ''} : une tenue entière ou une pièce posée à plat. Kode repère chaque vêtement et le dessine pour tes portants.`}
+      intro={`Ajoute des photos des pièces que tu portes souvent${draft.name ? `, ${draft.name}` : ''} : une tenue entière ou une pièce posée à plat. Kodi repère chaque vêtement et le dessine pour tes portants.`}
       footer={
         <>
-          <Button testID="onb-generate" label={n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kode` : 'Ajoute une première photo'} icon={n ? 'kode' : undefined} disabled={!n} onPress={next} />
+          <Button testID="onb-generate" label={n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kodi` : 'Ajoute une première photo'} icon={n ? 'kode' : undefined} disabled={!n} onPress={next} />
           <Button testID="onb-later" label="Plus tard : entrer avec un dressing vide" variant="plain" onPress={() => { setPhotos([]); next(); }} />
         </>
       }
@@ -836,8 +836,8 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
       </View>
       <T v="caption" tone="ink2" accessibilityLiveRegion="polite">
         {n
-          ? `${n} photo${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} · Kode dessine tes pièces dès que ton compte est créé.`
-          : 'Une photo peut porter plusieurs pièces : Kode les repère toutes, jusqu’à 10 photos à la fois.'}
+          ? `${n} photo${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} · Kodi dessine tes pièces dès que ton compte est créé.`
+          : 'Une photo peut porter plusieurs pièces : Kodi les repère toutes, jusqu’à 10 photos à la fois.'}
       </T>
       <View className="flex-row" style={{ gap: 8 }}>
         <Button testID="onb-import" label="Importer des photos" icon="image" variant="secondary" size="m" grow disabled={room <= 0} onPress={() => importPhotos(false)} />
@@ -859,7 +859,7 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
       )}
       <T v="small" tone="ink2">
         Tes photos servent seulement à dessiner tes pièces : elles ne sont ni publiées ni partagées.
-        {!online ? ' Dans cet aperçu, elles restent sur l’appareil : c’est l’app, avec ton compte, qui les confie à Kode.' : ''}
+        {!online ? ' Dans cet aperçu, elles restent sur l’appareil : c’est l’app, avec ton compte, qui les confie à Kodi.' : ''}
       </T>
     </Frame>
   );
@@ -870,10 +870,10 @@ function Generation({ draft, photos, next }: Ctx) {
   const n = photos.length;
   const rayon = draft.rayon === 'femme' ? 'rayon femme' : draft.rayon === 'homme' ? 'rayon homme' : draft.rayon === 'mixte' ? 'rayons femme et homme' : '';
   const lines = [
-    `Profil : ${rayon || 'Kode apprendra en route'}`,
+    `Profil : ${rayon || 'Kodi apprendra en route'}`,
     `Style : ${draft.styles.length ? draft.styles.join(', ') : 'à découvrir avec toi'}`,
     'La météo du jour, chaque matin',
-    n ? `${n} photo${n > 1 ? 's' : ''} pour Kode : il dessine tes pièces dès ton arrivée` : 'Tes portants, prêts à se remplir',
+    n ? `${n} photo${n > 1 ? 's' : ''} pour Kodi : il dessine tes pièces dès ton arrivée` : 'Tes portants, prêts à se remplir',
     n ? 'Tes premières tenues, dès tes pièces dessinées' : 'Ta première tenue, dès trois pièces',
   ];
   const [k, setK] = useState(0);
@@ -894,7 +894,7 @@ function Generation({ draft, photos, next }: Ctx) {
           <Icon name="kode" size={30} color={c.brass} />
         </Ring>
         <T v="title" style={{ textAlign: 'center' }}>
-          Kode prépare{'\n'}
+          Kodi prépare{'\n'}
           <T v="title" style={{ ...F.accent }}>
             ton espace…
           </T>

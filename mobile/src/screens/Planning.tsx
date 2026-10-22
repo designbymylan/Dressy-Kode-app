@@ -1,7 +1,7 @@
 /**
  * Le planning (07/10) : un grand calendrier du mois, avec les tenues prévues,
  * les rendez-vous et les voyages, sur le mois passé et l'année qui vient.
- * On choisit des jours et Kode les prépare ; on ouvre un jour pour voir sa
+ * On choisit des jours et Kodi les prépare ; on ouvre un jour pour voir sa
  * tenue, ses rendez-vous, et la changer.
  */
 import { useEffect, useState } from 'react';
@@ -81,7 +81,7 @@ export function Planning() {
       const out = await planifier(dates);
       const n = Object.keys(out).length;
       for (const [d, o] of Object.entries(out)) a.plan(d, { ...o, tripId: s.planned[d]?.tripId ?? tripOn(d)?.id ?? null }, 'kode');
-      a.toast(n ? (n > 1 ? `${n} tenues prévues par Kode` : 'Une tenue prévue par Kode') : 'Kode n’a pas trouvé de tenue : ajoute des pièces');
+      a.toast(n ? (n > 1 ? `${n} tenues prévues par Kodi` : 'Une tenue prévue par Kodi') : 'Kodi n’a pas trouvé de tenue : ajoute des pièces');
       setChosen([]);
       setChoisir(false);
       if (dates.length === 1) setDay(dates[0]);
@@ -156,7 +156,7 @@ export function Planning() {
             />
           </Animated.View>
           {!choisir ? (
-            <Button testID="planning-choose" label="Choisir des jours pour Kode" variant="quiet" size="m" icon="kode" disabled={!ready} onPress={() => { setChoisir(true); setChosen([]); }} />
+            <Button testID="planning-choose" label="Choisir des jours pour Kodi" variant="quiet" size="m" icon="kode" disabled={!ready} onPress={() => { setChoisir(true); setChosen([]); }} />
           ) : (
             <View className="flex-row items-center justify-between" style={{ paddingHorizontal: 4 }}>
               <T v="caption" tone="ink2">
@@ -170,18 +170,18 @@ export function Planning() {
         </Card>
 
         {choisir ? (
-          // Les jours choisis partent chez Kode : une tenue par jour.
+          // Les jours choisis partent chez Kodi : une tenue par jour.
           <Animated.View entering={FadeInDown.duration(260)}>
             <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="planning-kode">
               {busy ? (
-                <KodeThinking phrases={['Kode lit tes rendez-vous', 'Kode regarde la météo', 'Kode compose chaque jour']} />
+                <KodeThinking phrases={['Kodi lit tes rendez-vous', 'Kodi regarde la météo', 'Kodi compose chaque jour']} />
               ) : (
                 <View className="flex-row items-center" style={{ gap: 10 }}>
                   <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c['butter-ink'], alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name="kode" size={18} color={c.butter} />
                   </View>
                   <T v="cardTitle" style={{ color: c['butter-ink'], flex: 1 }}>
-                    {chosen.length ? `Kode prépare ${chosen.length} jour${chosen.length > 1 ? 's' : ''}` : 'Choisis tes jours'}
+                    {chosen.length ? `Kodi prépare ${chosen.length} jour${chosen.length > 1 ? 's' : ''}` : 'Choisis tes jours'}
                   </T>
                 </View>
               )}
@@ -253,7 +253,7 @@ export function Planning() {
                 ready ? (
                   <View className="flex-row" style={{ gap: 8 }}>
                     <Button grow testID="planning-compose" label="Composer" size="m" icon="layers" onPress={() => nav.navigate('Compose', { date: day })} />
-                    <Button grow testID="planning-ask" label="Kode" variant="quiet" size="m" icon="kode" loading={busy} onPress={() => lancer([day])} />
+                    <Button grow testID="planning-ask" label="Kodi" variant="quiet" size="m" icon="kode" loading={busy} onPress={() => lancer([day])} />
                   </View>
                 ) : (
                   <Button testID="planning-add-pieces" label="Ajouter des pièces" size="m" icon="plus" onPress={() => nav.navigate('AddPiece')} />
@@ -276,7 +276,7 @@ export function Planning() {
             <View className="flex-row items-center" style={{ gap: 10 }}>
               <Icon name="bell" size={20} color={c['butter-ink']} />
               <T v="bodyStrong" style={{ flex: 1, color: c['butter-ink'] }}>
-                Kode te prévient la veille ?
+                Kodi te prévient la veille ?
               </T>
             </View>
             <Button testID="planning-notifs-tout" label="Oui, préviens-moi" size="m" onPress={() => choisirNotifs('tout')} />

@@ -1,7 +1,7 @@
 /**
  * Un rendez-vous à habiller (07/10) : le jour, l'heure, le type, l'importance,
  * la tenue voulue, ce qu'on veut dégager, le lieu et les contraintes. Tout
- * part chez Kode avec la demande de tenue : plus il en sait, plus elle tombe
+ * part chez Kodi avec la demande de tenue : plus il en sait, plus elle tombe
  * juste.
  */
 import { useState, type ReactNode } from 'react';
@@ -76,7 +76,7 @@ export function EventEdit() {
     a.toast(known ? 'Rendez-vous corrigé' : 'Rendez-vous noté');
     nav.goBack();
   };
-  // Enregistre, puis Kode prépare la tenue de ce jour-là avec tout ce qui vient d'être dit.
+  // Enregistre, puis Kodi prépare la tenue de ce jour-là avec tout ce qui vient d'être dit.
   const saveAndDress = async () => {
     if (!ok) return;
     const ev = clean();
@@ -186,7 +186,7 @@ export function EventEdit() {
         {section(
           'Tenue voulue',
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-            <Chip testID="event-code-kode" label="Kode choisit" icon="kode" on={e.dressCode === null} onPress={() => set({ dressCode: null })} />
+            <Chip testID="event-code-kode" label="Kodi choisit" icon="kode" on={e.dressCode === null} onPress={() => set({ dressCode: null })} />
             {DRESS_CODES.map((d) => (
               <Chip key={d} testID={`event-code-${d}`} label={d} on={e.dressCode === d} onPress={() => set({ dressCode: e.dressCode === d ? null : d })} />
             ))}
@@ -208,7 +208,7 @@ export function EventEdit() {
         {section('Contraintes', <ChoiceChips testID="event-constraint" options={CONSTRAINTS} value={e.constraints} onChange={(constraints) => set({ constraints })} multi />, 'event-constraints')}
 
         {section(
-          'Note pour Kode',
+          'Note pour Kodi',
           <View style={{ gap: 8 }}>
           <TextInput
             testID="event-note"
@@ -218,11 +218,11 @@ export function EventEdit() {
             multiline
             placeholder="Je veux être à l’aise, il y aura sa famille…"
             placeholderTextColor={c.ink2}
-            accessibilityLabel="Note pour Kode"
+            accessibilityLabel="Note pour Kodi"
             style={{ ...input, minHeight: 96, borderRadius: 22, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' }}
           />
           <T v="small" tone="ink2">
-            Ta note part chez Kode pour choisir ta tenue. Pas besoin d’y mettre de détail sur ta santé.
+            Ta note part chez Kodi pour choisir ta tenue. Pas besoin d’y mettre de détail sur ta santé.
           </T>
           </View>,
           'event-note-card',

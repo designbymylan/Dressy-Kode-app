@@ -91,7 +91,7 @@ export function EventScreen() {
 
         <Card style={{ gap: 12 }}>
           <T v="kicker" tone="ink2">
-            L’idée de Kode
+            L’idée de Kodi
           </T>
           <OutfitBoard pieces={first} width={W} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
           <Legend pieces={first} />

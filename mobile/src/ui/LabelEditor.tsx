@@ -34,7 +34,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /**
- * L'étiquette d'une pièce, corrigée à la main : quand Kode s'est trompé de
+ * L'étiquette d'une pièce, corrigée à la main : quand Kodi s'est trompé de
  * nom, de couleur ou de matière, ou pour noter le prix. Rien n'est perdu
  * tant que « Enregistrer » n'est pas touché.
  */
@@ -66,7 +66,7 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
     if (!ok) return;
     const colour = COLOURS.find((x) => x.id === colorId);
     const colourChanged = colorId !== (piece.colorId ?? COLOURS.find((x) => x.label === piece.color)?.id);
-    // La teinte mesurée par Kode reste tant que la couleur ne change pas.
+    // La teinte mesurée par Kodi reste tant que la couleur ne change pas.
     const tint = colourChanged && colour ? colour.hex : piece.tint;
     onSave({
       ...piece,

@@ -2,7 +2,7 @@
  * « Pas pour moi » (09/10) : une tenue écartée, avec sa raison. La
  * combinaison n'est plus jamais proposée ; une pièce écartée seule passe en
  * dernier pendant deux semaines ; tout le reste (couleurs, météo, journée,
- * style, confort) part chez Kode, qui en tient compte dans ses tenues.
+ * style, confort) part chez Kodi, qui en tient compte dans ses tenues.
  */
 import { offsetOf, type Iso } from './planning';
 
