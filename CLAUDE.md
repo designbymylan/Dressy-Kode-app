@@ -323,8 +323,10 @@ la réduit à un fondu. Web : `components/Intro.tsx` et `.intro` dans
 **Refonte du 21/10 (web), demandée par l'utilisateur** sur ses images de
 référence (`Design app inspiration/`). Elle remplace, sur le web, ce qui
 la contredit plus haut ; couleurs mises à part, verre, arrondis et
-transparence restent. **Le mobile n'est pas encore aligné** (mêmes choix à y
-reporter : palette, Kodi, barre, icônes, offres).
+transparence restent. **Le mobile est aligné depuis le 22/10** (palette
+dans `palette.json`, `ui/Kodi.tsx`, `ui/TabBar.tsx` à bosse, icônes pleines
+de `ui/iconsSolid.ts` tirées du web, boutons en verre bleu, `ui/usage.tsx`
+pour la progression, offres Fashion et Sapologue).
 
 - **Palette** (« Palette de couleur officiel ») : fond blanc pur, texte noir
   pur ; Blue `#c4dae8` pour ce qui est choisi et l'action principale (texte
@@ -358,6 +360,8 @@ reporter : palette, Kodi, barre, icônes, offres).
   le mot de passe), bienvenue, accueil, dressing, erreurs.
 - **Encoche clair / sombre** en haut à droite (`ThemeNotch.tsx`), masquable
   dans Mon compte › Paramètres ; réglage d'appareil (cookie `dk_theme_tab`).
+  Depuis le 22/10, elle est posée dans la page (elle défile avec elle) et
+  les écrans gardent 52 px en haut, pour ne jamais couvrir un titre.
   Un visiteur garde son thème dans le cookie `dk_theme`.
 - **Barre de progression du dressing** (« Inspiration progress bar ») : la
   part des pièces portées ces 90 jours, en tout et par catégorie, dans une
@@ -448,8 +452,8 @@ Ordre de priorité, du plus fort au plus faible :
   service (messages de Kodi, offres, informations) avec texte noir en clair
   comme en sombre, Chocopie `#432f2e` pour le rond de Kodi. Le reste est
   noir, blanc et gris. Gris studio (`#f3f3f3`) pour les vignettes de
-  vêtements et les champs de saisie. (Le mobile garde le rose poudré
-  `#f8e9e4` jusqu'à son alignement.)
+  vêtements et les champs de saisie. Le mobile suit la même palette depuis
+  le 22/10.
 - Boutons (21/10, web) : en verre, libellé en casse normale ; l'action
   principale en verre bleu, texte noir ; les autres en verre clair, en
   pastille ou en texte. Liens de section (« Tout voir », « Agenda ») : texte
@@ -478,8 +482,9 @@ Ordre de priorité, du plus fort au plus faible :
   sur gris studio dans des vignettes arrondies ; jamais de photo produit, pas
   de 3D.
 - Icônes : pleines sur le web depuis le 21/10 (`components/icons.tsx`), avec
-  leur micro-interaction ; au trait sur le mobile (jeu du 02/10, reflet
-  chromé depuis le 09/10) jusqu'à son alignement. Des formes qui se
+  leur micro-interaction ; pleines aussi sur le mobile depuis le 22/10
+  (`ui/iconsSolid.ts`, régénéré depuis le web ; `line` pour le trait de la
+  barre d'onglets au repos). Des formes qui se
   comprennent sans leur nom ; toutes gardent leur libellé pour les lecteurs
   d'écran.
 - Mouvement : discret (fondus, ressorts courts), jamais bloquant, coupé par
