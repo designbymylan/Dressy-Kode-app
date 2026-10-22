@@ -3,7 +3,7 @@
  * niveau d'habillage du rendez-vous (de 0, le sport, à 3, la tenue de
  * soirée), suit la météo, et évite de remettre les mêmes pièces deux jours
  * de suite. C'est la version qui tourne sur le téléphone (démonstration,
- * hors ligne) ; un compte connecté passe par Kode (fonction `kode`, action
+ * hors ligne) ; un compte connecté passe par Kodi (fonction `kode`, action
  * `planifier`), qui en sait bien plus.
  */
 import type { Piece, Weather } from '../data/wardrobe';
@@ -94,7 +94,7 @@ export function proposer(pieces: Piece[], dates: Iso[], ctx: Contexte): Record<I
     }
     veille = new Set(tenue.map((p) => p.id));
     out[date] = {
-      title: e ? `Pour « ${e.title} »`.slice(0, 80) : ctx.trip ? `${ctx.trip.destination}, jour ${i + 1}` : 'Par Kode',
+      title: e ? `Pour « ${e.title} »`.slice(0, 80) : ctx.trip ? `${ctx.trip.destination}, jour ${i + 1}` : 'Par Kodi',
       pieces: tenue.map((p) => p.id),
       tripId: ctx.trip?.id ?? null,
     };

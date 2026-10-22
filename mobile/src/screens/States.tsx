@@ -79,7 +79,7 @@ export function States() {
             <EmptyState
               art={<Garment kind="trench" size={78} hanger hangerColor={c.rod} dark={scheme === 'dark'} />}
               title="Ton premier portant t’attend"
-              body="Photographie trois pièces que tu portes souvent : Kode pourra déjà composer."
+              body="Photographie trois pièces que tu portes souvent : Kodi pourra déjà composer."
               action={<Button label="Ajouter une pièce" size="m" icon="plus" onPress={() => nav.navigate('AddPiece')} />}
             />
           </Card>
@@ -87,7 +87,7 @@ export function States() {
             <EmptyState
               art={<Icon name="calendar" size={40} color={c.ink2} />}
               title="Semaine calme"
-              body="Aucun événement. Tu pourrais relier ton agenda pour que Kode prépare les jours chargés."
+              body="Aucun événement. Tu pourrais relier ton agenda pour que Kodi prépare les jours chargés."
               action={<Button label="Relier mon agenda" size="m" variant="secondary" onPress={() => a.toast('La liaison d’agenda arrive bientôt')} />}
             />
           </Card>
@@ -123,14 +123,14 @@ export function States() {
             <View style={{ flex: 1, gap: 4 }}>
               <T v="bodyStrong">Pas de réseau</T>
               <T v="body" tone="ink2">
-                Ton dressing et tes tenues prévues restent là. Kode répondra dès que le réseau revient.
+                Ton dressing et tes tenues prévues restent là. Kodi répondra dès que le réseau revient.
               </T>
             </View>
           </Card>
           <Card className="bg-butter flex-row" style={{ gap: 12 }}>
             <Icon name="kode" size={24} color={c['butter-ink']} />
             <View style={{ flex: 1, gap: 4 }}>
-              <T v="bodyStrong">Kode n’a pas pu répondre</T>
+              <T v="bodyStrong">Kodi n’a pas pu répondre</T>
               <T v="body" tone="ink2">
                 La question ne compte pas dans ton quota. Tu peux la reposer.
               </T>

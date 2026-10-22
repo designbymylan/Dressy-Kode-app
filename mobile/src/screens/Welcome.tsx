@@ -18,7 +18,7 @@ import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav } from '../navigation/types';
 
-// De vraies pièces, détourées (07/10) : le portant montre ce que Kode fera des tiennes.
+// De vraies pièces, détourées (07/10) : le portant montre ce que Kodi fera des tiennes.
 const RAIL: { kind: GarmentKind; image: string; label: string }[] = [
   { kind: 'veste', image: photo('blouson-noir'), label: 'Blouson zippé noir' },
   { kind: 'pull', image: photo('pull-marine'), label: 'Pull marine en maille' },
@@ -30,7 +30,7 @@ const CHIPS = ['détourage', 'tenue du jour', 'météo', 'agenda', 'coût par po
 
 /**
  * L'accueil avant le compte (version cartes, 05/10) : la capsule en haut, un
- * grand titre, deux boutons empilés, le portant en carte, ce que fait Kode
+ * grand titre, deux boutons empilés, le portant en carte, ce que fait Kodi
  * en puces. Peu de mots : le portant parle.
  */
 export function Welcome() {
@@ -60,7 +60,7 @@ export function Welcome() {
             Porte mieux ce que tu as.
           </T>
           <T v="body" tone="ink2" style={{ textAlign: 'center' }}>
-            Une photo, et Kode range ta pièce.
+            Une photo, et Kodi range ta pièce.
           </T>
         </Animated.View>
 

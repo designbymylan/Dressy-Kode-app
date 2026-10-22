@@ -1,6 +1,6 @@
 /**
  * Modifier le profil (07/10) : la photo, le prénom, le nom, le pseudonyme et
- * ce qui s'affiche ; puis ce que Kode retient de toi (styles, couleurs,
+ * ce qui s'affiche ; puis ce que Kodi retient de toi (styles, couleurs,
  * tailles, ville), sur le modèle des grandes boutiques où chaque compte
  * se règle à sa main. La photo part tout de suite ; le reste à
  * « Enregistrer », pour qu'un pseudonyme déjà pris ne se perde pas.

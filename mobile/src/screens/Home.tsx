@@ -40,7 +40,7 @@ const longDate = () => {
 /**
  * L'accueil (06/10) : chaque section a sa forme, dans l'ordre choisi dans
  * Personnaliser, la tenue du jour comprise. Rangées de la tête aux pieds,
- * cartes de la semaine, bulle de Kode, arches, page de magazine,
+ * cartes de la semaine, bulle de Kodi, arches, page de magazine,
  * classement, mosaïque, tickets, bloc plein (canevas
  * https://claude.ai/artifact/D6Y93CiR4UXrrp6djzxXcc). Couleurs, polices,
  * verre et arrondis restent ceux de la charte.
@@ -196,10 +196,10 @@ function TodayCard({ W }: { W: number }) {
         </T>
       </Animated.View>
       {worn && <WornToday pieces={shown} />}
-      {/* « Pas pour moi » (09/10) : la raison part chez Kode, la tenue ne revient plus. */}
+      {/* « Pas pour moi » (09/10) : la raison part chez Kodi, la tenue ne revient plus. */}
       {!worn && (
         <View className="flex-row items-center justify-between" style={{ borderTopWidth: 1, borderColor: c.rule, marginHorizontal: 4 }}>
-          <T testID="not-for-me" v="label" tone="ink2" onPress={() => setNope(true)} accessibilityRole="button" accessibilityHint="Dis à Kode pourquoi, et vois une autre tenue" suppressHighlighting style={{ paddingTop: 14, paddingBottom: 16, marginBottom: -12, paddingRight: 16 }}>
+          <T testID="not-for-me" v="label" tone="ink2" onPress={() => setNope(true)} accessibilityRole="button" accessibilityHint="Dis à Kodi pourquoi, et vois une autre tenue" suppressHighlighting style={{ paddingTop: 14, paddingBottom: 16, marginBottom: -12, paddingRight: 16 }}>
             Pas pour moi
           </T>
           <T v="small" tone="ink2">
@@ -214,7 +214,7 @@ function TodayCard({ W }: { W: number }) {
         onConfirm={(raison, cibles) => {
           setNope(false);
           a.ecarter(shown.map((p) => p.id), raison, cibles, outfit.pieces);
-          // La suivante arrive telle que Kode l'a pensée : les pièces changées ou gardées repartent.
+          // La suivante arrive telle que Kodi l'a pensée : les pièces changées ou gardées repartent.
           setSwapped({});
           setPinned(new Set());
         }}
@@ -255,7 +255,7 @@ function BilanCard() {
         </View>
       </View>
       <T v="caption" tone="ink2">
-        {vide ? 'Kode prépare tes tenues avec la météo et tes rendez-vous.' : `${b.portees.length} pièces portées · ${b.part} % de ton dressing${b.ecartees ? ` · ${b.ecartees} écartée${b.ecartees > 1 ? 's' : ''}` : ''}`}
+        {vide ? 'Kodi prépare tes tenues avec la météo et tes rendez-vous.' : `${b.portees.length} pièces portées · ${b.part} % de ton dressing${b.ecartees ? ` · ${b.ecartees} écartée${b.ecartees > 1 ? 's' : ''}` : ''}`}
       </T>
     </Tap>
   );
@@ -295,7 +295,7 @@ function WornToday({ pieces }: { pieces: Piece[] }) {
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <T v="body" tone="ink2">
-          Bonne journée. Kode s’en souviendra pour tes prochaines tenues.
+          Bonne journée. Kodi s’en souviendra pour tes prochaines tenues.
         </T>
         <Animated.View style={[{ alignSelf: 'flex-start', transformOrigin: 'left' }, count]}>
           <T v="caption" tone="ink">
@@ -333,22 +333,22 @@ function EmptyToday() {
   const { c } = useTheme();
   const n = s.pieces.length;
   const missing = missingForOutfit(s.pieces);
-  // Les photos confiées à Kode (au questionnaire ou depuis l'ajout) : on voit qu'il travaille.
+  // Les photos confiées à Kodi (au questionnaire ou depuis l'ajout) : on voit qu'il travaille.
   const drawing = new Set(s.jobs.filter(isActive).map((j) => j.source_paths[0])).size;
   const waiting = s.pendingPhotos.length;
   const knows = precision(s.profile);
   // Trois premiers pas, dans l'ordre où ils servent : des pièces, un style, une silhouette.
   const steps: { id: string; title: string; note: string; done: boolean; onPress: () => void }[] = [
     { id: 'pieces', title: n >= 3 ? 'Trois pièces ajoutées' : `Ajouter trois pièces · ${n}/3`, note: 'Une photo de tenue entière en compte plusieurs.', done: n >= 3, onPress: () => nav.navigate('AddPiece') },
-    { id: 'style', title: 'Dire à Kode ton style', note: 'Deux ou trois mots suffisent.', done: s.profile.styles.length > 0, onPress: () => nav.navigate('ProfileEdit') },
-    { id: 'affiner', title: 'Aider Kode à viser juste', note: `Deux minutes, tout est facultatif · ${knows} %`, done: knows >= 50, onPress: () => nav.navigate('Affiner') },
+    { id: 'style', title: 'Dire à Kodi ton style', note: 'Deux ou trois mots suffisent.', done: s.profile.styles.length > 0, onPress: () => nav.navigate('ProfileEdit') },
+    { id: 'affiner', title: 'Aider Kodi à viser juste', note: `Deux minutes, tout est facultatif · ${knows} %`, done: knows >= 50, onPress: () => nav.navigate('Affiner') },
   ];
   const done = steps.filter((x) => x.done).length;
   return (
     <Animated.View entering={FadeIn.duration(320)} style={{ gap: 12 }} testID="home-empty">
       {drawing > 0 ? (
         <Card className="bg-butter" style={{ gap: 8 }} testID="home-drawing">
-          <KodeThinking phrases={['Kode repère chaque pièce', 'Kode dessine tes pièces', 'Kode les range sur tes portants']} />
+          <KodeThinking phrases={['Kodi repère chaque pièce', 'Kodi dessine tes pièces', 'Kodi les range sur tes portants']} />
           <T v="body" tone="ink2">
             {drawing > 1 ? `${drawing} photos en cours` : 'Une photo en cours'} : chaque vêtement arrive sur tes portants, sans fond, dès qu’il est dessiné.
           </T>
@@ -357,12 +357,12 @@ function EmptyToday() {
         <Card className="bg-butter" style={{ gap: 6 }} testID="home-waiting">
           <T v="cardTitle">{waiting > 1 ? `${waiting} photos attendent ton compte.` : 'Une photo attend ton compte.'}</T>
           <T v="body" tone="ink2">
-            {s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kode dessinera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kode dessinera tes pièces aussitôt.'}
+            {s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kodi dessinera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kodi dessinera tes pièces aussitôt.'}
           </T>
         </Card>
       ) : null}
 
-      {/* Tes premiers pas (09/10) : ce qui manque pour la première tenue, et deux gestes qui aident Kode. */}
+      {/* Tes premiers pas (09/10) : ce qui manque pour la première tenue, et deux gestes qui aident Kodi. */}
       <Card style={{ gap: 14, padding: 16 }} testID="home-first-steps">
         <View className="flex-row items-center justify-between">
           <Tag label="Tes premiers pas" />
@@ -482,7 +482,7 @@ function DayCard({ d }: { d: number }) {
 /**
  * Ta semaine (06/10) : les tenues prévues et la météo réunies, en grand.
  * Une barre de sept jours dit ce qui est prêt ; chaque jour est une carte ;
- * Kode peut compléter les jours vides avec tes pièces.
+ * Kodi peut compléter les jours vides avec tes pièces.
  */
 function Week() {
   const { s, a } = useStore();
@@ -499,7 +499,7 @@ function Week() {
   const fill = async () => {
     setBusy(true);
     try {
-      // Kode prépare les jours vides, avec les rendez-vous et la météo de chacun.
+      // Kodi prépare les jours vides, avec les rendez-vous et la météo de chacun.
       const out = await planifier(empty);
       const n = Object.keys(out).length;
       for (const [d, o] of Object.entries(out)) a.plan(d, o, 'kode');
@@ -545,7 +545,7 @@ function Week() {
           <Icon name="chevron" size={16} color={c.ink2} />
         </Tap>
       )}
-      {empty.length > 0 && canCompose(s.pieces) && <Button testID="week-fill" label="Compléter avec Kode" variant="secondary" icon="kode" loading={busy} onPress={fill} />}
+      {empty.length > 0 && canCompose(s.pieces) && <Button testID="week-fill" label="Compléter avec Kodi" variant="secondary" icon="kode" loading={busy} onPress={fill} />}
       {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
     </View>
   );
@@ -582,7 +582,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
 
   if (id === 'semaine') return <Week />;
 
-  // Kode : une bulle de message rose poudré, son coin bas presque droit.
+  // Kodi : une bulle de message rose poudré, son coin bas presque droit.
   if (id === 'kode') {
     const tomorrow = eventsOn(s.events, isoOf(1))[0];
     const asks = [
@@ -601,14 +601,14 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             {title}
           </T>
         </View>
-        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kode" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 50, borderRadius: 25, paddingHorizontal: 18 }}>
+        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kodi" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 50, borderRadius: 25, paddingHorizontal: 18 }}>
           <T v="body" style={{ color: ink }}>
             Une tenue pour…
           </T>
         </Tap>
         <View className="flex-row flex-wrap" style={{ gap: 8 }}>
           {asks.map((q) => (
-            <Tap key={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} accessibilityLabel={`Demander à Kode : ${q}`} style={{ height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: c['butter-field'], justifyContent: 'center' }}>
+            <Tap key={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} accessibilityLabel={`Demander à Kodi : ${q}`} style={{ height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: c['butter-field'], justifyContent: 'center' }}>
               <T v="caption" style={{ color: ink, ...F.s500, fontSize: 14 }}>
                 {q}
               </T>

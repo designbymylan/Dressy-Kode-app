@@ -112,7 +112,7 @@ export function Settings() {
           {online && s.account === 'nouveau' && <Row testID="me-account" icon="lock" title={s.pendingEmail ? 'J’ai confirmé mon e-mail : me connecter' : 'Créer mon compte'} onPress={() => setAccount(true)} />}
           <Row testID="settings-offer" icon="gift" title="Mon offre" onPress={() => nav.navigate('Offers')} right={<View className="flex-row items-center" style={{ gap: 8 }}><Badge label={plan.name} tone="neutral" /><Icon name="chevron" size={18} color={c.ink2} /></View>} />
           <Row testID="me-shop" icon="bag" title="La boutique" onPress={() => nav.navigate('Shop')} />
-          <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Kode te connaît à ${precision(p)} %`} onPress={() => nav.navigate('Silhouette')} />
+          <Row testID="me-silhouette" icon="ruler" title="Ma silhouette" detail={`Kodi te connaît à ${precision(p)} %`} onPress={() => nav.navigate('Silhouette')} />
           <Row
             testID="me-loans"
             icon="share"

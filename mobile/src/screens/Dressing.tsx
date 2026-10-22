@@ -318,7 +318,7 @@ function EmptyWardrobe() {
       </View>
       <T v="section">Tes portants sont vides.</T>
       <T v="body" tone="ink2">
-        Une photo suffit : Kode la dessine et la range ici.
+        Une photo suffit : Kodi la dessine et la range ici.
       </T>
       <Button testID="dressing-empty-add" label="Ajouter ma première pièce" icon="plus" onPress={() => nav.navigate('AddPiece')} />
     </View>

@@ -16,7 +16,7 @@ import { type } from '../theme/tokens';
 /**
  * L'intro (13/10), une fois par lancement, la même que sur le web
  * (`web/src/components/Intro.tsx`) : le K se coud trait par trait,
- * l'étincelle de Kode s'allume, une couture se pique, DRESSKODE se resserre,
+ * l'étincelle de Kodi s'allume, une couture se pique, DRESSKODE se resserre,
  * puis la caméra plonge dans le K et l'app apparaît derrière. Noir sur blanc
  * en clair, blanc sur noir en sombre. Un toucher la passe ; « Réduire les
  * animations » la réduit à un fondu.

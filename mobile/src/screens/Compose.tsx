@@ -35,7 +35,7 @@ const slotOf = (p: Piece): SlotId => SLOTS.find((s) => s.cats.includes(p.categor
 /** Une lecture simple de la tenue, dite comme un conseil, jamais comme une note. */
 function advice(chosen: Piece[]): string {
   const has = (cat: CategoryId) => chosen.some((p) => p.category === cat);
-  if (!chosen.length) return 'Choisis une première pièce : Kode s’adapte à partir d’elle.';
+  if (!chosen.length) return 'Choisis une première pièce : Kodi s’adapte à partir d’elle.';
   if (!has('robes') && !(has('hauts') && has('bas'))) return has('hauts') ? 'Il manque un bas ou une jupe.' : has('bas') ? 'Il manque un haut.' : 'Tu pourrais partir d’un haut et d’un bas, ou d’une robe.';
   if (!has('chaussures')) return 'Il manque les chaussures.';
   const colors = [...new Set(chosen.map((p) => p.color.toLowerCase()))];
@@ -52,7 +52,7 @@ const byRest = (a: Piece, b: Piece) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999)
  * « Habille-moi » (05/10, inspiré des apps de garde-robe) : une rangée par
  * emplacement, la pièce choisie au centre, ses voisines de part et d'autre.
  * On touche une voisine pour la prendre, le cadenas garde une pièce, et
- * « Mélanger » laisse Kode changer tout ce qui n'est pas gardé.
+ * « Mélanger » laisse Kodi changer tout ce qui n'est pas gardé.
  */
 export function Compose() {
   const { s, a } = useStore();
@@ -73,7 +73,7 @@ export function Compose() {
       const p = byId.get(id);
       if (p && !start[slotOf(p)]) start[slotOf(p)] = p.id;
     }
-    // Kode complète la base autour des pièces données : bas, haut (sauf avec une robe), chaussures.
+    // Kodi complète la base autour des pièces données : bas, haut (sauf avec une robe), chaussures.
     if (!start.bas) start.bas = pools.bas.find((p) => p.category === 'bas')?.id ?? pools.bas[0]?.id ?? null;
     const dress = start.bas ? byId.get(start.bas)?.category === 'robes' : false;
     if (!start.haut && !dress) start.haut = pools.haut[0]?.id ?? null;
@@ -103,12 +103,12 @@ export function Compose() {
       if (locked.has(sl.id)) continue;
       if (sl.id === 'haut' && dress) continue;
       const pool = pools[sl.id].filter((p) => p.id !== slots[sl.id] && (sl.id !== 'bas' || p.category === 'bas' || !next.haut));
-      // Parmi les trois qui dorment le plus, une au hasard : Kode varie sans oublier la rotation.
+      // Parmi les trois qui dorment le plus, une au hasard : Kodi varie sans oublier la rotation.
       const pick = pool.slice(0, 3)[Math.floor(Math.random() * Math.min(3, pool.length))];
       if (pick && (sl.id !== 'veste' && sl.id !== 'sac' ? true : Math.random() < 0.6)) next[sl.id] = pick.id;
     }
     setSlots(next);
-    a.toast('Kode a mélangé la tenue');
+    a.toast('Kodi a mélangé la tenue');
   };
 
   const save = () => {

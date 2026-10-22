@@ -78,8 +78,9 @@ export const type = {
  */
 export const material = {
   blur: 24,
-  tabHeight: 66,
-  tabBottom: 12,
+  /** La barre d'onglets du 21/10 : 68 de haut, et sa bosse de 28 au-dessus. */
+  tabHeight: 68,
+  tabBottom: 10,
   shadow: {
     light: { shadowColor: '#111111', shadowOpacity: 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 8 },
     dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 24, shadowOffset: { width: 0, height: 14 }, elevation: 8 },

@@ -2,7 +2,7 @@
  * La planification (07/10) : des dates réelles (AAAA-MM-JJ) plutôt que des
  * écarts depuis aujourd'hui, pour que le calendrier couvre les mois à venir ;
  * des rendez-vous décrits finement (heure, type, importance, tenue voulue,
- * impression, contraintes) pour que Kode ait tout en main ; et les voyages,
+ * impression, contraintes) pour que Kodi ait tout en main ; et les voyages,
  * avec une tenue par jour sur place.
  */
 
@@ -96,7 +96,7 @@ export type RdvEvent = {
   title: string;
   /** Le type de rendez-vous, parmi RDV_KINDS (ou un mot libre). */
   kind: string | null;
-  /** La tenue voulue, parmi DRESS_CODES ; null : Kode choisit. */
+  /** La tenue voulue, parmi DRESS_CODES ; null : Kodi choisit. */
   dressCode: string | null;
   stake: Stake | null;
   /** Ce que la personne veut dégager. */
@@ -110,7 +110,7 @@ export type RdvEvent = {
 
 /**
  * Les types de rendez-vous, par famille. Chacun porte une indication pour
- * Kode : ce que l'occasion demande d'habitude (codes, pièges à éviter).
+ * Kodi : ce que l'occasion demande d'habitude (codes, pièges à éviter).
  */
 export const RDV_KINDS: { group: string; kinds: { id: string; hint: string }[] }[] = [
   {

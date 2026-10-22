@@ -221,7 +221,7 @@ type Props = {
   hangerColor?: string;
   dark?: boolean;
   label?: string;
-  /** La vignette détourée dessinée par Kode, ou une photo rangée avec l'app (`photo:<clé>`) : elle remplace l'illustration, le cintre reste. */
+  /** La vignette détourée dessinée par Kodi, ou une photo rangée avec l'app (`photo:<clé>`) : elle remplace l'illustration, le cintre reste. */
   image?: string;
 };
 

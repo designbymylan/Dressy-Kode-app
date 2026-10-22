@@ -81,7 +81,7 @@ function Arrow({ icon, label, off, onPress, testID }: { icon: IconName; label: s
 
 /**
  * Le pictogramme d'une section : sa forme à l'accueil, en petit (06/10).
- * Rangées pour la tenue, cartes pour la semaine, bulle pour Kode, arche,
+ * Rangées pour la tenue, cartes pour la semaine, bulle pour Kodi, arche,
  * ronds, barres, mosaïque, ticket, bloc plein.
  */
 function ModuleGlyph({ id, dim }: { id: HomeModule; dim: boolean }) {

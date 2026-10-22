@@ -50,7 +50,7 @@ export function rappels(
         id: `veille-${day}`,
         quand: at(addDays(day, -1), 19),
         titre: `Demain : ${first.title}${quand}`,
-        texte: tenue ? `Ta tenue « ${tenue.title} » est prête.` : 'Kode peut préparer ta tenue en un geste.',
+        texte: tenue ? `Ta tenue « ${tenue.title} » est prête.` : 'Kodi peut préparer ta tenue en un geste.',
         date: day,
       });
     } else if (tenue) {
@@ -75,7 +75,7 @@ export function rappels(
     for (let k = 0; k < 2; k++) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + ((7 - now.getDay()) % 7) + 7 * k);
       const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      out.push({ id: `bilan-${iso}`, quand: at(iso, 18), titre: 'Ton bilan de la semaine', texte: 'Ce que tu as porté, ce qui dort, et Kode qui prépare la semaine qui vient.', date: iso });
+      out.push({ id: `bilan-${iso}`, quand: at(iso, 18), titre: 'Ton bilan de la semaine', texte: 'Ce que tu as porté, ce qui dort, et Kodi qui prépare la semaine qui vient.', date: iso });
     }
   }
 

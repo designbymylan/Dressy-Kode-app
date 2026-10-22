@@ -35,7 +35,7 @@ export type Shot = { uri: string; mime?: string | null; ratio: number };
  * Photos en rafale (diagnostic UX du 09/10 : l'effort de tout photographier).
  * L'appareil se rouvre après chaque photo, jusqu'à « Annuler » ou au nombre
  * maximal ; chaque photo est rendue aussitôt (`onShot`), pour partir chez
- * Kode pendant qu'on prend la suivante. L'accès doit déjà être accordé
+ * Kodi pendant qu'on prend la suivante. L'accès doit déjà être accordé
  * (`cameraAccess`). Sur le web, une seule photo.
  *
  * L'appareil rend la photo avant d'avoir fini de se refermer : le rouvrir

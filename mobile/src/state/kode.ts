@@ -1,5 +1,5 @@
 /**
- * Kode, version démo : des réponses écrites à la main, choisies selon la
+ * Kodi, version démo : des réponses écrites à la main, choisies selon la
  * question, la météo et l'agenda. Dans l'app réelle, c'est la fonction
  * supabase/functions/kode qui répond ; le format (texte + tenue + raison)
  * est le même, pour que l'interface ne change pas au branchement.
@@ -37,7 +37,7 @@ type Reply = Omit<KodeMessage, 'id' | 'from'>;
 
 /**
  * Répond avec les pièces de l'utilisatrice. Tant qu'aucune tenue n'est
- * possible, Kode le dit et propose d'ajouter ce qui manque ; si la réponse
+ * possible, Kodi le dit et propose d'ajouter ce qui manque ; si la réponse
  * écrite pour la démo cite des pièces absentes, il compose avec les siennes.
  */
 export function kodeReply(question: string, pieces: Piece[], profile: Profile): Reply {

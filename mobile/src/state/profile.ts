@@ -1,7 +1,7 @@
 /**
- * Le profil que l'onboarding construit, et tout ce que Kode en tire.
+ * Le profil que l'onboarding construit, et tout ce que Kodi en tire.
  * Chaque champ a une raison d'être demandée (écrite à l'écran) ; presque
- * tous sont facultatifs, et la « précision de Kode » montre ce que chaque
+ * tous sont facultatifs, et la « précision de Kodi » montre ce que chaque
  * réponse apporte, sans jamais culpabiliser.
  */
 import type { GarmentKind } from '../ui/Garment';
@@ -15,7 +15,7 @@ export type MeasureId = 'poitrine' | 'taille' | 'hanches';
 export type NameDisplay = 'prenom' | 'prenom_nom' | 'pseudo';
 
 export type Profile = {
-  /** Le prénom (display_name côté base, lu par Kode). */
+  /** Le prénom (display_name côté base, lu par Kodi). */
   name: string;
   lastName: string | null;
   /** Le pseudonyme, sans @ : lettres minuscules, chiffres, point et tiret bas. */
@@ -36,7 +36,7 @@ export type Profile = {
   /** cm */
   height: number | null;
   /**
-   * kg. Plus demandé depuis le 09/10 (minimisation : Kode n'en a pas
+   * kg. Plus demandé depuis le 09/10 (minimisation : Kodi n'en a pas
    * besoin pour habiller) ; une valeur donnée avant peut être effacée.
    */
   weight: number | null;
@@ -110,7 +110,7 @@ export const DEMO_PROFILE: Profile = {
 export const RAYONS: { id: Rayon; label: string; note: string; kinds: [GarmentKind, string?][] }[] = [
   { id: 'femme', label: 'Au rayon femme', note: 'Coupes et tailles femme', kinds: [['robe', '#B5603A'], ['jupe'], ['escarpins', '#D9B8A0']] },
   { id: 'homme', label: 'Au rayon homme', note: 'Coupes et tailles homme', kinds: [['blazer'], ['pantalon', '#CDBB9C'], ['mocassins']] },
-  { id: 'mixte', label: 'Un peu des deux', note: 'Kode pioche dans les deux', kinds: [['tshirt'], ['jean'], ['baskets']] },
+  { id: 'mixte', label: 'Un peu des deux', note: 'Kodi pioche dans les deux', kinds: [['tshirt'], ['jean'], ['baskets']] },
 ];
 
 export const AGES = ['15–17 ans', '18–24 ans', '25–34 ans', '35–44 ans', '45 ans et plus'];
@@ -154,7 +154,7 @@ export const STYLE_CARDS: { name: string; note: string; kinds: [GarmentKind, str
 ];
 
 /**
- * Précision de Kode (0 à 100) : ce que chaque réponse lui apprend.
+ * Précision de Kodi (0 à 100) : ce que chaque réponse lui apprend.
  * Barème (09/10, sans le poids ni l'analyse par photos) : silhouette 25,
  * taille 10, 3 mesures × 8, 3 tailles × 4, styles 7, couleurs 5,
  * quotidien 4, ville 3, base 10.
@@ -172,7 +172,7 @@ export function precision(p: Profile) {
   return Math.min(100, s);
 }
 
-/** La prochaine réponse qui ferait le plus progresser Kode. */
+/** La prochaine réponse qui ferait le plus progresser Kodi. */
 export function nextBestAnswer(p: Profile): { label: string; gain: number } | null {
   const list: { ok: boolean; label: string; gain: number }[] = [
     { ok: !!p.silhouette && p.silhouette !== 'inconnue', label: 'ta silhouette', gain: 25 },

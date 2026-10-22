@@ -54,7 +54,7 @@ export async function programmer(list: Rappel[], matin: boolean): Promise<void> 
     if (matin) {
       await Notifications.scheduleNotificationAsync({
         identifier: 'matin',
-        content: { title: 'Ta tenue du jour t’attend', body: 'Kode l’a choisie avec la météo de ce matin.' },
+        content: { title: 'Ta tenue du jour t’attend', body: 'Kodi l’a choisie avec la météo de ce matin.' },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, ...MATIN },
       });
     }

@@ -119,7 +119,7 @@ const KODE_COLOURS: Record<string, [string, string]> = Object.fromEntries(COLOUR
 /** Une vignette détourée reste lisible une semaine ; l'app la redemande à chaque lancement. */
 const IMAGE_TTL = 7 * 24 * 3600;
 
-/** Les types de pièce du site et de Kode sans illustration à eux : la plus proche. */
+/** Les types de pièce du site et de Kodi sans illustration à eux : la plus proche. */
 const KIND_ALIAS: Record<string, GarmentKind> = {
   blouse: 'chemise', sweat: 'pull', top: 'debardeur', legging: 'pantalon', combinaison: 'robe', manteau: 'trench',
   doudoune: 'veste', gilet: 'cardigan', bottes: 'bottines', sandales: 'escarpins', ballerines: 'mocassins',
@@ -182,12 +182,12 @@ function toMessage(m: MessageRow): KodeMessage {
     from: m.author === 'user' ? 'me' : 'kode',
     text: m.body,
     outfit: m.author === 'kode' && pieces.length >= 2
-      ? { title: m.meta?.titre || m.outfits?.name || 'Proposée par Kode', pieces, why: m.meta?.pourquoi ?? '' }
+      ? { title: m.meta?.titre || m.outfits?.name || 'Proposée par Kodi', pieces, why: m.meta?.pourquoi ?? '' }
       : undefined,
   };
 }
 
-/** Les pièces, avec l'URL signée de leur vignette détourée quand Kode l'a dessinée. */
+/** Les pièces, avec l'URL signée de leur vignette détourée quand Kodi l'a dessinée. */
 async function withImages(rows: GarmentRow[], stats: StatRow[]): Promise<Piece[]> {
   const byGarment = new Map(stats.map((st) => [st.garment_id, st]));
   const paths = rows.map((g) => g.thumb_path ?? g.image_path).filter((p): p is string => !!p);
@@ -200,7 +200,7 @@ async function withImages(rows: GarmentRow[], stats: StatRow[]): Promise<Piece[]
   return rows.map((g) => toPiece(g, byGarment.get(g.id), signed.get(g.thumb_path ?? g.image_path ?? '')));
 }
 
-/** Les pièces seules, relues après l'arrivée de celles que Kode a dessinées. */
+/** Les pièces seules, relues après l'arrivée de celles que Kodi a dessinées. */
 export async function loadPieces(spaceId: string): Promise<Piece[]> {
   const sb = db();
   const [garments, stats] = await Promise.all([
@@ -367,7 +367,7 @@ export async function loadAccount(): Promise<Account | null> {
   };
 }
 
-/** L'offre et le compteur de Kode seulement : relus au retour du paiement. */
+/** L'offre et le compteur de Kodi seulement : relus au retour du paiement. */
 export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 'period' | 'kodeUsed'>> {
   const sb = db();
   const [subs, usage] = await Promise.all([
@@ -472,7 +472,7 @@ export async function addPieces(session: Session, pieces: Piece[]): Promise<stri
 /**
  * L'étiquette corrigée à la main (nom, catégorie, couleur, matière, saison,
  * prix). Le type de pièce ne change qu'avec la catégorie : sinon on garde
- * celui, plus fin, que Kode avait noté.
+ * celui, plus fin, que Kodi avait noté.
  */
 export async function updatePiece(id: string, p: Piece, categoryChanged: boolean) {
   if (!isUuid(id)) return;
@@ -566,7 +566,7 @@ export async function deleteAccount(): Promise<Result> {
   return { ok: true };
 }
 
-/** « Pas pour moi » : la tenue écartée et sa raison, que Kode lira avec ses prochaines questions. */
+/** « Pas pour moi » : la tenue écartée et sa raison, que Kodi lira avec ses prochaines questions. */
 export async function saveEcart(session: Session, e: Ecart) {
   const garment_ids = e.pieces.filter(isUuid);
   if (!garment_ids.length) return;
@@ -694,7 +694,7 @@ export async function saveNotifs(session: Session, choix: NotifChoice) {
   check(await db().from('settings').update({ notifications: { choix } }).eq('space_id', session.spaceId), 'notifications');
 }
 
-/* ---- Kode et paiement : les Edge Functions ---- */
+/* ---- Kodi et paiement : les Edge Functions ---- */
 
 /** Le message d'erreur qu'une fonction renvoie (elles écrivent pour la personne), ou un message par défaut. */
 async function functionError(error: unknown, fallback: string): Promise<{ message: string; code: string | null }> {
@@ -707,19 +707,19 @@ async function functionError(error: unknown, fallback: string): Promise<{ messag
 
 /**
  * Pose la question à la fonction `kode`, puis relit la réponse enregistrée.
- * `counted` : la question compte dans le quota (faux si Kode n'a pas pu répondre).
+ * `counted` : la question compte dans le quota (faux si Kodi n'a pas pu répondre).
  */
 export async function askKode(question: string): Promise<{ reply: Omit<KodeMessage, 'id' | 'from'> & { id?: string }; counted: boolean }> {
   const sb = db();
   const { data, error } = await sb.functions.invoke<{ question_id: string; reply_id: string }>('kode', { body: { question } });
   if (error || !data) {
-    const { message, code } = await functionError(error, 'Kode n’a pas pu répondre. Réessaie dans un instant.');
+    const { message, code } = await functionError(error, 'Kodi n’a pas pu répondre. Réessaie dans un instant.');
     const link: KodeLink | undefined =
       code === 'wardrobe' ? { label: 'Ajouter une pièce', route: 'AddPiece' } : code === 'quota' ? { label: 'Voir les offres', route: 'Offers' } : undefined;
     return { reply: { text: message, link }, counted: false };
   }
   const row = await sb.from('kode_messages').select('id, author, body, meta, outfits(name, outfit_items(garment_id))').eq('id', data.reply_id).single();
-  if (row.error) return { reply: { text: 'Kode a répondu, mais la réponse n’a pas pu être relue. Rouvre la conversation dans un instant.' }, counted: true };
+  if (row.error) return { reply: { text: 'Kodi a répondu, mais la réponse n’a pas pu être relue. Rouvre la conversation dans un instant.' }, counted: true };
   const m = toMessage(row.data as unknown as MessageRow);
   return { reply: { id: m.id, text: m.text, outfit: m.outfit }, counted: true };
 }
@@ -764,7 +764,7 @@ export async function infosVoyage(nom: string, lat: number, lon: number, debut: 
 }
 
 /**
- * Kode prévoit plusieurs jours d'un coup (fonction `kode`, action `planifier`) :
+ * Kodi prévoit plusieurs jours d'un coup (fonction `kode`, action `planifier`) :
  * une tenue par jour, avec les rendez-vous, la météo et le voyage s'il y en a un.
  * Les pièces reviennent avec leurs identifiants ; une question est comptée.
  */
@@ -772,8 +772,8 @@ export async function planifier(dates: Iso[], trip: Trip | null, consigne: strin
   type Jour = { date: string; titre: string; pourquoi: string; pieces: string[] };
   const voyage = trip ? { destination: trip.destination, pays: trip.country, motif: trip.purpose, activites: trip.activities, lat: trip.lat, lon: trip.lon } : null;
   const { data, error } = await db().functions.invoke<{ jours: Jour[] }>('kode', { body: { action: 'planifier', jours: dates, voyage, consigne } });
-  if (error || !data?.jours) throw new Error((await functionError(error, 'Kode ne répond pas')).message);
-  return Object.fromEntries(data.jours.filter((j) => j.pieces.length).map((j) => [j.date, { title: j.titre || 'Par Kode', pieces: j.pieces, tripId: trip?.id ?? null }]));
+  if (error || !data?.jours) throw new Error((await functionError(error, 'Kodi ne répond pas')).message);
+  return Object.fromEntries(data.jours.filter((j) => j.pieces.length).map((j) => [j.date, { title: j.titre || 'Par Kodi', pieces: j.pieces, tripId: trip?.id ?? null }]));
 }
 
 /** Ouvre le paiement Stripe (ou le portail pour changer d'offre) : rend l'adresse à ouvrir. */
@@ -784,7 +784,7 @@ export async function billing(plan: PlanId, period: Period): Promise<Result<{ ur
   return { ok: true, url: data.url };
 }
 
-/* ---- Photos confiées à Kode (Edge Function dressy-agent) ---- */
+/* ---- Photos confiées à Kodi (Edge Function dressy-agent) ---- */
 
 /** Même limite que le bucket `uploads`. */
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -793,7 +793,7 @@ const PHOTO_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 
 export type Photo = { uri: string; mime?: string | null };
 
 /**
- * Envoie les photos dans l'espace, puis confie chacune à Kode : une tâche
+ * Envoie les photos dans l'espace, puis confie chacune à Kodi : une tâche
  * `ai_jobs` par photo. L'insertion réveille l'agent, qui repère les pièces et
  * les dessine en parallèle. Si quoi que ce soit échoue, rien n'est confié et
  * les photos déjà envoyées repartent.
