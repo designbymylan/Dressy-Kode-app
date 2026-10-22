@@ -14,6 +14,9 @@ type ThemeValue = {
   /** « Verre plus opaque » : la version app de Réduire la transparence. */
   solidGlass: boolean;
   setSolidGlass: (v: boolean) => void;
+  /** L'interrupteur clair / sombre en haut à droite des onglets (21/10), masquable dans Réglages. */
+  themeSwitch: boolean;
+  setThemeSwitch: (v: boolean) => void;
 };
 
 const ThemeContext = createContext<ThemeValue | null>(null);
@@ -51,31 +54,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = host ?? device;
   const [pref, setPrefState] = useState<ThemePref>('auto');
   const [solidGlass, setSolidState] = useState(false);
+  const [themeSwitch, setSwitchState] = useState(true);
   // Le thème et le verre choisis dans Réglages restent d'un lancement à l'autre (07/10).
   useEffect(() => {
     AsyncStorage.getItem(LOOK)
       .then((raw) => {
         if (!raw) return;
-        const v = JSON.parse(raw) as { pref?: ThemePref; solidGlass?: boolean };
+        const v = JSON.parse(raw) as { pref?: ThemePref; solidGlass?: boolean; themeSwitch?: boolean };
         if (v.pref === 'auto' || v.pref === 'light' || v.pref === 'dark') setPrefState(v.pref);
         if (typeof v.solidGlass === 'boolean') setSolidState(v.solidGlass);
+        if (typeof v.themeSwitch === 'boolean') setSwitchState(v.themeSwitch);
       })
       .catch(() => undefined);
   }, []);
-  const keep = (v: { pref: ThemePref; solidGlass: boolean }) => AsyncStorage.setItem(LOOK, JSON.stringify(v)).catch(() => undefined);
+  const keep = (v: { pref: ThemePref; solidGlass: boolean; themeSwitch: boolean }) => AsyncStorage.setItem(LOOK, JSON.stringify(v)).catch(() => undefined);
   const setPref = (p: ThemePref) => {
     setPrefState(p);
-    void keep({ pref: p, solidGlass });
+    void keep({ pref: p, solidGlass, themeSwitch });
   };
   const setSolidGlass = (v: boolean) => {
     setSolidState(v);
-    void keep({ pref, solidGlass: v });
+    void keep({ pref, solidGlass: v, themeSwitch });
+  };
+  const setThemeSwitch = (v: boolean) => {
+    setSwitchState(v);
+    void keep({ pref, solidGlass, themeSwitch: v });
   };
   const scheme: Scheme = pref === 'auto' ? (system === 'dark' ? 'dark' : 'light') : pref;
   const value = useMemo(
-    () => ({ scheme, c: colors[scheme], pref, setPref, solidGlass, setSolidGlass }),
+    () => ({ scheme, c: colors[scheme], pref, setPref, solidGlass, setSolidGlass, themeSwitch, setThemeSwitch }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [scheme, pref, solidGlass],
+    [scheme, pref, solidGlass, themeSwitch],
   );
   return (
     <ThemeContext.Provider value={value}>

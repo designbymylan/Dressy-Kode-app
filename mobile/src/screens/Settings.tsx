@@ -37,7 +37,7 @@ export function Settings() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { c, scheme, pref, setPref, solidGlass, setSolidGlass } = useTheme();
+  const { c, scheme, pref, setPref, solidGlass, setSolidGlass, themeSwitch, setThemeSwitch } = useTheme();
   const { y, onScroll } = useHeaderScroll();
   const top = useStackTop();
   const [notifsOpen, setNotifsOpen] = useState(false);
@@ -104,6 +104,7 @@ export function Settings() {
               ]}
             />
           </View>
+          <Row icon="moon" title="Bouton clair / sombre" detail="En haut à droite des onglets" right={<Toggle testID="theme-switch-setting" value={themeSwitch} onChange={setThemeSwitch} label="Bouton clair / sombre" />} />
           <Row icon="layers" title="Verre plus opaque" detail="Barres et boutons pleins" right={<Toggle testID="solid-glass" value={solidGlass} onChange={setSolidGlass} label="Verre plus opaque" />} last />
         </Group>
 
