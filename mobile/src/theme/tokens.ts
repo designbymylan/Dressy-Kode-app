@@ -94,6 +94,11 @@ export const material = {
     light: { shadowColor: '#000000', shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
     dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   },
+  /** Ombre du verre bleu (--blue-shadow, 21/10) : bleutée, courte. */
+  blue: {
+    light: { shadowColor: '#4B7DA5', shadowOpacity: 0.42, shadowRadius: 11, shadowOffset: { width: 0, height: 7 }, elevation: 4 },
+    dark: { shadowColor: '#C4DAE8', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 7 }, elevation: 4 },
+  },
 } as const;
 
 /** Motion : des ressorts plutôt que des courbes, courts, jamais bloquants. */

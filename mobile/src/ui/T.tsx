@@ -2,7 +2,7 @@ import { StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 import { HIT, type as scale } from '../theme/tokens';
 
 export type TextVariant = keyof typeof scale;
-type Tone = 'ink' | 'ink2' | 'brass' | 'primary-fg' | 'positive' | 'caution';
+type Tone = 'ink' | 'ink2' | 'brass' | 'primary-fg' | 'positive' | 'caution' | 'blue-ink' | 'on-blue' | 'on-panel' | 'on-panel-muted';
 
 /** Classes écrites en entier : Tailwind ne génère que ce qu'il lit tel quel. */
 const TONE: Record<Tone, string> = {
@@ -12,6 +12,10 @@ const TONE: Record<Tone, string> = {
   'primary-fg': 'text-primary-fg',
   positive: 'text-positive',
   caution: 'text-caution',
+  'blue-ink': 'text-blue-ink',
+  'on-blue': 'text-on-blue',
+  'on-panel': 'text-on-panel',
+  'on-panel-muted': 'text-on-panel-muted',
 };
 
 /** Les grands titres grossissent avec la taille de texte du système, mais sans casser la page. */
