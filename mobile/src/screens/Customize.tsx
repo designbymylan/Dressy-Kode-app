@@ -96,6 +96,35 @@ function ModuleGlyph({ id, dim }: { id: HomeModule; dim: boolean }) {
   switch (id) {
     case 'tenue':
       return box(<View style={{ alignItems: 'center', gap: 2 }}>{bar(12, 4)}{bar(18, 9, 3)}{bar(14, 9, 3)}{bar(16, 4)}</View>);
+    case 'raccourcis':
+      return box(
+        <View style={{ gap: 3 }}>
+          <View style={{ flexDirection: 'row', gap: 3 }}>{bar(9, 9, 3)}{bar(9, 9, 3)}</View>
+          <View style={{ flexDirection: 'row', gap: 3 }}>{bar(9, 9, 3)}{bar(9, 9, 3)}</View>
+        </View>,
+      );
+    case 'rdv':
+      return box(
+        <View style={{ width: 26, height: 22 }}>
+          <View style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 10, borderRadius: 4, backgroundColor: c.butter, borderWidth: 1, borderColor: ink }} />
+          <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 16, borderRadius: 5, backgroundColor: c.blue, borderWidth: 1.5, borderColor: ink }} />
+        </View>,
+      );
+    case 'rayons':
+      return box(
+        <View style={{ flexDirection: 'row', gap: 3 }}>
+          {[0, 1, 2].map((k) => (
+            <View key={k} style={{ width: 9, height: 9, borderRadius: 5, borderWidth: 1.5, borderColor: ink }} />
+          ))}
+        </View>,
+      );
+    case 'chiffres':
+      return box(
+        <View style={{ flexDirection: 'row', gap: 3 }}>
+          <View style={{ width: 10, height: 18, borderRadius: 4, backgroundColor: c.butter, borderWidth: 1, borderColor: ink }} />
+          <View style={{ width: 10, height: 18, borderRadius: 4, backgroundColor: c['blue-soft'], borderWidth: 1, borderColor: ink }} />
+        </View>,
+      );
     case 'semaine':
       return box(
         <View style={{ flexDirection: 'row', gap: 3 }}>

@@ -4,7 +4,7 @@ import type { Iso } from '../state/planning';
 
 export type TabParams = {
   Home: undefined;
-  Dressing: { category?: CategoryId; view?: 'portants' | 'grille'; search?: boolean } | undefined;
+  Dressing: { category?: CategoryId; view?: 'rangees' | 'portants' | 'grille'; search?: boolean } | undefined;
   Kode: { ask?: string; nonce?: number } | undefined;
   Agenda: { day?: number } | undefined;
   Me: undefined;

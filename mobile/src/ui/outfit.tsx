@@ -1,5 +1,5 @@
-import { memo, useEffect, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { memo, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { FlatList, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { motion } from '../theme/tokens';
 import type { Piece } from '../data/wardrobe';
@@ -155,7 +155,7 @@ export function Legend({ pieces, onPiece }: { pieces: Piece[]; onPiece?: (p: Pie
   );
 }
 
-/* ---- La tenue en rangées, de la tête aux pieds (06/10) ---- */
+/* ---- La tenue en rangées, de la tête aux pieds (06/10, refaite le 23/10) ---- */
 
 export type RowId = 'tete' | 'veste' | 'haut' | 'bas' | 'pieds' | 'main';
 export const ROW_ORDER: RowId[] = ['tete', 'veste', 'haut', 'bas', 'pieds', 'main'];
@@ -185,7 +185,27 @@ export function headToToe(pieces: Piece[]) {
 }
 
 /** Rotation : d'abord ce qui dort le plus longtemps. */
-const rest = (a: Piece, b: Piece) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999);
+const rest = (a: Piece, b: Piece) => (b.lastWorn ?? 999) - (a.lastWorn ?? 999) || a.id.localeCompare(b.id);
+
+/** Une pièce détourée, cadrée dans sa rangée : on ne garde que la hauteur de la rangée, le dessin au centre. Sans vignette ni fond. */
+export function RowPiece({ p, h, w }: { p: Piece; h: number; w: number }) {
+  const { scheme } = useTheme();
+  const artH = w * 1.25;
+  const at = p.image ? 0.5 : DRAWN_AT[p.kind] ?? 0.5;
+  return (
+    <View style={{ width: w, height: h, overflow: 'hidden', alignItems: 'center' }}>
+      <View style={{ marginTop: h / 2 - at * artH }}>
+        <Garment kind={p.kind} tint={p.tint} image={p.image} size={w} dark={scheme === 'dark'} label={p.name} />
+      </View>
+    </View>
+  );
+}
+
+/** La rangée où chaque rayon du dressing se range, pour que le dressing et la tenue du jour cadrent les pièces de la même façon. */
+const ROW_OF_CATEGORY: Record<Piece['category'], RowId> = { manteaux: 'veste', hauts: 'haut', bas: 'bas', robes: 'bas', chaussures: 'pieds', accessoires: 'main' };
+/** La hauteur et la largeur de dessin d'une rangée de pièces d'un rayon (le dressing en rangées). */
+export const shelfHeight = (category: Piece['category']) => ROW_H[ROW_OF_CATEGORY[category]];
+export const shelfArt = (category: Piece['category']) => ROW_ART[ROW_OF_CATEGORY[category]];
 
 type DressProps = {
   pieces: Piece[];
@@ -198,78 +218,144 @@ type DressProps = {
   onPiece: (p: Piece) => void;
 };
 
+/** Le cadenas d'une rangée : il garde la pièce quand Kodi propose une autre tenue. */
+function PinButton({ r, keep, left, onPress }: { r: RowId; keep: boolean; left: number; onPress: () => void }) {
+  const { c } = useTheme();
+  return (
+    <View style={{ position: 'absolute', top: 0, left }}>
+      <Tap
+        testID={`row-${r}-pin`}
+        onPress={onPress}
+        feedback="select"
+        accessibilityRole="switch"
+        accessibilityState={{ checked: keep }}
+        accessibilityLabel={keep ? `${ROW_NAME[r]} : ne plus garder` : `${ROW_NAME[r]} : garder pour la prochaine tenue`}
+        style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'], borderWidth: keep ? 0 : 1, borderColor: c['card-edge'] }}>
+          <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
+        </View>
+      </Tap>
+    </View>
+  );
+}
+
 /**
- * La tenue du jour en rangées (06/10, sur le modèle « Dress me » des apps de
- * garde-robe) : une rangée par niveau, de la tête aux pieds, la pièce au
- * centre et ses voisines coupées par le bord. Toucher une voisine la prend ;
- * le cadenas garde la pièce quand Kodi propose une autre tenue.
+ * Une rangée qui défile (23/10, sur le modèle « Dress me » des apps de
+ * garde-robe) : la pièce au centre, ses voisines à pleine opacité, coupées
+ * par le bord de l'écran. On fait glisser, la pièce qui s'arrête au centre
+ * est prise ; toucher une voisine la prend aussi, toucher la pièce du
+ * centre ouvre sa fiche.
+ */
+function CarouselRow({ r, piece, pool, width, keep, onTogglePin, onSwap, onPiece }: { r: RowId; piece: Piece; pool: Piece[]; width: number; keep: boolean; onTogglePin: () => void; onSwap: (to: Piece) => void; onPiece: (p: Piece) => void }) {
+  const h = ROW_H[r];
+  const art = ROW_ART[r];
+  const step = Math.round(width * 0.4);
+  // L'ordre ne dépend pas de la pièce choisie : la rangée ne bouge pas quand on prend une voisine.
+  const list = useMemo(() => {
+    const all = pool.filter((p) => rowOf(p) === r);
+    return [...(all.some((p) => p.id === piece.id) ? all : [...all, piece])].sort(rest);
+  }, [pool, r, piece]);
+  const idx = Math.max(0, list.findIndex((p) => p.id === piece.id));
+  const ref = useRef<FlatList<Piece>>(null);
+  // L'index où la rangée est posée : un changement venu d'ailleurs (« Une autre ») la fait glisser jusqu'à la nouvelle pièce.
+  const at = useRef(idx);
+  useEffect(() => {
+    if (idx === at.current) return;
+    at.current = idx;
+    ref.current?.scrollToIndex({ index: idx, animated: true });
+  }, [idx]);
+  const take = (i: number, scroll: boolean) => {
+    if (i === at.current || !list[i]) return;
+    at.current = i;
+    if (scroll) ref.current?.scrollToIndex({ index: i, animated: true });
+    onSwap(list[i]);
+  };
+  const settle = (x: number) => take(Math.max(0, Math.min(list.length - 1, Math.round(x / step))), false);
+  return (
+    <View style={{ height: h, width }} accessibilityLabel={ROW_NAME[r]}>
+      <FlatList
+        ref={ref}
+        horizontal
+        data={list}
+        extraData={piece.id}
+        keyExtractor={(p) => p.id}
+        getItemLayout={(_, i) => ({ length: step, offset: step * i, index: i })}
+        initialScrollIndex={idx}
+        snapToInterval={step}
+        decelerationRate="fast"
+        showsHorizontalScrollIndicator={false}
+        scrollEnabled={list.length > 1}
+        initialNumToRender={5}
+        windowSize={5}
+        contentContainerStyle={{ paddingHorizontal: (width - step) / 2 }}
+        onMomentumScrollEnd={(e) => settle(e.nativeEvent.contentOffset.x)}
+        onScrollEndDrag={(e) => Math.abs(e.nativeEvent.velocity?.x ?? 0) < 0.1 && settle(e.nativeEvent.contentOffset.x)}
+        renderItem={({ item, index }) => {
+          const chosen = item.id === piece.id;
+          return (
+            <Tap
+              testID={chosen ? `row-${r}-piece` : `row-${r}-${index < idx ? 'left' : 'right'}`}
+              onPress={() => (chosen ? onPiece(item) : take(index, true))}
+              scaleTo={0.96}
+              accessibilityLabel={chosen ? item.name : `${ROW_NAME[r]} : prendre ${item.name}`}
+              accessibilityHint={chosen ? 'Ouvre la fiche de la pièce' : undefined}
+              style={{ width: step, height: h, alignItems: 'center' }}
+            >
+              <RowPiece p={item} h={h} w={art} />
+            </Tap>
+          );
+        }}
+      />
+      {list.length > 1 && <PinButton r={r} keep={keep} left={width / 2 + art / 2 - 6} onPress={onTogglePin} />}
+    </View>
+  );
+}
+
+/**
+ * La tenue du jour en rangées (06/10, refaite le 23/10 sur le modèle « Dress
+ * me ») : une rangée par niveau, de la tête aux pieds, sur le fond de la
+ * page, sans cadre. Chaque rangée glisse ; le cadenas garde la pièce quand
+ * Kodi propose une autre tenue. Une rangée qui porte plusieurs pièces
+ * (deux bijoux, un sac et une ceinture) les pose côte à côte, sans glisser.
  */
 export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, onPiece }: DressProps) {
-  const { c, scheme } = useTheme();
   const rows = ROW_ORDER.map((r) => ({ r, items: pieces.filter((p) => rowOf(p) === r) })).filter((x) => x.items.length);
-  const inOutfit = new Set(pieces.map((p) => p.id));
-  /** Une pièce cadrée dans sa rangée : on n'en garde que la hauteur de la rangée, dessin au centre. */
-  const framed = (p: Piece, h: number, w: number) => {
-    const artH = w * 1.25;
-    const at = p.image ? 0.5 : DRAWN_AT[p.kind] ?? 0.5;
-    return (
-      <View style={{ width: w, height: h, overflow: 'hidden', alignItems: 'center' }}>
-        <View style={{ marginTop: h / 2 - at * artH }}>
-          <Garment kind={p.kind} tint={p.tint} image={p.image} size={w} dark={scheme === 'dark'} label={p.name} />
-        </View>
-      </View>
-    );
-  };
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 2 }}>
       {rows.map(({ r, items }, i) => {
-        const h = ROW_H[r];
-        const w = Math.round(ROW_ART[r] * (items.length > 1 ? 0.78 : 1));
-        const side = Math.round(ROW_ART[r] * 0.86);
-        const alts = pool.filter((p) => rowOf(p) === r && !inOutfit.has(p.id)).sort(rest);
         const keep = pinned.has(r);
-        const groupW = items.length * w + (items.length - 1) * 8;
-        const neighbour = (p: Piece | undefined, edge: 'left' | 'right') =>
-          p ? (
-            <View key={edge} style={{ position: 'absolute', top: 0, [edge]: -Math.round(side * 0.38), opacity: 0.38 }}>
-              <Tap testID={`row-${r}-${edge}`} onPress={() => onSwap(r, p)} scaleTo={0.95} accessibilityLabel={`${ROW_NAME[r]} : prendre ${p.name}`}>
-                {framed(p, h, side)}
-              </Tap>
-            </View>
-          ) : null;
+        const toggle = () => onTogglePin(r);
         return (
-          <Animated.View key={r} entering={FadeInDown.delay(80 + i * 90).duration(380)} style={{ height: h, width, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={ROW_NAME[r]}>
-            {neighbour(alts[0], 'left')}
-            {neighbour(alts[1], 'right')}
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              {items.map((p) => (
-                <Animated.View key={p.id} entering={FadeIn.duration(260)}>
-                  <Tap onPress={() => onPiece(p)} scaleTo={0.96} accessibilityLabel={p.name} accessibilityHint="Ouvre la fiche de la pièce">
-                    {framed(p, h, w)}
-                  </Tap>
-                </Animated.View>
-              ))}
-            </View>
-            {alts.length > 0 && (
-              <View style={{ position: 'absolute', top: 0, left: width / 2 + groupW / 2 - 6 }}>
-                <Tap
-                  testID={`row-${r}-pin`}
-                  onPress={() => onTogglePin(r)}
-                  feedback="select"
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: keep }}
-                  accessibilityLabel={keep ? `${ROW_NAME[r]} : ne plus garder` : `${ROW_NAME[r]} : garder pour la prochaine tenue`}
-                  style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }}>
-                    <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
-                  </View>
-                </Tap>
-              </View>
+          <Animated.View key={r} entering={FadeInDown.delay(80 + i * 90).duration(380)}>
+            {items.length === 1 ? (
+              <CarouselRow r={r} piece={items[0]} pool={pool} width={width} keep={keep} onTogglePin={toggle} onSwap={(to) => onSwap(r, to)} onPiece={onPiece} />
+            ) : (
+              <StaticRow r={r} items={items} hasAlt={pool.some((p) => rowOf(p) === r && !items.some((x) => x.id === p.id))} width={width} keep={keep} onTogglePin={toggle} onPiece={onPiece} />
             )}
           </Animated.View>
         );
       })}
+    </View>
+  );
+}
+
+function StaticRow({ r, items, hasAlt, width, keep, onTogglePin, onPiece }: { r: RowId; items: Piece[]; hasAlt: boolean; width: number; keep: boolean; onTogglePin: () => void; onPiece: (p: Piece) => void }) {
+  const h = ROW_H[r];
+  const w = Math.round(ROW_ART[r] * 0.78);
+  const groupW = items.length * w + (items.length - 1) * 8;
+  return (
+    <View style={{ height: h, width, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={ROW_NAME[r]}>
+      <View className="flex-row items-center" style={{ gap: 8 }}>
+        {items.map((p) => (
+          <Animated.View key={p.id} entering={FadeIn.duration(260)}>
+            <Tap onPress={() => onPiece(p)} scaleTo={0.96} accessibilityLabel={p.name} accessibilityHint="Ouvre la fiche de la pièce">
+              <RowPiece p={p} h={h} w={w} />
+            </Tap>
+          </Animated.View>
+        ))}
+      </View>
+      {hasAlt && <PinButton r={r} keep={keep} left={width / 2 + groupW / 2 - 6} onPress={onTogglePin} />}
     </View>
   );
 }

@@ -24,7 +24,7 @@ import { cleTenue, evite, garder, type Ecart, type Raison } from './ecarts';
 
 export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
-export type HomeModule = 'tenue' | 'semaine' | 'kode' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
+export type HomeModule = 'tenue' | 'raccourcis' | 'rdv' | 'semaine' | 'rayons' | 'kode' | 'chiffres' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
 export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
 
@@ -42,8 +42,12 @@ export const LIMITS: Record<PlanId, { pieces: number | null; questions: number |
 
 export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> = {
   tenue: { title: 'Tenue du jour', note: 'Ta tenue, de la tête aux pieds' },
+  raccourcis: { title: 'Raccourcis', note: 'Ajouter, composer, planifier, voyager' },
+  rdv: { title: 'Rendez-vous', note: 'Sa date, sa météo, sa tenue' },
   semaine: { title: 'Ta semaine', note: 'Tes tenues prévues, jour par jour, avec la météo' },
+  rayons: { title: 'Ton dressing', note: 'Tes rayons, d’un coup d’œil' },
   kode: { title: 'Demande à Kodi', note: 'Des questions prêtes, selon ta journée' },
+  chiffres: { title: 'Tes chiffres', note: 'Pièces sorties, coût par port' },
   oubliees: { title: 'À redécouvrir', note: 'Les pièces qui dorment' },
   tendance: { title: 'Tendance', note: 'Ce qui se porte, déjà dans ton dressing' },
   porte: { title: 'Le plus porté', note: 'Tes pièces fétiches' },
@@ -54,14 +58,18 @@ export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> 
 
 type ModuleState = { id: HomeModule; on: boolean };
 
-/** L'ordre et l'état des sections d'un nouvel espace : la tenue du jour en tête, puis la semaine. */
+/** L'ordre et l'état des sections d'un nouvel espace : la tenue du jour en tête, puis les raccourcis et la semaine. */
 export const DEFAULT_MODULES: ModuleState[] = [
   { id: 'tenue', on: true },
+  { id: 'raccourcis', on: true },
+  { id: 'rdv', on: true },
   { id: 'semaine', on: true },
+  { id: 'rayons', on: true },
   { id: 'kode', on: true },
+  { id: 'chiffres', on: true },
+  { id: 'porte', on: true },
   { id: 'oubliees', on: true },
-  { id: 'tendance', on: true },
-  { id: 'porte', on: false },
+  { id: 'tendance', on: false },
   { id: 'nouveautes', on: false },
   { id: 'prets', on: false },
   { id: 'bilan', on: false },
@@ -78,6 +86,8 @@ const shownFirst = (list: ModuleState[]) => [...list.filter((m) => m.on), ...lis
  */
 export function normalizeModules(list: { id: string; on: boolean }[] | undefined): ModuleState[] {
   if (!list) return DEFAULT_MODULES;
+  // L'accueil refait le 23/10 : un ordre gardé avant lui (sans « Raccourcis ») repart de l'ordre d'origine, pour que les nouvelles sections se voient.
+  if (!list.some((m) => m.id === 'raccourcis')) return DEFAULT_MODULES;
   const known = new Set<string>(DEFAULT_MODULES.map((m) => m.id));
   const prevues = list.find((m) => m.id === 'prevues')?.on;
   let kept = list

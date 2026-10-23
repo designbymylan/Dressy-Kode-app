@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, TextInput, View } from 'react-native';
+import { FlatList, ScrollView, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -17,6 +17,7 @@ import { Garment, hangOf, type GarmentKind } from '../ui/Garment';
 import { FirstRail } from '../ui/onboarding';
 import { Sheet } from '../ui/Sheet';
 import { Icon } from '../ui/Icon';
+import { RowPiece, shelfArt, shelfHeight } from '../ui/outfit';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { UsagePanel } from '../ui/usage';
@@ -39,7 +40,7 @@ export function Dressing() {
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
   const { width } = useScreen();
-  const [view, setView] = useState<'portants' | 'grille'>('grille');
+  const [view, setView] = useState<'rangees' | 'portants' | 'grille'>('rangees');
   const [category, setCategory] = useState<CategoryId | null>(null);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [draft, setDraft] = useState<Filters>(NO_FILTERS);
@@ -147,6 +148,7 @@ export function Dressing() {
         </T>
         {(
           [
+            ['rangees', 'rows', 'Rangées'],
             ['grille', 'grid', 'Grille'],
             ['portants', 'rails', 'Portants'],
           ] as const
@@ -305,7 +307,11 @@ export function Dressing() {
                 }}
               />
             </View>
-            <Rail pieces={pieces} shelf={cat.id === 'chaussures' || cat.id === 'accessoires'} onPiece={(p, from) => nav.navigate('Piece', { id: p.id, from })} />
+            {view === 'rangees' ? (
+              <Shelf pieces={pieces} category={cat.id} onPiece={(p, from) => nav.navigate('Piece', { id: p.id, from })} />
+            ) : (
+              <Rail pieces={pieces} shelf={cat.id === 'chaussures' || cat.id === 'accessoires'} onPiece={(p, from) => nav.navigate('Piece', { id: p.id, from })} />
+            )}
           </View>
         ))}
       </Animated.ScrollView>
@@ -370,6 +376,44 @@ function Circles({ value, onChange }: { value: CategoryId | null; onChange: (v: 
         })}
       </ScrollView>
     </View>
+  );
+}
+
+/**
+ * Un rayon en rangée (23/10, sur le modèle « Dress me » d'une appli de
+ * garde-robe) : les pièces détourées posées sur le fond de la page, sans
+ * vignette ni nom, trois à l'écran, la dernière coupée par le bord. On
+ * glisse, chaque pièce s'arrête bien alignée ; on touche, la fiche s'ouvre.
+ */
+function Shelf({ pieces, category, onPiece }: { pieces: Piece[]; category: CategoryId; onPiece: (p: Piece, from?: Origin) => void }) {
+  const { width } = useScreen();
+  const h = shelfHeight(category);
+  const art = shelfArt(category);
+  const step = Math.round(width * 0.4);
+  return (
+    <FlatList
+      horizontal
+      data={pieces}
+      keyExtractor={(p) => p.id}
+      getItemLayout={(_, i) => ({ length: step, offset: step * i, index: i })}
+      snapToInterval={step}
+      decelerationRate="fast"
+      showsHorizontalScrollIndicator={false}
+      style={{ height: h }}
+      contentContainerStyle={{ paddingLeft: space.gutter - (step - art) / 2, paddingRight: space.gutter }}
+      renderItem={({ item }) => <ShelfItem piece={item} step={step} h={h} art={art} onPress={(from) => onPiece(item, from)} />}
+    />
+  );
+}
+
+function ShelfItem({ piece, step, h, art, onPress }: { piece: Piece; step: number; h: number; art: number; onPress: (from?: Origin) => void }) {
+  const frame = useRef<View>(null);
+  return (
+    <Tap testID={`shelf-piece-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" scaleTo={0.96} style={{ width: step, height: h, alignItems: 'center' }}>
+      <View ref={frame}>
+        <RowPiece p={piece} h={h} w={art} />
+      </View>
+    </Tap>
   );
 }
 

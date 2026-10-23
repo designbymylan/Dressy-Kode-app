@@ -381,6 +381,31 @@ pour la progression, offres Fashion et Sapologue).
   `offres_fashion_sapologue`. Ceci remplace « plus aucune pastille de
   réduction » du 09/10 pour les offres du web.
 
+**Accueil et dressing du mobile refaits le 23/10, demandés par
+l'utilisateur** sur trois références (Dress me, boutique « Auro », appli de
+santé). Mobile seulement ; couleurs, polices, verre et arrondis ne changent
+pas.
+
+- **Salut** : photo, prénom, date et ville, grande question (« Que
+  portes-tu aujourd'hui ? »), météo du jour et rendez-vous en puces.
+- **Tenue du jour en rangées qui glissent** (`DressRows`, `ui/outfit.tsx`) :
+  sur le fond de la page, d'un bord à l'autre, sans cadre ; la pièce au
+  centre, ses voisines à pleine opacité coupées par l'écran. On glisse (ou
+  on touche une voisine) pour la prendre, le cadenas la garde pour « Une
+  autre ». Sous le pouce : rond noir « Une autre » et grand bouton « Je la
+  porte ». Une rangée à plusieurs pièces (bijoux, sac et ceinture) ne glisse pas.
+- **Nouvelles sections** (`ui/home.tsx`, `HomeModule`) : Raccourcis (Ajouter,
+  Composer, Calendrier, Voyage), Rendez-vous (cartes empilées, date, heure,
+  météo, tenue prévue), Ton dressing (rayons en ronds), Tes chiffres (deux
+  cartes pastel beurre et bleu pâle). « Ta semaine » commence aujourd'hui ;
+  « Le plus porté » passe en deux grandes cartes ; Kodi devient plus discret.
+  Un ordre gardé avant le 23/10 (sans `raccourcis`) repart de l'ordre
+  d'origine (`normalizeModules`). Bouton « Personnaliser l'accueil » en bas
+  de page, en plus de l'icône de la capsule.
+- **Dressing** : nouvelle vue « Rangées » par défaut (`Shelf`,
+  `screens/Dressing.tsx`), les pièces détourées posées sur le fond, sans
+  vignette ni nom, trois à l'écran ; Grille et Portants restent.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 

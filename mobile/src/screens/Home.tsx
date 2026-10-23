@@ -15,10 +15,11 @@ import { useTheme } from '../theme/ThemeProvider';
 import { material, motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
-import { Button, IconButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
-import { Card, Tag, WeatherIcon } from '../ui/bits';
+import { Avatar, Card, Tag, WeatherIcon } from '../ui/bits';
+import { Figures, NextEvent, PieceCard, QuickActions, Rayons } from '../ui/home';
 import { NotForMeSheet } from '../ui/ecart';
 import { bilanDe, jourDeBilan } from '../state/bilan';
 import { Garment } from '../ui/Garment';
@@ -39,11 +40,11 @@ const longDate = () => {
 };
 
 /**
- * L'accueil (06/10) : chaque section a sa forme, dans l'ordre choisi dans
- * Personnaliser, la tenue du jour comprise. Rangées de la tête aux pieds,
- * cartes de la semaine, bulle de Kodi, arches, page de magazine,
- * classement, mosaïque, tickets, bloc plein (canevas
- * https://claude.ai/artifact/D6Y93CiR4UXrrp6djzxXcc). Couleurs, polices,
+ * L'accueil (06/10, refait le 23/10 sur des pages d'accueil de mode et de
+ * santé) : un salut avec la météo, la tenue du jour en rangées qui glissent
+ * (modèle « Dress me »), puis des sections que la personne monte, descend ou
+ * masque dans Personnaliser : raccourcis, prochain rendez-vous, semaine,
+ * rayons, Kodi, chiffres, le plus porté, à redécouvrir… Couleurs, polices,
  * verre et arrondis restent ceux de la charte.
  */
 export function Home() {
@@ -56,14 +57,16 @@ export function Home() {
   const outfits = useTodayOutfits();
   const meteo = useMeteo();
   const now = meteo.now;
+  const today = meteo.jours[0];
   const city = s.profile.city;
-  // « Mar. 6 oct. · Lyon, 15°, nuageux » ; sans météo connue, la date et la ville seulement.
-  const meteoTxt = now ? `${now.t}°, ${now.mot ?? (city ? WEATHER_WORD[now.kind] : (meteo.jours[0]?.label ?? WEATHER_WORD[now.kind]))}` : null;
   const todayEvents = eventsOn(s.events, isoOf(0)).length;
   const { c } = useTheme();
   const semaineVisible = s.modules.some((m) => m.id === 'semaine' && m.on);
   const W = width - space.gutter * 2;
   const top = useTabTop();
+  // « 14° · averses vers midi » : la météo du jour, en une ligne.
+  const mot = now?.mot ?? today?.label ?? (now ? WEATHER_WORD[now.kind] : '');
+  const meteoLine = now ? `${now.t}°${mot ? ` · ${mot}` : ''}` : null;
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
@@ -76,32 +79,52 @@ export function Home() {
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 28 }}
       >
-        {/* Le salut (09/10) : la date et la ville en petites capitales, une phrase fine, la météo et la journée en puces. */}
-        <View style={{ gap: 8, paddingHorizontal: 4, marginBottom: -12 }} testID="home-hello">
-          <T v="label" tone="ink2" numberOfLines={1}>
-            {[capital(longDate()), city].filter(Boolean).join(' · ')}
-          </T>
+        {/* Le salut (23/10) : la photo, le prénom, la date ; une grande question ; la météo et la journée en puces. */}
+        <View style={{ gap: 14, paddingHorizontal: 4, marginBottom: -8 }} testID="home-hello">
+          <View className="flex-row items-center" style={{ gap: 12 }}>
+            <Tap testID="home-avatar" onPress={() => nav.navigate('Tabs', { screen: 'Me' })} accessibilityLabel="Ouvrir mon profil" scaleTo={0.95}>
+              <Avatar name={s.profile.name || 'Toi'} size={44} uri={s.profile.avatar} />
+            </Tap>
+            <View style={{ flex: 1, gap: 1 }}>
+              <T v="caption" tone="ink2">
+                Bonjour
+              </T>
+              <T v="bodyStrong" numberOfLines={1}>
+                {s.profile.name || 'toi'}
+              </T>
+            </View>
+            <View style={{ alignItems: 'flex-end', gap: 2, flexShrink: 1 }}>
+              <T v="label" tone="ink2" numberOfLines={1}>
+                {capital(longDate())}
+              </T>
+              {city ? (
+                <T v="small" tone="ink2" numberOfLines={1}>
+                  {city}
+                </T>
+              ) : null}
+            </View>
+          </View>
           <T v="hero" accessibilityRole="header">
-            {`Bonjour${s.profile.name ? ` ${s.profile.name}` : ''},\n`}
-            {!outfits.length ? 'ton dressing\nt’attend' : s.wornToday ? 'ta tenue du jour\nest ' : 'ta tenue du jour\nest '}
-            {outfits.length ? (
+            {!outfits.length ? 'Ton dressing\nt’attend.' : s.wornToday ? 'Ta tenue du jour\nest ' : 'Que portes-tu\naujourd’hui ?'}
+            {outfits.length && s.wornToday ? (
               <T v="hero" style={F.accent}>
-                {s.wornToday ? 'portée' : 'prête'}
+                portée.
               </T>
             ) : null}
-            .
           </T>
-          <View className="flex-row flex-wrap" style={{ gap: 6, marginTop: 2 }}>
-            {now && (
-              <View className="flex-row items-center" style={{ gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
-                <Icon name={now.kind === 'soleil' ? 'sun' : now.kind === 'nuages' ? 'cloud' : now.kind === 'pluie' ? 'rain' : 'showers'} size={15} color={c.ink} />
-                <T v="small">{meteoTxt}</T>
+          <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+            {meteoLine && now && (
+              <View testID="home-weather" className="flex-row items-center" style={{ gap: 8, height: 36, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }} accessible accessibilityLabel={`Météo : ${meteoLine.replace(/°/g, ' degrés')}`}>
+                <Icon name={now.kind === 'soleil' ? 'sun' : now.kind === 'nuages' ? 'cloud' : now.kind === 'pluie' ? 'rain' : 'showers'} size={17} color={c.ink} />
+                <T v="small" style={F.s600}>
+                  {meteoLine}
+                </T>
               </View>
             )}
             {todayEvents > 0 && (
-              <Tap testID="home-today-events" hitSlop={6} onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityLabel={`${todayEvents} rendez-vous aujourd’hui`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
-                <Icon name="calendar" size={15} color={c.ink} />
-                <T v="small">{`${todayEvents} rendez-vous`}</T>
+              <Tap testID="home-today-events" hitSlop={6} onPress={() => nav.navigate('Tabs', { screen: 'Agenda' })} accessibilityLabel={`${todayEvents} rendez-vous aujourd’hui`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, height: 36, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['card-edge'] }}>
+                <Icon name="calendar" size={16} color={c.ink} />
+                <T v="small" style={F.s600}>{`${todayEvents} rendez-vous`}</T>
               </Tap>
             )}
           </View>
@@ -116,7 +139,14 @@ export function Home() {
         {/* Un dressing pas encore prêt : les premiers pas seuls, sans sections vides ni suggestions sans pièces. */}
         {s.modules
           .filter((m) => m.on && outfits.length > 0)
-          .map((m) => (m.id === 'tenue' ? outfits.length ? <TodayCard key="tenue" W={W} /> : null : <Module key={m.id} id={m.id} W={W} />))}
+          .map((m) => (m.id === 'tenue' ? outfits.length ? <TodayCard key="tenue" fullW={width} /> : null : <Module key={m.id} id={m.id} W={W} />))}
+
+        {/* Le bouton qui ouvre Personnaliser : monter, descendre ou masquer chaque section. */}
+        {outfits.length > 0 && (
+          <View style={{ alignItems: 'center' }}>
+            <Button testID="home-customize" label="Personnaliser l’accueil" variant="quiet" size="m" icon="sliders" onPress={() => nav.navigate('Customize')} />
+          </View>
+        )}
 
         {/* La météo de l'en-tête est créditée dans « Ta semaine » ; section masquée, elle l'est ici. */}
         {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
@@ -125,17 +155,21 @@ export function Home() {
   );
 }
 
-/** La tenue du jour : de la tête aux pieds, voisines à toucher, cadenas pour « Une autre ». */
-function TodayCard({ W }: { W: number }) {
+/**
+ * La tenue du jour (23/10) : de la tête aux pieds, sur le fond de la page et
+ * d'un bord à l'autre, chaque rangée glisse (modèle « Dress me ») ; le
+ * cadenas garde une pièce pour « Une autre ». En bas, sous le pouce : le
+ * rond noir « Une autre » et le grand bouton « Je la porte ».
+ */
+function TodayCard({ fullW }: { fullW: number }) {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const outfits = useTodayOutfits();
   const byId = new Map(s.pieces.map((p) => [p.id, p]));
   const outfit = outfits[s.outfitIndex % outfits.length];
   const pieces = outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[];
   const worn = !!s.wornToday;
-  const inner = W - 28;
   // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
   const [pinned, setPinned] = useState<Set<RowId>>(new Set());
@@ -162,25 +196,19 @@ function TodayCard({ W }: { W: number }) {
   };
 
   return (
-    <Card style={{ padding: 14, gap: 12 }} testID="home-outfit">
-      {/* Le matin, un geste (09/10) : « Je la porte » et « Une autre » en tête de carte, visibles sans défiler. */}
-      <View className="flex-row items-center" style={{ gap: 8, minHeight: 40 }}>
-        <View style={{ flex: 1 }}>
-          <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+    <View style={{ gap: 14 }} testID="home-outfit">
+      <View className="flex-row items-center justify-between" style={{ paddingHorizontal: 4, minHeight: 28 }}>
+        <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+        <View style={{ height: 28, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: c['rule-strong'], justifyContent: 'center' }}>
+          <T v="small" style={F.s600}>{`${shown.length} pièce${shown.length > 1 ? 's' : ''}`}</T>
         </View>
-        {!worn && (
-          <>
-            {outfits.length > 1 && <IconButton testID="another-outfit" icon="refresh" label="Une autre tenue" variant="quiet" size={40} onPress={another} />}
-            <Button testID="wear-today" label="Je la porte" size="s" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
-          </>
-        )}
       </View>
-      {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. */}
-      <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, paddingVertical: 12, overflow: 'hidden' }}>
+      {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. D'un bord à l'autre, les voisines sont coupées par l'écran. */}
+      <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ marginHorizontal: -space.gutter }}>
         <DressRows
           pieces={shown}
           pool={worn ? [] : s.pieces}
-          width={inner}
+          width={fullW}
           pinned={pinned}
           onTogglePin={(r) => setPinned((prev) => { const n = new Set(prev); if (n.has(r)) n.delete(r); else n.add(r); return n; })}
           onSwap={(r, to) => setSwapped((prev) => ({ ...prev, [r]: to.id }))}
@@ -189,18 +217,31 @@ function TodayCard({ W }: { W: number }) {
       </Animated.View>
       {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
       <Animated.View key={`t-${outfit.id}`} entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)} style={{ gap: 4, paddingHorizontal: 4 }}>
-        <T v="cardTitle" style={{ fontSize: 20, lineHeight: 25 }} accessibilityRole="header">
+        <T v="cardTitle" style={{ fontSize: 22, lineHeight: 27 }} accessibilityRole="header">
           {`${outfit.lead}${outfit.em}`.replace(/\s+/g, ' ')}
         </T>
         <T v="caption" tone="ink2" numberOfLines={2}>
           {outfit.why}
         </T>
       </Animated.View>
+      {/* Le matin, un geste (09/10) : « Je la porte » en grand, « Une autre » en rond noir, sous le pouce. */}
+      {!worn && (
+        <View className="flex-row items-center" style={{ gap: 10 }}>
+          {outfits.length > 1 && (
+            <Tap testID="another-outfit" onPress={another} accessibilityLabel="Une autre tenue" hitSlop={4} style={[{ width: 54, height: 54, borderRadius: 27, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }, material.press[scheme]]}>
+              <Icon name="refresh" size={22} color={c.paper} strokeWidth={2} />
+            </Tap>
+          )}
+          <View style={{ flex: 1 }}>
+            <Button testID="wear-today" label="Je la porte" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
+          </View>
+        </View>
+      )}
       {worn && <WornToday pieces={shown} />}
       {/* « Pas pour moi » (09/10) : la raison part chez Kodi, la tenue ne revient plus. */}
       {!worn && (
-        <View className="flex-row items-center justify-between" style={{ borderTopWidth: 1, borderColor: c.rule, marginHorizontal: 4 }}>
-          <T testID="not-for-me" v="label" tone="ink2" onPress={() => setNope(true)} accessibilityRole="button" accessibilityHint="Dis à Kodi pourquoi, et vois une autre tenue" suppressHighlighting style={{ paddingTop: 14, paddingBottom: 16, marginBottom: -12, paddingRight: 16 }}>
+        <View className="flex-row items-center justify-between" style={{ marginHorizontal: 4 }}>
+          <T testID="not-for-me" v="label" tone="ink2" onPress={() => setNope(true)} accessibilityRole="button" accessibilityHint="Dis à Kodi pourquoi, et vois une autre tenue" suppressHighlighting style={{ paddingVertical: 8, paddingRight: 16 }}>
             Pas pour moi
           </T>
           <T v="small" tone="ink2">
@@ -220,7 +261,7 @@ function TodayCard({ W }: { W: number }) {
           setPinned(new Set());
         }}
       />
-    </Card>
+    </View>
   );
 }
 
@@ -427,12 +468,15 @@ function DayCard({ d }: { d: number }) {
   const meteo = useMeteo();
   const nav = useNavigation<Nav>();
   const { c } = useTheme();
+  const outfits = useTodayOutfits();
   const w = meteo.jours[d];
   const date = isoOf(d);
-  const o = s.planned[date];
+  // Aujourd'hui, la tenue du jour (portée, ou celle que Kodi propose) tient lieu de tenue prévue.
+  const ofToday = d === 0 ? s.wornToday ?? (outfits.length ? outfits[s.outfitIndex % outfits.length].pieces : null) : null;
+  const o = s.planned[date] ?? (ofToday ? { title: 'Tenue du jour', pieces: ofToday } : undefined);
   const ev = eventsOn(s.events, date)[0];
   const ferie = ferieDu(s.contexte, d);
-  const label = d === 1 ? 'Demain' : capital(DAYS_SHORT[dayDate(d).getDay()]);
+  const label = d === 0 ? 'Aujourd’hui' : d === 1 ? 'Demain' : capital(DAYS_SHORT[dayDate(d).getDay()]);
   const num = String(dayDate(d).getDate()).padStart(2, '0');
   const pieces = o ? (o.pieces.map((id) => s.pieces.find((p) => p.id === id)).filter(Boolean) as Piece[]) : [];
   const note = ev?.title ?? ferie?.nom ?? o?.title ?? null;
@@ -470,7 +514,7 @@ function DayCard({ d }: { d: number }) {
       </Tap>
     );
   return (
-    <Tap testID={`planned-${d}`} onPress={() => nav.navigate('Planning', { date })} accessibilityLabel={`Tenue prévue : ${said}`} scaleTo={0.98} style={[shell, { backgroundColor: c.card, borderWidth: d === 1 ? 1.5 : 1, borderColor: d === 1 ? c.ink : c['card-edge'] }]}>
+    <Tap testID={`planned-${d}`} onPress={() => nav.navigate('Planning', { date })} accessibilityLabel={`Tenue prévue : ${said}`} scaleTo={0.98} style={[shell, { backgroundColor: c.card, borderWidth: d === 0 ? 1.5 : 1, borderColor: d === 0 ? c.ink : c['card-edge'] }]}>
       {top}
       <FlatLay pieces={pieces} w={126} h={132} />
       <View style={{ height: 16 }}>
@@ -533,7 +577,7 @@ function Week() {
         <T v="kicker" style={{ paddingLeft: 8 }}>{`${count}/7`}</T>
       </Tap>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 10, gap: 10 }}>
-        {[1, 2, 3, 4, 5, 6].map((d) => (
+        {[0, 1, 2, 3, 4, 5, 6].map((d) => (
           <DayCard key={d} d={d} />
         ))}
       </ScrollView>
@@ -573,7 +617,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     <View className="flex-row items-center justify-between" style={{ minHeight: 28 }}>
       <Tag label={title} />
       {action && onAction && (
-        <T testID={`module-${id}-action`} v="label" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 12 }}>
+        <T testID={`module-${id}-action`} v="label" tone="ink2" onPress={onAction} accessibilityRole="link" suppressHighlighting style={{ paddingLeft: 12 }}>
           {action}
         </T>
       )}
@@ -582,6 +626,10 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
   const allPieces = () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } });
 
   if (id === 'semaine') return <Week />;
+  if (id === 'raccourcis') return <QuickActions />;
+  if (id === 'rdv') return <NextEvent />;
+  if (id === 'rayons') return <Rayons title={title} />;
+  if (id === 'chiffres') return <Figures />;
 
   // Kodi : une bulle de message beurre, son coin bas presque droit, et Kodi qui salue (21/10).
   if (id === 'kode') {
@@ -593,19 +641,19 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     ];
     const ink = c['butter-ink'];
     return (
-      <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="home-kode">
+      <Card className="bg-butter" style={{ padding: 16, gap: 12, borderBottomLeftRadius: 8 }} testID="home-kode">
         <View className="flex-row items-center" style={{ gap: 10 }}>
-          <Kodi mood="wave" size={44} track />
-          <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
+          <Kodi mood="wave" size={40} track />
+          <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600, fontSize: 18, lineHeight: 22 }}>
             {title}
           </T>
         </View>
-        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kodi" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 50, borderRadius: 25, paddingHorizontal: 18 }}>
+        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kodi" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 48, borderRadius: 24, paddingHorizontal: 18 }}>
           <T v="body" style={{ color: ink }}>
             Une tenue pour…
           </T>
         </Tap>
-        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
           {asks.map((q) => (
             <Tap key={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} accessibilityLabel={`Demander à Kodi : ${q}`} style={{ height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: c['butter-field'], justifyContent: 'center' }}>
               <T v="caption" style={{ color: ink, ...F.s500, fontSize: 14 }}>
@@ -613,7 +661,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
               </T>
             </Tap>
           ))}
-        </View>
+        </ScrollView>
       </Card>
     );
   }
@@ -697,38 +745,29 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     );
   }
 
-  // Le plus porté : un classement, une barre par pièce.
+  // Le plus porté (23/10) : les deux pièces fétiches en grandes cartes, le lien « Tout voir » en pastille noire.
   if (id === 'porte') {
-    const list = [...s.pieces].filter((p) => p.wears > 0).sort((x, z) => z.wears - x.wears).slice(0, 3);
+    const list = [...s.pieces].filter((p) => p.wears > 0).sort((x, z) => z.wears - x.wears).slice(0, 2);
     if (!list.length) return <Quiet head={head()} text="Porte une tenue : le classement commence." />;
-    const max = list[0].wears;
+    const cw = (W - 12) / 2;
     return (
-      <Card style={{ padding: 16, gap: 14 }} testID="home-most-worn">
-        {head('Tout voir', allPieces)}
-        <View style={{ gap: 12 }}>
+      <View style={{ gap: 14 }} testID="home-most-worn">
+        <View className="flex-row items-center justify-between" style={{ paddingHorizontal: 4, minHeight: 36 }}>
+          <T v="section" accessibilityRole="header" style={{ fontSize: 22, lineHeight: 26 }}>
+            {title}
+          </T>
+          <Tap testID="module-porte-action" onPress={allPieces} accessibilityLabel="Tout voir" hitSlop={4} style={{ height: 36, paddingHorizontal: 16, borderRadius: 18, backgroundColor: c.ink, justifyContent: 'center' }}>
+            <T v="small" style={[F.s600, { color: c.paper }]}>
+              Tout voir
+            </T>
+          </Tap>
+        </View>
+        <View className="flex-row" style={{ gap: 12 }}>
           {list.map((p, k) => (
-            <Tap key={p.id} testID={`porte-${p.id}`} onPress={() => nav.navigate('Piece', { id: p.id })} accessibilityLabel={`${k + 1}, ${p.name}, ${p.wears} ports`} scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72 }}>
-              <T v="stat" style={{ width: 22, textAlign: 'center', fontSize: 28, lineHeight: 32 }}>
-                {String(k + 1)}
-              </T>
-              <View style={{ width: 68, height: 68, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                <Garment kind={p.kind} tint={p.tint} image={p.image} size={50} dark={dark} label={p.name} />
-              </View>
-              <View style={{ flex: 1, gap: 9 }}>
-                <View className="flex-row items-baseline justify-between" style={{ gap: 8 }}>
-                  <T v="bodyStrong" numberOfLines={1} style={{ flexShrink: 1 }}>
-                    {p.name}
-                  </T>
-                  <T v="kicker">{`${p.wears}×`}</T>
-                </View>
-                <View style={{ height: 6, borderRadius: 3, backgroundColor: c.rule }}>
-                  <View style={{ width: `${Math.round((p.wears / max) * 100)}%`, height: 6, borderRadius: 3, backgroundColor: c.ink }} />
-                </View>
-              </View>
-            </Tap>
+            <PieceCard key={p.id} testID={`porte-${p.id}`} piece={p} rank={k + 1} width={cw} onPress={() => nav.navigate('Piece', { id: p.id })} />
           ))}
         </View>
-      </Card>
+      </View>
     );
   }
 
