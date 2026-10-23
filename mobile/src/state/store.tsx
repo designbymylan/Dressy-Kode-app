@@ -68,7 +68,7 @@ export const DEFAULT_MODULES: ModuleState[] = [
   { id: 'kode', on: true },
   { id: 'chiffres', on: true },
   { id: 'porte', on: true },
-  { id: 'oubliees', on: true },
+  { id: 'oubliees', on: false },
   { id: 'tendance', on: false },
   { id: 'nouveautes', on: false },
   { id: 'prets', on: false },
