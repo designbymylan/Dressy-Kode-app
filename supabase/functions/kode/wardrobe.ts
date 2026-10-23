@@ -8,11 +8,17 @@ export type Garment = {
   id: string;
   name: string;
   category_id: string;
+  /** Le type précis (« pull », « baskets »…), rempli à la photo. */
+  kind: string | null;
+  /** La saison de la pièce : `toute_annee`, `mi_saison`, `hiver` ou `ete`. */
+  season: string | null;
   colors: string[];
   material: string | null;
   wear_count: number;
   last_worn_on: string | null;
 };
+
+const SAISON: Record<string, string> = { mi_saison: 'mi-saison', hiver: 'hiver', ete: 'été' };
 
 export type Slot = 'haut' | 'bas' | 'robe' | 'veste' | 'chaussures' | 'sac' | 'accessoire' | 'bijou';
 
@@ -52,8 +58,10 @@ export function wardrobeText(refs: Map<string, Garment>, labels: Map<string, str
   const byCategory = new Map<string, string[]>();
   for (const [ref, g] of refs) {
     const parts = [ref, g.name];
+    if (g.kind) parts.push(g.kind);
     if (g.colors.length) parts.push(g.colors.join('/'));
     if (g.material) parts.push(g.material);
+    if (g.season && SAISON[g.season]) parts.push(SAISON[g.season]);
     parts.push(wornLabel(g, today));
     const list = byCategory.get(g.category_id) ?? [];
     list.push(`- ${parts.join(' · ')}`);
@@ -71,17 +79,18 @@ export type Picked = { garment: Garment; slot: Slot };
 
 /**
  * Ne garde de la tenue proposée que des pièces qui existent : références
- * inconnues écartées, doublons retirés, six pièces au plus. En dessous de
- * deux pièces, ce n'est plus une tenue et aucune carte n'est montrée.
+ * inconnues écartées, doublons retirés, six pièces au plus, et les pièces
+ * que la météo du jour interdit (`interdites`, 23/10). En dessous de deux
+ * pièces, ce n'est plus une tenue et aucune carte n'est montrée.
  */
-export function pickPieces(proposed: unknown, refs: Map<string, Garment>): Picked[] {
+export function pickPieces(proposed: unknown, refs: Map<string, Garment>, interdites: Map<string, string> = new Map()): Picked[] {
   const list = Array.isArray(proposed) ? proposed : [];
   const seen = new Set<string>();
   const out: Picked[] = [];
   for (const raw of list) {
     const ref = String(raw).trim().toLowerCase();
     const g = refs.get(ref);
-    if (!g || seen.has(g.id)) continue;
+    if (!g || seen.has(g.id) || interdites.has(g.id)) continue;
     seen.add(g.id);
     out.push({ garment: g, slot: SLOT_BY_CATEGORY[g.category_id] ?? 'accessoire' });
     if (out.length === MAX_PIECES) break;
@@ -116,7 +125,12 @@ export type PlannedDay = { date: string; titre: string; pourquoi: string; pieces
  * fois chacun, chacun avec des pièces qui existent (même règle que
  * `pickPieces`). Un jour sans tenue valable revient avec une liste vide.
  */
-export function pickPlan(proposed: unknown, refs: Map<string, Garment>, days: string[]): PlannedDay[] {
+export function pickPlan(
+  proposed: unknown,
+  refs: Map<string, Garment>,
+  days: string[],
+  interditsParJour: Map<string, Map<string, string>> = new Map(),
+): PlannedDay[] {
   const list = Array.isArray(proposed) ? proposed : [];
   const wanted = new Set(days);
   const out: PlannedDay[] = [];
@@ -129,7 +143,7 @@ export function pickPlan(proposed: unknown, refs: Map<string, Garment>, days: st
       date,
       titre: String(j.titre ?? '').trim().slice(0, 80),
       pourquoi: String(j.pourquoi ?? '').trim().slice(0, 400),
-      pieces: pickPieces(j.pieces, refs),
+      pieces: pickPieces(j.pieces, refs, interditsParJour.get(date)),
     });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));

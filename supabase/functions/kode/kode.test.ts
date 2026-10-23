@@ -5,7 +5,8 @@
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
-import { profileText, agendaText, eventText, ecartsText, hourText, planDaysText, voyageText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
+import { conditionsDuJour, plafondDe, besoinDe, interdites, meteoTexte, chaleurDe, type Jour } from './meteo.ts';
+import { profileText, agendaText, eventText, ecartsText, hourText, planDaysText, voyageText, aimeesText, faitsText, interditesText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -15,7 +16,7 @@ const check = (label: string, got: unknown, want: unknown) => {
 };
 
 const g = (id: string, category_id: string, name: string, extra: Partial<Garment> = {}): Garment => ({
-  id, name, category_id, colors: [], material: null, wear_count: 0, last_worn_on: null, ...extra,
+  id, name, category_id, kind: null, season: null, colors: [], material: null, wear_count: 0, last_worn_on: null, ...extra,
 });
 
 const wardrobe = [
@@ -152,6 +153,88 @@ check('schéma de planification strict', [PLAN_SCHEMA.required, PLAN_SCHEMA.prop
   [['message', 'jours'], ['date', 'titre', 'pourquoi', 'pieces']]);
 check('la culture de styliste est dans les règles', ['Couleurs', 'Coupes et proportions', 'Dress codes', 'Mariage (invité)', 'Entretien'].every((x) => RULES.includes(x)), true);
 check('aucun tiret cadratin dans la consigne', /—/.test(RULES + PLAN_RULES), false);
+
+// ---------------------------------------------------------------- météo (23/10)
+
+const jour = (extra: Partial<Jour>): Jour => ({ min: 14, max: 20, ciel: 'soleil', pluie: null, uv: 2, vent: null, ...extra });
+const piece = (id: string, kind: string, extra: { material?: string | null; season?: string | null } = {}) => ({
+  id, kind, material: extra.material ?? null, season: extra.season ?? null,
+});
+const ecartees = (c: ReturnType<typeof conditionsDuJour>, pieces: ReturnType<typeof piece>[]) => [...interdites(pieces, c).keys()];
+
+check('plafond : le plus chaud de la journée', [plafondDe(33), plafondDe(29), plafondDe(25), plafondDe(21), plafondDe(15)], [0, 1, 2, 3, 4]);
+check('besoin : le plus froid de la journée', [besoinDe(3), besoinDe(8), besoinDe(12), besoinDe(17), besoinDe(22)], [4, 3, 2, 1, 0]);
+check('chaleur : débardeur 0, pull 3, doudoune 4, pull en laine 4', [chaleurDe('debardeur', null), chaleurDe('pull', null), chaleurDe('doudoune', null), chaleurDe('pull', 'laine')], [0, 3, 4, 4]);
+check('chaleur : le lin allège, la laine alourdit', [chaleurDe('pantalon', 'lin'), chaleurDe('pantalon', 'coton')], [1, 2]);
+check('chaleur inconnue pour un bijou ou un sac', [chaleurDe('collier', null), chaleurDe(null, null)], [null, null]);
+
+const chaud = conditionsDuJour(jour({ min: 18, max: 28, ciel: 'soleil', uv: 8 }));
+check('28° : pas de manteau, pas de sweat, pas de doudoune',
+  ecartees(chaud, [piece('m', 'manteau'), piece('s', 'sweat'), piece('d', 'doudoune'), piece('t', 'tshirt'), piece('v', 'veste')]),
+  ['m', 's', 'd', 'v']);
+check('28° : même une veste d’entre-saison est écartée', ecartees(chaud, [piece('v', 'veste')]), ['v']);
+check('28° : un trench reste écarté (la fraîcheur du matin est faible)', ecartees(chaud, [piece('tr', 'trench')]), ['tr']);
+check('28° : un débardeur et un short passent', ecartees(chaud, [piece('d', 'debardeur'), piece('sh', 'short')]), []);
+check('soleil fort : conseil texte', meteoTexte(chaud, 'de demain').includes('soleil fort'), true);
+
+const froid = conditionsDuJour(jour({ min: 3, max: 9 }));
+check('3° à 9° : manteau et doudoune autorisés', ecartees(froid, [piece('m', 'manteau'), piece('d', 'doudoune')]), []);
+check('3° à 9° : un t-shirt reste possible sous une couche', ecartees(froid, [piece('t', 'tshirt')]), []);
+check('matin froid : conseil de couche', meteoTexte(froid, 'de demain').includes('couche chaude'), true);
+
+const pluvieux = conditionsDuJour(jour({ min: 11, max: 16, ciel: 'averses', pluie: 6 }));
+check('pluie : sandales et daim écartés, trench permis',
+  ecartees(pluvieux, [piece('sa', 'sandales'), piece('da', 'bottines', { material: 'daim' }), piece('tr', 'trench'), piece('ba', 'baskets')]),
+  ['sa', 'da']);
+check('pluie : raison donnée à Kodi', interdites([piece('sa', 'sandales')], pluvieux).get('sa'), 'chaussures ouvertes sous la pluie');
+
+const venteux = conditionsDuJour(jour({ min: 12, max: 20, vent: 45 }));
+check('vent : jupe légère écartée, jupe en coton permise, chapeau écarté',
+  ecartees(venteux, [piece('j1', 'jupe', { material: 'mousseline' }), piece('j2', 'jupe', { material: 'coton' }), piece('ch', 'chapeau')]),
+  ['j1', 'ch']);
+check('vent faible : rien à écarter', ecartees(conditionsDuJour(jour({ vent: 12 })), [piece('ch', 'chapeau')]), []);
+
+const orage = conditionsDuJour(jour({ min: 15, max: 22, ciel: 'orage' }));
+check('orage : sandales et escarpins écartés', ecartees(orage, [piece('sa', 'sandales'), piece('es', 'escarpins'), piece('ba', 'baskets')]), ['sa', 'es']);
+
+const mi = conditionsDuJour(jour({ min: 10, max: 23 }));
+check('saison : pièce d’hiver écartée par temps doux, pièce d’été par temps froid',
+  ecartees(mi, [piece('h', 'pull', { season: 'hiver' }), piece('e', 'debardeur', { season: 'ete' }), piece('ex', 'tshirt', { season: 'toute_annee' })]),
+  ['h']);
+check('saison : pièce d’été écartée quand il fait froid le matin',
+  ecartees(conditionsDuJour(jour({ min: 5, max: 14 })), [piece('e', 'debardeur', { season: 'ete' })]), ['e']);
+
+check('bijoux et sacs ne sont jamais écartés par la météo', ecartees(chaud, [piece('b', 'collier'), piece('sac', 'cabas')]), []);
+
+// La règle tient jusqu’au bout : une pièce interdite ne sort jamais d’une tenue.
+const refsMeteo = withRefs([
+  g('a', 'hauts', 'Débardeur blanc', { kind: 'debardeur' }),
+  g('b', 'bas', 'Short', { kind: 'short' }),
+  g('c', 'vestes', 'Manteau long', { kind: 'manteau' }),
+]);
+const interditesMeteo = interdites([...refsMeteo.values()].map((x) => piece(x.id, x.kind ?? '')), chaud);
+check('pickPieces retire la pièce interdite, même proposée par le modèle',
+  pickPieces(['p1', 'p2', 'p3'], refsMeteo, interditesMeteo).map((p) => p.garment.id), ['a', 'b']);
+check('sans les pièces restantes : pas de tenue',
+  pickPieces(['p3', 'p1'], refsMeteo, interditesMeteo), []);
+check('planification : interdits par jour',
+  pickPlan([{ date: '2026-10-09', titre: 'Doux', pourquoi: '', pieces: ['p3', 'p1', 'p2'] }], refsMeteo, ['2026-10-09'],
+    new Map([['2026-10-09', interditesMeteo]])).map((p) => p.pieces.map((x) => x.garment.id)), [['a', 'b']]);
+
+check('texte météo lisible', meteoTexte(pluvieux, 'd’aujourd’hui'),
+  'Météo d’aujourd’hui : de 11° à 16°, pluie. Conseils : une veste qui protège, des chaussures fermées.');
+
+// ---------------------------------------------------------------- tailles, Mes choix (23/10)
+
+check('tailles habituelles, avec l’accord silhouette', profileText(null, { shape: null, height_cm: null, usual_sizes: { haut: 'S', bas: '38', pointure: '39' } }),
+  'Tailles habituelles : haut S, bas 38, pointure 39. Ne propose jamais une pièce dont la taille ne correspond pas.');
+check('pièces et tenues aimées', aimeesText(['p2', 'p5'], [{ titre: 'Doux et net', refs: ['p1', 'p3'] }, { titre: 'Seul', refs: ['p4'] }]),
+  'Pièces qu’elle aime : p2, p5. Mets-les en avant quand elles vont avec la demande.\nTenue aimée « Doux et net » : p1 + p3. Reste dans son esprit sans la recopier.');
+check('souvenirs retenus', faitsText([{ texte: 'Ne porte pas de couleurs vives.' }, { texte: 'Aime le denim.' }]),
+  'Ce que Kodi retient de cette personne (il s’en sert sans le citer) :\n- Ne porte pas de couleurs vives.\n- Aime le denim.');
+check('aucun souvenir : rien', faitsText([]), '');
+check('pièces interdites, avec les références', interditesText(new Map([['a', 'trop chaud pour la journée, il fait 28° au plus chaud']]), new Map([['a', 'p1']])),
+  'Pièces à ne pas proposer ce jour-là, à cause de la météo :\n- p1 : trop chaud pour la journée, il fait 28° au plus chaud');
 
 console.log(fails ? `\n${fails} échec(s)` : '\ntout est bon');
 if (fails) process.exit(1);
