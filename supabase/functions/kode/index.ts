@@ -32,7 +32,9 @@ import { contexteDuJour, type Contexte } from '../_shared/donnees/contexte.ts';
 import { contexteTexte } from '../_shared/donnees/texte.ts';
 import { meteoVoyage } from '../_shared/donnees/voyage.ts';
 
-const MODEL = Deno.env.get('KODE_MODEL') ?? 'claude-opus-5';
+const MODEL = Deno.env.get('KODE_MODEL') ?? 'claude-sonnet-5-5';
+// Repli en cas de refus du modèle principal : un autre Sonnet, jamais Opus.
+const REPLI = 'claude-sonnet-5';
 const HISTORY = 12; // bulles relues pour suivre la conversation
 const MAX_QUESTION = 600;
 const MAX_DAYS = 31; // jours prévus d'un coup, un mois ou un long voyage
@@ -229,22 +231,22 @@ async function askClaude(system: string, context: string, turns: Turn[], schema:
   }
 
   const client = new Anthropic({ apiKey, timeout: opts.timeout, maxRetries: opts.retries });
+  const appel = (model: string) => client.beta.messages.create({
+    model,
+    max_tokens: 16000,
+    // Les règles puis le dressing : les deux bougent peu d'une question à
+    // l'autre, le cache évite de repayer le dressing à chaque bulle.
+    system: [
+      { type: 'text', text: system },
+      { type: 'text', text: context, cache_control: { type: 'ephemeral' } },
+    ],
+    messages: turns,
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
+  });
   try {
-    return await client.beta.messages.create({
-      model: MODEL,
-      max_tokens: 16000,
-      // Les règles puis le dressing : les deux bougent peu d'une question à
-      // l'autre, le cache évite de repayer le dressing à chaque bulle.
-      system: [
-        { type: 'text', text: system },
-        { type: 'text', text: context, cache_control: { type: 'ephemeral' } },
-      ],
-      messages: turns,
-      output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
-      // Si les filtres de Claude Opus 5 refusent la question, l'API la
-      // rejoue sur le modèle de repli recommandé au lieu de la perdre.
-      ...(MODEL === 'claude-opus-5' ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
-    });
+    const res = await appel(MODEL);
+    // Un refus du modèle principal est rejoué une fois sur le repli.
+    return res.stop_reason === 'refusal' && MODEL !== REPLI ? await appel(REPLI) : res;
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
       console.error('Claude refuse la clé :', err.message);

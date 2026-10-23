@@ -35,8 +35,8 @@ Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur 
   Fable, pour aucune étape : le coût par pièce ne le justifie pas. Haiku reste
   permis pour les seules consignes (`CLAUDE_PROMPT_MODEL`). `steps.ts` refuse
   un autre modèle lu dans les secrets et garde le défaut. Pas de repli serveur
-  vers Opus sur cet agent. La fonction `kode` (Kodi) reste sur Opus 5 en
-  attendant une décision.
+  vers Opus sur cet agent. La fonction `kode` (Kodi) est aussi sur Sonnet
+  (`claude-sonnet-5-5`), avec repli sur `claude-sonnet-5` en cas de refus.
 - **Une photo, toutes ses pièces.** Sonnet 5.5 (`claude-sonnet-5-5`) repère chaque
   pièce visible (vêtements, chaussures, sacs, bijoux, accessoires) et écrit
   une consigne par pièce pour Nano Banana. Si la personne précise ce qu'elle

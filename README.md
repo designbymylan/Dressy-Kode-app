@@ -109,9 +109,9 @@ une réponse courte et, quand la question s'y prête, une tenue.
   avec « Je la porte », qui note un port par pièce (`wears`).
 - Quota selon l'offre (voir Paiements), compté en base par `kode_ask()`.
   Une question sans réponse (erreur, refus) est retirée et ne compte pas.
-- Modèle : `claude-opus-5` par défaut, avec repli automatique en cas de refus.
-  Pour réduire le coût par question, le secret facultatif `KODE_MODEL` accepte
-  par exemple `claude-sonnet-5`.
+- Modèle : `claude-sonnet-5-5` par défaut, avec repli sur `claude-sonnet-5` en
+  cas de refus (jamais Opus). Le secret facultatif `KODE_MODEL` peut le
+  remplacer ; un ancien secret `claude-opus-5` le garderait sur Opus.
 
 Déploiement (vérification JWT **activée**, contrairement à `dressy-agent`) :
 
