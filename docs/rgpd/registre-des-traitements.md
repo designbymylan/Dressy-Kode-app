@@ -25,7 +25,7 @@ jamais dans l'app ni dans le code ; jeton revalidé côté serveur par
 | --- | --- | --- |
 | Supabase | Base de données, authentification, fichiers, fonctions serveur | Union européenne (Irlande) |
 | Anthropic | IA : repérage des pièces sur les photos, réponses et tenues de Kode, recherche du modèle d'une pièce | États-Unis |
-| Google (API Gemini) | IA : dessin des pièces | États-Unis |
+| Google (API Gemini) | IA : dessin des pièces ; vectorisation des souvenirs de goût (textes courts, avec l'accord « gouts ») | États-Unis |
 | Stripe | Paiement, factures | États-Unis et Union européenne |
 | Expo (EAS Update) | Distribution des mises à jour de l'app, sans donnée de compte | États-Unis |
 
@@ -84,9 +84,11 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Tables** : `style_profile`, `settings`, `outfits`, `outfit_items`,
   `kode_messages`, `loans`.
 - **Destinataires** : Supabase ; Anthropic, pour chaque question : la liste
-  des pièces, le profil de style, l'agenda des deux semaines à venir, les
-  tenues écartées, et la silhouette et la taille seulement avec l'accord du
-  traitement 4. Jamais le nom, l'e-mail, le poids ni les mesures.
+  des pièces (avec leur type, leur saison et leur matière), le profil de
+  style, l'agenda des deux semaines à venir, les tenues écartées, la météo
+  du jour, les cœurs et les souvenirs retrouvés (traitement 11), et la
+  silhouette, la taille et les tailles habituelles seulement avec l'accord
+  du traitement 4. Jamais le nom, l'e-mail, le poids ni les mesures.
 - **Durée** : profil et tenues, tant que le compte existe ; conversations,
   12 mois, 2 mois une fois archivées.
 - **Profilage** : les tenues sont des suggestions ; aucune décision
@@ -190,6 +192,34 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Destinataires** : Supabase.
 - **Durée** : quelques jours, selon la conservation des journaux de
   l'hébergeur.
+
+## 11. Mes choix et mémoire de Kodi
+
+- **Finalité** : garder ce qu'on aime (cœurs), et apprendre de ses choix
+  pour que Kodi propose des tenues plus justes à chacun.
+- **Base** : les cœurs, exécution du contrat (favoris). La mémoire de Kodi,
+  consentement : accord « gouts » (« Kodi apprend de mes choix »), donné
+  ou retiré à tout moment dans Réglages › Mes choix, daté et versionné
+  (table `consents`).
+- **Données** : pièces et tenues aimées (cœurs) ; souvenirs en phrases
+  (« Pièce aimée : … », « Tenue écartée (raison) : … ») créés à partir des
+  cœurs et des tenues écartées ; leur vecteur (embedding, 768 nombres, qui
+  ne se lit pas comme du texte mais décrit le sens d'une phrase).
+- **Tables** : `likes`, `kodi_faits` (avec la colonne `embedding`), `consents`.
+- **Destinataires** : Supabase (base, vecteurs) ; Google (API Gemini), qui
+  reçoit le texte des souvenirs pour les vectoriser (à la première
+  question qui suit leur création) ; Anthropic, pour chaque question, les
+  souvenirs les plus proches de la question, jamais le vecteur.
+- **Durée** : cœurs, tant que le compte existe ou jusqu'au retrait ;
+  souvenirs, 12 mois (pg_cron `kodi-faits-retention`), et effacés aussitôt
+  si l'accord est retiré, si le cœur ou la tenue d'origine disparaît, ou si
+  le compte est supprimé.
+- **Droits** : voir les souvenirs et les effacer un à un dans Mes choix ;
+  les souvenirs figurent dans l'export (fonction `compte`).
+- **Profilage** : Kodi adapte ses suggestions aux goûts retenus ; aucune
+  décision automatisée produisant des effets juridiques ou significatifs
+  (art. 22 non applicable). Les goûts se limitent au vêtement : aucune
+  inférence sur la santé, la religion, l'origine ou l'orientation.
 
 ## Sans compte
 

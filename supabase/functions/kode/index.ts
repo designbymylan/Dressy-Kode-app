@@ -24,9 +24,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   RULES, ANSWER_RULES, PLAN_RULES, ANSWER_SCHEMA, PLAN_SCHEMA, profileText, agendaText, eventText, planDaysText, voyageText, ecartsText,
+  aimeesText, faitsText, interditesText,
   type Answer, type AgendaLine, type Corps, type EcartRow, type EventRow, type Profile, type Voyage,
 } from './prompt.ts';
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
+import { conditionsDuJour, interdites, meteoTexte, type Conditions } from './meteo.ts';
+import { vectoriser, versPgvector, LOT_MAX } from '../_shared/embeddings.ts';
 import { cachePostgres } from '../_shared/donnees/cache.ts';
 import { contexteDuJour, type Contexte } from '../_shared/donnees/contexte.ts';
 import { contexteTexte } from '../_shared/donnees/texte.ts';
@@ -36,6 +39,8 @@ const MODEL = Deno.env.get('KODE_MODEL') ?? 'claude-opus-5';
 const HISTORY = 12; // bulles relues pour suivre la conversation
 const MAX_QUESTION = 600;
 const MAX_DAYS = 31; // jours prévus d'un coup, un mois ou un long voyage
+const SOUVENIRS = 6; // souvenirs retrouvés par question
+const SIMILARITE_MIN = 0.4; // en dessous, le souvenir n'a pas de rapport avec la question
 
 /** Erreur dont le message peut être montré tel quel dans la conversation. */
 class KodeError extends Error {
@@ -110,18 +115,35 @@ type OutfitEmbed = { name: string | null; outfit_items: Named[] } | null;
 const pieceNames = (o: OutfitEmbed) =>
   (o?.outfit_items ?? []).map((i) => i.garments?.name).filter(Boolean).join(', ');
 
+/** Un cœur tel que la table `likes` le rend : une pièce, ou une tenue avec ses pièces. */
+type Coeur = {
+  garment_id: string | null;
+  outfit_id: string | null;
+  outfits: { name: string | null; outfit_items: { garment_id: string }[] } | null;
+};
+type Coeurs = { pieces: string[]; tenues: { titre: string; garmentIds: string[] }[] };
+
+function coeursDe(rows: Coeur[]): Coeurs {
+  return {
+    pieces: rows.flatMap((r) => (r.garment_id ? [r.garment_id] : [])),
+    tenues: rows.flatMap((r) => (r.outfit_id && r.outfits
+      ? [{ titre: r.outfits.name ?? '', garmentIds: r.outfits.outfit_items.map((i) => i.garment_id) }]
+      : [])),
+  };
+}
+
 /** Le dressing, le profil, et l'agenda de `from` à `to` (par défaut, les deux semaines à venir). */
 async function loadContext(db: SupabaseClient, spaceId: string, window?: { from: string; to: string }) {
   const today = parisDay(0);
   const from = window?.from ?? today;
   const horizon = window?.to ?? parisDay(14);
 
-  const [settings, style, categories, garments, stats, planned, events, history, ecarts, silhouette, accord] = await Promise.all([
+  const [settings, style, categories, garments, stats, planned, events, history, ecarts, silhouette, accord, gouts, likes] = await Promise.all([
     db.from('settings').select('city').eq('space_id', spaceId).maybeSingle(),
     db.from('style_profile').select('*').eq('space_id', spaceId).maybeSingle(),
     db.from('categories').select('id, label').order('sort'),
     db.from('garments')
-      .select('id, name, category_id, colors, material')
+      .select('id, name, category_id, kind, season, colors, material')
       .eq('space_id', spaceId)
       .eq('status', 'active')
       .order('created_at')
@@ -151,8 +173,15 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
       .order('created_at', { ascending: false })
       .limit(20),
     // La silhouette et la taille (jamais le poids ni les mesures), seulement avec l'accord en vigueur (RGPD art. 9).
-    db.from('silhouettes').select('shape, height_cm').eq('space_id', spaceId).maybeSingle(),
+    db.from('silhouettes').select('shape, height_cm, usual_sizes').eq('space_id', spaceId).maybeSingle(),
     db.rpc('has_consent', { target: spaceId, what: 'silhouette' }),
+    // Mes choix : Kodi n'en tire quelque chose qu'avec l'accord « gouts ».
+    db.rpc('has_consent', { target: spaceId, what: 'gouts' }),
+    db.from('likes')
+      .select('garment_id, outfit_id, outfits(name, outfit_items(garment_id))')
+      .eq('space_id', spaceId)
+      .order('created_at', { ascending: false })
+      .limit(30),
   ]);
 
   for (const r of [categories, garments, stats, planned, events, history]) {
@@ -164,6 +193,8 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
     id: g.id,
     name: g.name,
     category_id: g.category_id,
+    kind: g.kind ?? null,
+    season: g.season ?? null,
     colors: g.colors ?? [],
     material: g.material,
     wear_count: byGarment.get(g.id)?.wear_count ?? 0,
@@ -205,11 +236,12 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
     events: eventRows,
     plannedNames,
     turns,
+    coeurs: gouts.data === true ? coeursDe((likes.data ?? []) as unknown as Coeur[]) : null,
   };
 }
 
 /** L'identifiant d'une pièce vers sa référence courte (p1, p2…). */
-const refOf = (refs: Map<string, Garment>) => new Map([...refs].map(([ref, g]) => [g.id, ref]));
+const refOf = (refs: Map<string, Garment>) => new Map<string, string>([...refs].map(([ref, g]): [string, string] => [g.id, ref]));
 
 /** Une promesse qui ne bloque jamais Kodi : sans réponse à temps, ou en erreur, elle rend `null`. */
 function within<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> {
@@ -317,6 +349,45 @@ async function countQuestion(spaceId: string, question: string): Promise<string>
   return asked.data as string;
 }
 
+/** Les cœurs, en texte pour Kodi : seulement les pièces encore dans le dressing. */
+function coeursTexte(coeurs: Coeurs | null, refsById: Map<string, string>): string {
+  if (!coeurs) return '';
+  const ref = (id: string) => refsById.get(id);
+  const pieces = coeurs.pieces.map(ref).filter((r): r is string => !!r);
+  const tenues = coeurs.tenues.map((t) => ({ titre: t.titre, refs: t.garmentIds.map(ref).filter((r): r is string => !!r) }));
+  return aimeesText(pieces, tenues);
+}
+
+/** La météo d'aujourd'hui, en conditions (rien si elle manque ou n'est pas disponible). */
+function meteoDuJour(c: Contexte): Conditions | null {
+  const m = c.meteo.valeur;
+  if (!m || c.meteo.etat === 'indisponible' || !m.jours.length) return null;
+  const j = m.jours.find((x) => x.date === c.jour) ?? m.jours[0];
+  return conditionsDuJour({ ...j, vent: m.maintenant.vent });
+}
+
+/** Les souvenirs qui n'ont pas encore de vecteur : une poignée à la fois, sans bloquer la réponse. */
+async function completerSouvenirs(spaceId: string): Promise<void> {
+  const { data, error } = await admin.from('kodi_faits').select('id, texte').eq('space_id', spaceId).is('embedding', null).limit(LOT_MAX);
+  if (error || !data?.length) return;
+  const vecteurs = await vectoriser(data.map((f) => f.texte), 'RETRIEVAL_DOCUMENT');
+  if (!vecteurs) return;
+  await Promise.all(data.map((f, i) => admin.from('kodi_faits').update({ embedding: versPgvector(vecteurs[i]) }).eq('id', f.id)));
+}
+
+/** Les souvenirs les plus proches de la question, par ressemblance de sens. Vide sans réponse à temps. */
+async function souvenirsPour(db: SupabaseClient, spaceId: string, question: string): Promise<{ texte: string }[]> {
+  await completerSouvenirs(spaceId);
+  const q = await vectoriser([question], 'RETRIEVAL_QUERY');
+  if (!q) return [];
+  const { data, error } = await db.rpc('match_kodi_faits', { target: spaceId, query: versPgvector(q[0]), n: SOUVENIRS });
+  if (error) {
+    console.warn('souvenirs :', error.message);
+    return [];
+  }
+  return ((data ?? []) as { texte: string; similarite: number }[]).filter((f) => f.similarite >= SIMILARITE_MIN);
+}
+
 async function reply(token: string, question: string) {
   const { db, space } = await openSession(token);
   const ctx = await loadContext(db, space.id);
@@ -328,30 +399,51 @@ async function reply(token: string, question: string) {
 
   // Météo, fériés, vacances, tendances : lus en même temps que le quota, par
   // le cache partagé. Jamais bloquant : sans réponse en 9 s, Kodi répond sans.
-  const monde = within(contexteDuJour(cachePostgres(admin), ctx.city).then(contexteTexte), 9000, 'contexte du jour');
+  const monde = within(contexteDuJour(cachePostgres(admin), ctx.city), 9000, 'contexte du jour');
+  // Les souvenirs : même règle, sans eux Kodi répond comme avant.
+  const souvenirs = within(souvenirsPour(db, space.id, question), 8000, 'souvenirs');
 
   const questionId = await countQuestion(space.id, question);
 
   try {
     const refs = withRefs(ctx.wardrobe);
+    const refsById = refOf(refs);
+    const c = await monde;
+    const meteo = c ? meteoDuJour(c) : null;
+    // La météo écarte d'avance les pièces trop chaudes, trop légères ou mal adaptées.
+    const interdit = meteo ? interdites(ctx.wardrobe, meteo) : new Map<string, string>();
+
     const context = [
       profileText(ctx.style, ctx.corps),
+      coeursTexte(ctx.coeurs, refsById),
       `Agenda Dresskode des deux prochaines semaines :\n${agendaText(ctx.agenda)}`,
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
-      ecartsText(ctx.ecarts, refOf(refs)),
+      ecartsText(ctx.ecarts, refsById),
     ].filter(Boolean).join('\n\n');
 
-    // La date et le contexte du jour n'entrent que dans la dernière bulle :
-    // placés dans le contexte, ils invalideraient le cache à chaque heure.
-    const jour = await monde;
+    // La date, la météo du jour, les souvenirs et la question n'entrent que
+    // dans la dernière bulle : placés dans le contexte, ils invalideraient le
+    // cache à chaque question.
+    const jour = c ? contexteTexte(c) : '';
+    const souv = (await souvenirs) ?? [];
     const turns = normaliseHistory([
       ...ctx.turns,
-      { role: 'user', content: `Nous sommes le ${todayLabel()}.\n\n${jour ? `${jour}\n\n` : ''}${question}` },
+      {
+        role: 'user',
+        content: [
+          `Nous sommes le ${todayLabel()}.`,
+          jour,
+          meteo ? meteoTexte(meteo, 'd’aujourd’hui') : '',
+          interdit.size ? interditesText(interdit, refsById) : '',
+          faitsText(souv),
+          question,
+        ].filter(Boolean).join('\n\n'),
+      },
     ]);
 
     const res = await askClaude(`${RULES}\n\n${ANSWER_RULES}`, context, turns, ANSWER_SCHEMA);
     const answer = readAnswer(res);
-    const pieces = pickPieces(answer.tenue.pieces, refs);
+    const pieces = pickPieces(answer.tenue.pieces, refs, interdit);
 
     let outfitId: string | null = null;
     if (pieces.length) {
@@ -381,7 +473,7 @@ async function reply(token: string, question: string) {
     }).select('id').single();
     if (error) throw new Error(`enregistrement de la réponse : ${error.message}`);
 
-    console.log(`[${space.id.slice(0, 8)}] ${res.model} · ${res.usage.input_tokens} + ${res.usage.cache_read_input_tokens ?? 0} en cache → ${res.usage.output_tokens} · ${pieces.length} pièce(s)`);
+    console.log(`[${space.id.slice(0, 8)}] ${res.model} · ${res.usage.input_tokens} + ${res.usage.cache_read_input_tokens ?? 0} en cache → ${res.usage.output_tokens} · ${pieces.length} pièce(s) · ${souv.length} souvenir(s) · ${interdit.size} écartée(s) par la météo`);
     return { question_id: questionId, reply_id: saved.id as string };
   } catch (err) {
     // Sans réponse, la question ne doit pas compter dans le quota du mois.
@@ -428,24 +520,28 @@ const deg = (n: number) => `${Math.round(n)}°`;
 /** La météo de chez soi, jour par jour, et le reste du contexte (fériés, vacances, tendances). */
 function homeWeather(c: Contexte) {
   const byDay = new Map<string, string>();
+  const conditions = new Map<string, Conditions>();
   for (const j of c.meteo.valeur?.jours ?? []) {
     byDay.set(j.date, `${deg(j.min)} à ${deg(j.max)}, ${j.libelle}${j.pluie ? `, ${String(j.pluie).replace('.', ',')} mm de pluie` : ''}`);
+    conditions.set(j.date, conditionsDuJour(j));
   }
   // La météo passe jour par jour ; celle de maintenant, l'air et le soleil ne parlent que d'aujourd'hui.
   const off = { valeur: null, etat: 'indisponible' as const };
   const extra = contexteTexte({ ...c, meteo: { ...c.meteo, ...off }, air: { ...c.air, ...off }, soleil: { ...c.soleil, ...off } });
-  return { byDay, extra };
+  return { byDay, extra, conditions };
 }
 
 /** La météo du lieu de voyage : la prévision, ou l'an dernier quand elle n'existe pas encore. */
 function tripWeather(m: Awaited<ReturnType<typeof meteoVoyage>>) {
   const byDay = new Map<string, string>();
+  const conditions = new Map<string, Conditions>();
   for (const b of [m.prevision, m.saison]) {
     for (const j of b?.valeur ?? []) {
       byDay.set(j.date, `${deg(j.min)} à ${deg(j.max)}, ${j.libelle}${j.nature === 'saison' ? ' (l’an dernier à la même date, pas encore de prévision)' : ''}`);
+      if (!conditions.has(j.date)) conditions.set(j.date, conditionsDuJour({ min: j.min, max: j.max, ciel: j.ciel, pluie: null, uv: null }));
     }
   }
-  return { byDay, extra: '' };
+  return { byDay, extra: '', conditions };
 }
 
 async function plan(token: string, input: PlanInput) {
@@ -469,22 +565,37 @@ async function plan(token: string, input: PlanInput) {
   const asked = trip
     ? `Prévois mes tenues pour ${trip.destination}, du ${dayLabel(from)} au ${dayLabel(to)}.`
     : `Prévois mes tenues : ${days.map(dayLabel).join(', ')}.`;
-  const questionId = await countQuestion(space.id, `${asked}${consigne ? ` ${consigne}` : ''}`);
+  const demande = `${asked}${consigne ? ` ${consigne}` : ''}`;
+  const souvenirs = within(souvenirsPour(db, space.id, demande), 8000, 'souvenirs');
+  const questionId = await countQuestion(space.id, demande);
 
   try {
     const refs = withRefs(ctx.wardrobe);
+    const refsById = refOf(refs);
     const context = [
       profileText(ctx.style, ctx.corps),
+      coeursTexte(ctx.coeurs, refsById),
       `Dressing : ${refs.size} pièce${refs.size > 1 ? 's' : ''} disponible${refs.size > 1 ? 's' : ''} :\n${wardrobeText(refs, ctx.labels, ctx.today)}`,
-      ecartsText(ctx.ecarts, refOf(refs)),
+      ecartsText(ctx.ecarts, refsById),
     ].filter(Boolean).join('\n\n');
 
     const w = await weather;
+    // Jour par jour, ce que la météo écarte : Kodi ne le voit pas, et la planification le retire.
+    const interditsParJour = new Map<string, Map<string, string>>();
+    for (const d of days) {
+      const c = w?.conditions.get(d);
+      if (c) interditsParJour.set(d, interdites(ctx.wardrobe, c));
+    }
+    const interditsTexte = days.flatMap((d) => [...(interditsParJour.get(d) ?? [])]
+      .filter(([id]) => refsById.has(id))
+      .map(([id, raison]) => `- ${d}, ${refsById.get(id)} : ${raison}`));
+
     const wanted = new Set(days);
     const neighbours = [...ctx.plannedNames]
       .filter(([d]) => !wanted.has(d))
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([d, names]) => `- ${d} (${dayLabel(d)}) : ${names}`);
+    const souv = (await souvenirs) ?? [];
     const message = [
       `Nous sommes le ${todayLabel()}.`,
       w?.extra || null,
@@ -496,14 +607,16 @@ async function plan(token: string, input: PlanInput) {
         events: ctx.events.filter((e) => e.day === d),
         before: ctx.plannedNames.get(d) ?? null,
       })))}`,
+      interditsTexte.length ? `Pièces à ne pas proposer ces jours-là, à cause de la météo :\n${interditsTexte.join('\n')}` : null,
       neighbours.length ? `Tenues déjà prévues les jours voisins :\n${neighbours.join('\n')}` : null,
+      faitsText(souv) || null,
       consigne ? `Ce que la personne demande en plus : « ${consigne} »` : null,
     ].filter(Boolean).join('\n\n');
 
     // Plusieurs jours demandent plus de réflexion : un seul essai, mais plus long.
     const res = await askClaude(`${RULES}\n\n${PLAN_RULES}`, context, [{ role: 'user', content: message }], PLAN_SCHEMA, { timeout: 110_000, retries: 0 });
     const raw = readJson<{ message: string; jours: unknown }>(res);
-    const planned = pickPlan(raw.jours, refs, days);
+    const planned = pickPlan(raw.jours, refs, days, interditsParJour);
     const dressed = planned.filter((p) => p.pieces.length);
 
     const body = String(raw.message ?? '').trim() ||
@@ -518,7 +631,7 @@ async function plan(token: string, input: PlanInput) {
     });
     if (error) throw new Error(`enregistrement de la réponse : ${error.message}`);
 
-    console.log(`[${space.id.slice(0, 8)}] planifier ${res.model} · ${days.length} jour(s) → ${dressed.length} tenue(s) · ${res.usage.input_tokens} + ${res.usage.cache_read_input_tokens ?? 0} en cache → ${res.usage.output_tokens}`);
+    console.log(`[${space.id.slice(0, 8)}] planifier ${res.model} · ${days.length} jour(s) → ${dressed.length} tenue(s) · ${res.usage.input_tokens} + ${res.usage.cache_read_input_tokens ?? 0} en cache → ${res.usage.output_tokens} · ${souv.length} souvenir(s)`);
     return {
       message: body,
       jours: planned.map((p) => ({ date: p.date, titre: p.titre, pourquoi: p.pourquoi, pieces: p.pieces.map((x) => x.garment.id) })),

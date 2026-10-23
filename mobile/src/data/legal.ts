@@ -25,6 +25,8 @@ export const DUREES = {
   photos: '30 jours après l’envoi',
   conversations: '12 mois (2 mois une fois la conversation archivée)',
   ecarts: '6 mois',
+  souvenirs: '12 mois, ou jusqu’à ce que tu les effaces ou retires l’accord « Kodi apprend de mes choix »',
+  coeurs: 'tant que tu les gardes',
   demandes: '90 jours',
   factures: '10 ans, chez le prestataire de paiement (code de commerce)',
 };
