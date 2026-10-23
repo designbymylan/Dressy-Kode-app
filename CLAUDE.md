@@ -406,6 +406,16 @@ pas.
   `screens/Dressing.tsx`), les pièces détourées posées sur le fond, sans
   vignette ni nom, trois à l'écran ; Grille et Portants restent.
 
+**Conversation avec Kodi refaite le 23/10, demandée par l'utilisateur** sur
+une référence d'assistant (`screens/Kode.tsx`, mobile seulement) : à vide,
+Kodi en personne, la grande question (« Alice, qu'est-ce qu'on porte
+aujourd'hui ? »), des cartes de suggestions qui défilent, « Kodi sait déjà »
+en puces, puis le champ en panneau de verre avec l'envoi bleu sous le pouce.
+En conversation : ta question dans une bulle bleue à droite ; la réponse de
+Kodi avec sa tête à gauche et son texte dans une bulle beurre ; une tenue
+proposée dans une carte de verre à part dessous (planche, titre, « Prévoir
+demain », « Ajuster »). L'information « Kodi est une IA » reste à l'ouverture.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 
