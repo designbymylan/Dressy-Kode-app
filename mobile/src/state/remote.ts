@@ -36,6 +36,12 @@ export type Account = {
   notifs: NotifChoice | null;
   /** Les tenues écartées ces six derniers mois (« Pas pour moi »). */
   ecarts: Ecart[];
+  /** Les pièces aimées (cœurs), par identifiant, les plus récentes d'abord. */
+  coeurs: string[];
+  /** Ce que Kodi retient de la personne, avec son accord « Kodi apprend de mes choix ». */
+  souvenirs: Souvenir[];
+  /** Date de l'accord « Kodi apprend de mes choix » ; null sans accord. */
+  gouts: string | null;
   /** Ce qui a été porté ces cinq dernières semaines, jour par jour. */
   journal: Record<Iso, string[]>;
   messages: KodeMessage[];
@@ -299,7 +305,14 @@ export async function loadAccount(): Promise<Account | null> {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
   // Le journal, les tenues écartées et l'accord enrichissent l'app sans la bloquer : en cas d'échec, ils restent vides.
-  const [ecarts, journal, bodyConsent] = await Promise.all([loadEcarts(spaceId), loadJournal(), loadConsent(spaceId, 'silhouette')]);
+  const [ecarts, journal, bodyConsent, coeurs, souvenirs, gouts] = await Promise.all([
+    loadEcarts(spaceId),
+    loadJournal(),
+    loadConsent(spaceId, 'silhouette'),
+    loadCoeurs(spaceId),
+    loadSouvenirs(spaceId),
+    loadConsent(spaceId, 'gouts'),
+  ]);
 
   const p = profile.data!;
   const [pieces, avatar] = await Promise.all([
@@ -359,6 +372,9 @@ export async function loadAccount(): Promise<Account | null> {
     trips: ((trips.data ?? []) as unknown as TripRow[]).map(toTrip),
     notifs: notif === 'tout' || notif === 'planning' || notif === 'non' ? notif : null,
     ecarts,
+    coeurs,
+    souvenirs,
+    gouts,
     journal,
     messages: ((messages.data ?? []) as unknown as MessageRow[]).reverse().map(toMessage),
     kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
@@ -532,9 +548,31 @@ async function loadJournal(): Promise<Record<Iso, string[]>> {
 
 /* ---- Accords et droits (RGPD, 09/10) ---- */
 
-export type ConsentKind = 'silhouette';
+export type ConsentKind = 'silhouette' | 'gouts';
 
 /** L'accord en vigueur : sa date s'il est donné, null s'il ne l'est pas ou plus. */
+/** Les pièces aimées (cœurs). En cas d'échec, la liste reste vide. */
+async function loadCoeurs(spaceId: string): Promise<string[]> {
+  const r = await db().from('likes').select('garment_id').eq('space_id', spaceId).not('garment_id', 'is', null).order('created_at', { ascending: false });
+  if (r.error) {
+    console.warn('[supabase] cœurs :', r.error.message);
+    return [];
+  }
+  return (r.data ?? []).map((x) => x.garment_id as string);
+}
+
+/** Un souvenir de Kodi : ce qu'il a retenu d'un cœur ou d'une tenue écartée. */
+export type Souvenir = { id: string; origine: 'aime' | 'ecarte'; texte: string; date: string };
+
+async function loadSouvenirs(spaceId: string): Promise<Souvenir[]> {
+  const r = await db().from('kodi_faits').select('id, origine, texte, created_at').eq('space_id', spaceId).order('created_at', { ascending: false }).limit(100);
+  if (r.error) {
+    console.warn('[supabase] souvenirs :', r.error.message);
+    return [];
+  }
+  return (r.data ?? []).map((f) => ({ id: f.id as string, origine: f.origine as Souvenir['origine'], texte: f.texte as string, date: f.created_at as string }));
+}
+
 async function loadConsent(spaceId: string, kind: ConsentKind): Promise<string | null> {
   const r = await db().from('consents').select('granted, created_at').eq('space_id', spaceId).eq('kind', kind).order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (r.error) {
@@ -574,6 +612,18 @@ export async function saveEcart(session: Session, e: Ecart) {
     await db().from('outfit_feedback').insert({ id: e.id, space_id: session.spaceId, garment_ids, reason: e.raison, target_ids: e.cibles.filter(isUuid) }),
     'tenue écartée',
   );
+}
+
+/** Un cœur posé ou retiré sur une pièce. */
+export async function setCoeur(session: Session, pieceId: string, aime: boolean) {
+  if (!isUuid(pieceId)) return;
+  if (aime) check(await db().from('likes').insert({ space_id: session.spaceId, garment_id: pieceId }), 'cœur');
+  else check(await db().from('likes').delete().eq('space_id', session.spaceId).eq('garment_id', pieceId), 'cœur');
+}
+
+/** Un souvenir de Kodi effacé à la demande. */
+export async function removeSouvenir(id: string) {
+  check(await db().from('kodi_faits').delete().eq('id', id), 'souvenir');
 }
 
 export async function unwear(ids: string[]) {

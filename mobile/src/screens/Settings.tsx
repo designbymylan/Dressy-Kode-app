@@ -126,6 +126,7 @@ export function Settings() {
         <Label text="Vie privée" />
         <Group>
           <Row testID="settings-donnees" icon="lock" title="Tes données" detail="Ce que nous gardons, tes accords, tes droits" onPress={() => nav.navigate('TesDonnees')} />
+          <Row testID="settings-choix" icon="heart" title="Mes choix" detail="Tes cœurs, et ce que Kodi retient de toi" onPress={() => nav.navigate('MesChoix')} />
           <Row testID="settings-politique" icon="eye" title="Politique de confidentialité" onPress={() => nav.navigate('Confidentialite')} last />
         </Group>
 

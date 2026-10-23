@@ -114,6 +114,12 @@ type State = {
   notifs: NotifChoice | null;
   /** Les tenues écartées par « Pas pour moi », les plus récentes d'abord. */
   ecarts: Ecart[];
+  /** Les pièces aimées (cœurs), par identifiant. */
+  coeurs: string[];
+  /** Ce que Kodi retient de la personne (avec son accord « Kodi apprend de mes choix »). */
+  souvenirs: remote.Souvenir[];
+  /** Date de l'accord « Kodi apprend de mes choix » ; null sans accord. */
+  gouts: string | null;
   /** Ce qui a été porté, jour par jour (« Je la porte ») : le bilan du dimanche s'en sert. */
   journal: Record<Iso, string[]>;
   messages: KodeMessage[];
@@ -160,6 +166,9 @@ const initial: State = {
   trips: [],
   notifs: null,
   ecarts: [],
+  coeurs: [],
+  souvenirs: [],
+  gouts: null,
   journal: {},
   messages: [],
   kodeUsed: 0,
@@ -222,6 +231,9 @@ type Action =
   | { t: 'removeTrip'; id: string }
   | { t: 'notifs'; choice: NotifChoice }
   | { t: 'ecart'; ecart: Ecart }
+  | { t: 'coeur'; id: string; aime: boolean }
+  | { t: 'removeSouvenir'; id: string }
+  | { t: 'gouts'; date: string | null }
   | { t: 'ask'; message: KodeMessage }
   | { t: 'answer'; message: KodeMessage; refund?: boolean }
   | { t: 'setPlan'; plan: PlanId; period: Period }
@@ -275,6 +287,9 @@ function reducer(s: State, a: Action): State {
         trips: acc.trips,
         notifs: acc.notifs ?? s.notifs,
         ecarts: acc.ecarts,
+        coeurs: acc.coeurs,
+        souvenirs: acc.souvenirs,
+        gouts: acc.gouts,
         journal: acc.journal,
         messages: acc.messages,
         kodeUsed: acc.kodeUsed,
@@ -330,6 +345,13 @@ function reducer(s: State, a: Action): State {
     case 'ecart':
       // La tenue écartée sort de la liste : le même rang montre déjà la suivante.
       return { ...s, ecarts: garder([a.ecart, ...s.ecarts]), wornToday: null };
+    case 'coeur':
+      return { ...s, coeurs: a.aime ? [a.id, ...s.coeurs.filter((x) => x !== a.id)] : s.coeurs.filter((x) => x !== a.id) };
+    case 'removeSouvenir':
+      return { ...s, souvenirs: s.souvenirs.filter((x) => x.id !== a.id) };
+    case 'gouts':
+      // Retiré, l'accord emporte les souvenirs : les cœurs restent, ce sont des favoris.
+      return { ...s, gouts: a.date, souvenirs: a.date ? s.souvenirs : [] };
     case 'addPiece':
       return { ...s, pieces: [a.piece, ...s.pieces], fresh: [...s.fresh, a.piece.id], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
     case 'swapId': {
@@ -444,7 +466,7 @@ function refreshDemo(pieces: Piece[]): Piece[] {
   return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
 }
 
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -713,6 +735,24 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         const more = left.some((o) => !gone.has(cleTenue(o.pieces)));
         dispatch({ t: 'toast', text: more ? 'Noté. Kodi ne te la proposera plus.' : 'Noté. Ajoute une pièce ou deux : Kodi aura plus de choix.' });
         return more;
+      },
+      /** Un cœur sur une pièce : posé ou retiré, gardé dans « Mes choix ». */
+      coeur: (id: string) => {
+        const aime = !getState().coeurs.includes(id);
+        dispatch({ t: 'coeur', id, aime });
+        const session = live();
+        if (session) sync(remote.setCoeur(session, id, aime));
+      },
+      /** L'accord « Kodi apprend de mes choix ». Retiré, les souvenirs partent aussitôt. */
+      accorderGouts: (on: boolean) => {
+        dispatch({ t: 'gouts', date: on ? isoOf(0) : null });
+        const session = live();
+        if (session) sync(remote.saveConsent(session, 'gouts', on));
+      },
+      retirerSouvenir: (id: string) => {
+        dispatch({ t: 'removeSouvenir', id });
+        const session = live();
+        if (session) sync(remote.removeSouvenir(id));
       },
       addPiece: (piece: Piece) => {
         dispatch({ t: 'addPiece', piece });
