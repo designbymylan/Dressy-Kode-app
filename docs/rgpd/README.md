@@ -52,15 +52,47 @@ App mobile :
 Site web : la page publique `/confidentialite` et, à l'inscription, la même
 case des 15 ans avec le lien vers la politique.
 
+## Version 1.1 de la politique (23/10)
+
+Ajouts et précisions, tous écrits dans `mobile/src/data/legal.ts` :
+
+- Seuls l'e-mail et le mot de passe sont obligatoires pour un compte (art. 13.2.e).
+- Pas de délégué à la protection des données désigné (art. 37), à confirmer.
+- Prêts : seul le prénom d'une personne est noté, rien d'autre sur elle.
+- Preuve d'accord silhouette : gardée tant que le compte existe, puis effacée.
+- Kodi ne prend aucune décision à la place de la personne (art. 22) ; les
+  pièces dessinées sont dites produites par une IA.
+- Conseil : éviter de photographier un objet qui révèle une conviction ou une santé (art. 9).
+- Exports : supprimés 2 jours après préparation (`menage`).
+- Droits : délai d'un mois, prolongeable de deux mois ; preuve d'identité possible.
+- Mineurs : en dessous de 15 ans, pas de compte ; les parents peuvent demander l'effacement.
+- Cookies : listés (`dk_theme`, `dk_theme_tab`, cookie de connexion), sans consentement.
+
 ## À faire avant la sortie
 
 Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
 
-1. **L'identité de l'éditeur et une adresse de contact.** Remplir `EDITEUR`
-   dans `mobile/src/data/legal.ts` (nom ou raison sociale, forme, adresse,
-   SIREN, e-mail de contact), puis `node tools/politique.mjs`. Tant que ce
-   n'est pas fait, l'app et le site disent que le contact arrive. Le site
-   aura aussi besoin de mentions légales (LCEN, art. 6 III).
+1. **L'identité de l'éditeur et l'adresse de contact.** Adresse dédiée à
+   Dresskode à créer, puis : dans `mobile/src/data/legal.ts`, remplir
+   `EDITEUR.contact` (e-mail) et, si besoin, `EDITEUR.forme`, `adresse`,
+   `siren`, puis `node tools/politique.mjs`. Tant que ce n'est pas fait,
+   l'app et le site disent que le contact arrive. Le site aura aussi besoin
+   de mentions légales séparées (LCEN, art. 6 III : éditeur, directeur de la
+   publication, hébergeur).
+1 bis. **Durée des journaux techniques** : la politique dit « quelques jours ».
+   L'art. 13 demande une durée précise : la fixer dans les réglages de
+   l'hébergeur, puis la écrire dans `Sécurité` (legal.ts).
+1 ter. **Comptes inactifs** : aucune règle n'existe dans le code. À décider
+   (par exemple : prévenir après trois ans sans connexion, puis effacer) et à
+   coder dans `menage` avant de l'écrire dans la politique.
+1 quater. **Hébergeur du site** (Vercel, États-Unis) : vérifier qu'il est
+   couvert par un contrat de sous-traitance et par le cadre UE-États-Unis, et
+   le nommer dans les mentions légales.
+1 quinquies. **Obligations voisines à vérifier avec un juriste** : droit de
+   rétractation de 14 jours sur les abonnements, médiateur de la consommation
+   (L612-1 du code de la consommation), prix de référence des réductions
+   affichées (« Économise % », prix barré), et marquage des images produites
+   par IA (règlement européen sur l'IA, art. 50).
 2. **Les contrats de sous-traitance (art. 28)** à accepter dans chaque
    console : Supabase, Anthropic, Google (API Gemini), Stripe, Expo.
 3. **Vérifier chez chaque prestataire ce que la politique promet** :

@@ -18,7 +18,7 @@ export const EDITEUR: { nom: string; forme: string | null; adresse: string | nul
   contact: null,
 };
 
-export const POLITIQUE_VERSION = 'Version 1.0 du 9 octobre 2026';
+export const POLITIQUE_VERSION = 'Version 1.1 du 23 octobre 2026';
 
 /** Les durées de conservation, les mêmes que celles appliquées chaque nuit (fonction `menage`). */
 export const DUREES = {
@@ -45,16 +45,16 @@ export const POLITIQUE: Section[] = [
     titre: 'Qui est responsable',
     texte: [
       'Le responsable du traitement est l’éditeur de Dresskode, dont l’identité figure en bas de cette page.',
-      'Pour toute question sur tes données, ou pour exercer tes droits, écris à l’adresse de contact indiquée en bas de page.',
+      'Nous n’avons pas désigné de délégué à la protection des données. Pour toute question sur tes données, ou pour exercer tes droits, écris à l’adresse de contact indiquée en bas de page.',
     ],
   },
   {
     titre: 'Ce que nous gardons, et pourquoi',
     liste: [
-      { titre: 'Ton compte', texte: 'E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).' },
-      { titre: 'Ton dressing', texte: 'Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.' },
+      { titre: 'Ton compte', texte: 'E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Seuls l’e-mail et le mot de passe sont obligatoires ; le reste est facultatif. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).' },
+      { titre: 'Ton dressing', texte: 'Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires. Pour les prêts, seul le prénom de la personne est noté : rien d’autre sur elle.' },
       { titre: 'Ton style', texte: 'Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat.' },
-      { titre: 'Ta silhouette', texte: 'Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé.' },
+      { titre: 'Ta silhouette', texte: 'Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé. La preuve de ton accord (date et version) reste tant que ton compte existe, puis elle est effacée avec lui.' },
       { titre: 'Ton agenda et Kodi', texte: 'Tes rendez-vous, voyages, tenues prévues et conversations avec Kodi. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).' },
       { titre: 'Tes « Pas pour moi »', texte: 'Les tenues que tu écartes et leur raison. Pour ne plus te proposer ce qui ne te plaît pas. Base : le contrat. Gardées 6 mois.' },
       { titre: 'Ton abonnement', texte: 'Ton offre et ton historique de paiement. Pour te facturer. Base : le contrat et nos obligations comptables. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez le prestataire de paiement, qui garde les factures 10 ans comme la loi l’exige.' },
@@ -66,10 +66,10 @@ export const POLITIQUE: Section[] = [
     titre: 'Kodi est une intelligence artificielle',
     texte: [
       'Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces, ton profil de style, ton agenda des deux semaines à venir et tes tenues écartées ; ta silhouette et ta taille si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.',
-      'Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle.',
+      'Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle. Les pièces dessinées sont des images produites par une IA : ce ne sont pas des photos de tes vêtements.',
       'Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.',
-      'Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.',
-      'Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous.',
+      'Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent. Il ne prend aucune décision à ta place : tu choisis toujours.',
+      'Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous. Évite aussi de photographier un objet qui révèle une conviction ou une santé (un signe religieux, un bracelet médical).',
     ],
   },
   {
@@ -95,6 +95,8 @@ export const POLITIQUE: Section[] = [
       { titre: 'Les tenues écartées', texte: '6 mois.' },
       { titre: 'Les demandes de dessin', texte: '90 jours (la pièce dessinée reste dans ton dressing).' },
       { titre: 'Les factures', texte: '10 ans, chez le prestataire de paiement, comme le code de commerce l’exige.' },
+      { titre: 'Les fichiers d’export', texte: 'Le fichier de tes données est supprimé 2 jours après sa préparation.' },
+      { titre: 'La preuve de tes accords', texte: 'Tant que ton compte existe, puis effacée avec lui.' },
     ],
   },
   {
@@ -108,13 +110,13 @@ export const POLITIQUE: Section[] = [
     titre: 'Tes droits',
     texte: [
       'Tu peux accéder à tes données, les corriger, les effacer, les emporter (portabilité), en limiter l’usage, t’opposer à un traitement fondé sur notre intérêt légitime, retirer ton accord à tout moment, et laisser des directives sur ce qu’elles deviennent après ton décès.',
-      'Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Pour le reste, écris-nous : nous répondons sous un mois.',
+      'Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Pour le reste, écris-nous : nous répondons sous un mois, prolongeable de deux mois si ta demande est complexe, et nous te le disons. Avant de répondre, nous pouvons te demander une preuve de ton identité.',
       'Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL (cnil.fr, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07).',
     ],
   },
   {
     titre: 'À partir de 15 ans',
-    texte: ['Dresskode est ouverte à partir de 15 ans, l’âge auquel la loi française permet de consentir seul au traitement de ses données en ligne.'],
+    texte: ['Dresskode est ouverte à partir de 15 ans, l’âge auquel la loi française permet de consentir seul au traitement de ses données en ligne. Si tu as moins de 15 ans, tu ne peux pas créer de compte. Si tes parents découvrent un compte créé sans leur accord, ils peuvent demander son effacement à l’adresse de contact.'],
   },
   {
     titre: 'Sans compte',
@@ -122,7 +124,10 @@ export const POLITIQUE: Section[] = [
   },
   {
     titre: 'Cookies et traceurs',
-    texte: ['L’app n’utilise aucun traceur publicitaire ni de mesure d’audience. Le site n’utilise que les cookies nécessaires à ta connexion, qui ne demandent pas d’accord.'],
+    texte: [
+      'L’app n’utilise aucun traceur publicitaire ni de mesure d’audience, et ne dépose aucun cookie : elle garde seulement sur ton téléphone tes réglages et tes choix.',
+      'Le site n’utilise que des cookies nécessaires au service : le cookie de connexion, et deux cookies de préférence, « dk_theme » (clair ou sombre) et « dk_theme_tab » (l’encoche de thème). Ces cookies ne demandent pas d’accord, car ils ne servent qu’à te rendre le service demandé. Aucun cookie publicitaire ni de mesure d’audience.',
+    ],
   },
   {
     titre: 'Si ce texte change',
