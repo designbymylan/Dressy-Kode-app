@@ -4,17 +4,17 @@
  * Réveillé par la base (trigger sur ai_jobs, filet pg_cron), il prend la
  * tâche la plus ancienne en file et la fait avancer d'UN pas :
  *
- *   photo confiée → Opus 5 repère TOUTES les pièces (ou celles que la
+ *   photo confiée → Sonnet 5.5 repère TOUTES les pièces (ou celles que la
  *     personne a nommées) et écrit la consigne de chacune ; la tâche garde
  *     la première pièce et crée une tâche fille par pièce en plus, que
  *     d'autres passages traitent en parallèle ;
- *   pièce de marque identifiée → Opus 5 la retrouve sur le web (recherche)
+ *   pièce de marque identifiée → Sonnet 5.5 la retrouve sur le web (recherche)
  *     et enrichit sa consigne des détails du vrai modèle ;
  *   pièce → Nano Banana la redessine, seule, sur fond uni (en regardant
  *     les photos du modèle s'il est bien identifié)
- *     → Sonnet 5 compare à la photo et note sur 100
+ *     → Sonnet 5.5 compare à la photo et note sur 100
  *     → validée (≥ 88) : détourage, vignette, rangement dans le dressing
- *     → sinon : Opus 5 corrige la consigne pour un second essai, puis le
+ *     → sinon : Sonnet 5.5 corrige la consigne pour un second essai, puis le
  *       contrôle garde la meilleure des deux images.
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
@@ -150,12 +150,12 @@ function targetOf(job: Job): Target {
 // ---------------------------------------------------------------- repérage
 
 /**
- * Opus 5 repère les pièces de la photo. La tâche garde la première ; les
+ * Sonnet 5.5 repère les pièces de la photo. La tâche garde la première ; les
  * suivantes deviennent des tâches filles, réveillées aussitôt par le
  * déclencheur d'insertion : elles se dessinent en même temps.
  *
  * Le résultat du repérage est écrit AVANT la création des filles : un
- * passage tué entre les deux reprend sans rappeler Opus ni créer de
+ * passage tué entre les deux reprend sans rappeler le modèle ni créer de
  * doublons.
  */
 async function survey(job: Job, sources: Img[], log: (m: string) => void): Promise<Target> {
@@ -164,7 +164,7 @@ async function survey(job: Job, sources: Img[], log: (m: string) => void): Promi
   if (!inv) {
     const { data: profile } = await db.from('style_profile').select('gender').eq('space_id', job.space_id).maybeSingle();
     const found = await inventory({ sources, hint: job.user_input, gender: profile?.gender ?? null });
-    log(`Opus (repérage) → ${found.pieces.length} pièce(s) : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
+    log(`Sonnet (repérage) → ${found.pieces.length} pièce(s) : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
     if (!found.pieces.length) throw new AgentError(SAY.nothing, found.note || 'aucune pièce repérée');
 
     // La photo compte déjà pour une pièce dans la limite de l'offre ; les
@@ -211,7 +211,7 @@ async function lookup(job: Job, target: Target, sources: Img[], log: (m: string)
   try {
     const r = await research({ sources, target });
     next = { ...target, reference: r.reference, prompt: r.prompt || target.prompt };
-    log(r.reference ? `Opus (recherche) → ${r.reference.produit} (${r.reference.certitude}), ${r.reference.sources.length} source(s)` : 'Opus (recherche) → rien de sûr, consigne d’origine');
+    log(r.reference ? `Sonnet (recherche) → ${r.reference.produit} (${r.reference.certitude}), ${r.reference.sources.length} source(s)` : 'Sonnet (recherche) → rien de sûr, consigne d’origine');
   } catch (err) {
     log(`recherche impossible (${err instanceof AgentError ? err.detail : err instanceof Error ? err.message : err}) : consigne d’origine`);
     next = { ...target, reference: null };
@@ -247,7 +247,7 @@ async function attempt(job: Job, n: number, previous: Candidate | null, started:
     });
     base = r.prompt;
     usage.consigne = r.usage;
-    log(`Opus (nouvelle consigne) → essai ${n}`);
+    log(`Sonnet (nouvelle consigne) → essai ${n}`);
   }
 
   const search = wantsImageSearch(target);

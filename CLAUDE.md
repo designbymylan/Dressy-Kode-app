@@ -29,7 +29,15 @@ Deux applications, un seul projet Supabase :
 
 Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur :
 
-- **Une photo, toutes ses pièces.** Opus 5 (`claude-opus-5`) repère chaque
+- **Modèles de l'agent (23/10) : Sonnet seulement.** Les consignes et la
+  recherche tournent sur `claude-sonnet-5-5` (effort `xhigh`), le contrôle et
+  le choix entre images sur `claude-sonnet-5-5` (effort `high`). Ni Opus ni
+  Fable, pour aucune étape : le coût par pièce ne le justifie pas. Haiku reste
+  permis pour les seules consignes (`CLAUDE_PROMPT_MODEL`). `steps.ts` refuse
+  un autre modèle lu dans les secrets et garde le défaut. Pas de repli serveur
+  vers Opus sur cet agent. La fonction `kode` (Kodi) reste sur Opus 5 en
+  attendant une décision.
+- **Une photo, toutes ses pièces.** Sonnet 5.5 (`claude-sonnet-5-5`) repère chaque
   pièce visible (vêtements, chaussures, sacs, bijoux, accessoires) et écrit
   une consigne par pièce pour Nano Banana. Si la personne précise ce qu'elle
   veut (« seulement la veste et le jean »), seules ces pièces sont repérées.
@@ -37,12 +45,12 @@ Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur 
   pièce) : la vitesse compte autant que la ressemblance.
 - Chaque pièce arrive dans le dressing **sans fond** (PNG transparent,
   détouré par `cutout.ts`), jamais avec le fond de la photo ou du générateur.
-- **Fidélité avant tout** (04/10) : Opus 5 relève les vraies teintes (`hex`)
+- **Fidélité avant tout** (04/10) : Sonnet 5.5 relève les vraies teintes (`hex`)
   et les marquages visibles (logos, bandes, textes), qui sont reproduits tels
   quels sur le dessin. Le fond du dessin s'éloigne des teintes de la pièce :
   blanc, vert ou magenta (détourage par chrominance, sans liseré) ; le gris
   est réservé aux métaux. La teinte mesurée devient celle de la pièce.
-- **Recherche du modèle** (04/10) : quand Opus 5 reconnaît une marque ou un
+- **Recherche du modèle** (04/10) : quand Sonnet 5.5 reconnaît une marque ou un
   modèle (certitude moyenne ou forte, jamais sur une simple supposition) et
   juge qu'une recherche aidera, Claude cherche le vrai modèle sur le web
   (`web_search`, `web_fetch`) avant la consigne, et le générateur s'appuie

@@ -50,7 +50,7 @@ const KINDS_TEXT = Object.entries(KINDS).map(([c, ks]) => `${c} → ${ks.join(',
 /** Au-delà, une photo de groupe ou de penderie coûterait trop cher en une fois. */
 export const MAX_PIECES = 6;
 
-// ---------------------------------------------------------------- repérage (Opus)
+// ---------------------------------------------------------------- repérage (Sonnet)
 
 export const INVENTORY_SYSTEM = `Tu es le styliste de Dresskode, une garde-robe numérique. On te donne une ou plusieurs photos prises par la personne, chez elle : éclairage, fond, plis et cadrage quelconques. Elles montrent ses vêtements, portés ou posés.
 
@@ -147,7 +147,7 @@ export function inventoryUserText(input: { hint: string; gender: string | null }
   return lines.join('\n');
 }
 
-// ---------------------------------------------------------------- nouvel essai (Opus)
+// ---------------------------------------------------------------- nouvel essai (Sonnet)
 
 export type Identification = { marque: string; modele: string; coloris: string; certitude: 'aucune' | 'faible' | 'moyenne' | 'forte'; indices: string };
 
@@ -314,7 +314,7 @@ export function isolationClause(target: Pick<Target, 'name' | 'where'>): string 
  * Blanc d'abord (le rendu produit le plus naturel), puis vert d'incrustation,
  * puis magenta quand la pièce a déjà du vert ; gris moyen en dernier.
  *
- * L'écart se mesure sur les vraies teintes mesurées par Opus quand il les
+ * L'écart se mesure sur les vraies teintes mesurées par Sonnet quand il les
  * donne : avec la seule étiquette « vert », un denim menthe délavé passait
  * pour un vert foncé et partait sur fond gris, trop proche de lui (04/10).
  *
@@ -380,7 +380,7 @@ export const deltaE = (a: readonly number[], b: readonly number[]) => {
   return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
 };
 
-/** Les teintes de la pièce : mesurées si Opus les a données, sinon celles des étiquettes de couleur. */
+/** Les teintes de la pièce : mesurées si Sonnet les a données, sinon celles des étiquettes de couleur. */
 export function garmentRgbs(colors: readonly string[], hex: readonly string[] = []): [number, number, number][] {
   const measured = hex.map(hexRgb).filter((x): x is [number, number, number] => x !== null);
   if (measured.length) return measured;
@@ -428,7 +428,7 @@ export function searchClause(t: Target): string {
   return `This item has been identified as: ${product}. Before drawing, use Google Search (web and images) to look up official product photos of this exact model and colourway, and use them only to get its design exactly right: panel layout, number, shape and placement of stripes and logos, sole construction, proportions. The person's photo stays the reference for the actual colours, wash, wear and every visible detail; if they disagree, the person's photo wins.`;
 }
 
-// ---------------------------------------------------------------- recherche (Opus + web)
+// ---------------------------------------------------------------- recherche (Sonnet + web)
 
 export const RESEARCH_SYSTEM = `Tu es le documentaliste de Dresskode, une garde-robe numérique. On te donne la ou les photos d'une personne, la fiche d'UNE pièce qu'elle possède et une identification probable (marque, modèle, coloris). Un générateur d'images doit redessiner cette pièce à l'identique ; il se trompe sur les modèles qu'il ne connaît pas (bandes en trop ou en moins, semelle inventée).
 

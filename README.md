@@ -10,7 +10,7 @@ avec ce qu'on possède déjà.
 |---|---|
 | `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, branchée sur Supabase (mode démonstration sans réseau). Voir `mobile/README.md`. |
 | `web/` | L'application web (Next.js App Router, React 19, `@supabase/ssr`), branchée sur Supabase. |
-| `supabase/functions/dressy-agent/` | L'agent central : photo → Opus 5 (toutes les pièces) → Nano Banana (une image par pièce, en parallèle) → Sonnet 5 → dressing. |
+| `supabase/functions/dressy-agent/` | L'agent central : photo → Sonnet 5.5 (toutes les pièces) → Nano Banana (une image par pièce, en parallèle) → Sonnet 5.5 → dressing. |
 | `supabase/functions/kode/` | Kodi, le styliste : question → Claude → tenue composée avec les pièces du dressing. |
 | `supabase/functions/billing/`, `stripe-webhook/` | Les abonnements : ouverture du paiement Stripe, et le webhook qui active l'offre. |
 | `supabase/migrations/` | Le schéma SQL complet, dans l'ordre où il a été appliqué au projet Supabase. |
@@ -66,7 +66,7 @@ Supabase, ses clés restent dans Supabase.
 Chaque photo ajoutée devient une ligne `ai_jobs`. Un trigger réveille l'Edge
 Function `dressy-agent`, qui :
 
-1. demande à **Claude Opus 5** de repérer TOUTES les pièces de la photo
+1. demande à **Claude Sonnet 5.5** de repérer TOUTES les pièces de la photo
    (vêtements, chaussures, sacs, bijoux, accessoires), ou seulement celles que
    la personne a nommées dans la précision, et d'écrire une consigne d'image
    par pièce ;
@@ -74,8 +74,8 @@ Function `dressy-agent`, qui :
    se dessinent en parallèle, chacune dans son propre passage ;
 3. fait redessiner chaque pièce, seule et sur un fond uni choisi loin de ses
    couleurs, par **Nano Banana** à partir de la photo ;
-4. fait noter la fidélité par **Claude Sonnet 5**, validée à 88/100 ; sinon
-   Opus 5 corrige la consigne pour un second essai, puis le contrôle garde la
+4. fait noter la fidélité par **Claude Sonnet 5.5**, validée à 88/100 ; sinon
+   Sonnet 5.5 corrige la consigne pour un second essai, puis le contrôle garde la
    meilleure des deux images ;
 5. détoure l'image retenue (fond, trous enfermés, poussières, bords doux) et
    la range, transparente, dans le dressing.
@@ -86,9 +86,11 @@ jamais un modèle ; le détail technique part dans les journaux de la fonction.
 
 Les clés `GEMINI_API_KEY` et `ANTHROPIC_API_KEY` se règlent dans
 Supabase > Edge Functions > Secrets, jamais dans le code. Réglages facultatifs :
-`CLAUDE_PROMPT_MODEL` (consignes, `claude-opus-5` par défaut),
-`CLAUDE_MODEL` (contrôle, `claude-sonnet-5`), `CLAUDE_PROMPT_EFFORT` et
-`CLAUDE_JUDGE_EFFORT` (`medium` et `low`), `GEMINI_IMAGE_MODEL`. Vérification
+`CLAUDE_PROMPT_MODEL` (consignes, `claude-sonnet-5-5` par défaut ; Haiku
+permis, Opus et Fable refusés), `CLAUDE_MODEL` (contrôle, `claude-sonnet-5-5`
+seul permis), `CLAUDE_PROMPT_EFFORT` et `CLAUDE_JUDGE_EFFORT` (`xhigh` et
+`high`), `GEMINI_IMAGE_MODEL`. Un secret resté sur Opus est ignoré avec un
+avertissement dans les journaux. Vérification
 gratuite de la configuration : `GET /functions/v1/dressy-agent?verifier`.
 
 ## Kodi, le styliste

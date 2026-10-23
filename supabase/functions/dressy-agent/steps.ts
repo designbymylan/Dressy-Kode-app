@@ -2,13 +2,15 @@
  * Les modèles que l'agent fait travailler. Chaque fonction ne fait qu'un
  * appel et rend un résultat propre ; l'enchaînement est dans index.ts.
  *
- *   Opus 5 (MODELS.prompts) : repère les pièces d'une photo et écrit la
+ *   Sonnet 5.5 (MODELS.prompts) : repère les pièces d'une photo et écrit la
  *     consigne de chacune ; réécrit la consigne après un essai refusé.
- *   Opus 5 + recherche web : retrouve le modèle exact d'une pièce de marque
+ *   Sonnet 5.5 + recherche web : retrouve le modèle exact d'une pièce de marque
  *     et en tire les détails de design (bandes, semelle, logo).
  *   Nano Banana (MODELS.gemini) : dessine la pièce seule, sur fond uni ; pour
  *     un modèle identifié, il regarde aussi ses photos (recherche Google).
- *   Sonnet 5 (MODELS.judge) : contrôle qualité, plus rapide pour un verdict.
+ *   Sonnet 5.5 (MODELS.judge) : contrôle qualité et choix entre images.
+ *
+ * Ni Opus ni Fable ici : leur coût ne se justifie pas à chaque pièce.
  *
  * Rien de ce fichier n'est montré tel quel : un AgentError porte un message
  * écrit pour la personne (qui ne nomme jamais les modèles) et un détail
@@ -55,19 +57,34 @@ const effort = (name: string, fallback: Effort): Effort => {
   return v && ['low', 'medium', 'high', 'xhigh', 'max'].includes(v) ? v as Effort : fallback;
 };
 
-export const MODELS = {
-  // Opus 5 écrit les consignes de Nano Banana : c'est l'étape qui décide de
-  // la ressemblance, et un seul appel sert toutes les pièces d'une photo.
-  prompts: env('CLAUDE_PROMPT_MODEL') ?? 'claude-opus-5',
-  gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
-  judge: env('CLAUDE_MODEL') ?? 'claude-sonnet-5',
+/**
+ * Un modèle lu dans les secrets doit appartenir à une famille permise ; sinon
+ * le défaut sert, et un avertissement part dans les journaux. Un secret resté
+ * sur Opus ne peut donc plus faire grimper la facture en silence.
+ */
+const modele = (name: string, fallback: string, familles: string[]) => {
+  const v = env(name);
+  if (!v) return fallback;
+  if (familles.some((f) => v.startsWith(f))) return v;
+  console.warn(`${name} = ${v} refusé (modèle non permis) : ${fallback} utilisé`);
+  return fallback;
 };
 
-// L'effort est le premier levier de vitesse : « medium » est déjà très bon
-// sur Opus 5 ; le verdict, plus simple, passe en « low ».
+export const MODELS = {
+  // Sonnet 5.5 écrit les consignes de Nano Banana : c'est l'étape qui décide de
+  // la ressemblance, et un seul appel sert toutes les pièces d'une photo.
+  // Haiku 5.5 reste permis ici, pour un coût moindre au prix du détail.
+  prompts: modele('CLAUDE_PROMPT_MODEL', 'claude-sonnet-5-5', ['claude-sonnet-', 'claude-haiku-']),
+  gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
+  // Le contrôle juge la fidélité au vêtement : Sonnet seulement.
+  judge: modele('CLAUDE_MODEL', 'claude-sonnet-5-5', ['claude-sonnet-']),
+};
+
+// L'effort règle la vitesse et le soin : « xhigh » pour les consignes, là où
+// se joue la ressemblance ; « high » pour le contrôle, qui note et choisit.
 export const EFFORT = {
-  prompts: effort('CLAUDE_PROMPT_EFFORT', 'medium'),
-  judge: effort('CLAUDE_JUDGE_EFFORT', 'low'),
+  prompts: effort('CLAUDE_PROMPT_EFFORT', 'xhigh'),
+  judge: effort('CLAUDE_JUDGE_EFFORT', 'high'),
 };
 
 export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
@@ -252,7 +269,7 @@ async function askJson(opts: {
   }
 }
 
-/** Opus 5 repère toutes les pièces de la photo (ou celles que la personne a nommées) et écrit leur consigne. */
+/** Sonnet 5.5 repère toutes les pièces de la photo (ou celles que la personne a nommées) et écrit leur consigne. */
 export async function inventory(input: { sources: Img[]; hint: string; gender: string | null }): Promise<{ pieces: Target[]; note: string; usage: Usage }> {
   const { data, usage } = await askJson({
     model: MODELS.prompts,
@@ -270,7 +287,7 @@ export async function inventory(input: { sources: Img[]; hint: string; gender: s
   return { pieces, note: String(o.note ?? '').trim(), usage };
 }
 
-/** Opus 5 réécrit la consigne d'une pièce d'après les écarts relevés par le contrôle. */
+/** Sonnet 5.5 réécrit la consigne d'une pièce d'après les écarts relevés par le contrôle. */
 export async function refine(input: { sources: Img[]; target: Target; previous: Previous }): Promise<{ prompt: string; usage: Usage }> {
   const { data, usage } = await askJson({
     model: MODELS.prompts,
@@ -286,7 +303,7 @@ export async function refine(input: { sources: Img[]; target: Target; previous: 
 }
 
 /**
- * Opus 5, avec la recherche web, retrouve le modèle exact d'une pièce de
+ * Sonnet 5.5, avec la recherche web, retrouve le modèle exact d'une pièce de
  * marque et en tire ses détails de design. Rien de sûr → reference null :
  * la pièce garde sa consigne d'origine, rien n'est perdu.
  */
