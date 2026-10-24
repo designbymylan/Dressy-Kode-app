@@ -23,6 +23,7 @@ import { ProfileEdit } from '../screens/ProfileEdit';
 import { Settings } from '../screens/Settings';
 import { Bilan } from '../screens/Bilan';
 import { TesDonnees } from '../screens/TesDonnees';
+import { MesChoix } from '../screens/MesChoix';
 import { Confidentialite } from '../screens/Confidentialite';
 import { ShareScreen } from '../screens/Share';
 import { Offers } from '../screens/Offers';
@@ -79,6 +80,7 @@ export function RootNavigator() {
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="Bilan" component={Bilan} />
           <Stack.Screen name="TesDonnees" component={TesDonnees} />
+          <Stack.Screen name="MesChoix" component={MesChoix} />
           <Stack.Screen name="ProfileEdit" component={ProfileEdit} />
           <Stack.Screen name="Affiner" component={Affiner} />
           <Stack.Screen name="Offers" component={Offers} />

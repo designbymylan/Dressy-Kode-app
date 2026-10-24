@@ -37,6 +37,7 @@ export type RootParams = {
   Bilan: undefined;
   /** Tes données (09/10, RGPD) : ce qui est gardé, tes accords, tes droits. */
   TesDonnees: undefined;
+  MesChoix: undefined;
   /** La politique de confidentialité (09/10). */
   Confidentialite: undefined;
   Share: { id: string };

@@ -168,8 +168,15 @@ const ASSISTANCE: Record<string, string> = {
   achats: 'quand une pièce manque vraiment, dis quel type de pièce ferait le plus d’usage avec le reste',
 };
 
-/** La silhouette et la taille, lues seulement avec l'accord « silhouette » en vigueur. */
-export type Corps = { shape: string | null; height_cm: number | null };
+/**
+ * La silhouette, la taille et les tailles habituelles, lues seulement avec
+ * l'accord « silhouette » en vigueur (taille et mesures touchent au corps).
+ */
+export type Corps = {
+  shape: string | null;
+  height_cm: number | null;
+  usual_sizes?: { haut?: string; bas?: string; pointure?: string } | null;
+};
 
 const SHAPE: Record<string, string> = {
   triangle: 'en A (hanches plus marquées que les épaules)',
@@ -191,6 +198,12 @@ export function profileText(p: Profile | null, corps: Corps | null = null): stri
   const lines: string[] = [];
   const body = [corps?.shape && SHAPE[corps.shape] ? `silhouette ${SHAPE[corps.shape]}` : null, corps?.height_cm ? `taille ${corps.height_cm} cm` : null].filter(Boolean);
   if (body.length) lines.push(`Pour les coupes et les longueurs : ${body.join(', ')}. Ne commente jamais le corps : sers-t’en seulement pour mettre en valeur.`);
+  const tailles = [
+    corps?.usual_sizes?.haut && `haut ${corps.usual_sizes.haut}`,
+    corps?.usual_sizes?.bas && `bas ${corps.usual_sizes.bas}`,
+    corps?.usual_sizes?.pointure && `pointure ${corps.usual_sizes.pointure}`,
+  ].filter(Boolean);
+  if (tailles.length) lines.push(`Tailles habituelles : ${tailles.join(', ')}. Ne propose jamais une pièce dont la taille ne correspond pas.`);
   if (!p) return lines.length ? lines.join('\n') : 'Profil de style : pas encore renseigné.';
   if (p.gender === 'femme' || p.gender === 'homme') lines.push(`Coupes : ${p.gender}.`);
   if (p.styles.length) lines.push(`Styles choisis : ${words(p.styles)}.`);
@@ -331,4 +344,30 @@ export function voyageText(v: Voyage, from: string, to: string): string {
   if (v.motif) lines.push(`Motif : ${v.motif.toLowerCase()}.`);
   if (v.activites.length) lines.push(`Activités prévues : ${low(v.activites)}.`);
   return lines.join(' ');
+}
+
+// ---------------------------------------------------------------- Mes choix (23/10)
+
+/** Les pièces aimées et les tenues aimées, avec leurs références du dressing. */
+export function aimeesText(pieces: string[], tenues: { titre: string; refs: string[] }[]): string {
+  const lines: string[] = [];
+  if (pieces.length) lines.push(`Pièces qu’elle aime : ${pieces.join(', ')}. Mets-les en avant quand elles vont avec la demande.`);
+  for (const t of tenues) {
+    if (t.refs.length >= 2) lines.push(`Tenue aimée « ${t.titre || 'sans titre'} » : ${t.refs.join(' + ')}. Reste dans son esprit sans la recopier.`);
+  }
+  return lines.join('\n');
+}
+
+/** Ce que Kodi retient de la personne : souvenirs retrouvés par ressemblance avec la question. */
+export function faitsText(faits: { texte: string }[]): string {
+  if (!faits.length) return '';
+  return `Ce que Kodi retient de cette personne (il s’en sert sans le citer) :\n${faits.map((f) => `- ${f.texte}`).join('\n')}`;
+}
+
+/** Les pièces que la météo écarte pour une journée, avec la raison. */
+export function interditesText(interdites: Map<string, string>, refOfId: Map<string, string>): string {
+  const lines = [...interdites]
+    .map(([id, raison]) => (refOfId.get(id) ? `${refOfId.get(id)} : ${raison}` : null))
+    .filter(Boolean);
+  return lines.length ? `Pièces à ne pas proposer ce jour-là, à cause de la météo :\n- ${lines.join('\n- ')}` : '';
 }

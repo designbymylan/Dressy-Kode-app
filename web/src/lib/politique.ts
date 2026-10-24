@@ -61,6 +61,10 @@ export const POLITIQUE: Section[] = [
         "texte": "Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat."
       },
       {
+        "titre": "Mes choix",
+        "texte": "Les pièces et les tenues que tu aimes (cœurs). Pour les retrouver dans « Mes choix ». Base : le contrat. Si tu acceptes que Kodi apprenne de tes choix, il garde aussi, en phrases, ce que tu aimes et ce que tu écartes, pour mieux te proposer. Base : ton accord « Kodi apprend de mes choix », que tu retires d’un geste : ces souvenirs sont alors effacés aussitôt."
+      },
+      {
         "titre": "Ta silhouette",
         "texte": "Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé."
       },
@@ -89,7 +93,7 @@ export const POLITIQUE: Section[] = [
   {
     "titre": "Kodi est une intelligence artificielle",
     "texte": [
-      "Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces, ton profil de style, ton agenda des deux semaines à venir et tes tenues écartées ; ta silhouette et ta taille si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.",
+      "Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.",
       "Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle.",
       "Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.",
       "Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.",
@@ -101,6 +105,7 @@ export const POLITIQUE: Section[] = [
     "texte": [
       "Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : hébergement et base de données (Union européenne, Irlande), intelligence artificielle (États-Unis), paiement, et distribution des mises à jour de l’app (sans aucune donnée de ton compte).",
       "Les données du jour (météo, jours fériés, vacances) sont demandées par nos serveurs à des services publics et ouverts, avec le nom de ta ville seulement, sans rien qui te désigne.",
+      "Si tu as accepté que Kodi apprenne de tes choix, les souvenirs qu’il retient sont transformés en vecteurs de sens par un service d’intelligence artificielle (Google), pour être retrouvés selon ta question. Seul le texte court d’un souvenir part, jamais ton nom ni ton e-mail.",
       "La liste nominative de nos prestataires t’est envoyée sur simple demande. Personne d’autre : aucune vente, aucun partage publicitaire."
     ]
   },
@@ -128,6 +133,10 @@ export const POLITIQUE: Section[] = [
       {
         "titre": "Les tenues écartées",
         "texte": "6 mois."
+      },
+      {
+        "titre": "Les souvenirs de Kodi",
+        "texte": "12 mois, ou jusqu’à ce que tu les effaces ou retires ton accord."
       },
       {
         "titre": "Les demandes de dessin",

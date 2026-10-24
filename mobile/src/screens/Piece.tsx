@@ -175,6 +175,15 @@ export function PieceScreen() {
           </View>
         </View>
 
+        <Button
+          testID="piece-coeur"
+          label={s.coeurs.includes(piece.id) ? 'Dans mes choix' : 'Ajouter à mes choix'}
+          icon="heart"
+          variant={s.coeurs.includes(piece.id) ? 'primary' : 'secondary'}
+          size="m"
+          grow
+          onPress={() => a.coeur(piece.id)}
+        />
         <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
 
         {dormant && (
