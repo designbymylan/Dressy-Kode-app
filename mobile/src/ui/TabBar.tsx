@@ -83,7 +83,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const indShown = useSharedValue(index === centerIndex ? 0 : 1);
   useEffect(() => {
     const to = index * col + col / 2 - 8;
-    ind.value = reduced ? to : withSpring(to, { damping: 16, stiffness: 180, mass: 0.9 });
+    ind.value = reduced ? to : withTiming(to, { duration: motion.duration.base, easing: motion.easing });
     indShown.value = withTiming(index === centerIndex ? 0 : 1, { duration: 200 });
   }, [index, col, centerIndex, reduced, ind, indShown]);
   const indStyle = useAnimatedStyle(() => ({ transform: [{ translateX: ind.value }, { scaleX: 0.2 + 0.8 * indShown.value }], opacity: indShown.value }));

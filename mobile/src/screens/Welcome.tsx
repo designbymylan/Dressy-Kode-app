@@ -127,9 +127,9 @@ function Drop({ i, children }: { i: number; children: ReactNode }) {
   useEffect(() => {
     if (reduced) return;
     const d = 120 + i * 90;
-    o.value = withDelay(d, withSpring(1));
-    y.value = withDelay(d, withSpring(0, { damping: 14, stiffness: 180 }));
-    r.value = withDelay(d, withSequence(withSpring(i % 2 ? -6 : 6, { damping: 10, stiffness: 120 }), withSpring(0, motion.swing)));
+    o.value = withDelay(d, withSpring(1, motion.gentle));
+    y.value = withDelay(d, withSpring(0, { damping: 27, stiffness: 180 }));
+    r.value = withDelay(d, withSequence(withSpring(i % 2 ? -6 : 6, { damping: 22, stiffness: 120 }), withSpring(0, motion.swing)));
   }, [i, o, r, y, reduced]);
   const style = useAnimatedStyle(() => ({ opacity: o.value, transform: [{ translateY: y.value }, { rotate: `${r.value}deg` }] }));
   return <Animated.View style={[{ transformOrigin: 'top' }, style]}>{children}</Animated.View>;

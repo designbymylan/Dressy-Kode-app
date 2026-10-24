@@ -15,6 +15,7 @@ import Svg, { ClipPath, Circle, Defs, Ellipse, G, Path, Rect, Text as SvgText } 
 import { haptic } from './Tap';
 import { T } from './T';
 import { useTheme } from '../theme/ThemeProvider';
+import { motion } from '../theme/tokens';
 
 /**
  * Kodi, le styliste de Dresskode, en personne (refonte du 21/10, même dessin
@@ -249,7 +250,7 @@ export function Kodi({ mood = 'idle', size = 96, track = false, tap = true, ente
   }, [ticking, shown, reduced]);
 
   useEffect(() => {
-    if (enter && !reduced) appear.value = withSpring(1, { damping: 11, stiffness: 160 });
+    if (enter && !reduced) appear.value = withSpring(1, { damping: 25, stiffness: 160 });
   }, [enter, reduced, appear]);
 
   // Le corps, selon l'humeur.
@@ -294,8 +295,8 @@ export function Kodi({ mood = 'idle', size = 96, track = false, tap = true, ente
 
   function poke() {
     if (!reduced) {
-      sx.value = withSequence(withTiming(1.14, { duration: 120 }), withSpring(1, { damping: 8, stiffness: 260 }));
-      sy.value = withSequence(withTiming(0.84, { duration: 120 }), withSpring(1, { damping: 8, stiffness: 260 }));
+      sx.value = withSequence(withTiming(1.14, { duration: 120 }), withTiming(1, { duration: motion.duration.base, easing: motion.easing }));
+      sy.value = withSequence(withTiming(0.84, { duration: 120 }), withTiming(1, { duration: motion.duration.base, easing: motion.easing }));
     }
     setReaction(REACTIONS[turn.current++ % REACTIONS.length]);
     haptic('light');
