@@ -381,6 +381,14 @@ pour la progression, offres Fashion et Sapologue).
   `offres_fashion_sapologue`. Ceci remplace « plus aucune pastille de
   réduction » du 09/10 pour les offres du web.
 
+**Accueil mobile avant le compte (24/10), demandé par l'utilisateur** sur
+deux modèles de connexion envoyés : photo de mode verticale en plein écran
+(tirée au hasard parmi sept, `data/welcome.ts`, `mobile/assets/welcome/`,
+issues du dossier « Image fashion ref »), voile sombre en bas, DRESSKODE en
+grand, « Commencer », « Se connecter », « Voir la démo ». Le portant, Kodi et
+les puces de l'ancien accueil sont retirés. Remplace l'accueil du 05/10 et
+du 21/10 sur le mobile.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 
