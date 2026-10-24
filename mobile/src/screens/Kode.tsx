@@ -11,7 +11,7 @@ import { dateLongue, jourIso, periode } from '../state/contexte';
 import { Credit } from '../ui/Credit';
 import { canCompose } from '../state/outfits';
 import { useTheme } from '../theme/ThemeProvider';
-import { space, TAB_CLEARANCE } from '../theme/tokens';
+import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
@@ -183,7 +183,7 @@ export function Kode() {
 
 function Mine({ m }: { m: KodeMessage }) {
   return (
-    <Animated.View entering={FadeInDown.springify().damping(18)} style={{ alignSelf: 'flex-end', maxWidth: '82%' }}>
+    <Animated.View entering={FadeInDown.duration(motion.duration.base).easing(motion.easing)} style={{ alignSelf: 'flex-end', maxWidth: '82%' }}>
       <View className="bg-primary-bg" style={{ borderRadius: 22, borderBottomRightRadius: 6, paddingHorizontal: 16, paddingVertical: 11 }}>
         <T v="body" tone="primary-fg">
           {m.text}

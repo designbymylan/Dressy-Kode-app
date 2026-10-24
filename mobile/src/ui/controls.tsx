@@ -5,12 +5,12 @@ import { Tap } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { material, motion } from '../theme/tokens';
+import { motion } from '../theme/tokens';
 import { F } from '../theme/fonts';
 
 /** Puce de filtre ou de choix (globals.css : `.chip`) : verre clair, encre pleine quand elle est active. */
 export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: string; on?: boolean; onPress: () => void; icon?: IconName; count?: number; testID?: string; dot?: string }) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   return (
     <Tap
       testID={testID}
@@ -23,7 +23,7 @@ export function Chip({ label, on, onPress, icon, count, testID, dot }: { label: 
       style={[
         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 40, borderRadius: 20, borderWidth: 1 },
         on
-          ? { backgroundColor: c['primary-bg'], borderColor: 'transparent', ...material.press[scheme] }
+          ? { backgroundColor: c['primary-bg'], borderColor: 'transparent' }
           : { backgroundColor: c['glass-strong'], borderColor: c['glass-border'] },
       ]}
     >

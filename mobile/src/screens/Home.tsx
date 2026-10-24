@@ -687,7 +687,7 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             </View>
           ))}
           <View style={{ position: 'absolute', left: (circles.length - 1) * step + R - 20, top: R / 2 - 28 }}>
-            <Tap testID="trend-compose" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, meteo.reelle ? 1 : 3).map((p) => p.id) })} accessibilityLabel={`Composer une tenue : ${name.toLowerCase()}`} style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }, material.press[scheme]]}>
+            <Tap testID="trend-compose" onPress={() => nav.navigate('Compose', { pieces: owned.slice(0, meteo.reelle ? 1 : 3).map((p) => p.id) })} accessibilityLabel={`Composer une tenue : ${name.toLowerCase()}`} style={[{ width: 56, height: 56, borderRadius: 28, backgroundColor: c['primary-bg'], alignItems: 'center', justifyContent: 'center' }]}>
               <Icon name="kode" size={22} color={c['primary-fg']} />
             </Tap>
           </View>

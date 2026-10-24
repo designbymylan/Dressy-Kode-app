@@ -134,9 +134,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   <View
                     style={[
                       { position: 'absolute', top: -24, alignSelf: 'center', width: 56, height: 56, borderRadius: 28, backgroundColor: c.choco, alignItems: 'center', justifyContent: 'center' },
-                      scheme === 'dark'
-                        ? { borderWidth: 2, borderColor: 'rgba(254,239,184,0.16)', shadowColor: c.butter, shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } }
-                        : { shadowColor: c.choco, shadowOpacity: 0.42, shadowRadius: 11, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+                      scheme === 'dark' ? { borderWidth: 2, borderColor: 'rgba(254,239,184,0.16)' } : null,
                     ]}
                   >
                     <Kodi size={44} mood={on && mood === 'idle' ? 'wink' : mood} track={look !== 'up'} tap={false} decorative />
