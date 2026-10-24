@@ -384,8 +384,10 @@ pour la progression, offres Fashion et Sapologue).
 **Accueil mobile avant le compte (24/10), demandé par l'utilisateur** sur
 deux modèles de connexion envoyés : photo de mode verticale en plein écran
 (tirée au hasard parmi sept, `data/welcome.ts`, `mobile/assets/welcome/`,
-issues du dossier « Image fashion ref »), voile sombre en bas, DRESSKODE en
-grand, « Commencer », « Se connecter », « Voir la démo ». Le portant, Kodi et
+issues du dossier « Image fashion ref »), et par-dessus une carte aux couleurs
+de l'app (jetons du thème) : DRESSKODE, « Commencer », « Se connecter »,
+Google et Apple (visibles mais désactivés, « Bientôt disponible » : la
+liaison des comptes n'est pas faite), « Voir la démo ». Le portant, Kodi et
 les puces de l'ancien accueil sont retirés. Remplace l'accueil du 05/10 et
 du 21/10 sur le mobile.
 
