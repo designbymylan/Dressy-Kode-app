@@ -843,8 +843,9 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
           })
           .catch(() => dispatch({ t: 'toast', text: NETWORK, warn: true }));
       },
-      buyPack: (id: string) => (live() ? dispatch({ t: 'toast', text: 'Les achats à l’unité arrivent bientôt' }) : dispatch({ t: 'buyPack', id })),
-      buyPlaces: () => (live() ? dispatch({ t: 'toast', text: 'Les achats à l’unité arrivent bientôt' }) : dispatch({ t: 'buyPlaces' })),
+      // Connecté, pas d'achat branché : les écrans n'affichent plus ces boutons.
+      buyPack: (id: string) => (live() ? undefined : dispatch({ t: 'buyPack', id })),
+      buyPlaces: () => (live() ? undefined : dispatch({ t: 'buyPlaces' })),
       toggleModule: (id: HomeModule) => dispatch({ t: 'toggleModule', id }),
       moveModule: (id: HomeModule, by: -1 | 1) => dispatch({ t: 'moveModule', id, by }),
       resetModules: () => dispatch({ t: 'resetModules' }),

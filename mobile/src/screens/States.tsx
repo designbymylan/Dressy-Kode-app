@@ -87,8 +87,7 @@ export function States() {
             <EmptyState
               art={<Icon name="calendar" size={40} color={c.ink2} />}
               title="Semaine calme"
-              body="Aucun événement. Tu pourrais relier ton agenda pour que Kodi prépare les jours chargés."
-              action={<Button label="Relier mon agenda" size="m" variant="secondary" onPress={() => a.toast('La liaison d’agenda arrive bientôt')} />}
+              body="Aucun événement cette semaine."
             />
           </Card>
           <Card>

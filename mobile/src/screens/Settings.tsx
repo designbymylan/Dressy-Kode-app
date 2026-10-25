@@ -132,7 +132,6 @@ export function Settings() {
 
         <Label text="Aide" />
         <Group>
-          <Row icon="help" title="Questions fréquentes" onPress={() => a.toast('L’aide arrive bientôt')} />
           <Row testID="me-states" icon="eye" title="Aperçu du design" onPress={() => nav.navigate('States')} last={s.account === 'connecte'} />
           {s.account !== 'connecte' && <Row testID="replay-welcome" icon="refresh" title="Revoir la bienvenue" detail="Remet l’aperçu à zéro" onPress={a.restart} last />}
         </Group>

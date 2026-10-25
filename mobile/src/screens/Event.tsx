@@ -38,6 +38,8 @@ const EXTRA = [
 export function EventScreen() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
+  // Connecté, les achats ne sont pas encore branchés : aucun bouton d'achat n'est montré.
+  const connecte = s.account === 'connecte';
   const { params } = useRoute<Route<'Event'>>();
   const insets = useSafeAreaInsets();
   const { c } = useTheme();
@@ -154,7 +156,7 @@ export function EventScreen() {
             <T v="caption" tone="ink2">
               Prêt en 2 minutes, valable 30 jours.
             </T>
-            <Button testID="pack-buy" label={`Préparer mon occasion · ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />
+            {!connecte && <Button testID="pack-buy" label={`Préparer mon occasion · ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />}
             <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
               Déjà inclus dans Sapologue.
             </T>
@@ -169,15 +171,17 @@ export function EventScreen() {
         title="Pack Occasion"
         testID="pack-confirm"
         footer={
-          <Button
-            testID="pack-pay"
-            label={`Payer ${PACK_OCCASION.price}`}
-            icon="lock"
-            onPress={() => {
-              a.buyPack('occasion');
-              setConfirm(false);
-            }}
-          />
+          connecte ? null : (
+            <Button
+              testID="pack-pay"
+              label={`Payer ${PACK_OCCASION.price}`}
+              icon="lock"
+              onPress={() => {
+                a.buyPack('occasion');
+                setConfirm(false);
+              }}
+            />
+          )
         }
       >
         <View style={{ gap: 10 }}>
