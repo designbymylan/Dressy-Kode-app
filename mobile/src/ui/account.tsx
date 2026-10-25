@@ -123,24 +123,11 @@ type Mode = 'login' | 'signup';
 export type AccountDone = 'app' | 'onboarding' | 'confirm';
 
 /**
- * Se connecter ou créer son compte. `onDemo` n'est donné que depuis
- * l'accueil : l'aperçu garde l'accès au compte de démonstration.
+ * Le formulaire de compte (e-mail, mot de passe, création) : il vit dans la
+ * feuille (Moi, réglages, ajout) et dans la page de connexion de l'accueil.
  */
-export function AccountSheet({
-  visible,
-  onClose,
-  onDone,
-  onDemo,
-  initial = 'login',
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onDone: (next: AccountDone) => void;
-  onDemo?: () => void;
-  initial?: Mode;
-}) {
+export function useAccountForm(initial: Mode, onDone: (next: AccountDone) => void) {
   const { s, a } = useStore();
-  const nav = useNavigation<Nav>();
   const [mode, setMode] = useState<Mode>(initial);
   const [adult, setAdult] = useState(false);
   const [email, setEmail] = useState(s.pendingEmail ?? '');
@@ -179,10 +166,27 @@ export function AccountSheet({
     setError(null);
   };
 
+  return { mode, adult, setAdult, email, setEmail, password, setPassword, busy, error, sent, setSent, ready, submit, switchTo };
+}
+
+/** Se connecter ou créer son compte, dans une feuille ouverte par un geste. */
+export function AccountSheet({
+  visible,
+  onClose,
+  onDone,
+  initial = 'login',
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onDone: (next: AccountDone) => void;
+  initial?: Mode;
+}) {
+  const nav = useNavigation<Nav>();
+  const { mode, adult, setAdult, email, setEmail, password, setPassword, busy, error, sent, setSent, ready, submit, switchTo } = useAccountForm(initial, onDone);
+
   if (!online) {
     return (
-      <Sheet visible={visible} onClose={onClose} kicker="Connexion" title="Content de te revoir" testID="login-sheet"
-        footer={onDemo ? <Button testID="login-demo" label="Ouvrir le compte de démonstration" onPress={() => { onClose(); onDemo(); }} /> : undefined}>
+      <Sheet visible={visible} onClose={onClose} kicker="Connexion" title="Content de te revoir" testID="login-sheet">
         <T v="body" tone="ink2">
           Cet aperçu tourne sans serveur : la connexion n’y est pas branchée. Dans l’app, ton compte se retrouve avec ton e-mail et ton mot de passe.
         </T>
@@ -217,7 +221,6 @@ export function AccountSheet({
             label={mode === 'login' ? 'Pas encore de compte ? En créer un' : 'J’ai déjà un compte'}
             onPress={() => switchTo(mode === 'login' ? 'signup' : 'login')}
           />
-          {onDemo && <Button testID="login-demo" variant="plain" label="Voir le compte de démonstration" onPress={() => { onClose(); onDemo(); }} />}
         </View>
       }
     >

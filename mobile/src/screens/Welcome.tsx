@@ -1,33 +1,32 @@
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackActions, useNavigation } from '@react-navigation/native';
-import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { Monogram } from '../ui/Logo';
-import { AccountSheet } from '../ui/account';
+import { EmailField, FormError, PasswordField, SignupTerms, useAccountForm } from '../ui/account';
 import { useScreen } from '../ui/screen';
+import { online } from '../state/remote';
 import { WELCOME_PHOTOS, nextWelcomePhoto } from '../data/welcome';
 import type { Nav } from '../navigation/types';
 
 /**
- * L'accueil avant le compte (24/10), sur le modèle des écrans de
- * connexion envoyés : une photo de mode verticale en plein écran, tirée au
- * hasard à chaque arrivée, et par-dessus une carte aux couleurs de l'app
- * (DRESSKODE, deux boutons, Google et Apple).
+ * La page de connexion, première chose vue sans compte (sans session, après
+ * une déconnexion aussi) : une photo de mode plein écran, tirée au hasard, et
+ * par-dessus une carte aux couleurs de l'app. La connexion est dans la carte,
+ * pas dans une feuille qui s'ouvrirait toute seule ; « Commencer sans compte »
+ * mène au questionnaire. Pas de démonstration ici.
  */
 export function Welcome() {
-  const { a } = useStore();
   const nav = useNavigation<Nav>();
-  const [login, setLogin] = useState(false);
   const [idx] = useState(nextWelcomePhoto);
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
@@ -40,6 +39,12 @@ export function Welcome() {
     if (!reduced) zoom.value = withTiming(1.07, { duration: 16000, easing: Easing.out(Easing.quad) });
   }, [reduced, zoom]);
   const zoomStyle = useAnimatedStyle(() => ({ transform: [{ scale: zoom.value }] }));
+
+  // Une fois le compte créé (ou connecté) sans questionnaire rempli : on le remplit maintenant.
+  const f = useAccountForm('login', (next) => {
+    if (next !== 'app') nav.dispatch(StackActions.replace('Onboarding'));
+  });
+  const commencer = () => nav.dispatch(StackActions.replace('Onboarding'));
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }} testID="screen-welcome">
@@ -58,69 +63,74 @@ export function Welcome() {
         <Rect x="0" y="0" width="100%" height="100%" fill="url(#shade)" />
       </Svg>
 
-      {/* La carte aux couleurs de l'app (fond, texte, boutons : les jetons du thème), posée sur la photo. */}
-      <Animated.View
-        entering={FadeInDown.delay(250).duration(600)}
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingTop: 22, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 14, gap: 8 }}
-      >
-        <View accessible accessibilityRole="header" accessibilityLabel="Dresskode" style={{ alignItems: 'center', gap: 6, paddingBottom: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Monogram size={30} />
-            <T v="brand" numberOfLines={1} style={{ fontSize: 26, lineHeight: 32 }}>
-              DRESSKODE
-            </T>
-          </View>
-          <T v="body" tone="ink2" style={{ textAlign: 'center' }}>
-            Porte mieux ce que tu as.
-          </T>
-        </View>
+      {/* La carte remonte avec le clavier ; défilante si elle ne tient pas sur un petit écran. */}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <Animated.View entering={FadeInDown.delay(250).duration(600)} style={{ backgroundColor: c.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" bounces={false} style={{ maxHeight: height * 0.82 }} contentContainerStyle={{ paddingTop: 22, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 14, gap: 8 }}>
+            <View accessible accessibilityRole="header" accessibilityLabel="Dresskode" style={{ alignItems: 'center', gap: 6, paddingBottom: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Monogram size={30} />
+                <T v="brand" numberOfLines={1} style={{ fontSize: 26, lineHeight: 32 }}>
+                  DRESSKODE
+                </T>
+              </View>
+              <T v="body" tone="ink2">
+                Porte mieux ce que tu as.
+              </T>
+            </View>
 
-        {/* Le questionnaire remplace l'accueil au lieu de s'empiler dessus : sur
-            iPhone, la pile native peut figer l'écran quand on retire
-            plusieurs écrans d'un coup en entrant dans l'app. */}
-        <Button testID="welcome-start" label="Commencer" onPress={() => nav.dispatch(StackActions.replace('Onboarding'))} />
-        <Button testID="welcome-login" label="Se connecter" variant="secondary" onPress={() => setLogin(true)} />
+            {!online ? (
+              <T v="body" tone="ink2" style={{ textAlign: 'center' }}>
+                Cet aperçu tourne sans serveur : la connexion n’y est pas branchée.
+              </T>
+            ) : f.sent ? (
+              <>
+                <T v="section">Regarde tes e-mails</T>
+                <T v="body" tone="ink2">
+                  On vient d’envoyer un lien à {f.sent}. Touche-le pour confirmer ton adresse, puis reviens te connecter ici : ton espace sera enregistré sur ton compte.
+                </T>
+                <Button testID="signup-sent-ok" label="C’est noté" onPress={() => { f.setSent(null); commencer(); }} />
+              </>
+            ) : (
+              <>
+                <EmailField testID="login-email" value={f.email} onChange={f.setEmail} />
+                <PasswordField testID="login-password" value={f.password} onChange={f.setPassword} onSubmit={f.submit} isNew={f.mode === 'signup'} />
+                {f.mode === 'signup' && <SignupTerms adult={f.adult} onAdult={f.setAdult} onPolicy={() => nav.navigate('Confidentialite')} />}
+                <FormError text={f.error} />
+                <Button testID="login-send" label={f.mode === 'login' ? 'Me connecter' : 'Créer mon compte'} disabled={!f.ready} loading={f.busy} onPress={f.submit} />
+                <Button
+                  testID="login-switch"
+                  variant="plain"
+                  label={f.mode === 'login' ? 'Pas encore de compte ? En créer un' : 'J’ai déjà un compte'}
+                  onPress={() => f.switchTo(f.mode === 'login' ? 'signup' : 'login')}
+                />
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 2 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: c.rule }} />
-          <T v="caption" tone="ink2">
-            ou
-          </T>
-          <View style={{ flex: 1, height: 1, backgroundColor: c.rule }} />
-        </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 2 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: c.rule }} />
+                  <T v="caption" tone="ink2">
+                    ou
+                  </T>
+                  <View style={{ flex: 1, height: 1, backgroundColor: c.rule }} />
+                </View>
 
-        {/* Google et Apple : l'interface seulement, la liaison des comptes n'est pas faite. */}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <SocialButton testID="welcome-google" label="Google" glyph={<GoogleG />} />
-          <SocialButton testID="welcome-apple" label="Apple" glyph={<AppleGlyph color={c.ink} />} />
-        </View>
-        <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
-          Bientôt disponible
-        </T>
+                {/* Google et Apple : l'interface seulement, la liaison des comptes n'est pas faite. */}
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <SocialButton testID="welcome-google" label="Google" glyph={<GoogleG />} />
+                  <SocialButton testID="welcome-apple" label="Apple" glyph={<AppleGlyph color={c.ink} />} />
+                </View>
+                <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>
+                  Bientôt disponible
+                </T>
+              </>
+            )}
 
-        <Tap
-          testID="welcome-demo"
-          onPress={a.loginDemo}
-          accessibilityRole="button"
-          accessibilityLabel="Voir la démo"
-          style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <T v="body" tone="ink2" style={{ textDecorationLine: 'underline' }}>
-            Voir la démo
-          </T>
-        </Tap>
-      </Animated.View>
-
-      <AccountSheet
-        visible={login}
-        onClose={() => setLogin(false)}
-        onDone={(next) => {
-          setLogin(false);
-          // Compte vierge (questionnaire jamais rempli) : on le remplit maintenant.
-          if (next !== 'app') nav.dispatch(StackActions.replace('Onboarding'));
-        }}
-        onDemo={a.loginDemo}
-      />
+            {/* Le questionnaire remplace l'accueil au lieu de s'empiler dessus : sur
+                iPhone, la pile native peut figer l'écran quand on retire
+                plusieurs écrans d'un coup en entrant dans l'app. */}
+            <Button testID="welcome-start" label="Commencer sans compte" variant="plain" onPress={commencer} />
+          </ScrollView>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
