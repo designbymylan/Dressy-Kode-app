@@ -1,26 +1,23 @@
 import type { CSSProperties } from 'react';
 
 /**
- * Le logo de Dresskode (piste A validée le 13/10, `design/logo/`) : un K fin
- * dont la branche haute s'arrête sur l'étincelle de Kodi. Le K suit la
- * couleur du texte (noir en clair, blanc en sombre) ; l'étincelle aussi, sauf
- * sur fond noir où elle peut passer en rose poudré (`sparkle="var(--butter)"`).
+ * Le logo de Dresskode (25/10, `design/logo/`) : l'orbe de Kodi, une sphère
+ * lavande vers ciel avec son reflet. Il remplace le K étoilé (13/10), retiré
+ * à la demande de l'utilisateur. Le dégradé est celui de l'orbe au repos
+ * (`STEP_COLORS.look` dans components/Orb.tsx).
  */
-export const K = {
-  stem: 'M26.75 14H33.25V86H26.75Z',
-  upper: 'M32.3 63.3L63.3 32.3L58.7 27.7L27.7 58.7Z',
-  lower: 'M41.53 49.11L72.93 86L81.47 86L46.48 44.89Z',
-  spark: 'M71 3C72 13 75 16 85 17C75 18 72 21 71 31C70 21 67 18 57 17C67 16 70 13 71 3Z',
+export const ORBE = {
+  from: '#b9adff',
+  to: '#9fd0ff',
+  glint: { cx: 42, cy: 21, rx: 20, ry: 13 },
 };
 
 export function Monogram({
   size = 40,
-  sparkle = 'currentColor',
   label,
   style,
 }: {
   size?: number;
-  sparkle?: string;
   /** Sans libellé, le monogramme est décoratif (le nom est écrit à côté). */
   label?: string;
   style?: CSSProperties;
@@ -30,14 +27,17 @@ export function Monogram({
       width={size}
       height={size}
       viewBox="0 0 100 100"
-      fill="currentColor"
       style={{ display: 'block', flexShrink: 0, ...style }}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
     >
-      <path d={K.stem} />
-      <path d={K.upper} />
-      <path d={K.lower} />
-      <path d={K.spark} fill={sparkle} />
+      <defs>
+        <radialGradient id="dk-orbe" cx="32%" cy="28%" r="85%">
+          <stop offset="0%" stopColor={ORBE.from} />
+          <stop offset="100%" stopColor={ORBE.to} />
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="50" fill="url(#dk-orbe)" />
+      <ellipse cx={ORBE.glint.cx} cy={ORBE.glint.cy} rx={ORBE.glint.rx} ry={ORBE.glint.ry} fill="#ffffff" fillOpacity={0.7} />
     </svg>
   );
 }

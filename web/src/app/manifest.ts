@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-/** Pour « Ajouter à l'écran d'accueil » : le nom, les couleurs de la galerie et l'icône du K étoilé. */
+/** Pour « Ajouter à l'écran d'accueil » : le nom, les couleurs de la galerie et l'icône de l'orbe. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Dresskode',

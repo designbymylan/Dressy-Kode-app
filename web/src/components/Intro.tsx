@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { K } from '@/components/Logo';
+import { ORBE } from '@/components/Logo';
 
 const SEEN = 'dk-intro';
 const LENGTH = 2900;
@@ -14,12 +14,12 @@ const LENGTH = 2900;
 export const INTRO_SCRIPT = `try{if(sessionStorage.getItem('${SEEN}')==='1')document.documentElement.classList.add('intro-vu')}catch(e){}`;
 
 /**
- * L'intro (13/10), une fois par visite : le K se coud trait par trait,
- * l'étincelle de Kodi s'allume, une couture se pique, DRESSKODE se resserre,
- * puis la caméra plonge dans le K et l'app apparaît derrière (la mascotte
- * qui s'y ajoutait le 21/10 a été abandonnée le 25/10). Noir sur blanc
- * en clair, blanc sur noir en sombre. Un toucher ou Échap la passe ;
- * « Réduire les animations » la réduit à un fondu (`globals.css`, `.intro`).
+ * L'intro (25/10), une fois par visite : l'orbe apparaît et se met à tourner
+ * (son reflet fait le tour de la sphère), DRESSKODE se resserre dessous, puis
+ * la caméra plonge dans l'orbe et l'app apparaît derrière. Noir sur blanc
+ * en clair, blanc sur noir en sombre (le fond suit le thème). Un toucher ou
+ * Échap la passe ; « Réduire les animations » la réduit à un fondu
+ * (`globals.css`, `.intro`).
  */
 export function Intro() {
   const [state, setState] = useState<'on' | 'leaving' | 'gone'>('on');
@@ -56,21 +56,23 @@ export function Intro() {
   return (
     <div className={state === 'leaving' ? 'intro intro-leaving' : 'intro'} aria-hidden="true" onClick={() => setState('leaving')}>
       <div className="intro-stage">
-        <svg className="intro-mark" viewBox="0 0 100 100" width="128" height="128">
+        <div className="intro-dive">
+        <svg className="intro-orb" viewBox="0 0 100 100" width="128" height="128">
           <defs>
-            <clipPath id="intro-clip">
-              <rect x="0" y="14" width="100" height="72" />
+            <radialGradient id="intro-orbe" cx="32%" cy="28%" r="85%">
+              <stop offset="0%" stopColor={ORBE.from} />
+              <stop offset="100%" stopColor={ORBE.to} />
+            </radialGradient>
+            <clipPath id="intro-disc">
+              <circle cx="50" cy="50" r="50" />
             </clipPath>
           </defs>
-          <g clipPath="url(#intro-clip)" fill="none" stroke="currentColor" strokeWidth="6.5">
-            <path className="intro-stroke intro-stem" d="M30 86V14" />
-            <path className="intro-stroke intro-up" d="M30 61L61 30" />
-            <path className="intro-stroke intro-lo" d="M44 47L82.3 92" />
+          <circle cx="50" cy="50" r="50" fill="url(#intro-orbe)" />
+          <g clipPath="url(#intro-disc)">
+            <ellipse className="intro-glint" cx={ORBE.glint.cx} cy={ORBE.glint.cy} rx={ORBE.glint.rx} ry={ORBE.glint.ry} fill="#ffffff" fillOpacity={0.7} />
           </g>
-          <circle className="intro-glint" cx="71" cy="17" r="14" fill="none" stroke="currentColor" strokeWidth="0.8" />
-          <path className="intro-spark" d={K.spark} fill="currentColor" />
         </svg>
-        <i className="intro-seam" />
+        </div>
         <span className="brand intro-word">Dresskode</span>
       </div>
     </div>
