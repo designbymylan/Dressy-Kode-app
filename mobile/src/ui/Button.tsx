@@ -2,9 +2,9 @@ import { ActivityIndicator, View } from 'react-native';
 import { Tap, type Feedback } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
-import { BlueGlassFill, Glass, blueShadow } from './Glass';
+import { BlueGlassFill, Glass } from './Glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { HIT, material } from '../theme/tokens';
+import { HIT } from '../theme/tokens';
 import { F } from '../theme/fonts';
 
 type Variant = 'primary' | 'dark' | 'secondary' | 'quiet' | 'plain';
@@ -34,16 +34,17 @@ type Props = {
  * pastille ; simple en texte gris. Toujours ≥ 44 pt de zone tactile.
  */
 export function Button({ label, onPress, variant = 'primary', size = 'l', icon, iconRight, grow, disabled, loading, hint, feedback, testID }: Props) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   const h = HEIGHT[size];
   const fg = variant === 'primary' ? c['primary-fg'] : variant === 'dark' ? c.paper : variant === 'plain' ? c.ink2 : c.ink;
+  // Aucun bouton n'a d'ombre (décision du 24/10) : seuls les aplats et les filets.
   const surface =
     variant === 'primary'
-      ? { backgroundColor: c.blue, ...blueShadow[scheme] }
+      ? { backgroundColor: c.blue }
       : variant === 'dark'
-        ? { backgroundColor: c.ink, ...material.press[scheme] }
+        ? { backgroundColor: c.ink }
         : variant === 'secondary'
-        ? { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['glass-border'], ...material.card[scheme] }
+        ? { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['glass-border'] }
         : variant === 'quiet'
           ? { backgroundColor: c.pill }
           : null;
@@ -99,7 +100,7 @@ type IconButtonProps = {
  * l'icône seule. Le libellé reste pour les lecteurs d'écran.
  */
 export function IconButton({ icon, label, onPress, variant = 'outline', size = HIT, testID, badge }: IconButtonProps) {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   const fg = variant === 'solid' ? c['primary-fg'] : c.ink;
   const body = (
     <View style={{ width: size, height: size }} className="items-center justify-center">
@@ -109,9 +110,9 @@ export function IconButton({ icon, label, onPress, variant = 'outline', size = H
   );
   const surface =
     variant === 'solid'
-      ? { backgroundColor: c.blue, ...blueShadow[scheme] }
+      ? { backgroundColor: c.blue }
       : variant === 'outline'
-        ? { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['glass-border'], ...material.card[scheme] }
+        ? { backgroundColor: c['glass-strong'], borderWidth: 1, borderColor: c['glass-border'] }
         : variant === 'quiet'
           ? { backgroundColor: c.pill }
           : null;
@@ -119,7 +120,7 @@ export function IconButton({ icon, label, onPress, variant = 'outline', size = H
   return (
     <Tap testID={testID} onPress={onPress} accessibilityLabel={label} hitSlop={slop} style={[{ borderRadius: size / 2 }, surface]}>
       {variant === 'solid' && <BlueGlassFill radius={size / 2} />}
-      {variant === 'glass' ? <Glass radius={size / 2}>{body}</Glass> : body}
+      {variant === 'glass' ? <Glass radius={size / 2} shadow={false}>{body}</Glass> : body}
     </Tap>
   );
 }

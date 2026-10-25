@@ -1,6 +1,6 @@
 import { createContext, Fragment, useContext, useEffect, useId, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, SlideInDown, runOnJS, useAnimatedKeyboard, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInDown, runOnJS, useAnimatedKeyboard, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
@@ -123,7 +123,7 @@ function SheetBody({ visible, onGone, onClose, title, kicker, children, footer, 
     })
     .onEnd((e) => {
       if (y.value > 120 || e.velocityY > 900) runOnJS(onClose)();
-      else y.value = withSpring(0, motion.sheet);
+      else y.value = withTiming(0, { duration: motion.duration.fast, easing: motion.easing });
     });
   const panel = useAnimatedStyle(() => ({ transform: [{ translateY: y.value - keyboard.height.value }] }));
 
@@ -133,7 +133,7 @@ function SheetBody({ visible, onGone, onClose, title, kicker, children, footer, 
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer la feuille" />
       </Animated.View>
       <Animated.View
-        entering={reduced ? FadeIn : SlideInDown.springify().damping(motion.sheet.damping).stiffness(motion.sheet.stiffness)}
+        entering={reduced ? FadeIn : SlideInDown.duration(motion.duration.base).easing(motion.easing)}
         pointerEvents="box-none"
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0, justifyContent: 'flex-end' }}
       >

@@ -6,7 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { FRIENDS, forms } from '../data/wardrobe';
 import { useStore, type Share as ShareT } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
@@ -47,7 +47,7 @@ export function ShareScreen() {
     return (
       <View className="bg-paper items-center justify-center" style={{ flex: 1, padding: space.gutter, gap: 14 }} testID="share-sent">
       <Ambient />
-        <Animated.View entering={ZoomIn.springify().damping(14)} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: c['positive-soft'], alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View entering={ZoomIn.duration(motion.duration.base).easing(motion.easing)} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: c['positive-soft'], alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="check" size={40} color={c.positive} strokeWidth={2.2} />
         </Animated.View>
         <T v="title" style={{ textAlign: 'center' }}>

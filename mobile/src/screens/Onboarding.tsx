@@ -171,7 +171,7 @@ export function Onboarding({ affiner }: { affiner?: boolean }) {
             } : undefined}
           />
         )}
-        <Animated.View key={step} entering={(dir > 0 ? SlideInRight : SlideInLeft).springify().damping(24)} style={{ flex: 1 }}>
+        <Animated.View key={step} entering={(dir > 0 ? SlideInRight : SlideInLeft).duration(motion.duration.base).easing(motion.easing)} style={{ flex: 1 }}>
           {body[step]}
         </Animated.View>
       </View>

@@ -74,7 +74,8 @@ export const type = {
  * Matière : le verre (décision du 03/10). Les cartes sont du blanc
  * translucide posé sur les halos, bordé d'un filet et d'une ombre douce ; la
  * couche de navigation (onglets, boutons flottants, feuilles) ajoute le flou,
- * ou le vrai Liquid Glass sur iOS 26. Ombres neutres, sans teinte.
+ * ou le vrai Liquid Glass sur iOS 26. Ombres neutres, sans teinte. Les boutons
+ * n'ont pas d'ombre (décision du 24/10).
  */
 export const material = {
   blur: 24,
@@ -89,24 +90,23 @@ export const material = {
     light: { shadowColor: '#111111', shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 0 },
     dark: { shadowColor: '#000000', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 0 },
   },
-  /** Ombre d'un bouton noir (--shadow-press). */
-  press: {
-    light: { shadowColor: '#000000', shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-    dark: { shadowColor: '#000000', shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  },
 } as const;
 
-/** Motion : des ressorts plutôt que des courbes, courts, jamais bloquants. */
+/**
+ * Motion. Ce qui arrive par le bas (feuilles, messages, bulles, Personnaliser)
+ * glisse sans rebond, à `duration.base` et `easing` (décision du 24/10). Les
+ * ressorts restent pour l'appui, les bascules et les gestes, mais amortis à la
+ * limite (damping ≈ 2 × √(raideur × masse)) : ils arrivent sans dépasser.
+ */
 export const motion = {
-  press: { damping: 22, stiffness: 420, mass: 0.6 },
-  snappy: { damping: 20, stiffness: 300, mass: 0.8 },
-  gentle: { damping: 18, stiffness: 170, mass: 1 },
-  sheet: { damping: 26, stiffness: 260, mass: 0.9 },
-  swing: { damping: 6, stiffness: 90, mass: 0.6 },
+  press: { damping: 32, stiffness: 420, mass: 0.6 },
+  snappy: { damping: 31, stiffness: 300, mass: 0.8 },
+  gentle: { damping: 26, stiffness: 170, mass: 1 },
+  swing: { damping: 15, stiffness: 90, mass: 0.6 },
   duration: { fast: 160, base: 240, slow: 360 },
   easing: Easing.bezier(0.2, 0.8, 0.2, 1),
   /** Ressort des boutons et des onglets (--ease-spring). */
-  spring: { damping: 14, stiffness: 260, mass: 0.7 },
+  spring: { damping: 27, stiffness: 260, mass: 0.7 },
   pressScale: 0.965,
 } as const;
 

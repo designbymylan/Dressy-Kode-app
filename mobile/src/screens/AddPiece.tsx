@@ -242,7 +242,7 @@ export function AddPiece() {
                     // La photo est l'action principale (noire) ; la galerie, en gris studio (05/10).
                     const main = o.icon === 'camera';
                     return (
-                      <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(main)} accessibilityLabel={o.hint} outerStyle={{ flex: 1 }} style={[{ borderRadius: 28, padding: 16, gap: 12, minHeight: 150, alignItems: 'center', justifyContent: 'center', backgroundColor: main ? c['primary-bg'] : c.stage }, main && material.press[scheme]]}>
+                      <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(main)} accessibilityLabel={o.hint} outerStyle={{ flex: 1 }} style={[{ borderRadius: 28, padding: 16, gap: 12, minHeight: 150, alignItems: 'center', justifyContent: 'center', backgroundColor: main ? c['primary-bg'] : c.stage }]}>
                         <Icon name={o.icon} size={30} color={main ? c['primary-fg'] : c.ink} />
                         <View style={{ gap: 2, alignItems: 'center' }}>
                           <T v="bodyStrong" tone={main ? 'primary-fg' : 'ink'}>{o.label}</T>

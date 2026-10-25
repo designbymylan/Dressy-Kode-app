@@ -71,7 +71,7 @@ export function glassSurface(c: Record<string, string>, scheme: 'light' | 'dark'
 /**
  * Le verre bleu du 21/10 (boutons principaux, ce qui est choisi) : un
  * dégradé de bleu clair, un reflet en haut et un liseré blanc, comme
- * `--blue-glass` et `--blue-shadow` sur le web. Se pose en fond, sous le
+ * `--blue-glass` sur le web. Se pose en fond, sous le
  * contenu, dans une vue arrondie.
  */
 export function BlueGlassFill({ radius }: { radius: number }) {
@@ -92,9 +92,3 @@ export function BlueGlassFill({ radius }: { radius: number }) {
     </View>
   );
 }
-
-/** L'ombre bleutée du verre bleu (--blue-shadow). */
-export const blueShadow = {
-  light: { shadowColor: '#4B7DA5', shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
-  dark: { shadowColor: '#C4DAE8', shadowOpacity: 0.28, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
-} as const;

@@ -393,7 +393,7 @@ function Rail({ pieces, shelf, onPiece }: { pieces: Piece[]; shelf: boolean; onP
       lastX.value = e.contentOffset.x;
       if (shelf) return;
       const target = Math.max(-9, Math.min(9, -dx * 0.9));
-      swing.value = withSequence(withSpring(target, { damping: 14, stiffness: 160 }), withSpring(0, motion.swing));
+      swing.value = withSequence(withSpring(target, { damping: 25, stiffness: 160 }), withSpring(0, motion.swing));
     },
   });
   return (
@@ -439,8 +439,8 @@ function Hanging({
     if (arriving === null) return;
     if (reduced) return onLanded();
     const wait = 200 + arriving * 140;
-    drop.value = withDelay(wait, withSpring(0, { damping: 15, stiffness: 190 }));
-    if (!shelf) sway.value = withDelay(wait + 220, withSequence(withSpring(9, { damping: 12, stiffness: 220 }), withSpring(0, motion.swing)));
+    drop.value = withDelay(wait, withSpring(0, { damping: 28, stiffness: 190 }));
+    if (!shelf) sway.value = withDelay(wait + 220, withSequence(withSpring(9, { damping: 30, stiffness: 220 }), withSpring(0, motion.swing)));
     const buzz = setTimeout(() => arriving === 0 && haptic('light'), wait + 240);
     const done = setTimeout(onLanded, wait + 1600);
     return () => {

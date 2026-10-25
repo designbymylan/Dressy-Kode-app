@@ -148,8 +148,8 @@ function Arriving({ piece, size, dark }: { piece: Piece; size: number; dark: boo
   useEffect(() => {
     if (reduced) return;
     o.value = withTiming(1, { duration: 200 });
-    y.value = withSpring(0, { damping: 14, stiffness: 190 });
-    r.value = withSequence(withSpring(-6, { damping: 10, stiffness: 120 }), withSpring(0, motion.swing));
+    y.value = withSpring(0, { damping: 28, stiffness: 190 });
+    r.value = withSequence(withSpring(-6, { damping: 22, stiffness: 120 }), withSpring(0, motion.swing));
   }, [o, r, y, reduced]);
   const style = useAnimatedStyle(() => ({ opacity: o.value, transform: [{ translateY: y.value }, { rotate: `${r.value}deg` }] }));
   const hangs = hangOf(piece.kind) !== 'none';

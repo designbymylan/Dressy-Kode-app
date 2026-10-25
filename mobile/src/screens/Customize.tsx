@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MODULE_LABELS, useStore, type HomeModule } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Card, Tag } from '../ui/bits';
 import { IconButton } from '../ui/Button';
@@ -39,7 +39,7 @@ export function Customize() {
             {s.modules.map((m, i) => {
               const title = MODULE_LABELS[m.id].title;
               return (
-                <Animated.View key={m.id} layout={LinearTransition.springify().damping(22)} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 60, gap: 8, borderBottomWidth: i === s.modules.length - 1 ? 0 : 1, borderColor: c.rule }}>
+                <Animated.View key={m.id} layout={LinearTransition.duration(motion.duration.base).easing(motion.easing)} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 60, gap: 8, borderBottomWidth: i === s.modules.length - 1 ? 0 : 1, borderColor: c.rule }}>
                   <ModuleGlyph id={m.id} dim={!m.on} />
                   <T v="bodyStrong" numberOfLines={1} style={{ flex: 1, opacity: m.on ? 1 : 0.5, marginLeft: 4 }}>
                     {title}
