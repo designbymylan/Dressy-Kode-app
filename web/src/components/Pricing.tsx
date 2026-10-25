@@ -39,21 +39,35 @@ export function Pricing({ current, trial }: { current: PlanId | null; trial: boo
         <p className="small muted">{plan.note}</p>
       </header>
 
-      <div role="radiogroup" aria-label="Choisis ton offre" style={GRID}>
-        <span className="small muted">Choisis ton offre</span>
-        {PLANS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            role="radio"
-            aria-checked={pick === p.id}
-            className="chip"
-            onClick={() => setPick(p.id)}
-            style={{ minHeight: 32, padding: '0 8px', justifyContent: 'center', fontSize: 12.5 }}
-          >
-            {p.name}
-          </button>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <span id="choix-offre" className="small muted">Choisis ton offre</span>
+        <div role="radiogroup" aria-labelledby="choix-offre" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {PLANS.map((p) => {
+            // Les deux pastilles ont la même taille ; Sapologue, l'offre mise en avant, reste bleue.
+            const mise = p.id === 'atelier';
+            const on = pick === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setPick(p.id)}
+                style={{
+                  width: '100%', minHeight: 48, padding: '0 12px', borderRadius: 999, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 15, fontWeight: mise ? 600 : 500, color: mise ? '#000000' : 'var(--ink)',
+                  background: mise ? 'var(--blue-glass)' : 'var(--glass)',
+                  border: `1px solid ${mise ? 'rgba(255, 255, 255, 0.7)' : 'var(--glass-edge)'}`,
+                  boxShadow: on ? '0 0 0 2px var(--blue-ink)' : mise ? 'var(--blue-shadow)' : 'none',
+                  transition: 'box-shadow 200ms, background-color 200ms',
+                }}
+              >
+                {p.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 16 }}>
