@@ -218,7 +218,7 @@ export function Shop() {
         }
       >
         <T v="body" tone="ink2">
-          {`Cinq packs, ${price(total - BUNDLE)} d’économie, sans date limite. Aperçu : le paiement est simulé.`}
+          {`Cinq packs, ${price(total - BUNDLE)} d’économie, sans date limite.${connecte ? '' : ' Aperçu : le paiement est simulé.'}`}
         </T>
       </Sheet>
     </View>

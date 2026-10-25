@@ -190,7 +190,7 @@ export function EventScreen() {
             <T v="bodyStrong">{PACK_OCCASION.price} TTC</T>
           </View>
           <T v="small" tone="ink2">
-            Aperçu : le paiement est simulé, aucune somme n’est prélevée.
+            {s.account === 'connecte' ? 'Achat unique, rien ne se renouvelle.' : 'Aperçu : le paiement est simulé, aucune somme n’est prélevée.'}
           </T>
         </View>
       </Sheet>
