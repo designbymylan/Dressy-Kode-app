@@ -296,29 +296,24 @@ demandé par l'utilisateur pour lever les freins de la cible :
   web) ; information au bon moment (photo effacée sous 30 jours, éviter le
   visage ; pas de santé dans une note ; Kode est une IA).
 
-**Logo (13/10)**, piste A validée par l'utilisateur parmi trois (planches :
-https://claude.ai/artifact/LJomyeYSjzN9abt5v5VpJP) : **le K étoilé**, un K
-fin dont la branche haute s'arrête sur l'étincelle de Kode, à côté de
-DRESSKODE. Fichiers, règles et géométrie : `design/logo/README.md`. Le K
-est noir ou blanc comme le texte ; l'étincelle passe en rose poudré
-seulement sur noir. Web : `components/Logo.tsx` (`Monogram`, `Wordmark
-mark`) sur Bienvenue et les écrans de compte, favicon `app/icon.svg`.
-Mobile : icônes et écran de lancement dans `mobile/assets/` ; le
-monogramme devant DRESSKODE partout où la marque s'écrit (capsule de
-l'accueil et de la fiche pièce, Bienvenue, carte de membre de Moi), par
-`BrandMark` (`mobile/src/ui/Logo.tsx`, accord du 13/10). Couleurs gardées (13/10) : noir
-sur blanc, blanc sur noir, noir sur rose poudré ; l'icône d'app garde son
-étincelle rose sur noir (mock-ups validés). Le site a aussi son image de
-partage (`app/opengraph-image.png`), son manifeste et l'étincelle du logo
-dans `ICON.sparkle`.
+**Logo (25/10)**, demandé par l'utilisateur : **l'orbe de Kodi** remplace le
+K étoilé (13/10, retiré). Une sphère lavande vers ciel avec son reflet, la
+même que l'orbe au repos. Dessin : `design/logo/orbe.svg` (logo) et
+`design/logo/icone-app.svg` (icône, orbe sur noir plein cadre). Web :
+`components/Logo.tsx` (`Monogram`, `Wordmark mark`), `app/icon.svg`,
+`app/apple-icon.png`, `app/opengraph-image.png`, `public/icons/`. Mobile :
+`src/ui/Logo.tsx` (`Monogram`, `BrandMark`), icônes et écran de lancement
+dans `mobile/assets/`. Le dégradé de l'orbe est permis dans le logo (il
+déroge à « ni dégradé » de `design/logo/README.md`). Le mot DRESSKODE reste
+en Inter Tight.
 
-**Intro (13/10)**, demandée par l'utilisateur : à l'arrivée, une fois par
-visite (web, `sessionStorage`) ou par lancement (mobile), le K se coud
-trait par trait, l'étincelle s'allume, une couture se pique, DRESSKODE se
-resserre, puis la caméra plonge dans le K (2,7 s). Noir sur blanc ou blanc
-sur noir selon le thème ; un toucher la passe ; « Réduire les animations »
-la réduit à un fondu. Web : `components/Intro.tsx` et `.intro` dans
-`globals.css` ; mobile : `src/ui/Intro.tsx` (Reanimated, react-native-svg).
+**Intro (25/10)**, demandée par l'utilisateur : à l'arrivée, une fois par
+visite (web, `sessionStorage`) ou par lancement (mobile), l'orbe apparaît,
+son reflet fait le tour de la sphère, DRESSKODE se resserre, puis la caméra
+plonge dans l'orbe (2,7 s). Fond noir ou blanc selon le thème ; un toucher la
+passe ; « Réduire les animations » la réduit à un fondu. Web :
+`components/Intro.tsx` et `.intro` dans `globals.css` ; mobile :
+`src/ui/Intro.tsx` (Reanimated, react-native-svg).
 
 **Refonte du 21/10 (web), demandée par l'utilisateur** sur ses images de
 référence (`Design app inspiration/`). Elle remplace, sur le web, ce qui
