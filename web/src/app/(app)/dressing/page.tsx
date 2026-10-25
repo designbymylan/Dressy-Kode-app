@@ -19,7 +19,7 @@ export default async function Dressing({
 }) {
   const { demande } = await searchParams;
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
 
   const [items, { data: jobRows }, { data: statRows }] = await Promise.all([

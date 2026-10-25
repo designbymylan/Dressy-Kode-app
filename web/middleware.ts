@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = '/bienvenue';
+    url.pathname = '/connexion';
     url.searchParams.set('suite', pathname);
     return NextResponse.redirect(url);
   }

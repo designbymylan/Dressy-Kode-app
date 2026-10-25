@@ -59,7 +59,7 @@ export default async function Moi({
 }) {
   const { abonnement } = await searchParams;
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
 
   const supabase = await createClient();
   const [{ data: sp }, subscription, { count: customers }, { count: everSubscribed }, { count: pieces }, { data: stats }, { data: profile }, shortcut] = await Promise.all([

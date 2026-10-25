@@ -10,7 +10,7 @@ import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
 
 export default async function Tenues() {
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
 
   const [pieces, { data: outfits }] = await Promise.all([

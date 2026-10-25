@@ -11,7 +11,7 @@ export const maxDuration = 60;
 
 export default async function KodiPage() {
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
 
   const [messages, usage, { count }, { data: tomorrow }] = await Promise.all([

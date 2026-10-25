@@ -47,7 +47,7 @@ function shift(year: number, month: number, delta: number) {
 export default async function Calendrier({ searchParams }: { searchParams: Promise<{ mois?: string }> }) {
   const { mois } = await searchParams;
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
   const mo = monthOf(mois);
 

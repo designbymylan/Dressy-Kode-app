@@ -8,7 +8,7 @@ import { Screen, Title } from '@/components/ui';
 export default async function NouvelleTenue({ searchParams }: { searchParams: Promise<{ avec?: string }> }) {
   const { avec } = await searchParams;
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
   const pieces = await loadPieces(supabase);
 

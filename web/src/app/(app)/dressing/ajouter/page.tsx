@@ -6,7 +6,7 @@ import { Screen, Title, Card } from '@/components/ui';
 
 export default async function Ajouter() {
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
 
   return (
     <Screen>

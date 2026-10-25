@@ -16,7 +16,7 @@ export default async function Demarrage({
 }) {
   const { ajuster } = await searchParams;
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   if (viewer.onboardedAt && !ajuster) redirect('/accueil');
 
   const supabase = await createClient();

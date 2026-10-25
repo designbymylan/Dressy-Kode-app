@@ -7,7 +7,7 @@ import { Screen, Title } from '@/components/ui';
 
 export default async function Offres() {
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
 
   const [subscription, { count }] = await Promise.all([

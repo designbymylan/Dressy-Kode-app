@@ -144,7 +144,7 @@ export async function updatePassword(_prev: FormResult, formData: FormData): Pro
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect('/bienvenue');
+  redirect('/connexion');
 }
 
 const YEAR = 365 * 24 * 3600;

@@ -15,7 +15,7 @@ const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
 
 export default async function Accueil() {
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   const supabase = await createClient();
 
   const [{ count }, { data: planned }, { data: semaine }] = await Promise.all([

@@ -9,7 +9,7 @@ import { TabBar } from '@/components/TabBar';
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
-  if (!viewer) redirect('/bienvenue');
+  if (!viewer) redirect('/connexion');
   // Tant que le questionnaire n'est pas passé, l'application reste fermée :
   // Kodi n'aurait rien sur quoi s'appuyer pour proposer quoi que ce soit.
   if (!viewer.onboardedAt) redirect('/demarrage');
