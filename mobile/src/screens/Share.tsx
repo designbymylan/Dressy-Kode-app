@@ -69,7 +69,7 @@ export function ShareScreen() {
       <StackHeader title="Partager" close />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 20 }}>
         <T v="title" accessibilityRole="header">
-          À une amie
+          À un proche
         </T>
 
         {/* L'aperçu de ce que l'amie recevra : la pièce, pas une photo, et aucun logo. */}
@@ -143,7 +143,7 @@ export function ShareScreen() {
 
         <Button
           testID="share-send"
-          label={name ? `Envoyer à ${name}` : 'Choisis une amie'}
+          label={name ? `Envoyer à ${name}` : 'Choisis un proche'}
           disabled={!name}
           icon="send"
           onPress={() => {

@@ -6,8 +6,8 @@ import { wearToday } from '@/app/actions';
 /**
  * « Je la porte » : note un port pour chaque pièce de la tenue du jour.
  * Au geste, le bouton laisse place à une coche qui se dessine, de petites
- * pastilles aux couleurs de la tenue s'envolent et le compteur de ports
- * monte. Récompenser le fait de porter ce qu'on a, c'est tout le propos.
+ * pastilles aux couleurs de la tenue s’envolent et le compteur de ports
+ * monte. Récompenser le fait de porter ce qu’on a, c’est tout le propos.
  */
 export function WearButton({
   outfitId,
@@ -30,7 +30,7 @@ export function WearButton({
   const [just, setJust] = useState(false);
 
   if (worn || just) {
-    // Tant que la page n'est pas relue, le compteur avance tout seul.
+    // Tant que la page n’est pas relue, le compteur avance tout seul.
     const total = worn ? ports : ports + count;
     return (
       <div className={`worn-line${just ? ' play' : ''}`} role="status">
@@ -54,7 +54,7 @@ export function WearButton({
           </svg>
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <strong style={{ fontSize: 14.5, fontWeight: 500 }}>Portée aujourd&apos;hui</strong>
+          <strong style={{ fontSize: 14.5, fontWeight: 500 }}>Portée aujourd’hui</strong>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>
             <b className="worn-tally" style={{ color: 'var(--ink)', fontWeight: 500 }}>{total}</b> port{total > 1 ? 's' : ''} pour ces pièces
           </span>

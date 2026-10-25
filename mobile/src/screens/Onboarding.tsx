@@ -565,7 +565,7 @@ function Mesures({ draft, set, next }: Ctx) {
           </T>
         </Ring>
         <T v="caption" tone="ink2" style={{ flex: 1 }}>
-          Précision de Kodi. Mètre ruban souple, à même la peau, sans serrer.
+          Conseil de Kodi. Mètre ruban souple, à même la peau, sans serrer.
         </T>
       </Card>
     </Frame>
@@ -597,7 +597,7 @@ function Tailles({ draft, set, next }: Ctx) {
     <Frame
       lead={'Tes tailles\n'}
       em="habituelles."
-      intro="Celles que tu portes le plus souvent. Elles servent pour les prêts entre amies et pour affiner les coupes."
+      intro="Celles que tu portes le plus souvent. Elles servent pour les prêts entre proches et pour affiner les coupes."
       footer={<Button testID="onb-next" label={filled ? 'Continuer' : 'Continuer sans'} onPress={next} />}
     >
       {row('haut', 'Hauts', o.haut, 'XS à XXL')}
@@ -663,7 +663,7 @@ function Couleurs({ draft, set, next, W }: Ctx) {
     <Frame
       lead={'Tes\n'}
       em="couleurs."
-      intro="Une touche : tu aimes. Deux : tu évites. Trois : on oublie."
+      intro="Une touche : tu aimes. Deux touches : tu évites. Trois touches : on repart de zéro."
       footer={<Button testID="onb-next" label="Continuer" onPress={next} />}
     >
       <View className="flex-row flex-wrap" style={{ rowGap: 14 }}>
@@ -735,7 +735,7 @@ function Ville({ draft, set, next }: Ctx) {
   const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const list = CITIES.filter((x) => !q || norm(x).startsWith(norm(q))).slice(0, 6);
   return (
-    <Frame lead={'Où tu\n'} em="vis ?" intro="Pour la météo de chaque matin : un trench quand il pleut, pas de laine quand il fait 25°." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
+    <Frame lead={'Où tu\n'} em="vis ?" intro="Pour la météo de chaque matin : un trench quand il pleut, pas de laine quand il fait 25 °C." footer={<Button testID="onb-next" label="Continuer" onPress={next} />}>
       <View className="flex-row items-center bg-sunk" style={{ height: 52, borderRadius: 26, paddingHorizontal: 16, gap: 10 }}>
         <Icon name="pin" size={20} color={c.ink2} />
         <TextInput
@@ -768,7 +768,7 @@ function Ville({ draft, set, next }: Ctx) {
             <View style={{ flex: 1 }}>
               <T v="bodyStrong">{draft.city}, c’est noté</T>
               <T v="caption" tone="ink2">
-                Kodi regardera sa météo chaque matin, dès ton compte créé.
+                Kodi regardera la météo de ta ville chaque matin, dès ton compte créé.
               </T>
             </View>
           </Card>
@@ -859,7 +859,7 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
       )}
       <T v="small" tone="ink2">
         Tes photos servent seulement à dessiner tes pièces : elles ne sont ni publiées ni partagées.
-        {!online ? ' Dans cet aperçu, elles restent sur l’appareil : c’est l’app, avec ton compte, qui les confie à Kodi.' : ''}
+        {!online ? ' Dans cet aperçu, elles restent sur l’appareil. Dans la vraie app, ton compte les confie à Kodi.' : ''}
       </T>
     </Frame>
   );

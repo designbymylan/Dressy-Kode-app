@@ -159,7 +159,7 @@ export default async function Moi({
         <p role="status" className="note pop center">
           {subscription
             ? `Merci ! ${planName(subscription.plan)} est active.`
-            : 'Merci ! Stripe confirme ton paiement : ton offre s’active dans quelques secondes. Recharge la page si elle ne s’affiche pas.'}
+            : 'Merci ! Ton paiement est confirmé, ton offre s’active dans quelques secondes. Recharge la page si rien ne change.'}
         </p>
       ) : null}
 

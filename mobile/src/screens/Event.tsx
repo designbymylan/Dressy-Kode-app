@@ -98,7 +98,7 @@ export function EventScreen() {
           <Rule />
           <T v="cardTitle">Terracotta au jardin</T>
           <T v="body" tone="ink2">
-            La robe terracotta et le blazer lin, jamais porté, sont faits pour une fin d’après-midi dehors. Prévois une étole{w ? ` : ${w.low}° après le dîner` : ' pour la soirée'}.
+            La robe terracotta et le blazer lin, jamais porté, sont faits pour une fin d’après-midi dehors. Prévois une étole{w ? `, il fera ${w.low} °C après le dîner` : ' pour la soirée'}.
           </T>
           <Button testID="event-plan" label="Prévoir cette tenue" size="m" onPress={() => planIt('Terracotta au jardin', first.map((p) => p.id))} />
         </Card>
@@ -152,7 +152,7 @@ export function EventScreen() {
               </View>
             ))}
             <T v="caption" tone="ink2">
-              Prêt en 2 minutes, valable 30 jours.
+              Prêt en quelques minutes, valable 30 jours.
             </T>
             <Button testID="pack-buy" label={`Préparer mon occasion · ${PACK_OCCASION.price}`} onPress={() => setConfirm(true)} />
             <T v="caption" tone="ink2" style={{ textAlign: 'center' }}>

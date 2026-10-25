@@ -9,10 +9,10 @@ import { Segment } from '@/components/Segment';
 import { Icon, ICON } from '@/components/ui';
 
 /**
- * L'atelier de tenue, sur le modèle des applis de garde-robe les plus
- * simples à l'usage : une rangée qui défile par emplacement, la pièce
- * au centre est celle qu'on porte. On verrouille ce qu'on garde, on
- * mélange le reste, on ajoute sac, accessoires et bijoux d'un toucher.
+ * L’atelier de tenue, sur le modèle des applis de garde-robe les plus
+ * simples à l’usage : une rangée qui défile par emplacement, la pièce
+ * au centre est celle qu’on porte. On verrouille ce qu’on garde, on
+ * mélange le reste, on ajoute sac, accessoires et bijoux d’un toucher.
  */
 
 type RowKey = 'veste' | 'haut' | 'bas' | 'robe' | 'chaussures';
@@ -90,7 +90,7 @@ function Row({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Changement venu d'ailleurs (le bouton Mélanger) : on glisse jusqu'à la pièce.
+  // Changement venu d’ailleurs (le bouton Mélanger) : on glisse jusqu’à la pièce.
   useEffect(() => {
     if (index !== reported.current) {
       reported.current = index;
@@ -175,7 +175,7 @@ function Row({
 const pick = (n: number) => Math.floor(Math.random() * n);
 
 /**
- * `start` : la pièce d'où l'on part (« Composer avec », depuis sa fiche) ;
+ * `start` : la pièce d’où l’on part (« Composer avec », depuis sa fiche) ;
  * elle est posée et verrouillée dans sa rangée, ou ajoutée aux extras.
  */
 export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; start?: string }) {
@@ -368,7 +368,7 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
 
       {error ? <p role="alert" className="note note-error pop">{error}</p> : null}
 
-      {/* barre d'action flottante */}
+      {/* barre d’action flottante */}
       <div
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)',
@@ -439,7 +439,7 @@ function Saved({ onAgain }: { onAgain: () => void }) {
           </svg>
         </span>
         <h2 id="tenue-ok" style={{ fontSize: 25 }}>Tenue <em className="accent">enregistrée</em></h2>
-        <p className="lead small">Elle t&apos;attend dans tes tenues. Tu pourras la prévoir pour un jour précis.</p>
+        <p className="lead small">Elle t’attend dans tes tenues. Tu pourras la prévoir pour un jour précis.</p>
         <Link href="/tenues" className="btn btn-primary btn-block">Voir mes tenues</Link>
         <button type="button" onClick={onAgain} className="btn btn-glass btn-block">En composer une autre</button>
       </div>

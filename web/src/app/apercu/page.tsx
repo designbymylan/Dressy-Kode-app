@@ -13,7 +13,7 @@ import { usageMood } from '@/lib/usage';
  * boutons de verre, sélection en bleu, icônes pleines (survoler pour voir
  * leur geste), humeurs de Kodi, barre de progression dans la section
  * découpée, tarifs et barre de navigation. Fermée par défaut : elle ne
- * s'ouvre qu'avec DRESSY_APERCU=1 dans l'environnement du serveur.
+ * s’ouvre qu’avec DRESSY_APERCU=1 dans l’environnement du serveur.
  */
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +46,7 @@ export default async function Apercu({ searchParams }: { searchParams: Promise<{
   return (
     <>
       <Screen>
-        <Title sub="La planche du 21/10, sur les composants de l'app.">Aperçu du design</Title>
+        <Title sub="La planche du 21/10, sur les composants de l’app.">Aperçu du design</Title>
 
         <section className="glass card">
           <h2 className="section-title">Palette</h2>
@@ -105,10 +105,10 @@ export default async function Apercu({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <Cut close label="Garde-robe exploitée">
+        <Cut close label="Pièces portées">
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span className="eyebrow">Garde-robe exploitée</span>
+              <span className="eyebrow">Pièces portées</span>
               <p className="stat" style={{ fontSize: 26, lineHeight: 1.1 }}>{usage.worn} sur {usage.total} pièces</p>
               <span className="small muted">portées ces 90 derniers jours</span>
             </div>

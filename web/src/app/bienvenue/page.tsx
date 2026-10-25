@@ -39,8 +39,8 @@ export default function Bienvenue() {
         </h1>
 
         <p className="lead rise" style={{ '--i': 8 } as CSSProperties}>
-          Tu as déjà tout ce qu&apos;il faut dans ton armoire. Dresskode t&apos;aide à le voir,
-          et à t&apos;habiller sans y penser une heure.
+          Tu as déjà tout ce qu’il faut dans ton armoire. Dresskode t’aide à le voir,
+          et à t’habiller sans y passer une heure.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export default function Bienvenue() {
           Commencer
         </Link>
         <Link href="/connexion" className="btn btn-ghost">
-          J&apos;ai déjà un compte
+          J’ai déjà un compte
         </Link>
       </div>
     </main>

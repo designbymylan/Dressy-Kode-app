@@ -17,12 +17,12 @@ const STEPS = [
 ] as const;
 type Step = (typeof STEPS)[number];
 const TOTAL = STEPS.length;
-/** Fins de chapitre (toi et ton style, ton dressing, tes couleurs, ton rythme) : un nœud s'y forme une fois franchies. */
+/** Fins de chapitre (toi et ton style, ton dressing, tes couleurs, ton rythme) : un nœud s’y forme une fois franchies. */
 const KNOTS = [3, 6, 8, 11];
 
 const PENCIL = 'M4 20h4L19 9l-4-4L4 16ZM13.5 6.5l4 4';
 
-/* ---------- briques d'interface ---------- */
+/* ---------- briques d’interface ---------- */
 
 function Check({ on }: { on: boolean }) {
   return (
@@ -130,7 +130,7 @@ function RowList({
   );
 }
 
-/* ---------- « je porte » / « j'aimerais porter » ---------- */
+/* ---------- « je porte » / « j’aimerais porter » ---------- */
 
 type Wear = 'porte' | 'aimerait' | null;
 const WEAR_LABEL: Record<Exclude<Wear, null>, string> = { porte: 'Je porte', aimerait: 'J’aimerais' };
@@ -162,15 +162,15 @@ function Legend() {
         <span style={{ position: 'relative', display: 'inline-block', width: 96, height: 22 }}><WearBadge state="aimerait" /></span>
       </div>
       <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.45 }}>
-        Une touche : tu en portes au quotidien. Deux touches : tu aimerais en porter. Trois : on oublie.
+        Une touche : tu en portes au quotidien. Deux touches : tu aimerais en porter. Trois touches : on repart de zéro.
       </p>
     </div>
   );
 }
 
 /**
- * Grille à trois états. Chaque touche fait tourner l'état de l'option :
- * rien, puis « je porte », puis « j'aimerais porter », puis rien.
+ * Grille à trois états. Chaque touche fait tourner l’état de l’option :
+ * rien, puis « je porte », puis « j’aimerais porter », puis rien.
  */
 function WearGrid({
   groups, worn, wish, onChange,
@@ -417,7 +417,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
   const toggle = (field: 'goals' | 'styles' | 'favourite_items' | 'colours' | 'avoid' | 'occasions', options: Option[] = []) => (id: string) =>
     setA((prev) => ({ ...prev, [field]: toggleIn(prev[field], id, options) }));
 
-  // Un second clic annule le choix : rien n'oblige à répondre.
+  // Un second clic annule le choix : rien n’oblige à répondre.
   const choose = (field: 'gender' | 'morning_time' | 'time_intent' | 'assistance') => (id: string) =>
     setA((prev) => ({ ...prev, [field]: prev[field] === id ? null : id }));
 
@@ -479,7 +479,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
             <Head title={<>Faisons <em className="accent">connaissance</em></>} lead="Deux choses et on y va." />
             <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <span style={{ fontSize: 12, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--muted)' }}>
-                Comment tu t&apos;appelles ?
+                Comment tu t’appelles ?
               </span>
               <input
                 type="text" value={a.display_name} autoFocus autoComplete="given-name"
@@ -588,7 +588,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
 
         {key === 'eviter' && !done ? (
           <>
-            <Head title={<>Et ce que tu <em className="accent">évites</em> ?</>} lead={"Ça m’évite de te proposer à côté."} />
+            <Head title={<>Et ce que tu <em className="accent">évites</em> ?</>} lead={"Pour ne pas te proposer ce qui ne te ressemble pas."} />
             <RowList options={AVOID} selected={a.avoid} pick={toggle('avoid')} toneFrom={2} />
           </>
         ) : null}
@@ -641,7 +641,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
         ) : null}
       </div>
 
-      {/* Barre d'action fixe : le pouce la trouve toujours au même endroit. */}
+      {/* Barre d’action fixe : le pouce la trouve toujours au même endroit. */}
       <div
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 5,

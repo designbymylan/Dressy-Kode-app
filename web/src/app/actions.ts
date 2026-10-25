@@ -16,16 +16,16 @@ import {
 } from '@/lib/onboarding';
 import { categoryMeta, isKnownKind, slotFor } from '@/lib/wardrobe';
 
-// code : ce que l'écran peut proposer en plus du message (« pieces » → voir les offres).
+// code : ce que l’écran peut proposer en plus du message (« pieces » → voir les offres).
 export type FormResult = { error: string; code?: string } | undefined;
 
 const AUTH_ERRORS: Record<string, string> = {
   invalid_credentials: 'Adresse e-mail ou mot de passe incorrect.',
-  email_not_confirmed: "Confirme d'abord ton adresse : le lien t'attend dans tes e-mails.",
+  email_not_confirmed: "Confirme d’abord ton adresse : le lien t’attend dans tes e-mails.",
   user_already_exists: 'Un compte existe déjà avec cette adresse. Connecte-toi.',
-  email_address_invalid: "Cette adresse e-mail n'est pas valide.",
+  email_address_invalid: "Cette adresse e-mail n’est pas valide.",
   weak_password: 'Mot de passe trop court : il en faut au moins 8.',
-  same_password: "C'est déjà ton mot de passe actuel : choisis-en un autre.",
+  same_password: "C’est déjà ton mot de passe actuel : choisis-en un autre.",
   over_email_send_rate_limit: 'Trop de tentatives. Réessaie dans quelques minutes.',
   over_request_rate_limit: 'Trop de tentatives. Réessaie dans quelques minutes.',
 };
@@ -55,9 +55,9 @@ export async function signUp(_prev: FormResult, formData: FormData): Promise<For
     options: { emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/demarrage` },
   });
 
-  if (error) return { error: readable(error.code, "L'inscription n'a pas abouti. Réessaie.") };
+  if (error) return { error: readable(error.code, "L’inscription n’a pas abouti. Réessaie.") };
   // Adresse déjà inscrite et confirmée : Supabase répond sans erreur, mais
-  // sans identité, pour ne pas révéler l'existence du compte.
+  // sans identité, pour ne pas révéler l’existence du compte.
   if (data.user && !data.user.identities?.length) return { error: AUTH_ERRORS.user_already_exists };
 
   redirect(data.session ? '/demarrage' : `/inscription/verifier?email=${encodeURIComponent(email)}`);
@@ -73,8 +73,8 @@ export async function signIn(_prev: FormResult, formData: FormData): Promise<For
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: readable(error.code, 'Connexion impossible.') };
 
-  // Un compte dont le questionnaire n'est pas fait y est renvoyé par le
-  // layout de l'application.
+  // Un compte dont le questionnaire n’est pas fait y est renvoyé par le
+  // layout de l’application.
   redirect('/accueil');
 }
 
@@ -95,11 +95,11 @@ export async function signInWithProvider(_prev: FormResult, formData: FormData):
     provider,
     options: { redirectTo: `${await siteOrigin()}/auth/callback?next=/demarrage` },
   });
-  if (error || !data.url) return { error: `La connexion avec ${PROVIDER_NAME[provider]} n'a pas pu s'ouvrir. Réessaie.` };
+  if (error || !data.url) return { error: `La connexion avec ${PROVIDER_NAME[provider]} n’a pas pu s’ouvrir. Réessaie.` };
   redirect(data.url);
 }
 
-/** Renvoie l'e-mail de confirmation, depuis l'écran « Regarde tes e-mails ». */
+/** Renvoie l’e-mail de confirmation, depuis l’écran « Regarde tes e-mails ». */
 export async function resendConfirmation(_prev: FormResult | { sent: true }, formData: FormData): Promise<FormResult | { sent: true }> {
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   if (!email) return { error: 'Adresse e-mail manquante.' };
@@ -109,7 +109,7 @@ export async function resendConfirmation(_prev: FormResult | { sent: true }, for
     email,
     options: { emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/demarrage` },
   });
-  if (error) return { error: readable(error.code, "L'e-mail n'est pas reparti. Réessaie dans un instant.") };
+  if (error) return { error: readable(error.code, "L’e-mail n’a pas pu partir. Réessaie dans un instant.") };
   return { sent: true };
 }
 
@@ -137,7 +137,7 @@ export async function updatePassword(_prev: FormResult, formData: FormData): Pro
   if (!user) return { error: 'Ce lien a expiré. Demande-en un nouveau.' };
 
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) return { error: readable(error.code, "Le mot de passe n'a pas pu être changé. Réessaie.") };
+  if (error) return { error: readable(error.code, "Le mot de passe n’a pas pu être changé. Réessaie.") };
   redirect('/accueil');
 }
 
@@ -157,16 +157,16 @@ export async function setTheme(theme: Theme) {
     const supabase = await createClient();
     await supabase.from('settings').update({ theme }).eq('space_id', viewer.spaceId);
   } else {
-    // Un visiteur (bienvenue, connexion) garde son choix sur l'appareil.
+    // Un visiteur (bienvenue, connexion) garde son choix sur l’appareil.
     (await cookies()).set('dk_theme', theme, { path: '/', maxAge: YEAR, sameSite: 'lax' });
   }
 
-  // layout.tsx relit le thème : on invalide tout l'arbre pour que le
-  // changement porte sur l'application entière, pas sur l'écran courant.
+  // layout.tsx relit le thème : on invalide tout l’arbre pour que le
+  // changement porte sur l’application entière, pas sur l’écran courant.
   revalidatePath('/', 'layout');
 }
 
-/** Montre ou masque l'encoche clair / sombre (réglage propre à l'appareil). */
+/** Montre ou masque l’encoche clair / sombre (réglage propre à l’appareil). */
 export async function setThemeShortcut(on: boolean) {
   const jar = await cookies();
   if (on) jar.delete('dk_theme_tab');
@@ -175,13 +175,13 @@ export async function setThemeShortcut(on: boolean) {
 }
 
 /**
- * « Je l'ai portée aujourd'hui », depuis la fiche d'une pièce : un premier
- * toucher note le port, un second l'annule. C'est ce qui fait avancer la
+ * « Je l’ai portée aujourd’hui », depuis la fiche d’une pièce : un premier
+ * toucher note le port, un second l’annule. C’est ce qui fait avancer la
  * barre de progression du dressing.
  */
 export async function togglePieceWear(garmentId: string): Promise<{ error: string } | { worn: boolean }> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const supabase = await createClient();
   const day = parisDay(0);
@@ -195,7 +195,7 @@ export async function togglePieceWear(garmentId: string): Promise<{ error: strin
   const res = existing?.length
     ? await supabase.from('wears').delete().eq('garment_id', garmentId).eq('worn_on', day)
     : await supabase.from('wears').insert({ garment_id: garmentId, worn_on: day });
-  if (res.error) return { error: "Le port n'a pas pu être noté." };
+  if (res.error) return { error: "Le port n’a pas pu être noté." };
 
   revalidatePath('/dressing');
   revalidatePath('/accueil');
@@ -204,7 +204,7 @@ export async function togglePieceWear(garmentId: string): Promise<{ error: strin
 
 export async function addGarment(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const name = String(formData.get('name') ?? '').trim();
   const categoryId = String(formData.get('category_id') ?? '');
@@ -220,7 +220,7 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
 
   const price = priceRaw ? Math.round(Number(priceRaw) * 100) : null;
   if (price !== null && (!Number.isFinite(price) || price < 0)) {
-    return { error: 'Le prix ne se lit pas. Exemple : 49,90' };
+    return { error: 'Ce prix n’est pas lisible. Exemple : 49,90' };
   }
 
   const supabase = await createClient();
@@ -238,7 +238,7 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
   if (error) {
     return error.hint === 'pieces'
       ? { error: error.message, code: 'pieces' }
-      : { error: "La pièce n'a pas pu être ajoutée. Réessaie." };
+      : { error: "La pièce n’a pas pu être ajoutée. Réessaie." };
   }
 
   revalidatePath('/dressing');
@@ -249,19 +249,19 @@ const DAILY_QUOTA = 20; // même limite que le trigger ai_jobs_before_insert (ph
 const MAX_PHOTOS_PER_BATCH = 10;
 
 /**
- * Confie à l'agent central les photos déjà déposées dans `uploads` par le
- * navigateur : une tâche par photo. L'agent y repère ensuite TOUTES les
+ * Confie à l’agent central les photos déjà déposées dans `uploads` par le
+ * navigateur : une tâche par photo. L’agent y repère ensuite TOUTES les
  * pièces (ou celles que la précision nomme) et crée une tâche par pièce.
  */
 export async function requestAiGarments(input: { paths: string[]; hint: string }): Promise<FormResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const paths = Array.isArray(input?.paths) ? input.paths.map(String) : [];
   if (!paths.length) return { error: 'Ajoute au moins une photo.' };
   if (paths.length > MAX_PHOTOS_PER_BATCH) return { error: `${MAX_PHOTOS_PER_BATCH} photos au plus à la fois.` };
-  // La base refait ce contrôle ; ici il évite d'envoyer une demande perdue d'avance.
-  if (paths.some((p) => !p.startsWith(`${viewer.spaceId}/`))) return { error: 'Photo hors de ton espace.' };
+  // La base refait ce contrôle ; ici il évite d’envoyer une demande perdue d’avance.
+  if (paths.some((p) => !p.startsWith(`${viewer.spaceId}/`))) return { error: 'Cette photo n’est pas dans ton espace. Choisis-en une autre.' };
 
   const supabase = await createClient();
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
@@ -276,8 +276,8 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
   if (paths.length > left) {
     return {
       error: left > 0
-        ? `Il te reste ${left} photo${left > 1 ? 's' : ''} à confier à Kodi aujourd'hui : retire-en ${paths.length - left}.`
-        : `Tu as confié ${DAILY_QUOTA} photos à Kodi aujourd'hui, c'est la limite du jour. Reviens demain.`,
+        ? `Il te reste ${left} photo${left > 1 ? 's' : ''} à confier à Kodi aujourd’hui : retire-en ${paths.length - left}.`
+        : `Tu as confié ${DAILY_QUOTA} photos à Kodi aujourd’hui, c’est la limite du jour. Reviens demain.`,
     };
   }
 
@@ -295,7 +295,7 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
     // Les messages des triggers (quota, photo hors espace, dressing plein) sont écrits pour être lus.
     return ['quota', 'photos', 'pieces'].includes(error.hint)
       ? { error: error.message, code: error.hint }
-      : { error: "La demande n'est pas partie. Réessaie." };
+      : { error: "La demande n’est pas partie. Réessaie." };
   }
 
   revalidatePath('/dressing');
@@ -311,8 +311,8 @@ export async function retryAiJob(jobId: string): Promise<FormResult> {
 }
 
 /**
- * Retire une pièce en échec de la liste. Ses photos d'origine ne partent que
- * si aucune autre pièce repérée sur la même photo ne s'en sert encore.
+ * Retire une pièce en échec de la liste. Ses photos d’origine ne partent que
+ * si aucune autre pièce repérée sur la même photo ne s’en sert encore.
  */
 export async function dismissAiJob(jobId: string): Promise<FormResult> {
   const supabase = await createClient();
@@ -340,13 +340,13 @@ export type KodeResult =
   | { messages: KodeMessage[]; usage: KodeUsage };
 
 /**
- * Pose une question à Kodi. L'Edge Function `kode` compte le quota, fait
+ * Pose une question à Kodi. L’Edge Function `kode` compte le quota, fait
  * répondre le modèle et enregistre les deux bulles ; on les relit ensuite par
  * la RLS, avec les vignettes signées, pour les afficher telles quelles.
  */
 export async function askKode(question: string): Promise<KodeResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.', code: null };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.', code: null };
 
   const q = String(question ?? '').trim().slice(0, 600);
   if (!q) return { error: 'Écris ta question à Kodi.', code: null };
@@ -362,7 +362,7 @@ export async function askKode(question: string): Promise<KodeResult> {
       ? await (error.context as Response).json().catch(() => null)
       : null;
     return {
-      error: body?.error ?? "Kodi n'a pas pu répondre. Réessaie dans un instant.",
+      error: body?.error ?? "Kodi n’a pas pu répondre, la connexion est peut-être faible. Réessaie.",
       code: body?.code ?? null,
     };
   }
@@ -378,18 +378,18 @@ export async function askKode(question: string): Promise<KodeResult> {
 export async function resetKode(): Promise<FormResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc('kode_reset');
-  if (error) return { error: "La conversation n'a pas pu être remise à zéro." };
+  if (error) return { error: "La conversation n’a pas pu être remise à zéro." };
   revalidatePath('/kodi');
   return undefined;
 }
 
 /**
- * Prévoit une tenue pour demain, ou la retire si c'était déjà elle. Une
+ * Prévoit une tenue pour demain, ou la retire si c’était déjà elle. Une
  * autre tenue déjà prévue pour demain est remplacée : un jour, une tenue.
  */
 export async function planTomorrow(outfitId: string): Promise<{ error: string } | { planned: boolean }> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const supabase = await createClient();
   const day = parisDay(1);
@@ -403,19 +403,19 @@ export async function planTomorrow(outfitId: string): Promise<{ error: string } 
   const { error } = current?.outfit_id === outfitId
     ? await supabase.from('planned_days').delete().eq('space_id', viewer.spaceId).eq('day', day)
     : await supabase.from('planned_days').upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: false });
-  if (error) return { error: "Le calendrier n'a pas pu être mis à jour." };
+  if (error) return { error: "Le calendrier n’a pas pu être mis à jour." };
 
   revalidatePath('/accueil');
   return { planned: current?.outfit_id !== outfitId };
 }
 
 /**
- * « Je la porte » : un port par pièce pour aujourd'hui (ce qui alimente le
+ * « Je la porte » : un port par pièce pour aujourd’hui (ce qui alimente le
  * nombre de ports et le coût par port), et la journée marquée portée.
  */
 export async function wearToday(outfitId: string): Promise<FormResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const supabase = await createClient();
   const day = parisDay(0);
@@ -428,20 +428,20 @@ export async function wearToday(outfitId: string): Promise<FormResult> {
       onConflict: 'garment_id,worn_on',
       ignoreDuplicates: true,
     });
-  if (wears.error) return { error: "Le port n'a pas pu être noté." };
+  if (wears.error) return { error: "Le port n’a pas pu être noté." };
 
   const plan = await supabase
     .from('planned_days')
     .upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: true });
-  if (plan.error) return { error: "Le calendrier n'a pas pu être mis à jour." };
+  if (plan.error) return { error: "Le calendrier n’a pas pu être mis à jour." };
 
   revalidatePath('/accueil');
   return undefined;
 }
 
 /**
- * Demande une page Stripe à l'Edge Function `billing`. Rien n'est accordé
- * ici : l'offre ne s'active qu'une fois le paiement confirmé par le webhook.
+ * Demande une page Stripe à l’Edge Function `billing`. Rien n’est accordé
+ * ici : l’offre ne s’active qu’une fois le paiement confirmé par le webhook.
  */
 async function billingPage(body: Record<string, string>): Promise<{ url: string } | { error: string }> {
   const supabase = await createClient();
@@ -450,7 +450,7 @@ async function billingPage(body: Record<string, string>): Promise<{ url: string 
     const detail = error instanceof FunctionsHttpError
       ? await (error.context as Response).json().catch(() => null)
       : null;
-    return { error: detail?.error ?? "Le paiement n'a pas pu s'ouvrir. Réessaie dans un instant." };
+    return { error: detail?.error ?? "Le paiement n’a pas pu s’ouvrir. Réessaie dans un instant." };
   }
   return { url: data.url };
 }
@@ -458,7 +458,7 @@ async function billingPage(body: Record<string, string>): Promise<{ url: string 
 /** « Continuer avec Sapologue » : ouvre le paiement Stripe (ou le portail si déjà abonné). */
 export async function startCheckout(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const plan = formData.get('plan');
   const period = formData.get('period');
@@ -469,10 +469,10 @@ export async function startCheckout(_prev: FormResult, formData: FormData): Prom
   redirect(res.url);
 }
 
-/** « Gérer mon abonnement » : changer d'offre, de carte, résilier, factures. */
+/** « Gérer mon abonnement » : changer d’offre, de carte, résilier, factures. */
 export async function openPortal(_prev: FormResult, _formData: FormData): Promise<FormResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const res = await billingPage({ action: 'portal' });
   if ('error' in res) return res;
@@ -488,7 +488,7 @@ export async function openPortal(_prev: FormResult, _formData: FormData): Promis
  */
 export async function saveStyleProfile(answers: Answers): Promise<FormResult> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const keep = (allowed: readonly { id: string }[], values: string[]) => {
     const ok = new Set(allowed.map((o) => o.id));
@@ -512,7 +512,7 @@ export async function saveStyleProfile(answers: Answers): Promise<FormResult> {
       styles: keep(STYLES, answers.styles),
       favourite_items: keep(ITEMS, answers.favourite_items),
       jewelry,
-      // Ce qu'on porte déjà n'est pas aussi ce qu'on aimerait porter.
+      // Ce qu’on porte déjà n’est pas aussi ce qu’on aimerait porter.
       jewelry_wish: keep(JEWELRY, answers.jewelry_wish ?? []).filter((id) => id !== NO_JEWELRY.id && !jewelry.includes(id)),
       metals: alone(keep(METALS, answers.metals ?? []), 'mixte'),
       accessories,
@@ -528,8 +528,8 @@ export async function saveStyleProfile(answers: Answers): Promise<FormResult> {
 
   if (profile.error) return { error: profile.error.message };
 
-  // onboarded_at est ce qui ouvre l'application : il se pose en dernier,
-  // pour qu'un échec plus haut laisse la personne reprendre le parcours.
+  // onboarded_at est ce qui ouvre l’application : il se pose en dernier,
+  // pour qu’un échec plus haut laisse la personne reprendre le parcours.
   const done = await supabase
     .from('profiles')
     .update({ display_name: name || viewer.displayName, onboarded_at: new Date().toISOString() })
@@ -545,13 +545,13 @@ const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
   'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
 /**
- * Enregistre une tenue composée dans l'atelier. L'emplacement de chaque pièce
+ * Enregistre une tenue composée dans l’atelier. L’emplacement de chaque pièce
  * se déduit de sa catégorie, relue en base : le navigateur ne choisit que
  * les pièces, et seulement parmi celles que la RLS lui laisse voir.
  */
 export async function createOutfit(input: { garmentIds: string[]; name?: string }): Promise<{ error: string } | { id: string }> {
   const viewer = await getViewer();
-  if (!viewer) return { error: 'Session expirée.' };
+  if (!viewer) return { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' };
 
   const ids = [...new Set((Array.isArray(input?.garmentIds) ? input.garmentIds : []).map(String))].slice(0, 16);
   if (ids.length < 2) return { error: 'Une tenue, c’est au moins deux pièces.' };

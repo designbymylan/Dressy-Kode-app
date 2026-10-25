@@ -151,7 +151,7 @@ export function Kode() {
           <Card testID="kode-quota" style={{ gap: 10, padding: 14 }}>
             <Tag label={`${quota} questions posées`} />
             <T v="body" tone="ink2">
-              Elles reviennent le 1er du mois. Sapologue rend Kodi sans limite.
+              Elles reviennent le 1er du mois. Avec Sapologue, Kodi n’a pas de limite.
             </T>
             <Button label="Voir les offres" variant="secondary" size="m" onPress={() => nav.navigate('Offers')} />
           </Card>

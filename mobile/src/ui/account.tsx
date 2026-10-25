@@ -184,7 +184,7 @@ export function AccountSheet({
       <Sheet visible={visible} onClose={onClose} kicker="Connexion" title="Content de te revoir" testID="login-sheet"
         footer={onDemo ? <Button testID="login-demo" label="Ouvrir le compte de démonstration" onPress={() => { onClose(); onDemo(); }} /> : undefined}>
         <T v="body" tone="ink2">
-          Cet aperçu tourne sans serveur : la connexion n’y est pas branchée. Dans l’app, ton compte se retrouve avec ton e-mail et ton mot de passe.
+          Cet aperçu tourne sans serveur : la connexion n’y est pas branchée. Dans la vraie app, tu te connectes avec ton e-mail et ton mot de passe.
         </T>
       </Sheet>
     );

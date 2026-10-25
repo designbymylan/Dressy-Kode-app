@@ -3,7 +3,7 @@ import { Screen, Title, Card } from '@/components/ui';
 export default function Calendrier() {
   return (
     <Screen>
-      <Title sub="Tenues planifiées, occasions, prêts, voyage.">
+      <Title sub="Tenues planifiées, occasions, prêts, voyages.">
         <em className="accent">Calendrier</em>
       </Title>
       <Card center i={1}>

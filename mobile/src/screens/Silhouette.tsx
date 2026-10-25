@@ -79,7 +79,7 @@ export function SilhouetteScreen() {
             </T>
           </Ring>
           <View style={{ flex: 1, gap: 4 }}>
-            <T v="bodyStrong">Précision de Kodi</T>
+            <T v="bodyStrong">Conseil de Kodi</T>
             <T v="caption" tone="ink2">
               {next ? `Ajoute ${next.label} : +${next.gain} %.` : 'Kodi a tout ce qu’il lui faut.'}
             </T>
@@ -241,7 +241,7 @@ export function SilhouetteScreen() {
 
       <Sheet visible={edit === 'couleurs'} onClose={() => setEdit(null)} kicker="Ton style" title="Couleurs" testID="colors-sheet">
         <T v="caption" tone="ink2" style={{ marginBottom: 12 }}>
-          Une touche : tu aimes. Deux : tu évites. Trois : on oublie.
+          Une touche : tu aimes. Deux touches : tu évites. Trois touches : on repart de zéro.
         </T>
         <View className="flex-row flex-wrap" style={{ rowGap: 14 }}>
           {COLOR_CHOICES.map((x) => {

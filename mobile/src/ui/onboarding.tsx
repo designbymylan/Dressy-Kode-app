@@ -262,7 +262,7 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
       feedback="select"
       accessibilityRole="button"
       accessibilityLabel={`${name} : ${state === 'aime' ? 'tu aimes' : state === 'evite' ? 'tu évites' : 'neutre'}`}
-      accessibilityHint="Touche pour passer de neutre à j’aime, puis à j’évite"
+      accessibilityHint="Touche pour passer de neutre à « tu aimes », puis à « tu évites »"
       style={{ width: width ?? size + 18, alignItems: 'center', gap: 6 }}
       scaleTo={0.94}
     >

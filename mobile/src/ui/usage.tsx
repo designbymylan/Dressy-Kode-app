@@ -104,11 +104,11 @@ export function UsagePanel({ pieces }: { pieces: Piece[] }) {
   const kodi = usageMood(u);
   if (!u.total) return null;
   return (
-    <Cut testID="dressing-usage" label="Garde-robe exploitée">
+    <Cut testID="dressing-usage" label="Pièces portées">
       <View className="flex-row items-end justify-between" style={{ gap: 12 }}>
         <View style={{ flex: 1, gap: 4 }}>
           <T v="label" style={{ color: c['on-panel-muted'] }}>
-            Garde-robe exploitée
+            Pièces portées
           </T>
           <T v="title" style={{ color: c['on-panel'], fontSize: 26, lineHeight: 30 }}>
             {u.worn} sur {u.total} pièce{u.total > 1 ? 's' : ''}

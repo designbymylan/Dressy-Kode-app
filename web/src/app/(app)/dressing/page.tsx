@@ -66,10 +66,10 @@ export default async function Dressing({
       </Title>
 
       {usage.total ? (
-        <Cut close label="Garde-robe exploitée" i={1}>
+        <Cut close label="Pièces portées" i={1}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span className="eyebrow">Garde-robe exploitée</span>
+              <span className="eyebrow">Pièces portées</span>
               <p className="stat" style={{ fontSize: 26, lineHeight: 1.1 }}>
                 {usage.worn} sur {usage.total} pièce{usage.total > 1 ? 's' : ''}
               </p>
@@ -110,7 +110,7 @@ export default async function Dressing({
       {jobs.length ? (
         <Card i={1}>
           <h2 className="section-title">{working ? 'Kodi s’occupe de tes photos' : 'Tout juste rangé'}</h2>
-          {/* La clé change quand une pièce part, arrive ou est relancée : la liste repart de l'état serveur. */}
+          {/* La clé change quand une pièce part, arrive ou est relancée : la liste repart de l’état serveur. */}
           <JobList
             key={jobs.map((j) => `${j.id}:${j.status}`).join('|')}
             initial={jobs.map((j) => ({
@@ -126,7 +126,7 @@ export default async function Dressing({
         <Card center i={2}>
           <h2 style={{ fontSize: 22 }}>Ta garde-robe est <em className="accent">vide</em></h2>
           <p className="lead small">
-            C&apos;est normal : rien n&apos;est ajouté pour toi. Commence par une pièce
+            C’est normal : rien n’est ajouté pour toi. Commence par une pièce
             que tu portes souvent, un sac ou un bijou : Kodi a besoin de deux ou trois
             pièces pour proposer sa première tenue.
           </p>

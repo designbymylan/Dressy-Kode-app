@@ -131,7 +131,7 @@ export function PieceScreen() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-piece">
       <Ambient />
-      <StackHeader title={piece.name} brand y={y} right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
+      <StackHeader title={piece.name} brand y={y} right={[{ icon: 'share', label: 'Partager à un proche', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {/* La scène : la pièce sur gris studio, un panneau de verre posé dessus (05/10). */}
         <View style={{ height: stageH, borderRadius: 28, backgroundColor: c.stage, overflow: 'hidden', alignItems: 'center' }}>
@@ -182,7 +182,7 @@ export function PieceScreen() {
             <Tag label={piece.lastWorn === null ? `Jamais porté${f.e}` : `${f.il} ${f.v('dort', 'dorment')} depuis ${sinceLabel(piece).replace('il y a ', '')}`} tone="butter" />
             <View className="flex-row" style={{ gap: 8 }}>
               <Button testID="dormant-plan" label="Prévoir demain" size="m" grow onPress={() => nav.navigate('Compose', { with: piece.id, day: 1 })} />
-              <Button label="À une amie" size="m" variant="secondary" grow onPress={() => nav.navigate('Share', { id: piece.id })} />
+              <Button label="À un proche" size="m" variant="secondary" grow onPress={() => nav.navigate('Share', { id: piece.id })} />
             </View>
           </Card>
         )}
@@ -235,7 +235,7 @@ export function PieceScreen() {
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">
         {/* La feuille du menu se referme d'abord : sur iPhone, deux modales ne s'ouvrent pas l'une sur l'autre. */}
         <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
-        <Row icon="share" title="Prêter ou donner à une amie" onPress={() => { setMenu(false); nav.navigate('Share', { id: piece.id }); }} />
+        <Row icon="share" title="Prêter ou donner à un proche" onPress={() => { setMenu(false); nav.navigate('Share', { id: piece.id }); }} />
         <Row icon="trash" title="Retirer du dressing" detail="Tu pourras annuler juste après" last onPress={() => { setMenu(false); nav.goBack(); a.removePiece(piece.id); }} testID="piece-remove" />
       </Sheet>
 

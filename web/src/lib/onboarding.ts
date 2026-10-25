@@ -153,13 +153,13 @@ export const ITEM_GROUPS: Group[] = [
     label: 'Hauts',
     options: [
       { id: 'tshirts', label: 'T-shirts', icon: ICONS.tshirt },
-      { id: 'debardeurs', label: 'Débardeurs et tops', icon: ICONS.debardeur },
+      { id: 'debardeurs', label: 'Débardeurs et hauts', icon: ICONS.debardeur },
       { id: 'chemises', label: 'Chemises', icon: ICONS.chemise },
       { id: 'blouses', label: 'Blouses', icon: ICONS.blouse, for: 'femme' },
       { id: 'polos', label: 'Polos', icon: ICONS.polo },
       { id: 'pulls', label: 'Pulls', icon: ICONS.pull },
       { id: 'cardigans', label: 'Gilets et cardigans', icon: ICONS.cardigan },
-      { id: 'sweats', label: 'Sweats et hoodies', icon: ICONS.sweat },
+      { id: 'sweats', label: 'Sweats et sweats à capuche', icon: ICONS.sweat },
     ],
   },
   {
@@ -258,7 +258,7 @@ export const ACCESSORY_GROUPS: Group[] = [
     options: [
       { id: 'sac_main', label: 'Sac à main', icon: ICONS.sacamain },
       { id: 'bandouliere', label: 'Sac bandoulière', icon: ICONS.bandouliere },
-      { id: 'cabas', label: 'Cabas ou tote bag', icon: ICONS.cabas },
+      { id: 'cabas', label: 'Cabas ou sac fourre-tout', icon: ICONS.cabas },
       { id: 'sac_dos', label: 'Sac à dos', icon: ICONS.sacados },
       { id: 'pochette', label: 'Pochette', icon: ICONS.pochette },
       { id: 'banane', label: 'Banane', icon: ICONS.banane },
@@ -324,7 +324,7 @@ export const AVOID: Option[] = [
   { id: 'trop_formel', label: 'Trop habillé', icon: ICONS.mallette },
   { id: 'trop_sportif', label: 'Trop sportif', icon: ICONS.course },
   { id: 'imprimes', label: 'Les imprimés', icon: ICONS.motif },
-  { id: 'oversize', label: 'L’oversize', icon: ICONS.oversize },
+  { id: 'oversize', label: 'Les coupes amples', icon: ICONS.oversize },
   { id: 'moulant', label: 'Le moulant', icon: ICONS.moulant },
   { id: 'court', label: 'Les pièces courtes', icon: ICONS.ciseaux },
 ];

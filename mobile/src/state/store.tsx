@@ -48,7 +48,7 @@ export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> 
   tendance: { title: 'Tendance', note: 'Ce qui se porte, déjà dans ton dressing' },
   porte: { title: 'Le plus porté', note: 'Tes pièces fétiches' },
   nouveautes: { title: 'Nouveautés', note: 'Tes dernières pièces' },
-  prets: { title: 'Prêts en cours', note: 'Ce que tes amies ont' },
+  prets: { title: 'Prêts en cours', note: 'Ce que tes proches ont' },
   bilan: { title: 'Ton mois', note: 'Ce que tu portes vraiment' },
 };
 
@@ -567,7 +567,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
           const r = await remote.signIn(email, password);
           if (!r.ok) return r;
           const acc = await remote.loadAccount();
-          if (!acc) return { ok: false, message: 'Connexion ouverte, mais ton compte n’a pas pu être lu. Réessaie.' };
+          if (!acc) return { ok: false, message: 'Connexion réussie, mais ton compte n’a pas pu se charger. Réessaie.' };
           const s = getState();
           if (!acc.onboarded && s.onboarded && s.account === 'nouveau') {
             dispatch({ t: 'session', session: acc.session, pendingEmail: null });

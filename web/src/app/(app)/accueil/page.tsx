@@ -21,7 +21,7 @@ export default async function Accueil() {
 
   const [{ count }, { data: planned }] = await Promise.all([
     supabase.from('garments').select('id', { count: 'exact', head: true }),
-    // La tenue prévue pour aujourd'hui (par Kodi ou à la main) passe avant tout le reste.
+    // La tenue prévue pour aujourd’hui (par Kodi ou à la main) passe avant tout le reste.
     supabase
       .from('planned_days')
       .select(`worn, outfits(${OUTFIT_SELECT})`)
@@ -65,7 +65,7 @@ export default async function Accueil() {
           <Kodi mood="wave" size={104} track shadow />
           <h2 style={{ fontSize: 22 }}>On commence par <em className="accent">tes vêtements</em></h2>
           <p className="lead small">
-            Ton espace est prêt et il est vide : rien n&apos;y est ajouté sans toi.
+            Ton espace est prêt et il est vide : rien n’y est ajouté sans toi.
             Dès que deux ou trois pièces y seront, Kodi pourra composer une tenue
             avec ce que tu as déjà.
           </p>

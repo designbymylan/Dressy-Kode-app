@@ -124,7 +124,7 @@ function curated(question: string, pieces: Piece[]): Reply {
       outfit: {
         title: 'Réveiller le blazer lin',
         pieces: exists(['m3', 'h6', 'b2', 'c1', 'a1']),
-        why: 'Porté sur le t-shirt écru et le jean large, le blazer lin perd son côté habillé. Samedi, il fera 19° et grand beau.',
+        why: 'Porté sur le t-shirt écru et le jean large, le blazer lin perd son côté habillé. Samedi, il fera 19 °C et grand soleil.',
       },
     };
   }

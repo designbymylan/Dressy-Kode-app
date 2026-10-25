@@ -207,7 +207,7 @@ export function ProfileEdit() {
         <Card style={{ gap: 12 }}>
           <Tag label="Tes couleurs" />
           <T v="kicker" tone="ink2">
-            Une touche : aimée · deux : évitée
+            Une touche : tu aimes · deux touches : tu évites
           </T>
           <View className="flex-row flex-wrap" style={{ rowGap: 12 }} onLayout={(e) => setRowW(e.nativeEvent.layout.width)}>
             {rowW > 0 &&

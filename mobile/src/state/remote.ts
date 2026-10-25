@@ -555,14 +555,14 @@ export async function saveConsent(session: Session, kind: ConsentKind, granted: 
 /** Toutes tes données, préparées par la fonction `compte` : un lien valable une heure. */
 export async function exportData(): Promise<Result<{ url: string }>> {
   const { data, error } = await db().functions.invoke<{ url: string }>('compte', { body: { action: 'exporter' } });
-  if (error || !data?.url) return { ok: false, ...(await functionError(error, 'L’export n’a pas pu être préparé. Réessaie dans un instant.')) };
+  if (error || !data?.url) return { ok: false, ...(await functionError(error, 'L’export n’a pas pu être préparé. Réessaie dans quelques minutes.')) };
   return { ok: true, url: data.url };
 }
 
 /** Supprime le compte et tout ce qu'il contient ; l'abonnement s'arrête. */
 export async function deleteAccount(): Promise<Result> {
   const { data, error } = await db().functions.invoke<{ ok: boolean }>('compte', { body: { action: 'supprimer', confirmation: 'SUPPRIMER' } });
-  if (error || !data?.ok) return { ok: false, ...(await functionError(error, 'La suppression n’a pas abouti. Réessaie dans un instant.')) };
+  if (error || !data?.ok) return { ok: false, ...(await functionError(error, 'La suppression n’a pas abouti. Réessaie dans quelques minutes.')) };
   return { ok: true };
 }
 
@@ -749,7 +749,7 @@ export type InfosVoyage = { photo: Bloc<{ url: string; credit: string; page: str
 /** Les lieux du monde qui portent ce nom. */
 export async function lieux(q: string): Promise<Result<{ lieux: Lieu[] }>> {
   const { data, error } = await db().functions.invoke<{ lieux: Bloc<Lieu[]> }>('donnees', { body: { action: 'lieux', q } });
-  if (error || !data) return { ok: false, ...(await functionError(error, 'La recherche ne répond pas. Réessaie dans un instant.')) };
+  if (error || !data) return { ok: false, ...(await functionError(error, 'La recherche ne répond pas. Réessaie dans quelques minutes.')) };
   return { ok: true, lieux: data.lieux.valeur ?? [] };
 }
 

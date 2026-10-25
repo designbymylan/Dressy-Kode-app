@@ -132,7 +132,7 @@ export function Settings() {
         <Label text="Aide" />
         <Group>
           <Row icon="help" title="Questions fréquentes" onPress={() => a.toast('L’aide arrive bientôt')} />
-          <Row testID="me-states" icon="eye" title="Aperçu du design" onPress={() => nav.navigate('States')} last={s.account === 'connecte'} />
+          {__DEV__ && <Row testID="me-states" icon="eye" title="Aperçu du design" onPress={() => nav.navigate('States')} last={s.account === 'connecte'} />}
           {s.account !== 'connecte' && <Row testID="replay-welcome" icon="refresh" title="Revoir la bienvenue" detail="Remet l’aperçu à zéro" onPress={a.restart} last />}
         </Group>
 
@@ -154,7 +154,7 @@ export function Settings() {
         {s.shares.length === 0 ? (
           <EmptyState
             title="Rien en cours"
-            body="Depuis la fiche d’une pièce, touche Partager pour la montrer, la prêter ou la donner à une amie."
+            body="Depuis la fiche d’une pièce, touche Partager pour la montrer, la prêter ou la donner à un proche."
             action={<Button label="Ouvrir le dressing" variant="secondary" size="m" onPress={() => { setSharesOpen(false); nav.navigate('Tabs', { screen: 'Dressing' }); }} />}
           />
         ) : (

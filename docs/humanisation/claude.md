@@ -186,3 +186,30 @@ Visuel : sur iPhone seulement (`npm run apercu`, voir `mobile/README.md`) pour l
 - **Textes générés par le modèle** : pas évalués ici. Seuls les textes figés sont analysés.
 - **`design/`, `docs/`, `.claude/skills/`** : ni l'app ni son texte. Les tirets cadratins y restent (§1) ; à traiter seulement si le propriétaire le demande.
 - **Nom d'un fichier à la racine** (« Dresskode », tiret cadratin, « palette accent.html ») : à renommer avec le propriétaire ; un changement de nom touche les liens.
+
+---
+
+## 8. Statut au 25/10 (ce qui est appliqué dans l'app)
+
+**Appliqué**
+- §3 lot 1 : corrections 1 à 17, sauf 13 à 15 déjà couverts (unités, accords) : tout appliqué.
+- §3 lot 2 : 18, 19, 20, 22 appliqués. Le 21 (« Smart casual », « Old money ») est gardé.
+- §3 lot 3 : toutes les apostrophes droites et `&apos;` du web converties en ’ (9 fichiers web + `apercu`).
+- §3 lot 4 : 23 (« Session expirée » remplacé), 25 à 27 (délais), 28 à 32 (touches, Stripe). Le 24 est appliqué à 4 messages (remote.ts, actions.ts), les autres « Réessaie dans un instant » sont gardés : ils disent bien une attente.
+- §4 décision 2 : mobile aligné sur « tu aimes / tu évites / repart de zéro ». Le web garde son autre sens (« tu portes / tu aimerais »), avec « Trois touches : on repart de zéro ».
+- §4 décision 3 : « Stripe » retiré de l'écran (Pricing, moi).
+- §4 décision 4 : « Aperçu du design » masqué hors développement (`__DEV__`).
+- §4 décision 7 : « amie » remplacé par « proche » partout.
+- §4 décision 9 : délais remplacés par « quelques minutes ».
+- §4 décision 10 : phrase « Les packs commencent à 0,99 € » retirée.
+- §4 décision 12 : « Garde-robe exploitée » devient « Pièces portées ».
+- §4 décision 13 : « Débardeurs et hauts », « Sweats et sweats à capuche », « Les coupes amples », « Cabas ou sac fourre-tout ».
+
+**Non appliqué (à trancher)**
+- §4 décision 1 (seuil de la première tenue) : le code n'a pas un seuil unique. Le web exige 2 pièces (`OutfitBuilder.tsx:274`, `remote.ts:184`), le mobile 3 pour une réponse de Kodi (`state/kode.ts:59`). Changer seulement le texte créerait une contradiction. Il faut d'abord fixer la règle produit, puis le code et le texte ensemble.
+- §4 décision 5 (`/apercu`) : déjà fermée en production (`notFound()` sans la variable `DRESSY_APERCU=1`). Le dossier disait le contraire : c'était faux. Rien à faire tant que la variable n'est pas posée.
+- §4 décision 6 (identité de l'éditeur, adresse de contact) : attend les informations du propriétaire (`EDITEUR` dans `legal.ts`).
+- §4 décision 11 (e-mails Supabase) : à vérifier dans le tableau de bord, rien dans le dépôt.
+- §4 décision 8 : rien à faire (le sous-titre est déjà conditionnel au plan).
+- Anglicismes « Smart casual » et « Old money » : gardés volontairement.
+- Sens de la légende des touches côté web : à décider (§4 décision 2).

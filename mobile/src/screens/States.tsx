@@ -168,7 +168,7 @@ export function States() {
       </Sheet>
       <Sheet visible={sheet === 'info'} onClose={() => setSheet(null)} kicker="Bon à savoir" title="Pourquoi le coût par port ?">
         <T v="body" tone="ink2">
-          Une pièce à 120 € portée 40 fois revient à 3 € la sortie. C’est la mesure qui récompense ce que tu portes, pas ce que tu achètes.
+          Une pièce à 120 € portée 40 fois revient à 3 € par port. C’est la mesure qui récompense ce que tu portes, pas ce que tu achètes.
         </T>
       </Sheet>
     </View>

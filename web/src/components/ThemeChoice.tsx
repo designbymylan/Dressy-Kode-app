@@ -15,7 +15,7 @@ const OPTIONS: { value: Theme; label: string }[] = [
 /**
  * Le choix se voit tout de suite (posé sur <html>), puis part en base : le
  * layout racine relit settings.theme et repose data-theme, le changement
- * vaut donc pour toute l'application et sur tous les appareils.
+ * vaut donc pour toute l’application et sur tous les appareils.
  */
 export function ThemeChoice({ current }: { current: Theme }) {
   const [value, setValue] = useState<Theme>(current);
@@ -23,7 +23,7 @@ export function ThemeChoice({ current }: { current: Theme }) {
 
   return (
     <Segment
-      label="Apparence de l'application"
+      label="Apparence de l’application"
       options={OPTIONS}
       value={value}
       onChange={(v) => {
@@ -38,7 +38,7 @@ export function ThemeChoice({ current }: { current: Theme }) {
   );
 }
 
-/** « Raccourci clair / sombre » : montre ou masque l'encoche du haut de l'écran. */
+/** « Raccourci clair / sombre » : montre ou masque l’encoche du haut de l’écran. */
 export function ShortcutSwitch({ on }: { on: boolean }) {
   const [value, setValue] = useState(on);
   const [, start] = useTransition();

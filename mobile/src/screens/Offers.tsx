@@ -121,7 +121,6 @@ export function Offers() {
           items={[
             { icon: 'check', text: 'Sans engagement. Tu arrêtes en un geste, depuis Réglages.' },
             { icon: 'lock', text: firstYear ? 'Paiement sécurisé, et ton premier mois offert sur l’année.' : 'Paiement sécurisé, dans ton navigateur.' },
-            { icon: 'bag', text: 'Plutôt à l’unité ? Les packs commencent à 0,99 €.' },
           ]}
         />
 

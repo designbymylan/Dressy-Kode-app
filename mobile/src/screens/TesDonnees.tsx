@@ -118,7 +118,7 @@ export function TesDonnees() {
           {hasBody && !p.bodyConsent && (
             <View style={{ gap: 8, paddingBottom: 6 }}>
               <T v="caption" tone="ink2">
-                Tu nous as donné ces informations avant qu’on te demande ton accord. Garde-les en l’activant, ou efface-les.
+                Tu nous as donné ces informations avant qu’on te demande ton accord. Garde-les en donnant ton accord, ou efface-les.
               </T>
               <Button testID="erase-body" label="Effacer ma silhouette" variant="secondary" size="m" onPress={() => setWithdraw(true)} />
             </View>

@@ -223,7 +223,7 @@ function PeriodSheet({ plan, current, trial, onClose }: { plan: Plan; current: P
           {period === 'an'
             ? trial ? 'Premier mois offert, puis facturé une fois par an. ' : 'Facturé une fois par an. '
             : 'Facturé chaque mois. '}
-          Sans engagement, résiliable à tout moment depuis Mon compte. Prix TTC, paiement sécurisé par Stripe.
+          Sans engagement, résiliable à tout moment depuis Mon compte. Prix TTC, paiement sécurisé.
         </p>
       </div>
     </>

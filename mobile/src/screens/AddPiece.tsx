@@ -292,7 +292,7 @@ export function AddPiece() {
                     <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kodi dessine tes pièces avec ton compte.'}</T>
                     <T v="body" tone="ink2">
                       {remote.online
-                        ? 'Gratuit, en une minute : Kodi range chaque vêtement de tes photos.'
+                        ? 'Gratuit pour commencer. Kodi range chaque vêtement de tes photos.'
                         : 'Dans cet aperçu, Kodi ne reçoit pas les photos.'}
                     </T>
                     {remote.online && <Button testID="add-create-account" label="Créer mon compte" size="m" onPress={() => setAccount(true)} />}
