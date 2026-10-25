@@ -390,6 +390,11 @@ Google et Apple (visibles mais désactivés, « Bientôt disponible » : la
 liaison des comptes n'est pas faite), « Voir la démo ». Le portant, Kodi et
 les puces de l'ancien accueil sont retirés. Remplace l'accueil du 05/10 et
 du 21/10 sur le mobile.
+**Même chose sur le web (25/10)** : `/bienvenue` (photo plein écran, carte,
+Commencer, Se connecter) et les écrans de compte (photo en haut, carte
+dessus, `AuthShell`), photos dans `web/public/welcome/`
+(`PhotoBackdrop.tsx`, tirage au navigateur). Sur le web, Google et Apple
+fonctionnent déjà (connexion et inscription).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
