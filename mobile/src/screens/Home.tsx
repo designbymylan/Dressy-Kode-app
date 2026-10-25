@@ -349,7 +349,7 @@ function EmptyToday() {
     <Animated.View entering={FadeIn.duration(320)} style={{ gap: 12 }} testID="home-empty">
       {drawing > 0 ? (
         <Card className="bg-butter" style={{ gap: 8 }} testID="home-drawing">
-          <KodeThinking phrases={['Kodi repère chaque pièce', 'Kodi dessine tes pièces', 'Kodi les range sur tes portants']} />
+          <KodeThinking phrases={['Kodi repère chaque pièce', 'Kodi découpe tes pièces', 'Kodi les range sur tes portants']} />
           <T v="body" tone="ink2">
             {drawing > 1 ? `${drawing} photos en cours` : 'Une photo en cours'} : chaque vêtement arrive sur tes portants, sans fond, dès qu’il est dessiné.
           </T>
@@ -358,7 +358,7 @@ function EmptyToday() {
         <Card className="bg-butter" style={{ gap: 6 }} testID="home-waiting">
           <T v="cardTitle">{waiting > 1 ? `${waiting} photos attendent ton compte.` : 'Une photo attend ton compte.'}</T>
           <T v="body" tone="ink2">
-            {s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kodi dessinera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kodi dessinera tes pièces aussitôt.'}
+            {s.pendingEmail ? 'Confirme ton adresse, puis connecte-toi depuis Moi : Kodi découpera tes pièces aussitôt.' : 'Crée ton compte depuis Moi : Kodi découpera tes pièces aussitôt.'}
           </T>
         </Card>
       ) : null}

@@ -823,7 +823,7 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
     <Frame
       lead={'Ton premier\n'}
       em="portant."
-      intro={`Ajoute des photos des pièces que tu portes souvent${draft.name ? `, ${draft.name}` : ''} : une tenue entière ou une pièce posée à plat. Kodi repère chaque vêtement et le dessine pour tes portants.`}
+      intro={`Ajoute des photos des pièces que tu portes souvent${draft.name ? `, ${draft.name}` : ''} : une tenue entière ou une pièce posée à plat. Kodi repère chaque vêtement et le découpe pour tes portants.`}
       footer={
         <>
           <Button testID="onb-generate" label={n ? `Confier ${n} photo${n > 1 ? 's' : ''} à Kodi` : 'Ajoute une première photo'} icon={n ? 'kode' : undefined} disabled={!n} onPress={next} />
@@ -836,7 +836,7 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
       </View>
       <T v="caption" tone="ink2" accessibilityLiveRegion="polite">
         {n
-          ? `${n} photo${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} · Kodi dessine tes pièces dès que ton compte est créé.`
+          ? `${n} photo${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} · Kodi découpe tes pièces dès que ton compte est créé.`
           : 'Une photo peut porter plusieurs pièces : Kodi les repère toutes, jusqu’à 10 photos à la fois.'}
       </T>
       <View className="flex-row" style={{ gap: 8 }}>
@@ -858,7 +858,7 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
         </View>
       )}
       <T v="small" tone="ink2">
-        Tes photos servent seulement à dessiner tes pièces : elles ne sont ni publiées ni partagées.
+        Tes photos servent seulement à découper tes pièces : elles ne sont ni publiées ni partagées.
         {!online ? ' Dans cet aperçu, elles restent sur l’appareil : c’est l’app, avec ton compte, qui les confie à Kodi.' : ''}
       </T>
     </Frame>
@@ -873,7 +873,7 @@ function Generation({ draft, photos, next }: Ctx) {
     `Profil : ${rayon || 'Kodi apprendra en route'}`,
     `Style : ${draft.styles.length ? draft.styles.join(', ') : 'à découvrir avec toi'}`,
     'La météo du jour, chaque matin',
-    n ? `${n} photo${n > 1 ? 's' : ''} pour Kodi : il dessine tes pièces dès ton arrivée` : 'Tes portants, prêts à se remplir',
+    n ? `${n} photo${n > 1 ? 's' : ''} pour Kodi : il découpe tes pièces dès ton arrivée` : 'Tes portants, prêts à se remplir',
     n ? 'Tes premières tenues, dès tes pièces dessinées' : 'Ta première tenue, dès trois pièces',
   ];
   const [k, setK] = useState(0);

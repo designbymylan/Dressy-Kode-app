@@ -2,34 +2,41 @@
  * L'agent central de Dresskode.
  *
  * Réveillé par la base (trigger sur ai_jobs, filet pg_cron), il prend la
- * tâche la plus ancienne en file et la fait avancer d'UN pas :
+ * tâche la plus ancienne en file et la traite d'UN passage :
  *
- *   photo confiée → Opus 5 repère TOUTES les pièces (ou celles que la
- *     personne a nommées) et écrit la consigne de chacune ; la tâche garde
- *     la première pièce et crée une tâche fille par pièce en plus, que
- *     d'autres passages traitent en parallèle ;
- *   pièce de marque identifiée → Opus 5 la retrouve sur le web (recherche)
- *     et enrichit sa consigne des détails du vrai modèle ;
- *   pièce → Nano Banana la redessine, seule, sur fond uni (en regardant
- *     les photos du modèle s'il est bien identifié)
- *     → Sonnet 5 compare à la photo et note sur 100
- *     → validée (≥ 88) : détourage, vignette, rangement dans le dressing
- *     → sinon : Opus 5 corrige la consigne pour un second essai, puis le
- *       contrôle garde la meilleure des deux images.
+ *   photo confiée → Sonnet 5 repère TOUTES les pièces (ou celles que la
+ *     personne a nommées) ; la tâche garde la première et crée une tâche fille
+ *     par pièce en plus, que d'autres passages traitent en parallèle ;
+ *   pièce → Gemini segmente la pièce (un masque, pas une image) et elle est
+ *     DÉCOUPÉE dans la photo : ses pixels, ses couleurs, ses marquages sont
+ *     ceux de la personne, rien n'est redessiné ;
+ *     → contrôles automatiques (couverture, une seule pièce, bord net, taille,
+ *       couleur dominante) ; sinon repli sur un détourage par contraste ;
+ *     → mise au format fixe (canevas carré, marges, pièce centrée), vignette,
+ *       rangement dans le dressing.
+ *
+ * « Rendu incorrect » (fiche pièce) remet la tâche en file : 1re fois, la
+ * découpe reprend avec le modèle le plus fort ; 2e fois seulement, Nano Banana
+ * redessine la pièce. C'est le seul cas de génération d'image.
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
- * ce qui a déjà été fait (repérage, images générées).
+ * ce qui a déjà été fait (repérage).
  *
  * L'appel HTTP ne porte aucune donnée de confiance, c'est un simple réveil
  * (déployé sans vérification JWT) : l'agent ne traite que ce qui est déjà
  * en file, donc déjà passé par la RLS et le quota à l'insertion.
  */
 import { createClient } from '@supabase/supabase-js';
-import { planRun, isValidated, bestByScore, type Candidate } from './decide.ts';
-import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, searchClause, stripClauses, wantsImageSearch, wantsResearch, type Target } from './prompts.ts';
-import { inventory, refine, research, generate, judge, pickBest, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img, type Usage } from './steps.ts';
-import { cutoutBackground, alphaRatio, contentBox, crop, downscale } from './cutout.ts';
+import { MAX_RUNS } from './decide.ts';
+import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
+import { survey, segment, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
+import { cutoutBackground, crop, downscale, type Raster } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
+import { CUTOUT } from './config.ts';
+import { dominantColour } from './color.ts';
+import { exifOrientation, fitOnCanvas, orient } from './normalize.ts';
+import { cleanSpecks, cutFromMask, pickSegment, pixelBox } from './segment.ts';
+import { BLOCKING, runChecks, type Checks } from './checks.ts';
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void };
 
@@ -47,14 +54,14 @@ type Job = {
   attempts: number;
   runs: number;
   garment_id: string | null;
+  cutout: { reperage?: unknown } | null;
+  /** Ce que la personne a ajouté en envoyant la photo : marque, taille, coupe, matière, note. */
+  details: Details | null;
+  /** 0 : première découpe ; 1 et 2 : reprises après un « rendu incorrect ». */
+  redo: number;
 };
 
-// Un passage qui a déjà consommé ce temps remet la pièce en file plutôt que
-// d'enchaîner le jugement : la limite d'une Edge Function est de 150 s.
-const BUDGET_MS = 85_000;
-// Après une recherche web déjà longue, on dessine au passage suivant plutôt
-// que de risquer la limite de temps en pleine génération.
-const DRAW_AFTER_MS = 45_000;
+type Details = { brand?: string; size?: string; fit?: string; material?: string; note?: string };
 
 function serviceKey(): string {
   const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -105,66 +112,26 @@ async function loadSources(job: Job): Promise<Img[]> {
   return Promise.all(job.source_paths.map((p) => download('uploads', p)));
 }
 
-type ImageRow = {
-  id: string;
-  attempt: number | null;
-  storage_path: string;
-  mime: string | null;
-  prompt: string | null;
-  score: number | null;
-  validated: boolean;
-  chosen: boolean;
-  critique: { ecarts?: string[]; usage?: Record<string, Usage> } | null;
-};
-
-const toCandidate = (r: ImageRow): Candidate => ({
-  id: r.id,
-  attempt: r.attempt ?? 0,
-  storage_path: r.storage_path,
-  mime: r.mime,
-  prompt: r.prompt,
-  score: r.score,
-  validated: r.validated,
-  chosen: r.chosen,
-  ecarts: r.critique?.ecarts ?? [],
-});
-
-async function loadCandidates(job: Job): Promise<{ rows: ImageRow[]; candidates: Candidate[] }> {
-  const { data, error } = await db
-    .from('ai_images')
-    .select('id, attempt, storage_path, mime, prompt, score, validated, chosen, critique')
-    .eq('job_id', job.id)
-    .order('attempt');
-  if (error) throw new Error(`lecture des essais : ${error.message}`);
-  const rows = (data ?? []) as ImageRow[];
-  return { rows, candidates: rows.map(toCandidate) };
-}
-
-/** La fiche de la pièce ; les tâches d'avant le repérage gardaient la leur dans `analysis`. */
-function targetOf(job: Job): Target {
-  const t = job.target ?? (job.analysis?.name ? job.analysis as Target : null);
-  if (!t) throw new AgentError(SAY.failed, 'fiche de la pièce perdue');
-  return { ...t, where: t.where ?? '', prompt: t.prompt ?? '' };
-}
 
 // ---------------------------------------------------------------- repérage
 
 /**
- * Opus 5 repère les pièces de la photo. La tâche garde la première ; les
+ * Sonnet 5 repère les pièces de la photo. La tâche garde la première ; les
  * suivantes deviennent des tâches filles, réveillées aussitôt par le
- * déclencheur d'insertion : elles se dessinent en même temps.
+ * déclencheur d'insertion : elles se découpent en même temps.
  *
  * Le résultat du repérage est écrit AVANT la création des filles : un
- * passage tué entre les deux reprend sans rappeler Opus ni créer de
+ * passage tué entre les deux reprend sans rappeler le modèle ni créer de
  * doublons.
  */
-async function survey(job: Job, sources: Img[], log: (m: string) => void): Promise<Target> {
+async function surveyPhoto(job: Job, sources: Img[], log: (m: string) => void): Promise<Target> {
   let inv = job.analysis?.inventory;
 
   if (!inv) {
     const { data: profile } = await db.from('style_profile').select('gender').eq('space_id', job.space_id).maybeSingle();
-    const found = await inventory({ sources, hint: job.user_input, gender: profile?.gender ?? null });
-    log(`Opus (repérage) → ${found.pieces.length} pièce(s) : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
+    const t0 = Date.now();
+    const found = await survey({ sources, hint: job.user_input, gender: profile?.gender ?? null });
+    log(`repérage (${MODELS.survey}) → ${found.pieces.length} pièce(s) en ${Date.now() - t0} ms : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
     if (!found.pieces.length) throw new AgentError(SAY.nothing, found.note || 'aucune pièce repérée');
 
     // La photo compte déjà pour une pièce dans la limite de l'offre ; les
@@ -173,7 +140,7 @@ async function survey(job: Job, sources: Img[], log: (m: string) => void): Promi
     const room = left === null || left === undefined ? Infinity : Math.max(0, Number(left));
     const extra = Math.min(found.pieces.length - 1, room);
     inv = { pieces: found.pieces.slice(0, 1 + extra), note: found.note, skipped: found.pieces.length - 1 - extra };
-    await setJob(job, { analysis: { inventory: inv }, prompt_model: MODELS.prompts });
+    await setJob(job, { analysis: { inventory: inv }, prompt_model: MODELS.survey, cutout: { reperage: { ms: Date.now() - t0, usage: found.usage } } });
   }
 
   const extras = inv.pieces.slice(1);
@@ -198,207 +165,207 @@ async function survey(job: Job, sources: Img[], log: (m: string) => void): Promi
   return first;
 }
 
-// ---------------------------------------------------------------- recherche
-
-/**
- * Le modèle exact d'une pièce de marque, retrouvé sur le web : ses détails de
- * design entrent dans la consigne et dans ce que le contrôle vérifie. Une
- * recherche qui échoue ne bloque jamais la pièce : elle garde sa consigne.
- */
-async function lookup(job: Job, target: Target, sources: Img[], log: (m: string) => void): Promise<Target> {
-  await setJob(job, { status: 'prompting' });
-  let next: Target;
-  try {
-    const r = await research({ sources, target });
-    next = { ...target, reference: r.reference, prompt: r.prompt || target.prompt };
-    log(r.reference ? `Opus (recherche) → ${r.reference.produit} (${r.reference.certitude}), ${r.reference.sources.length} source(s)` : 'Opus (recherche) → rien de sûr, consigne d’origine');
-  } catch (err) {
-    log(`recherche impossible (${err instanceof AgentError ? err.detail : err instanceof Error ? err.message : err}) : consigne d’origine`);
-    next = { ...target, reference: null };
-  }
-  await setJob(job, { target: next });
-  return next;
+/** La fiche de la pièce ; les tâches d'avant le repérage gardaient la leur dans `analysis`. */
+function targetOf(job: Job): Target {
+  const t = job.target ?? (job.analysis?.name ? job.analysis as Target : null);
+  if (!t) throw new AgentError(SAY.failed, 'fiche de la pièce perdue');
+  return { ...t, where: t.where ?? '', prompt: t.prompt ?? '' };
 }
 
-// ---------------------------------------------------------------- étapes
+// ---------------------------------------------------------------- découpe
 
-async function attempt(job: Job, n: number, previous: Candidate | null, started: number, log: (m: string) => void) {
-  const sources = await loadSources(job);
-  let target = job.target ?? await survey(job, sources, log);
+type Cand = { method: 'masque' | 'contraste'; cut: Raster; checks: Checks };
 
-  if (!previous && wantsResearch(target)) {
-    target = await lookup(job, target, sources, log);
-    if (Date.now() - started > DRAW_AFTER_MS) {
-      log('recherche faite : dessin au passage suivant');
-      await setJob(job, { status: 'queued' });
-      return;
+type Journal = {
+  version: string;
+  niveau: number;
+  methode?: string;
+  modele?: string;
+  controles?: Checks;
+  essais?: { methode: string; echecs: string[] }[];
+  ms: Record<string, number>;
+  usage: Record<string, unknown>;
+};
+
+const bytesOf = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+const fatal = (err: unknown) => err instanceof AgentError && (err.message === SAY.busy || err.message === SAY.notReady);
+
+/**
+ * La photo, décodée, remise debout (jpeg-js ne lit pas l'orientation EXIF) et
+ * ramenée à 1 800 px au plus : la pièce finit sur un canevas de 1 024 px, et
+ * le temps de calcul d'une Edge Function est compté (un iPhone envoie 12 Mpx).
+ */
+function open(photo: Img): Raster {
+  if (photo.mime !== 'image/jpeg' && photo.mime !== 'image/png') throw new AgentError(SAY.photo, `format non géré : ${photo.mime}`);
+  const raster = decode(photo.bytes, photo.mime);
+  const upright = photo.mime === 'image/jpeg' ? orient(raster, exifOrientation(photo.bytes)) : raster;
+  return Math.max(upright.width, upright.height) > 2000 ? downscale(upright, 1800) : upright;
+}
+
+/**
+ * Découpe la pièce dans la photo : masque de Gemini d'abord ; si les contrôles
+ * automatiques le refusent, un détourage par contraste du cadre repéré ; le
+ * meilleur des deux est gardé. Une image sans couverture ou trop petite n'est
+ * jamais gardée.
+ */
+async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+  await setJob(job, { status: 'cutout', image_model: MODELS.segment });
+  const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
+  const photo = sources[0];
+
+  let t = Date.now();
+  const raster = open(photo);
+  j.ms.decodage = Date.now() - t;
+  const expected = target.hex?.[0] ?? null;
+  const cands: Cand[] = [];
+
+  try {
+    t = Date.now();
+    const seg = await segment(photo, target, { strong: job.redo >= 1 });
+    j.ms.segmentation = Date.now() - t;
+    j.usage.segmentation = seg.usage;
+    j.modele = seg.model;
+    const chosen = pickSegment(seg.segments, job.redo >= 1 ? null : target.box);
+    if (!chosen?.mask) {
+      log(`segmentation (${seg.model}) : aucun masque`);
+    } else {
+      t = Date.now();
+      const maskBytes = bytesOf(chosen.mask);
+      const mask = decode(maskBytes, sniffMime(maskBytes) ?? 'image/png');
+      const region = pixelBox(chosen.box, raster.width, raster.height);
+      const { cut, oneShare } = cleanSpecks(cutFromMask(raster, mask, chosen.box, region));
+      cands.push({ method: 'masque', cut, checks: runChecks(cut, oneShare, expected) });
+      j.ms.masque = Date.now() - t;
+      log(`segmentation (${seg.model}) : ${j.ms.segmentation} ms, contrôles ${cands[0].checks.ok ? 'ok' : cands[0].checks.failed.join(', ')}`);
+    }
+  } catch (err) {
+    if (fatal(err)) throw err;
+    log(`segmentation impossible (${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}) : repli sur le contraste`);
+  }
+
+  if (!cands.some((c) => c.checks.ok)) {
+    t = Date.now();
+    const region = target.box ? pixelBox(target.box, raster.width, raster.height, 0.08) : { x: 0, y: 0, w: raster.width, h: raster.height };
+    const lit = cutoutBackground(crop(raster, region), { garment: garmentRgbs(target.colors, target.hex) });
+    const { cut, oneShare } = cleanSpecks(lit);
+    cands.push({ method: 'contraste', cut, checks: runChecks(cut, oneShare, expected) });
+    j.ms.contraste = Date.now() - t;
+    log(`détourage par contraste : contrôles ${cands.at(-1)!.checks.ok ? 'ok' : cands.at(-1)!.checks.failed.join(', ')}`);
+  }
+
+  j.essais = cands.map((c) => ({ methode: c.method, echecs: c.checks.failed }));
+  const usable = cands.filter((c) => !c.checks.failed.some((f) => BLOCKING.includes(f)));
+  const best = usable.find((c) => c.checks.ok) ?? [...usable].sort((a, b) => a.checks.failed.length - b.checks.failed.length)[0];
+  if (!best) throw new AgentError(SAY.failed, `aucun détourage exploitable (${j.essais.map((e) => `${e.methode}: ${e.echecs.join('+') || 'ok'}`).join(' ; ')})`);
+
+  j.methode = best.method;
+  j.controles = best.checks;
+  await store(job, target, best.cut, 'photo', j, log);
+}
+
+/**
+ * Dernier recours, après deux « rendu incorrect » : Nano Banana redessine la
+ * pièce à partir de la photo, sur un fond uni retiré ensuite. C'est le seul
+ * endroit où une image est générée.
+ */
+async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+  const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
+  const prompt = [
+    stripClauses(target.prompt),
+    colourClause(target),
+    isolationClause(target),
+    backdropClause(target.colors, target.hex, isMetal(target)),
+  ].filter(Boolean).join('\n\n');
+
+  await setJob(job, { status: 'generating', refined_prompt: prompt, image_model: MODELS.gemini });
+  let t = Date.now();
+  const img = await generate(prompt, sources);
+  j.ms.generation = Date.now() - t;
+  j.usage.generation = img.usage;
+  j.modele = MODELS.gemini;
+  log(`Nano Banana → ${Math.round(img.bytes.length / 1024)} Ko en ${j.ms.generation} ms`);
+
+  await setJob(job, { status: 'cutout' });
+  t = Date.now();
+  const lit = cutoutBackground(decode(img.bytes, img.mime), { garment: garmentRgbs(target.colors, target.hex) });
+  const { cut, oneShare } = cleanSpecks(lit);
+  const checks = runChecks(cut, oneShare, target.hex?.[0] ?? null);
+  j.ms.detourage = Date.now() - t;
+  j.methode = 'generation';
+  j.controles = checks;
+  if (checks.failed.some((f) => BLOCKING.includes(f))) throw new AgentError(SAY.failed, `dessin inexploitable (${checks.failed.join(', ')})`);
+  await store(job, target, cut, 'ai', j, log);
+}
+
+// ---------------------------------------------------------------- rangement
+
+const clip = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n) || null;
+
+/** Met la pièce au format fixe, l'envoie, puis la crée dans le dressing (ou remplace son image). */
+async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j: Journal, log: (m: string) => void) {
+  let t0 = Date.now();
+  if (job.cutout?.reperage) j.usage.reperage = job.cutout.reperage;
+  const dominant = dominantColour(cut);
+  const full = fitOnCanvas(cut);
+  const [png, thumb] = [encodePng(full), encodePng(downscale(full, CUTOUT.thumb))];
+  j.ms.format = Date.now() - t0;
+
+  await setJob(job, { status: 'uploading' });
+  t0 = Date.now();
+  const suffix = job.redo ? `-r${job.redo}` : '';
+  const imagePath = `${job.space_id}/${job.id}${suffix}.png`;
+  const thumbPath = `${job.space_id}/${job.id}${suffix}-vignette.png`;
+  await Promise.all([
+    upload('garments', imagePath, { bytes: png, mime: 'image/png' }),
+    upload('garments', thumbPath, { bytes: thumb, mime: 'image/png' }),
+  ]);
+  j.ms.envoi = Date.now() - t0;
+
+  // Les infos ajoutées par la personne valent pour une photo d'UNE pièce ;
+  // sur une tenue entière on ne sait pas à laquelle elles se rapportent.
+  const inv = job.analysis?.inventory;
+  const single = !job.parent_id && !!inv && inv.pieces.length + inv.skipped === 1;
+  const d = single ? job.details ?? {} : {};
+  const tint = dominant?.hex ?? t.hex?.[0] ?? null;
+
+  let garmentId = job.garment_id ?? undefined;
+  if (garmentId) {
+    // Reprise : l'image est remplacée, les infos de la fiche restent.
+    const { data: old } = await db.from('garments').select('image_path, thumb_path').eq('id', garmentId).maybeSingle();
+    const { error } = await db.from('garments').update({ image_path: imagePath, thumb_path: thumbPath, tint, source }).eq('id', garmentId);
+    if (error) throw new Error(`remplacement de l'image : ${error.message}`);
+    const stale = [old?.image_path, old?.thumb_path].filter((p): p is string => !!p && p !== imagePath && p !== thumbPath);
+    if (stale.length) await db.storage.from('garments').remove(stale).catch(() => undefined);
+  } else {
+    // Un passage tué entre la création de la pièce et la fin de la tâche ne
+    // doit pas la créer deux fois.
+    const { data: existing } = await db.from('garments').select('id').eq('image_path', imagePath).maybeSingle();
+    garmentId = existing?.id as string | undefined;
+    if (!garmentId) {
+      const { data: garment, error } = await db.from('garments').insert({
+        space_id: job.space_id,
+        category_id: t.category,
+        kind: t.kind ?? null,
+        name: t.name,
+        colors: t.colors,
+        // La teinte mesurée sur les pixels de la pièce : la pastille de couleur de la fiche.
+        tint,
+        material: clip(d.material, 80) ?? (t.material || null),
+        brand: clip(d.brand, 60),
+        size: clip(d.size, 20),
+        fit: clip(d.fit, 40),
+        notes: clip(d.note, 280),
+        image_path: imagePath,
+        thumb_path: thumbPath,
+        source,
+      }).select('id').single();
+      if (error) throw new Error(`création de la pièce : ${error.message}`);
+      garmentId = garment.id;
     }
   }
 
-  let base = target.prompt;
-  const usage: Record<string, Usage> = {};
-  if (previous) {
-    await setJob(job, { status: 'prompting' });
-    const r = await refine({
-      sources,
-      target,
-      // Les rappels ajoutés en fin de consigne (teintes, fond…) sont remis à neuf ensuite.
-      previous: { attempt: previous.attempt, score: previous.score, ecarts: previous.ecarts, prompt: previous.prompt ? stripClauses(previous.prompt) : null },
-    });
-    base = r.prompt;
-    usage.consigne = r.usage;
-    log(`Opus (nouvelle consigne) → essai ${n}`);
-  }
-
-  const search = wantsImageSearch(target);
-  const prompt = [stripClauses(base), colourClause(target), search ? searchClause(target) : '', isolationClause(target), backdropClause(target.colors, target.hex, isMetal(target))]
-    .filter(Boolean)
-    .join('\n\n');
-  const { prompt: _p, where: _w, ...fiche } = target;
-  await setJob(job, {
-    status: 'generating',
-    analysis: { ...fiche, where: target.where, inventory: job.analysis?.inventory },
-    refined_prompt: prompt,
-    prompt_model: MODELS.prompts,
-    image_model: MODELS.gemini,
-  });
-
-  const img = await generate(prompt, sources, { search });
-  log(`Nano Banana → ${Math.round(img.bytes.length / 1024)} Ko (${img.mime})${img.searched ? ', avec recherche Google' : ''}`);
-
-  const ext = img.mime === 'image/jpeg' ? 'jpg' : img.mime === 'image/webp' ? 'webp' : 'png';
-  const path = `${job.space_id}/${job.id}/essai-${n}.${ext}`;
-  await upload('ai-generated', path, img);
-
-  const { data: row, error } = await db.from('ai_images').insert({
-    job_id: job.id, space_id: job.space_id, storage_path: path, attempt: n,
-    prompt, mime: img.mime, bytes: img.bytes.length,
-    critique: { usage: { ...usage, image: img.usage } },
-  }).select('id, attempt, storage_path, mime, prompt, score, validated, chosen, critique').single();
-  if (error) throw new Error(`enregistrement de l'essai : ${error.message}`);
-
-  if (Date.now() - started > BUDGET_MS) {
-    // Le jugement se fera au passage suivant (plan « judge »), sans regénérer.
-    log('temps écoulé : jugement reporté au passage suivant');
-    await setJob(job, { status: 'queued' });
-    return;
-  }
-  await verify(job, row as ImageRow, img, sources, log);
-}
-
-async function verify(job: Job, row: ImageRow, img: Img, sources: Img[], log: (m: string) => void) {
-  await setJob(job, { status: 'verifying' });
-
-  const v = await judge({ sources, generated: img, target: targetOf(job), prompt: row.prompt ?? '' });
-  const ok = isValidated(v);
-  const n = row.attempt ?? 0;
-
-  const { usage, ...verdict } = v;
-  const { error } = await db.from('ai_images').update({
-    score: v.score,
-    validated: ok,
-    critique: {
-      ...verdict,
-      model: MODELS.judge,
-      usage: { ...(row.critique?.usage ?? {}), controle: usage },
-    },
-  }).eq('id', row.id);
-  if (error) throw new Error(`enregistrement du verdict : ${error.message}`);
-
-  await setJob(job, { attempts: n });
-  log(`Sonnet (contrôle) → ${v.score}/100${ok ? ', validée' : `, ${v.ecarts[0] ?? 'sous le seuil'}`}`);
-
-  if (ok) {
-    await finalize(job, { ...toCandidate(row), score: v.score, validated: true }, img, log);
-    return;
-  }
-  // Pas validée : le passage suivant refait un essai corrigé, ou fait
-  // choisir le contrôle si c'était le dernier.
-  await setJob(job, { status: 'queued' });
-}
-
-async function choose(job: Job, candidates: Candidate[], log: (m: string) => void): Promise<Candidate> {
-  await setJob(job, { status: 'selecting' });
-
-  let chosen = bestByScore(candidates);
-  try {
-    const [sources, imgs] = await Promise.all([
-      loadSources(job),
-      Promise.all(candidates.map((c) => download('ai-generated', c.storage_path))),
-    ]);
-    const pick = await pickBest(sources, targetOf(job), candidates.map((c, i) => ({ img: imgs[i], score: c.score })));
-    chosen = candidates[pick.index];
-    log(`le contrôle choisit l'essai ${chosen.attempt} : ${pick.raison}`);
-  } catch (err) {
-    // Faute de choix, on garde la meilleure note plutôt que de perdre des
-    // générations déjà payées.
-    log(`choix impossible (${err instanceof AgentError ? err.detail : err instanceof Error ? err.message : err}) : meilleure note retenue`);
-  }
-
-  await db.from('ai_images').update({ chosen: true }).eq('id', chosen.id);
-  return { ...chosen, chosen: true };
-}
-
-async function finalize(job: Job, c: Candidate, img: Img | null, log: (m: string) => void) {
-  const t = targetOf(job);
-
-  await setJob(job, { status: 'cutout' });
-  const source = img ?? await download('ai-generated', c.storage_path);
-
-  const t0 = Date.now();
-  // Les vraies teintes de la pièce : sur fond d'incrustation, leur part de
-  // « vert » est permise, le reste du vert est un reflet du fond.
-  const cut = cutoutBackground(decode(source.bytes, source.mime), { garment: garmentRgbs(t.colors, t.hex) });
-  const ratio = alphaRatio(cut);
-  const box = contentBox(cut) ?? { x: 0, y: 0, w: cut.width, h: cut.height };
-  const framed = crop(cut, box);
-  const [full, thumb] = [encodePng(framed), encodePng(downscale(framed, 320))];
-  log(`détourage : ${(ratio * 100).toFixed(1)} % transparent, ${framed.width}×${framed.height}, ${Date.now() - t0} ms`);
-
-  await setJob(job, { status: 'uploading' });
-  const imagePath = `${job.space_id}/${job.id}.png`;
-  const thumbPath = `${job.space_id}/${job.id}-vignette.png`;
-  await Promise.all([
-    upload('garments', imagePath, { bytes: full, mime: 'image/png' }),
-    upload('garments', thumbPath, { bytes: thumb, mime: 'image/png' }),
-  ]);
-
-  // Un passage tué entre la création de la pièce et la fin de la tâche ne
-  // doit pas la créer deux fois.
-  const { data: existing } = await db.from('garments').select('id').eq('image_path', imagePath).maybeSingle();
-  let garmentId = existing?.id as string | undefined;
-  if (!garmentId) {
-    const { data: garment, error } = await db.from('garments').insert({
-      space_id: job.space_id,
-      category_id: t.category,
-      kind: t.kind ?? null,
-      name: t.name,
-      colors: t.colors,
-      // La teinte mesurée par Kodi : la pastille de couleur de la fiche.
-      tint: t.hex?.[0] ?? null,
-      material: t.material || null,
-      image_path: imagePath,
-      thumb_path: thumbPath,
-      source: 'ai',
-    }).select('id').single();
-    if (error) throw new Error(`création de la pièce : ${error.message}`);
-    garmentId = garment.id;
-  }
-
-  // Un détourage qui n'enlève presque rien, ou presque tout, est suspect : on
-  // garde la pièce mais on le note.
-  await db.from('ai_images').update({
-    chosen: true,
-    has_alpha: ratio > 0.05 && ratio < 0.95,
-    width: framed.width,
-    height: framed.height,
-  }).eq('id', c.id);
-
-  // Pour le « détourage révélé » : l'image générée, avec son fond, et
-  // l'endroit où la pièce y a été découpée. L'écran les superpose.
-  const reveal = { raw: c.storage_path, size: [cut.width, cut.height], box: [box.x, box.y, box.w, box.h] };
-  await setJob(job, { status: 'done', garment_id: garmentId, error: null, analysis: { ...(job.analysis ?? {}), reveal } });
-  log(`rangée dans le dressing : ${t.name}`);
+  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j });
+  log(`rangée dans le dressing : ${t.name} (${j.methode}, ${Object.entries(j.ms).map(([k, v]) => `${k} ${v} ms`).join(', ')})`);
 }
 
 // ---------------------------------------------------------------- passage
@@ -411,51 +378,30 @@ async function runOnce() {
   if (!job) return; // file vide : un autre passage l'a déjà prise
 
   const log = (m: string) => console.log(`[${job.id.slice(0, 8)}] ${m} (+${Date.now() - started} ms)`);
-  log(`passage ${job.runs}, ${job.attempts} essai(s) déjà jugé(s)${job.parent_id ? `, pièce repérée sur ${job.parent_id.slice(0, 8)}` : ''}`);
+  log(`passage ${job.runs}${job.redo ? `, reprise ${job.redo}` : ''}${job.parent_id ? `, pièce repérée sur ${job.parent_id.slice(0, 8)}` : ''}`);
 
   try {
     const missing = KEYS.filter((k) => !Deno.env.get(k));
     if (missing.length) throw new AgentError(SAY.notReady, `${missing.join(', ')} absente(s) des secrets Supabase`);
 
-    if (job.garment_id) {
+    if (job.garment_id && !job.redo) {
       await setJob(job, { status: 'done', error: null });
       return;
     }
+    if (job.runs > MAX_RUNS) throw new AgentError(SAY.failed, 'trop de passages');
 
-    const { candidates, rows } = await loadCandidates(job);
-    const plan = planRun(job.runs, candidates);
-
-    switch (plan.kind) {
-      case 'fail':
-        throw new AgentError(plan.reason);
-      case 'finalize':
-        await finalize(job, plan.candidate, null, log);
-        break;
-      case 'judge': {
-        const row = rows.find((r) => r.id === plan.candidate.id)!;
-        const [sources, img] = await Promise.all([
-          loadSources(job),
-          download('ai-generated', plan.candidate.storage_path),
-        ]);
-        await verify(job, row, img, sources, log);
-        break;
-      }
-      case 'attempt':
-        await attempt(job, plan.attempt, plan.previous, started, log);
-        break;
-      case 'select': {
-        const chosen = await choose(job, plan.candidates, log);
-        await finalize(job, chosen, null, log);
-        break;
-      }
-    }
+    const sources = await loadSources(job);
+    const target = job.target ?? await surveyPhoto(job, sources, log);
+    if (job.redo >= 2) await redraw(job, targetOf(job), sources, log);
+    else await cutOut(job, target, sources, log);
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
     // ni de nom de modèle. Le détail part dans les journaux de la fonction.
     const message = err instanceof AgentError ? err.message : SAY.failed;
     const detail = err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : String(err);
     log(`échec : ${detail}`);
-    await db.from('ai_jobs').update({ status: 'failed', error: message }).eq('id', job.id);
+    // Une reprise ratée laisse la pièce telle qu'elle était : seule la tâche garde la trace.
+    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message }).eq('id', job.id);
   }
 }
 
@@ -467,7 +413,7 @@ Deno.serve(async (req) => {
   }
   if (req.method === 'GET') {
     const keys = Object.fromEntries(KEYS.map((k) => [k, Boolean(Deno.env.get(k))]));
-    return Response.json({ agent: 'dressy-agent', models: MODELS, effort: EFFORT, keys });
+    return Response.json({ agent: 'dressy-agent', gabarit: CUTOUT.version, models: MODELS, effort: EFFORT, keys });
   }
   if (req.method !== 'POST') return new Response('Méthode non prise en charge', { status: 405 });
 

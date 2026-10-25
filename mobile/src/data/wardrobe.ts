@@ -29,6 +29,12 @@ export type Piece = {
   lastWorn: number | null;
   addedDaysAgo: number;
   price?: number;
+  /** Ce que la personne a précisé : marque, taille, coupe. */
+  brand?: string;
+  size?: string;
+  fit?: string;
+  /** Fois où elle a signalé un rendu incorrect (deux au plus). */
+  reports?: number;
 };
 
 export const CATEGORIES: { id: CategoryId; title: string; short: string }[] = [

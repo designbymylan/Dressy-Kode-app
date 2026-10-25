@@ -44,6 +44,9 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
   const [category, setCategory] = useState<CategoryId>(piece.category);
   const [colorId, setColorId] = useState<string | undefined>(piece.colorId ?? COLOURS.find((x) => x.label === piece.color)?.id);
   const [material, setMaterial] = useState(piece.material);
+  const [brand, setBrand] = useState(piece.brand ?? '');
+  const [size, setSize] = useState(piece.size ?? '');
+  const [fit, setFit] = useState(piece.fit ?? '');
   const [season, setSeason] = useState<Season>(piece.season);
   const [price, setPrice] = useState(priceText(piece.price));
 
@@ -54,6 +57,9 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
     setCategory(piece.category);
     setColorId(piece.colorId ?? COLOURS.find((x) => x.label === piece.color)?.id);
     setMaterial(piece.material);
+    setBrand(piece.brand ?? '');
+    setSize(piece.size ?? '');
+    setFit(piece.fit ?? '');
     setSeason(piece.season);
     setPrice(priceText(piece.price));
   }, [visible, piece]);
@@ -78,6 +84,9 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
       tint,
       swatch: tint ?? colour?.hex ?? piece.swatch,
       material: material.trim(),
+      brand: brand.trim() || undefined,
+      size: size.trim() || undefined,
+      fit: fit.trim() || undefined,
       season,
       price: parsed ?? undefined,
     });
@@ -115,6 +124,18 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
 
         <Field label="Matière">
           <TextInput testID="label-material" value={material} onChangeText={setMaterial} maxLength={80} placeholder="Par exemple : denim de coton" placeholderTextColor={c.ink2} accessibilityLabel="Matière" className="bg-sunk" style={input} />
+        </Field>
+
+        <Field label="Marque">
+          <TextInput testID="label-brand" value={brand} onChangeText={setBrand} maxLength={60} placeholder="Facultatif" placeholderTextColor={c.ink2} accessibilityLabel="Marque" className="bg-sunk" style={input} />
+        </Field>
+
+        <Field label="Taille">
+          <TextInput testID="label-size" value={size} onChangeText={setSize} maxLength={20} placeholder="Par exemple : M, 38, 42" placeholderTextColor={c.ink2} accessibilityLabel="Taille" className="bg-sunk" style={input} />
+        </Field>
+
+        <Field label="Coupe">
+          <TextInput testID="label-fit" value={fit} onChangeText={setFit} maxLength={40} placeholder="Par exemple : slim, droite, oversize" placeholderTextColor={c.ink2} accessibilityLabel="Coupe" className="bg-sunk" style={input} />
         </Field>
 
         <Field label="Saison">

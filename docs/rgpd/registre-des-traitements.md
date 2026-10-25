@@ -54,19 +54,23 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 
 ## 2. Dressing et dessin des pièces
 
-- **Finalité** : transformer les photos de vêtements en pièces dessinées,
-  détourées et étiquetées, pour le dressing.
+- **Finalité** : découper les pièces dans les photos de vêtements (la pièce
+  est la vraie, détourée et mise au format du dressing, pas redessinée) et
+  les étiqueter, pour le dressing.
 - **Base** : exécution du contrat.
 - **Données** : photos confiées (qui peuvent montrer une personne, d'où le
   conseil d'éviter le visage), consigne facultative (« seulement la veste »),
-  pièces dessinées, étiquettes (nom, catégorie, couleur, matière, saison,
-  prix), ports.
-- **Tables et fichiers** : `ai_jobs`, `ai_images`, `garments`,
+  précisions facultatives sur la pièce (marque, taille, coupe, matière, note),
+  pièces détourées, étiquettes (nom, catégorie, couleur, matière, saison,
+  prix), ports, signalements « rendu incorrect » (niveau de reprise et
+  contrôles de l'image, sans la photo).
+- **Tables et fichiers** : `ai_jobs` (dont le journal de découpe : méthode,
+  contrôles, durées, jetons), `ai_images`, `garments`, `garment_reports`,
   `categories` ; seaux `uploads`, `ai-generated`, `garments`.
-- **Destinataires** : Supabase ; Anthropic (analyse de la photo) ; Google
-  (dessin de chaque pièce, à partir du recadrage et de la consigne). Pour
-  une pièce de marque reconnue, une recherche du modèle sur le web (marque
-  et modèle seulement, rien qui désigne la personne).
+- **Destinataires** : Supabase ; Anthropic (repérage des pièces sur la
+  photo) ; Google (masque de découpe de chaque pièce, calculé sur la photo ;
+  après deux signalements « rendu incorrect » seulement, dessin de la pièce
+  à partir de la photo et d'une consigne).
 - **Durée** : photos confiées, 30 jours après l'envoi ; demandes de dessin
   terminées, 90 jours ; pièces, tant qu'elles restent dans le dressing
   (fonction `menage`, chaque nuit).

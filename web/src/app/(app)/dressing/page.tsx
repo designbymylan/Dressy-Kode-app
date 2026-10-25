@@ -101,8 +101,8 @@ export default async function Dressing({
         <Card strong i={1}>
           <p role="status" className="small center">
             {sent > 1 ? `${sent} photos confiées à Kodi.` : 'Photo confiée à Kodi.'} Il repère chaque pièce
-            et les dessine en même temps. Tu peux quitter cet écran : elles arriveront dans ton dressing,
-            détourées, une fois vérifiées.
+            et les découpe en même temps. Tu peux quitter cet écran : elles arriveront dans ton dressing,
+            détourées et centrées.
           </p>
         </Card>
       ) : null}

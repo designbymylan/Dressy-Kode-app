@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransitio
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Piece } from '@/lib/garments';
-import { togglePieceWear } from '@/app/actions';
+import { reportGarment, togglePieceWear } from '@/app/actions';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Icon, ICON } from '@/components/ui';
 
@@ -230,6 +230,7 @@ function PieceSheet({
   // Le type n'apparaît que s'il dit autre chose que le nom (« Trench » pour un trench, non).
   const kind = pieceKindLabel(piece);
   const eyebrow = kind && kind.toLowerCase() !== piece.name.toLowerCase() ? kind : null;
+  const infos = [piece.brand, piece.size && `Taille ${piece.size}`, piece.fit, piece.material].filter((x): x is string => !!x);
 
   return (
     <div className="sheet-layer">
@@ -241,6 +242,7 @@ function PieceSheet({
         <div className="piece-sheet-facts">
           {eyebrow ? <p className="eyebrow" style={{ textAlign: 'left' }}>{eyebrow}</p> : null}
           <h2 id="fiche-titre" style={{ fontSize: 24 }}>{piece.name}</h2>
+          {infos.length ? <p className="small muted">{infos.join(' · ')}</p> : null}
           <p className="small muted">{wornLine(stat)}</p>
           {goes > 0 ? (
             <p className="small muted">
@@ -253,6 +255,7 @@ function PieceSheet({
           <Link href={`/tenues/nouvelle?avec=${piece.id}`} className="btn btn-glass btn-block">
             <Icon d={ICON.sparkle} size={18} /> Composer une tenue avec
           </Link>
+          <ReportRender id={piece.id} reports={piece.reports} />
           <button ref={closeBtn} type="button" className="btn btn-glass btn-block" onClick={close}>
             Fermer
           </button>
@@ -296,6 +299,47 @@ function WornToday({ id, initial }: { id: string; initial: boolean }) {
       >
         <Icon name={on ? 'check' : 'hanger'} size={18} />
         {on ? 'Portée aujourd’hui' : 'Je l’ai portée aujourd’hui'}
+      </button>
+      {error ? <p role="alert" className="small" style={{ color: 'var(--danger)' }}>{error}</p> : null}
+    </>
+  );
+}
+
+/**
+ * « Rendu incorrect » : la pièce est reprise à partir de sa photo. Une
+ * première fois, la découpe repart avec un modèle plus fort ; une seconde,
+ * Kodi la redessine. La page se relit ensuite pour montrer le nouveau rendu.
+ */
+function ReportRender({ id, reports }: { id: string; reports: number }) {
+  const router = useRouter();
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  if (reports >= 2 && !sent) return null;
+  if (sent) {
+    return <p role="status" className="small muted center">Kodi reprend cette pièce, elle se met à jour dans un instant.</p>;
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="btn btn-glass btn-block"
+        disabled={pending}
+        onClick={() => {
+          setError(null);
+          start(async () => {
+            const res = await reportGarment(id);
+            if (res?.error) return setError(res.error);
+            setSent(true);
+            // L'agent met quelques secondes ; on relit la page deux fois.
+            setTimeout(() => router.refresh(), 7000);
+            setTimeout(() => router.refresh(), 18000);
+          });
+        }}
+      >
+        Rendu incorrect
       </button>
       {error ? <p role="alert" className="small" style={{ color: 'var(--danger)' }}>{error}</p> : null}
     </>

@@ -121,6 +121,8 @@ export function PieceScreen() {
   const goes = matches(piece, s.pieces).sort((x, z) => z.wears - x.wears).slice(0, 6);
   const { labels, values } = history(piece);
   const wornToday = piece.lastWorn === 0;
+  // Seule une pièce découpée d'une photo du compte peut être reprise, deux fois au plus.
+  const reportable = s.account === 'connecte' && !!piece.image && (piece.reports ?? 0) < 2;
 
   const stageH = Math.min(440, Math.round(width * 1.1));
   const art = Math.min(220, width * 0.56);
@@ -169,6 +171,9 @@ export function PieceScreen() {
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
             <DotChip label={piece.color} swatch={piece.swatch} />
             {piece.material ? <DotChip label={cap(piece.material)} /> : null}
+            {piece.brand ? <DotChip label={piece.brand} /> : null}
+            {piece.size ? <DotChip label={`Taille ${piece.size}`} /> : null}
+            {piece.fit ? <DotChip label={cap(piece.fit)} /> : null}
             <DotChip label={cap(piece.season)} />
             {priceTxt && <DotChip label={priceTxt} />}
             <DotChip label={cap(addedLabel(piece.addedDaysAgo))} />
@@ -244,6 +249,9 @@ export function PieceScreen() {
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">
         {/* La feuille du menu se referme d'abord : sur iPhone, deux modales ne s'ouvrent pas l'une sur l'autre. */}
         <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
+        {reportable && (
+          <Row icon="edit" title="Rendu incorrect" detail="Kodi reprend la découpe de cette pièce" testID="piece-report" onPress={() => { setMenu(false); void a.reportPiece(piece.id); }} />
+        )}
         <Row icon="share" title="Prêter ou donner à une amie" onPress={() => { setMenu(false); nav.navigate('Share', { id: piece.id }); }} />
         <Row icon="trash" title="Retirer du dressing" detail="Tu pourras annuler juste après" last onPress={() => { setMenu(false); nav.goBack(); a.removePiece(piece.id); }} testID="piece-remove" />
       </Sheet>

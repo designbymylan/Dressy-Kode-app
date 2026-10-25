@@ -11,6 +11,12 @@ export type Piece = {
   url: string | null;
   /** Date d'arrivée dans le dressing (les nouvelles pièces tombent sur leur portant). */
   created_at: string;
+  brand: string | null;
+  size: string | null;
+  fit: string | null;
+  material: string | null;
+  /** Fois où la personne a signalé un rendu incorrect (deux au plus). */
+  reports: number;
 };
 
 const HOUR = 3600;
@@ -28,7 +34,7 @@ export async function signAll(supabase: Supabase, bucket: string, paths: string[
 export async function loadPieces(supabase: Supabase): Promise<Piece[]> {
   const { data } = await supabase
     .from('garments')
-    .select('id, name, category_id, kind, colors, image_path, thumb_path, created_at')
+    .select('id, name, category_id, kind, colors, image_path, thumb_path, created_at, brand, size, fit, material, reports')
     .eq('status', 'active')
     .order('created_at', { ascending: false });
 
@@ -47,5 +53,10 @@ export async function loadPieces(supabase: Supabase): Promise<Piece[]> {
     colors: g.colors ?? [],
     url: urls.get((g.thumb_path ?? g.image_path) as string) ?? null,
     created_at: g.created_at,
+    brand: g.brand ?? null,
+    size: g.size ?? null,
+    fit: g.fit ?? null,
+    material: g.material ?? null,
+    reports: g.reports ?? 0,
   }));
 }

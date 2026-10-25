@@ -2,13 +2,13 @@
  * Les modèles que l'agent fait travailler. Chaque fonction ne fait qu'un
  * appel et rend un résultat propre ; l'enchaînement est dans index.ts.
  *
- *   Opus 5 (MODELS.prompts) : repère les pièces d'une photo et écrit la
- *     consigne de chacune ; réécrit la consigne après un essai refusé.
- *   Opus 5 + recherche web : retrouve le modèle exact d'une pièce de marque
- *     et en tire les détails de design (bandes, semelle, logo).
- *   Nano Banana (MODELS.gemini) : dessine la pièce seule, sur fond uni ; pour
- *     un modèle identifié, il regarde aussi ses photos (recherche Google).
- *   Sonnet 5 (MODELS.judge) : contrôle qualité, plus rapide pour un verdict.
+ *   Sonnet 5 (MODELS.survey) : repère les pièces d'une photo et écrit leur
+ *     fiche (type, couleurs, cadre), vite.
+ *   Gemini (MODELS.segment) : segmente la pièce, c'est-à-dire rend son masque ;
+ *     les pixels restent ceux de la photo. Un modèle plus fort
+ *     (MODELS.segmentStrong) reprend après un « rendu incorrect ».
+ *   Nano Banana (MODELS.gemini) : ne dessine plus qu'en dernier recours, quand
+ *     la personne a signalé deux fois un rendu incorrect.
  *
  * Rien de ce fichier n'est montré tel quel : un AgentError porte un message
  * écrit pour la personne (qui ne nomme jamais les modèles) et un détail
@@ -18,14 +18,10 @@ import { Buffer } from 'node:buffer';
 import Anthropic, { APIError, APIConnectionTimeoutError } from '@anthropic-ai/sdk';
 import {
   MAX_PIECES, cleanTarget,
-  INVENTORY_SYSTEM, INVENTORY_SCHEMA, inventoryUserText,
-  REFINE_SYSTEM, REFINE_SCHEMA, refineUserText,
-  RESEARCH_SYSTEM, researchUserText, parseResearch,
-  JUDGE_SYSTEM, VERDICT_SCHEMA, judgeText,
-  PICK_SYSTEM, PICK_SCHEMA,
-  type Previous, type Reference, type Target,
+  SURVEY_SYSTEM, SURVEY_SCHEMA, surveyUserText,
+  type Target,
 } from './prompts.ts';
-import { normaliseVerdict, type Verdict } from './decide.ts';
+import { parseSegments, type Segment } from './segment.ts';
 import { sniffMime } from './codec.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
@@ -56,18 +52,16 @@ const effort = (name: string, fallback: Effort): Effort => {
 };
 
 export const MODELS = {
-  // Opus 5 écrit les consignes de Nano Banana : c'est l'étape qui décide de
-  // la ressemblance, et un seul appel sert toutes les pièces d'une photo.
-  prompts: env('CLAUDE_PROMPT_MODEL') ?? 'claude-opus-5',
+  // Sonnet 5 en effort bas : le repérage doit être rapide, la qualité de
+  // l'image ne dépend plus de lui puisque la pièce est découpée dans la photo.
+  survey: env('CLAUDE_SURVEY_MODEL') ?? 'claude-sonnet-5',
+  segment: env('GEMINI_SEGMENT_MODEL') ?? 'gemini-2.5-flash',
+  segmentStrong: env('GEMINI_SEGMENT_MODEL_STRONG') ?? 'gemini-2.5-pro',
   gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
-  judge: env('CLAUDE_MODEL') ?? 'claude-sonnet-5',
 };
 
-// L'effort est le premier levier de vitesse : « medium » est déjà très bon
-// sur Opus 5 ; le verdict, plus simple, passe en « low ».
 export const EFFORT = {
-  prompts: effort('CLAUDE_PROMPT_EFFORT', 'medium'),
-  judge: effort('CLAUDE_JUDGE_EFFORT', 'low'),
+  survey: effort('CLAUDE_SURVEY_EFFORT', 'low'),
 };
 
 export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
@@ -252,15 +246,15 @@ async function askJson(opts: {
   }
 }
 
-/** Opus 5 repère toutes les pièces de la photo (ou celles que la personne a nommées) et écrit leur consigne. */
-export async function inventory(input: { sources: Img[]; hint: string; gender: string | null }): Promise<{ pieces: Target[]; note: string; usage: Usage }> {
+/** Le repérage des pièces d'une photo : un seul appel rapide, la découpe se fait ensuite pièce par pièce. */
+export async function survey(input: { sources: Img[]; hint: string; gender: string | null }): Promise<{ pieces: Target[]; note: string; usage: Usage }> {
   const { data, usage } = await askJson({
-    model: MODELS.prompts,
-    effort: EFFORT.prompts,
-    system: INVENTORY_SYSTEM,
-    schema: INVENTORY_SCHEMA,
-    content: [...input.sources.map(imageBlock), { type: 'text', text: inventoryUserText(input) }],
-    maxTokens: 16_000,
+    model: MODELS.survey,
+    effort: EFFORT.survey,
+    system: SURVEY_SYSTEM,
+    schema: SURVEY_SCHEMA,
+    content: [...input.sources.map(imageBlock), { type: 'text', text: surveyUserText(input) }],
+    maxTokens: 8_000,
   });
   const o = (data ?? {}) as { pieces?: unknown; note?: unknown };
   const pieces = (Array.isArray(o.pieces) ? o.pieces : [])
@@ -270,104 +264,66 @@ export async function inventory(input: { sources: Img[]; hint: string; gender: s
   return { pieces, note: String(o.note ?? '').trim(), usage };
 }
 
-/** Opus 5 réécrit la consigne d'une pièce d'après les écarts relevés par le contrôle. */
-export async function refine(input: { sources: Img[]; target: Target; previous: Previous }): Promise<{ prompt: string; usage: Usage }> {
-  const { data, usage } = await askJson({
-    model: MODELS.prompts,
-    effort: EFFORT.prompts,
-    system: REFINE_SYSTEM,
-    schema: REFINE_SCHEMA,
-    content: [...input.sources.map(imageBlock), { type: 'text', text: refineUserText(input.target, input.previous) }],
-    maxTokens: 8_000,
-  });
-  const prompt = String((data as { prompt?: unknown })?.prompt ?? '').trim();
-  // Faute de nouvelle consigne, on garde la précédente plutôt que d'échouer.
-  return { prompt: prompt || input.previous.prompt || input.target.prompt, usage };
-}
+// ---------------------------------------------------------------- Gemini : segmentation
 
 /**
- * Opus 5, avec la recherche web, retrouve le modèle exact d'une pièce de
- * marque et en tire ses détails de design. Rien de sûr → reference null :
- * la pièce garde sa consigne d'origine, rien n'est perdu.
+ * Le masque de segmentation d'UNE pièce (Gemini, modèle de texte et de vision,
+ * pas de génération d'image : les pixels restent ceux de la photo). `strong`
+ * prend le modèle le plus fort et ne donne pas le cadre de Kodi, pour la
+ * reprise après un « rendu incorrect ».
  */
-export async function research(input: { sources: Img[]; target: Target }): Promise<{ reference: Reference | null; prompt: string | null; usage: Usage }> {
-  const tools = [
-    { type: 'web_search_20260209', name: 'web_search', max_uses: 4 },
-    { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 3, max_content_tokens: 12_000 },
-  ] as unknown as Anthropic.ToolUnion[];
-  const messages: Anthropic.MessageParam[] = [
-    { role: 'user', content: [...input.sources.map(imageBlock), { type: 'text', text: researchUserText(input.target) }] as Anthropic.ContentBlockParam[] },
-  ];
+export async function segment(photo: Img, target: Target, opts: { strong: boolean }): Promise<{ segments: Segment[]; usage: Usage; model: string }> {
+  const key = secret('GEMINI_API_KEY');
+  const model = opts.strong ? MODELS.segmentStrong : MODELS.segment;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-  let res: Anthropic.Message | null = null;
+  const hint = !opts.strong && target.box
+    ? ` It is roughly inside the box [y0, x0, y1, x1] = [${[target.box[1], target.box[0], target.box[1] + target.box[3], target.box[0] + target.box[2]].map((v) => Math.round(v * 1000)).join(', ')}] (0-1000), but that box is only approximate.`
+    : '';
+  const text = `Give the segmentation mask of ONE single item in this photo: "${target.name}"${target.where ? ` (${target.where})` : ''}.${hint} Include the whole visible item. Leave out the person (skin, hair, face, hands), the background, every other item even where it touches or overlaps this one, and cast shadows. If the item is a pair (shoes, earrings, gloves), include both. Output a JSON list with exactly one entry: the 2D bounding box in "box_2d" as [y0, x0, y1, x1] normalised to 0-1000, the segmentation mask in "mask", and the text label in "label".`;
+
+  const parts = [
+    { inline_data: { mime_type: photo.mime, data: b64(photo.bytes) } },
+    { text },
+  ];
+  const call = (thinking: boolean) =>
+    fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      signal: AbortSignal.timeout(60_000),
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: 'application/json',
+          ...(thinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        },
+      }),
+    });
+
+  let res: Response;
   try {
-    // La recherche tourne côté serveur ; une boucle trop longue revient en
-    // « pause_turn » : on renvoie la réponse telle quelle pour qu'elle reprenne.
-    for (let turn = 0; turn < 3; turn++) {
-      res = await anthropic().messages.create({
-        model: MODELS.prompts,
-        max_tokens: 12_000,
-        system: RESEARCH_SYSTEM,
-        messages,
-        tools,
-        output_config: { effort: EFFORT.prompts },
-      });
-      if (res.stop_reason !== 'pause_turn') break;
-      messages.push({ role: 'assistant', content: res.content as unknown as Anthropic.ContentBlockParam[] });
+    res = await call(true);
+    // Certains modèles (les plus forts) ne se laissent pas couper la réflexion.
+    if (res.status === 400) {
+      const body = await res.text();
+      if (!/think/i.test(body)) throw httpError('Gemini (découpe)', 400, body);
+      res = await call(false);
     }
   } catch (err) {
-    if (err instanceof APIError && typeof err.status === 'number') throw httpError(`Claude ${MODELS.prompts} (recherche)`, err.status, err.message);
-    throw new AgentError(SAY.failed, `Claude ${MODELS.prompts} (recherche) : ${err instanceof Error ? err.message : err}`);
+    if (err instanceof AgentError) throw err;
+    throw new AgentError(SAY.failed, `Gemini (découpe) injoignable : ${err instanceof Error ? err.message : err}`);
   }
-  if (!res || res.stop_reason === 'refusal') return { reference: null, prompt: null, usage: (res?.usage ?? null) as unknown as Usage };
+  if (!res.ok) throw httpError('Gemini (découpe)', res.status, await res.text());
 
-  const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
-  const found = parseResearch(text);
-  return { reference: found?.reference ?? null, prompt: found?.prompt || null, usage: res.usage as unknown as Usage };
-}
+  const body = await res.json();
+  const candidate = body?.candidates?.[0];
+  const blocked = body?.promptFeedback?.blockReason ?? (/SAFETY|PROHIBITED|BLOCK/.test(candidate?.finishReason ?? '') ? candidate.finishReason : null);
+  if (blocked) throw new AgentError(SAY.refused, `Gemini (découpe) a refusé : ${blocked}`);
 
-export async function judge(input: {
-  sources: Img[];
-  generated: Img;
-  target: Target;
-  prompt: string;
-}): Promise<Verdict & { usage: Usage }> {
-  const { data, usage } = await askJson({
-    model: MODELS.judge,
-    effort: EFFORT.judge,
-    system: JUDGE_SYSTEM,
-    schema: VERDICT_SCHEMA,
-    content: [
-      { type: 'text', text: input.sources.length > 1 ? "Photos d'origine :" : "Photo d'origine :" },
-      ...input.sources.map(imageBlock),
-      { type: 'text', text: judgeText(input.target, input.prompt) },
-      { type: 'text', text: 'Image générée :' },
-      imageBlock(input.generated),
-    ],
-    maxTokens: 6_000,
-  });
-  return { ...normaliseVerdict(data), usage };
-}
-
-/** Renvoie l'index (0, 1, 2…) de l'image que le contrôle garde parmi `options`. */
-export async function pickBest(sources: Img[], target: Target, options: { img: Img; score: number | null }[]): Promise<{ index: number; raison: string }> {
-  const content: Block[] = [
-    { type: 'text', text: sources.length > 1 ? "Photos d'origine :" : "Photo d'origine :" },
-    ...sources.map(imageBlock),
-    { type: 'text', text: `Pièce : ${target.name}, ${target.where || 'pièce principale'}.` },
-  ];
-  options.forEach((o, i) => {
-    content.push({ type: 'text', text: `Image ${i + 1} (note du contrôle : ${o.score ?? '?'}/100) :` });
-    content.push(imageBlock(o.img));
-  });
-
-  const { data } = await askJson({
-    model: MODELS.judge, effort: EFFORT.judge, system: PICK_SYSTEM, schema: PICK_SCHEMA, content, maxTokens: 4_000,
-  });
-  const o = (data ?? {}) as { image?: unknown; raison?: unknown };
-  const n = Math.round(Number(o.image));
-  if (!Number.isFinite(n) || n < 1 || n > options.length) throw new AgentError(SAY.failed, `choix hors liste : ${o.image}`);
-  return { index: n - 1, raison: String(o.raison ?? '') };
+  const answer = ((candidate?.content?.parts ?? []) as { text?: string; thought?: boolean }[])
+    .filter((p) => p.text && !p.thought).map((p) => p.text).join('');
+  return { segments: parseSegments(answer), usage: body?.usageMetadata ?? null, model };
 }
 
 // ---------------------------------------------------------------- vérification
@@ -428,19 +384,30 @@ export async function checkSetup() {
     claudeModels,
   );
 
-  const [gemini, consignes, controle] = await Promise.all([
+  const geminiList = async (k: string) => {
+    const b = await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
+    return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
+  };
+
+  const [decoupe, decoupeFort, dessin, repérage] = await Promise.all([
+    probe(
+      'GEMINI_API_KEY', MODELS.segment,
+      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.segment}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
+      geminiList,
+    ),
+    probe(
+      'GEMINI_API_KEY', MODELS.segmentStrong,
+      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.segmentStrong}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
+      geminiList,
+    ),
     probe(
       'GEMINI_API_KEY', MODELS.gemini,
       (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      async (k) => {
-        const b = await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
-        return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).filter((id: string) => id.includes('image')).sort();
-      },
+      geminiList,
     ),
-    claudeProbe(MODELS.prompts),
-    claudeProbe(MODELS.judge),
+    claudeProbe(MODELS.survey),
   ]);
 
-  const pret = [gemini, consignes, controle].every((p) => p.cle === 'valide' && p.modele_trouve === true);
-  return { pret, gemini, consignes, controle };
+  const pret = [decoupe, decoupeFort, dessin, repérage].every((p) => p.cle === 'valide' && p.modele_trouve === true);
+  return { pret, decoupe, decoupeFort, dessin, reperage: repérage };
 }

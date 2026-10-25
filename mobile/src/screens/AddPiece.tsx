@@ -48,13 +48,15 @@ export function AddPiece() {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Found | null>(null);
   const [photo, setPhoto] = useState<Picked | null>(null);
-  // Compte connecté : les photos partent vraiment chez Kodi, qui repère et dessine chaque pièce.
+  // Compte connecté : les photos partent vraiment chez Kodi, qui repère et découpe chaque pièce.
   const live = s.account === 'connecte' && remote.online;
   // Le compte de démonstration seul garde la galerie d'exemples ; un espace sans compte n'a aucune pièce fictive.
   const demo = s.account === 'demo';
   const [account, setAccount] = useState(false);
   const waiting = s.pendingPhotos.length;
   const [hint, setHint] = useState('');
+  // Précisions sur UN vêtement (marque, taille, coupe, matière) : envoyées avec la photo.
+  const [details, setDetails] = useState({ brand: '', size: '', fit: '', material: '' });
   const [error, setError] = useState<string | null>(null);
   // Appareil photo refusé : le message propose d'ouvrir les Réglages.
   const [settings, setSettings] = useState(false);
@@ -86,10 +88,10 @@ export function AddPiece() {
   };
 
   /** Les photos partent chez Kodi ; l'écran les montre tout de suite, balayées par le scan. */
-  const confide = async (picked: Picked[]) => {
+  const confide = async (picked: Picked[], withDetails = false) => {
     setSent((prev) => [...(prev ?? []), ...picked.map((p) => ({ picked: p, path: null }))]);
     setPhase('suivi');
-    const r = await a.sendPhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })), hint);
+    const r = await a.sendPhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })), hint, withDetails && picked.length === 1 ? details : undefined);
     setSent((prev) =>
       prev &&
       prev.map((x) => {
@@ -142,7 +144,7 @@ export function AddPiece() {
       }
       if (!picked.length) return;
       if (live) {
-        const r = await confide(picked.slice(0, 10));
+        const r = await confide(picked.slice(0, 10), true);
         if (!r.ok) giveUp(r.message);
       } else if (demo) pick(gallery[0], picked[0]);
       else {
@@ -256,7 +258,7 @@ export function AddPiece() {
                   <View className="flex-row" style={{ gap: 8, paddingHorizontal: 4 }} testID="add-privacy">
                     <Icon name="lock" size={15} color={c.ink2} />
                     <T v="small" tone="ink2" style={{ flex: 1 }}>
-                      Ta photo sert seulement à dessiner tes pièces, puis elle est effacée sous 30 jours. Évite d’y montrer ton visage.
+                      Ta photo sert seulement à découper tes pièces, puis elle est effacée sous 30 jours. Évite d’y montrer ton visage.
                     </T>
                   </View>
                 )}
@@ -278,18 +280,45 @@ export function AddPiece() {
                       maxLength={280}
                       placeholder="Par exemple : seulement la veste et le jean"
                       placeholderTextColor={c.ink2}
-                      accessibilityLabel="Les pièces que Kodi doit dessiner, si tu ne veux pas toute la photo"
+                      accessibilityLabel="Les pièces que Kodi doit découper, si tu ne veux pas toute la photo"
                       className="bg-sunk"
                       style={{ minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
                     />
                     <T v="small" tone="ink2">
-                      Sinon, Kodi dessine tout ce qu’il voit.
+                      Sinon, Kodi range tout ce qu’il voit.
+                    </T>
+                    <T v="kicker" tone="ink2" style={{ marginTop: 8 }}>
+                      Un seul vêtement ? Précise-le
+                    </T>
+                    <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                      {([
+                        ['brand', 'Marque', 60],
+                        ['size', 'Taille', 20],
+                        ['fit', 'Coupe', 40],
+                        ['material', 'Matière', 60],
+                      ] as const).map(([key, label, max]) => (
+                        <TextInput
+                          key={key}
+                          testID={`add-${key}`}
+                          value={details[key]}
+                          onChangeText={(v) => setDetails((d) => ({ ...d, [key]: v }))}
+                          maxLength={max}
+                          placeholder={label}
+                          placeholderTextColor={c.ink2}
+                          accessibilityLabel={`${label} du vêtement, facultatif`}
+                          className="bg-sunk"
+                          style={{ flexBasis: '47%', flexGrow: 1, minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
+                        />
+                      ))}
+                    </View>
+                    <T v="small" tone="ink2">
+                      Pour une photo à plusieurs pièces, ou en rafale, modifie l’étiquette ensuite.
                     </T>
                   </View>
                 ) : !demo ? (
                   // Sans compte : aucune pièce d'exemple, l'invitation à créer le compte.
                   <Card className="bg-butter" style={{ gap: 10 }} testID="add-account">
-                    <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kodi dessine tes pièces avec ton compte.'}</T>
+                    <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kodi découpe tes pièces avec ton compte.'}</T>
                     <T v="body" tone="ink2">
                       {remote.online
                         ? 'Gratuit, en une minute : Kodi range chaque vêtement de tes photos.'
@@ -314,7 +343,7 @@ export function AddPiece() {
                 </>
                 )}
                 <T v="small" tone="ink2">
-                  Tes photos servent seulement à dessiner la pièce. Elles ne sont ni publiées ni partagées.
+                  Tes photos servent seulement à découper la pièce. Elles ne sont ni publiées ni partagées.
                 </T>
               </>
             )}
@@ -536,7 +565,7 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
         </T>
         <T v="body" tone="ink2">
           {working || playing
-            ? 'Il repère chaque pièce et les dessine en même temps. Chacune arrive sur tes portants, détourée, sans fond.'
+            ? 'Il repère chaque pièce et les découpe en même temps. Chacune arrive sur tes portants, détourée, sans fond.'
             : 'Tes pièces sont sur tes portants, détourées et sans fond.'}
         </T>
       </View>

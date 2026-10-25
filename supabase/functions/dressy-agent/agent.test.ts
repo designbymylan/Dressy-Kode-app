@@ -1,12 +1,11 @@
 /**
  * node supabase/functions/dressy-agent/agent.test.ts
  *
- * Ne teste que les modules sans dépendance (détourage, décisions, fond) :
+ * Ne teste que les modules sans dépendance (détourage, fond, fiche) :
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
 import { cutoutBackground, alphaRatio, cropToContent, contentBox, downscale, type Raster } from './cutout.ts';
-import { planRun, normaliseVerdict, isValidated, bestByScore, MAX_RUNS, type Candidate } from './decide.ts';
-import { backdropFor, cleanTarget, cleanBox, deltaE, isMetal, parseResearch, stripClauses, wantsResearch, wantsImageSearch, productLine } from './prompts.ts';
+import { backdropFor, cleanTarget, cleanBox, deltaE, isMetal, stripClauses } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -149,32 +148,12 @@ check('menthe : intérieur opaque et vert gardé', mPx(40, 40), [160, 196, 176, 
 check('menthe : près du bord, vert gardé aussi', mPx(21, 40), [160, 196, 176, 255]);
 check('menthe : fond retiré', mPx(5, 5)[3], 0);
 
-// ---------------------------------------------------------------- recherche
+// ---------------------------------------------------------------- fiche (suite)
 
-const lu = parseResearch(`Voici :
-<produit>Marque X, Trail 2, noir/gris</produit>
-<certitude>forte</certitude>
-<details>- black mesh upper\n- three grey printed stripes</details>
-<consigne>Reproduce ONLY the black trail sneakers…</consigne>
-<sources>https://exemple.com/a https://exemple.com/b pasuneurl</sources>`);
-check('recherche lue : produit, certitude, sources', [lu?.reference.produit, lu?.reference.certitude, lu?.reference.sources.length], ['Marque X, Trail 2, noir/gris', 'forte', 2]);
-check('recherche lue : consigne', lu?.prompt.startsWith('Reproduce ONLY'), true);
-check('recherche « inconnu » → rien', parseResearch('<produit>inconnu</produit><certitude>faible</certitude><details>x</details>'), null);
-check('recherche sans balises → rien', parseResearch('Je n’ai rien trouvé.'), null);
-
-const base = { name: 'Baskets trail noires', category: 'chaussures' as const, kind: 'baskets', colors: ['noir'], material: '', where: '', description: '', prompt: 'x' };
-const idForte = { marque: 'Marque X', modele: 'Trail 2', coloris: 'noir', certitude: 'forte' as const, indices: 'bandes' };
-check('recherche voulue : marque identifiée et demandée', wantsResearch({ ...base, recherche: true, identification: idForte }), true);
-check('recherche : pas deux fois', wantsResearch({ ...base, recherche: true, identification: idForte, reference: null }), false);
-check('recherche : pas sur une certitude faible', wantsResearch({ ...base, recherche: true, identification: { ...idForte, certitude: 'faible' } }), false);
-check('recherche d\'images pour le générateur : identification forte', wantsImageSearch({ ...base, identification: idForte }), true);
-check('pas de recherche d\'images sans identification', wantsImageSearch(base), false);
-check('le produit vérifié prime sur la supposition', productLine({ identification: idForte, reference: { produit: 'Marque X Trail 2 GTX', certitude: 'moyenne', details: 'd', sources: [] } }), 'Marque X Trail 2 GTX');
-check('rappels de fin retirés avant réécriture',
+check('rappels de fin retirés avant de les remettre à neuf',
   stripClauses('Reproduce the jacket.\n\nOnly one item must appear in the output: the one described above (x).\n\nBackground: a perfectly flat, solid pure white (#FFFFFF) backdrop.\n\nExact colours of the real item: #000000.'),
   'Reproduce the jacket.');
 check('fiche : teintes hex gardées, une par couleur', cleanTarget({ name: 'Short', category: 'bas', colors: ['vert'], hex: ['#a9c4b5', '#zzz', '#F0E9DC'], prompt: 'x' })?.hex, ['#A9C4B5']);
-check('fiche : identification sans marque ni modèle → null', cleanTarget({ name: 'Pull', category: 'hauts', prompt: 'x', identification: { marque: '', modele: '', certitude: 'forte' } })?.identification, null);
 
 // ---------------------------------------------------------------- détourage fin
 
@@ -224,53 +203,13 @@ const fiche = cleanTarget({
 });
 check('fiche : type incohérent avec la catégorie → null', fiche?.kind, null);
 check('fiche : couleurs filtrées, dédoublonnées, 3 au plus', fiche?.colors, ['bleu', 'blanc', 'noir']);
-check('fiche : catégorie inconnue → accessoires', cleanTarget({ category: 'lingerie', prompt: 'x' })?.category, 'accessoires');
+check('fiche : catégorie inconnue → accessoires', cleanTarget({ name: 'Truc', category: 'lingerie', prompt: 'x' })?.category, 'accessoires');
 check('cadre en millièmes → fractions', cleanBox({ x: 250, y: 100, w: 500, h: 400 }), [0.25, 0.1, 0.5, 0.4]);
 check('cadre qui déborde → ramené dans la photo', cleanBox({ x: 800, y: 900, w: 500, h: 400 }), [0.8, 0.9, 0.2, 0.1]);
 check('cadre minuscule ou illisible → ignoré', [cleanBox({ x: 10, y: 10, w: 5, h: 300 }), cleanBox({ x: 'a' })], [null, null]);
 check('fiche : cadre repris', cleanTarget({ name: 'Veste', category: 'vestes', prompt: 'x', box: { x: 100, y: 200, w: 300, h: 400 } })?.box, [0.1, 0.2, 0.3, 0.4]);
-check('fiche sans consigne → écartée', cleanTarget({ name: 'Pull', category: 'hauts', prompt: '  ' }), null);
-
-// ---------------------------------------------------------------- verdict
-
-const perfect = { type_coupe: 98, couleurs: 97, motifs: 100, matiere: 96, details: 95, proportions: 97 };
-
-check('verdict ≥ seuil, fond uni, pièce entière → validé',
-  isValidated(normaliseVerdict({ criteres: perfect, score: 90, fond_uni: true, piece_entiere: true, ecarts: [] })), true);
-check('verdict juste sous le seuil → refusé',
-  isValidated(normaliseVerdict({ criteres: perfect, score: 87, fond_uni: true, piece_entiere: true })), false);
-check('score 99 mais fond non uni → refusé',
-  isValidated(normaliseVerdict({ criteres: perfect, score: 99, fond_uni: false, piece_entiere: true })), false);
-check('score plafonné au critère le plus faible + 5',
-  normaliseVerdict({ criteres: { ...perfect, couleurs: 70 }, score: 97, fond_uni: true, piece_entiere: true }).score, 75);
-check('réponse abîmée → 0 et refus, pas de plantage',
-  isValidated(normaliseVerdict({ score: 'beaucoup' })), false);
-
-// ---------------------------------------------------------------- plan
-
-const cand = (attempt: number, score: number | null, extra: Partial<Candidate> = {}): Candidate => ({
-  id: `c${attempt}`, attempt, storage_path: `s/j/essai-${attempt}.png`, mime: 'image/png',
-  prompt: `p${attempt}`, score, validated: false, chosen: false, ecarts: [], ...extra,
-});
-
-check('rien encore → essai 1', planRun(1, []), { kind: 'attempt', attempt: 1, previous: null });
-
-const p2 = planRun(2, [cand(1, 80, { ecarts: ['col trop large'] })]);
-check('essai 1 refusé → essai 2', p2.kind === 'attempt' && p2.attempt, 2);
-check('essai 2 reçoit la critique du 1', p2.kind === 'attempt' && p2.previous?.ecarts, ['col trop large']);
-
-check('essai 2 validé → rangement',
-  planRun(3, [cand(1, 80), cand(2, 90, { validated: true })]).kind, 'finalize');
-check('image générée mais pas jugée → juger, pas régénérer',
-  planRun(3, [cand(1, 80), cand(2, null)]), { kind: 'judge', candidate: cand(2, null) });
-check('2 essais refusés → le contrôle choisit, pas de 3e essai',
-  planRun(3, [cand(1, 80), cand(2, 85)]).kind, 'select');
-check('choix déjà fait → rangement sans redemander',
-  planRun(5, [cand(1, 80), cand(2, 85, { chosen: true })]),
-  { kind: 'finalize', candidate: cand(2, 85, { chosen: true }) });
-check('trop de passages → échec', planRun(MAX_RUNS + 1, []).kind, 'fail');
-check('repli : meilleure note', bestByScore([cand(1, 80), cand(2, 91), cand(3, 85)]).attempt, 2);
-check('repli : à égalité, le plus récent', bestByScore([cand(1, 88), cand(2, 88)]).attempt, 2);
+check('fiche sans consigne → consigne de repli bâtie par gabarit', cleanTarget({ name: 'Pull', category: 'hauts', where: 'sur le lit', description: 'Grey ribbed jumper.' })?.prompt.includes('Grey ribbed jumper.'), true);
+check('fiche vide → écartée', cleanTarget({ category: 'hauts' }), null);
 
 console.log(fails === 0 ? '\nTOUT PASSE' : `\n${fails} ÉCHEC(S)`);
 process.exit(fails ? 1 : 0);

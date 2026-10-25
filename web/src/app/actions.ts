@@ -245,6 +245,17 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
   redirect('/dressing');
 }
 
+export type PieceDetails = { brand?: string; size?: string; fit?: string; material?: string; note?: string };
+
+function cleanDetails(raw: PieceDetails | undefined): PieceDetails | null {
+  const out: PieceDetails = {};
+  for (const k of ['brand', 'size', 'fit', 'material', 'note'] as const) {
+    const v = String(raw?.[k] ?? '').trim();
+    if (v) out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 const DAILY_QUOTA = 20; // même limite que le trigger ai_jobs_before_insert (photos par jour)
 const MAX_PHOTOS_PER_BATCH = 10;
 
@@ -253,7 +264,7 @@ const MAX_PHOTOS_PER_BATCH = 10;
  * navigateur : une tâche par photo. L'agent y repère ensuite TOUTES les
  * pièces (ou celles que la précision nomme) et crée une tâche par pièce.
  */
-export async function requestAiGarments(input: { paths: string[]; hint: string }): Promise<FormResult> {
+export async function requestAiGarments(input: { paths: string[]; hint: string; details?: PieceDetails }): Promise<FormResult> {
   const viewer = await getViewer();
   if (!viewer) return { error: 'Session expirée.' };
 
@@ -282,12 +293,15 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
   }
 
   const hint = String(input?.hint ?? '').trim().slice(0, 280);
+  // Les précisions valent pour une photo d'une seule pièce ; la base borne chaque champ.
+  const details = paths.length === 1 ? cleanDetails(input?.details) : null;
   const { error } = await supabase.from('ai_jobs').insert(
     paths.map((p) => ({
       space_id: viewer.spaceId,
       requested_by: viewer.userId,
       source_paths: [p],
       user_input: hint,
+      details,
     })),
   );
 
@@ -298,6 +312,18 @@ export async function requestAiGarments(input: { paths: string[]; hint: string }
       : { error: "La demande n'est pas partie. Réessaie." };
   }
 
+  revalidatePath('/dressing');
+  return undefined;
+}
+
+/**
+ * « Rendu incorrect » : la découpe de la pièce reprend à partir de sa photo
+ * (la base compte les reprises et refuse au-delà de deux).
+ */
+export async function reportGarment(garmentId: string): Promise<FormResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('report_garment', { target: garmentId });
+  if (error) return { error: error.message };
   revalidatePath('/dressing');
   return undefined;
 }

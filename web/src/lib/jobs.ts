@@ -77,21 +77,20 @@ export function jobStep(j: Pick<JobRow, 'status' | 'target'>): OrbStep {
 export function jobPhrases(j: Pick<JobRow, 'status' | 'attempts' | 'target'>): string[] {
   switch (j.status) {
     case 'queued':
-      if (j.attempts >= MAX_ATTEMPTS) return ['Kodi choisit le meilleur rendu'];
       if (!j.target) return ['Kodi regarde ta photo', 'Kodi s’installe'];
-      return j.attempts > 0 ? ['Kodi prépare un nouvel essai'] : ['Kodi sort ses crayons'];
+      return ['Kodi s’y met'];
     case 'prompting':
       return j.target
-        ? ['Kodi affine son dessin', 'Kodi corrige les détails']
-        : ['Kodi repère chaque pièce', 'Kodi regarde les couleurs', 'Kodi note chaque détail'];
+        ? ['Kodi prépare la découpe']
+        : ['Kodi repère chaque pièce', 'Kodi regarde les couleurs'];
     case 'generating':
-      return ['Kodi dessine ta pièce', 'Kodi soigne les couleurs', 'Kodi ajuste la coupe', 'Kodi peaufine les détails'];
+      return ['Kodi reprend ta pièce', 'Kodi soigne les couleurs'];
     case 'verifying':
       return ['Kodi compare avec ta photo', 'Kodi vérifie chaque détail'];
     case 'selecting':
       return ['Kodi choisit le meilleur rendu'];
     case 'cutout':
-      return ['Kodi enlève le fond', 'Kodi détoure ta pièce'];
+      return ['Kodi découpe ta pièce', 'Kodi enlève le fond'];
     case 'uploading':
       return ['Kodi la range sur ton portant'];
     default:

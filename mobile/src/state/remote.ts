@@ -115,10 +115,11 @@ type GarmentRow = {
   id: string; name: string; category_id: string; kind: string | null; tint: string | null; season: string | null;
   colors: string[] | null; material: string | null; purchase_price_cents: number | null; created_at: string;
   thumb_path: string | null; image_path: string | null;
+  brand: string | null; size: string | null; fit: string | null; reports: number | null;
 };
 type StatRow = { garment_id: string; wear_count: number | null; last_worn_on: string | null };
 
-const GARMENT_SELECT = 'id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at, thumb_path, image_path';
+const GARMENT_SELECT = 'id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at, thumb_path, image_path, brand, size, fit, reports';
 
 const KODE_COLOURS: Record<string, [string, string]> = Object.fromEntries(COLOURS.map((c) => [c.id, [c.label, c.hex]]));
 
@@ -160,6 +161,10 @@ function toPiece(g: GarmentRow, st: StatRow | undefined, image?: string): Piece 
     lastWorn: st?.last_worn_on ? daysSince(st.last_worn_on) : null,
     addedDaysAgo: daysSince(g.created_at),
     price: g.purchase_price_cents != null ? g.purchase_price_cents / 100 : undefined,
+    brand: g.brand ?? undefined,
+    size: g.size ?? undefined,
+    fit: g.fit ?? undefined,
+    reports: g.reports ?? 0,
   };
 }
 
@@ -173,6 +178,9 @@ function garmentRow(p: Piece, spaceId: string) {
     season: SEASON_ID[p.season] ?? null,
     colors: p.colorId ? [p.colorId] : p.color ? [p.color] : [],
     material: p.material || null,
+    brand: p.brand?.trim().slice(0, 60) || null,
+    size: p.size?.trim().slice(0, 20) || null,
+    fit: p.fit?.trim().slice(0, 40) || null,
     source: 'photo',
     purchase_price_cents: p.price != null ? Math.round(p.price * 100) : null,
   };
@@ -498,6 +506,9 @@ export async function updatePiece(id: string, p: Piece, categoryChanged: boolean
     colors: p.colorId ? [p.colorId] : [],
     tint: p.tint && HEX.test(p.tint) ? p.tint : null,
     material: p.material.trim() || null,
+    brand: p.brand?.trim().slice(0, 60) || null,
+    size: p.size?.trim().slice(0, 20) || null,
+    fit: p.fit?.trim().slice(0, 40) || null,
     season: SEASON_ID[p.season] ?? null,
     purchase_price_cents: p.price != null ? Math.round(p.price * 100) : null,
     updated_at: new Date().toISOString(),
@@ -842,13 +853,25 @@ const PHOTO_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 
 
 export type Photo = { uri: string; mime?: string | null };
 
+/** Ce que la personne précise en envoyant la photo d'UN vêtement. */
+export type PieceDetails = { brand?: string; size?: string; fit?: string; material?: string };
+
+const cleanDetails = (d?: PieceDetails) => {
+  const out: Record<string, string> = {};
+  for (const k of ['brand', 'size', 'fit', 'material'] as const) {
+    const v = d?.[k]?.trim();
+    if (v) out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+};
+
 /**
  * Envoie les photos dans l'espace, puis confie chacune à Kodi : une tâche
  * `ai_jobs` par photo. L'insertion réveille l'agent, qui repère les pièces et
  * les dessine en parallèle. Si quoi que ce soit échoue, rien n'est confié et
  * les photos déjà envoyées repartent.
  */
-export async function sendPhotos(session: Session, photos: Photo[], hint: string): Promise<Result<{ jobs: JobRow[]; paths: string[] }>> {
+export async function sendPhotos(session: Session, photos: Photo[], hint: string, details?: PieceDetails): Promise<Result<{ jobs: JobRow[]; paths: string[] }>> {
   const sb = db();
   const stamp = Date.now().toString(36);
   const items = photos.map((ph, i) => {
@@ -867,7 +890,7 @@ export async function sendPhotos(session: Session, photos: Photo[], hint: string
 
     const { data, error } = await sb
       .from('ai_jobs')
-      .insert(paths.map((p) => ({ space_id: session.spaceId, requested_by: session.userId, source_paths: [p], user_input: hint.trim().slice(0, 280) })))
+      .insert(paths.map((p) => ({ space_id: session.spaceId, requested_by: session.userId, source_paths: [p], user_input: hint.trim().slice(0, 280), details: paths.length === 1 ? cleanDetails(details) : null })))
       .select(JOB_SELECT);
     if (error) {
       await sb.storage.from('uploads').remove(paths);
@@ -908,6 +931,16 @@ export async function revealsFor(jobs: JobRow[]): Promise<Record<string, Reveal>
     if (raw && cut) out[j.id] = { raw, cut, size: r.size, box: r.box };
   });
   return out;
+}
+
+/**
+ * « Rendu incorrect » : la découpe de la pièce reprend à partir de sa photo
+ * (deux reprises au plus, comptées par la base ; la seconde redessine).
+ */
+export async function reportPiece(id: string): Promise<Result> {
+  if (!isUuid(id)) return { ok: false, message: 'Cette pièce n’a pas de photo à reprendre.' };
+  const { error } = await db().rpc('report_garment', { target: id });
+  return error ? { ok: false, message: error.message } : { ok: true };
 }
 
 /** Relance une pièce en échec (deux fois au plus, contrôlé par la base). */

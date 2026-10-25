@@ -856,10 +856,10 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       /** Sans compte : les photos attendent sur le téléphone (10 au plus) et partent à sa création. */
       queuePhotos: (photos: Photo[]) => dispatch({ t: 'pendingPhotos', photos: [...getState().pendingPhotos, ...photos].slice(0, 10) }),
       /** Confie des photos à Kodi ; rend les chemins des photos à suivre. */
-      sendPhotos: async (photos: Photo[], hint: string): Promise<remote.Result<{ paths: string[] }>> => {
+      sendPhotos: async (photos: Photo[], hint: string, details?: remote.PieceDetails): Promise<remote.Result<{ paths: string[] }>> => {
         const session = live();
         if (!session) return { ok: false, message: 'Connecte-toi pour confier tes photos à Kodi.' };
-        const r = await remote.sendPhotos(session, photos, hint);
+        const r = await remote.sendPhotos(session, photos, hint, details);
         if (!r.ok) return r;
         dispatch({ t: 'jobs', jobs: r.jobs });
         return { ok: true, paths: r.paths };
@@ -870,6 +870,25 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         const jobs = await remote.readJobs(paths);
         dispatch({ t: 'jobs', jobs });
         return jobs;
+      },
+      /** « Rendu incorrect » : la découpe de la pièce reprend, l'image se met à jour dans un instant. */
+      reportPiece: async (id: string): Promise<boolean> => {
+        const r = await remote.reportPiece(id).catch(() => ({ ok: false as const, message: NETWORK }));
+        if (!r.ok) {
+          dispatch({ t: 'toast', text: r.message, warn: true });
+          return false;
+        }
+        dispatch({ t: 'toast', text: 'Kodi reprend cette pièce, elle se met à jour dans un instant.' });
+        // L'agent met quelques secondes : on relit les pièces deux fois.
+        const session = live();
+        if (session) {
+          for (const wait of [7000, 18000]) {
+            setTimeout(() => {
+              remote.loadPieces(session.spaceId).then((pieces) => dispatch({ t: 'pieces', pieces })).catch(() => undefined);
+            }, wait);
+          }
+        }
+        return true;
       },
       retryJob: async (id: string) => {
         const r = await remote.retryJob(id).catch(() => ({ ok: false as const, message: NETWORK }));

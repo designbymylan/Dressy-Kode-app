@@ -162,6 +162,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
   const router = useRouter();
   const [items, setItems] = useState<Picked[]>([]);
   const [hint, setHint] = useState('');
+  const [details, setDetails] = useState({ brand: '', size: '', fit: '', material: '' });
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState<string | null>(null);
@@ -222,7 +223,7 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
       if (sent.some((r) => r.error)) throw new Error("Une photo n'a pas pu être envoyée. Vérifie ta connexion et réessaie.");
 
       setProgress('Kodi prend le relais');
-      const res = await requestAiGarments({ paths, hint });
+      const res = await requestAiGarments({ paths, hint, details });
       if (res?.error) {
         setCode(res.code);
         throw new Error(res.error);
@@ -302,10 +303,33 @@ export function PhotoForm({ spaceId }: { spaceId: string }) {
         />
       </Field>
 
+      {n === 1 ? (
+        <fieldset disabled={busy} style={{ border: 'none', padding: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <legend className="small muted" style={{ marginBottom: 8 }}>Un seul vêtement sur la photo ? Précise-le (facultatif)</legend>
+          {([
+            ['brand', 'Marque', 'Par exemple : Levi’s'],
+            ['size', 'Taille', 'M, 38, 42…'],
+            ['fit', 'Coupe', 'Slim, droite, oversize…'],
+            ['material', 'Matière', 'Coton, laine, cuir…'],
+          ] as const).map(([key, label, placeholder]) => (
+            <Field key={key} label={label}>
+              <input
+                type="text"
+                value={details[key]}
+                onChange={(e) => setDetails((d) => ({ ...d, [key]: e.target.value }))}
+                maxLength={key === 'size' ? 20 : key === 'fit' ? 40 : 60}
+                placeholder={placeholder}
+                className="input"
+              />
+            </Field>
+          ))}
+        </fieldset>
+      ) : null}
+
       <p className="small muted center" style={{ paddingInline: 6 }}>
         Kodi repère chaque pièce de ta photo, vêtements, chaussures, sacs et bijoux compris, puis les
-        redessine une par une, sans fond, et les range sur tes portants. Tu n’en veux que certaines ?
-        Dis-le juste au-dessus.
+        découpe une par une, telles qu’elles sont, et les range sur tes portants. Tu n’en veux que
+        certaines ? Dis-le juste au-dessus.
       </p>
 
       {busy ? <KodeThinking phrases={[progress ?? THINKING.send[0], ...THINKING.send]} center /> : null}
