@@ -26,7 +26,6 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
-import { Kodi } from '../ui/Kodi';
 import { isActive } from '../state/jobs';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
@@ -594,12 +593,9 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
     const ink = c['butter-ink'];
     return (
       <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="home-kode">
-        <View className="flex-row items-center" style={{ gap: 10 }}>
-          <Kodi mood="wave" size={44} track />
-          <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
-            {title}
-          </T>
-        </View>
+        <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
+          {title}
+        </T>
         <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kodi" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 50, borderRadius: 25, paddingHorizontal: 18 }}>
           <T v="body" style={{ color: ink }}>
             Une tenue pour…

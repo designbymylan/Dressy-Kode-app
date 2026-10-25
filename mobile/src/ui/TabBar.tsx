@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { material, motion } from '../theme/tokens';
 import { F } from '../theme/fonts';
 import { Icon, type IconName } from './Icon';
-import { Kodi, type KodiMood } from './Kodi';
+import { Orb } from './Orb';
 import { T } from './T';
 import { Tap } from './Tap';
 import { useScreen } from './screen';
@@ -49,10 +49,10 @@ function silhouette(w: number): string {
 
 /**
  * La barre du 21/10 (« Inspiration Navbar 1 », même dessin que le web) :
- * barre de verre arrondie, bosse au centre qui porte le rond chocopie de
- * Kodi, petit trait au-dessus de l'onglet actif qui glisse d'un onglet à
- * l'autre, icône au trait qui devient pleine et bleue, tous les noms écrits.
- * Kodi regarde l'onglet choisi et sursaute quand on change d'onglet.
+ * barre de verre arrondie, bosse au centre qui porte un petit trait
+ * au-dessus de l'onglet actif qui glisse d'un onglet à l'autre, icône au
+ * trait qui devient pleine et bleue, tous les noms écrits. Au centre,
+ * l'orbe de Kodi (25/10) : il tourne, et ouvre la conversation au toucher.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { c, scheme, solidGlass } = useTheme();
@@ -63,19 +63,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const bottom = (insets.bottom > 0 ? insets.bottom - 8 : 0) + material.tabBottom;
   const index = state.index;
   const col = full / state.routes.length;
-
-  // Kodi réagit au changement d'onglet.
-  const [mood, setMood] = useState<KodiMood>('idle');
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    setMood(state.routes[index]?.name === 'Kode' ? 'happy' : 'surprised');
-    const t = setTimeout(() => setMood('idle'), 900);
-    return () => clearTimeout(t);
-  }, [index, state.routes]);
 
   // Le petit trait au-dessus de l'onglet actif, qui glisse.
   const centerIndex = state.routes.findIndex((r) => r.name === 'Kode');
@@ -117,7 +104,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               if (!on && !e.defaultPrevented) navigation.navigate(route.name, route.params);
             };
             if (!tab.icon) {
-              const look = index < i ? 'left' : index > i ? 'right' : 'up';
               return (
                 <Tap
                   key={route.key}
@@ -131,13 +117,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   outerStyle={{ flex: 1 }}
                   style={{ height: HEIGHT, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 }}
                 >
-                  <View
-                    style={[
-                      { position: 'absolute', top: -24, alignSelf: 'center', width: 56, height: 56, borderRadius: 28, backgroundColor: c.choco, alignItems: 'center', justifyContent: 'center' },
-                      scheme === 'dark' ? { borderWidth: 2, borderColor: 'rgba(254,239,184,0.16)' } : null,
-                    ]}
-                  >
-                    <Kodi size={44} mood={on && mood === 'idle' ? 'wink' : mood} track={look !== 'up'} tap={false} decorative />
+                  <View style={{ position: 'absolute', top: -24, alignSelf: 'center', width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}>
+                    <Orb size={46} />
                   </View>
                   <T v="tab" style={[{ fontSize: 11.5, color: on ? (scheme === 'dark' ? c.butter : c.choco) : c['nav-idle'] }, on && F.s600]}>
                     {tab.label}

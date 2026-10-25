@@ -7,10 +7,9 @@ import { ACTIVE_STATUSES, JOB_SELECT, jobsFilter, type JobRow } from '@/lib/jobs
 import { loadPieces, signAll } from '@/lib/garments';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { parisDay } from '@/lib/dates';
-import { usageMood, usageOf, WINDOW_DAYS } from '@/lib/usage';
+import { usageLine, usageOf, WINDOW_DAYS } from '@/lib/usage';
 import { JobList } from '@/components/JobList';
 import { DressingRails, type WearStat } from '@/components/DressingRails';
-import { Kodi } from '@/components/Kodi';
 import { Screen, Title, Card, Cut, Icon, ICON, ProgressBar } from '@/components/ui';
 
 export default async function Dressing({
@@ -57,7 +56,7 @@ export default async function Dressing({
 
   // La barre de progression : la part du dressing portée ces 90 derniers jours.
   const usage = usageOf(items, Object.fromEntries(Object.entries(stats).map(([id, st]) => [id, st.last])), CATEGORIES, parisDay(-WINDOW_DAYS));
-  const kodi = usageMood(usage);
+  const line = usageLine(usage);
 
   return (
     <Screen>
@@ -67,19 +66,16 @@ export default async function Dressing({
 
       {usage.total ? (
         <Cut close label="Garde-robe exploitée" i={1}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span className="eyebrow">Garde-robe exploitée</span>
-              <p className="stat" style={{ fontSize: 26, lineHeight: 1.1 }}>
-                {usage.worn} sur {usage.total} pièce{usage.total > 1 ? 's' : ''}
-              </p>
-              <span className="small muted">portée{usage.worn > 1 ? 's' : ''} ces {WINDOW_DAYS} derniers jours</span>
-            </div>
-            <Kodi mood={kodi.mood} size={66} track />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span className="eyebrow">Garde-robe exploitée</span>
+            <p className="stat" style={{ fontSize: 26, lineHeight: 1.1 }}>
+              {usage.worn} sur {usage.total} pièce{usage.total > 1 ? 's' : ''}
+            </p>
+            <span className="small muted">portée{usage.worn > 1 ? 's' : ''} ces {WINDOW_DAYS} derniers jours</span>
           </div>
 
           <ProgressBar value={usage.pct} label={`Part de ta garde-robe portée ces ${WINDOW_DAYS} derniers jours`} />
-          <p className="small" style={{ color: 'var(--on-panel-muted)' }}>{kodi.line}</p>
+          <p className="small" style={{ color: 'var(--on-panel-muted)' }}>{line}</p>
 
           {usage.categories.length > 1 ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 14px', marginTop: 2 }}>

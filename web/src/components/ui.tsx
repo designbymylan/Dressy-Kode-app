@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon as SolidIcon, type IconName } from '@/components/icons';
-import { Kodi } from '@/components/Kodi';
 import { CATEGORIES } from '@/lib/wardrobe';
 
 /**
@@ -106,11 +105,10 @@ export function Field({ label, children }: { label: string; children: ReactNode 
   );
 }
 
-/** role="alert" : l'erreur est annoncée dès son apparition. Kodi fait la moue à côté. */
+/** role="alert" : l'erreur est annoncée dès son apparition. */
 export function ErrorNote({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="note note-error pop" style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 8 }}>
-      <Kodi mood="sad" size={36} decorative tap={false} />
+    <div role="alert" className="note note-error pop">
       <p>{children}</p>
     </div>
   );

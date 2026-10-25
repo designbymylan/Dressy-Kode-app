@@ -1,26 +1,9 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { signIn, signUp, signInWithProvider, type FormResult } from '@/app/actions';
 import { SubmitButton } from '@/components/SubmitButton';
-import { Kodi, type KodiLook, type KodiMood } from '@/components/Kodi';
-
-/**
- * Kodi au-dessus du formulaire (21/10) : il écoute pendant qu'on écrit
- * l'adresse, se cache les yeux sur le mot de passe, réfléchit pendant
- * l'envoi et fait la moue si ça échoue.
- */
-function KodiWatch({ mood, look, line }: { mood: KodiMood; look?: KodiLook; line: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <div className="kodi-say" aria-hidden="true">
-      <Kodi mood={pending ? 'thinking' : mood} look={pending ? 'up-left' : look} track={!look && !pending} size={60} tap={false} />
-      <p className="kodi-say__bubble" key={pending ? 'attente' : line}>{pending ? 'Je vérifie…' : line}</p>
-    </div>
-  );
-}
 
 /** Logo officiel de Google, exigé tel quel par ses règles de marque. */
 function GoogleLogo() {
@@ -107,23 +90,9 @@ export function PasswordInput({ isNew, id = 'password' }: { isNew?: boolean; id?
 export function AuthForm({ mode, adult }: { mode: 'signin' | 'signup'; adult?: boolean }) {
   const isSignUp = mode === 'signup';
   const [state, action] = useActionState<FormResult, FormData>(isSignUp ? signUp : signIn, undefined);
-  const [focus, setFocus] = useState<string | null>(null);
-
-  const mood: KodiMood = focus === 'password' ? 'shy' : state?.error ? 'sad' : focus ? 'listening' : isSignUp ? 'wave' : 'happy';
-  const line = focus === 'password'
-    ? 'Je ne regarde pas, promis.'
-    : state?.error
-      ? 'Oups. On réessaie ?'
-      : isSignUp ? 'Je prépare ton espace en un instant.' : 'Content de te revoir !';
 
   return (
-    <form
-      action={action}
-      style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-      onFocus={(e) => setFocus(e.target instanceof HTMLInputElement ? e.target.name || null : null)}
-      onBlur={() => setFocus(null)}
-    >
-      <KodiWatch mood={mood} look={focus === 'email' ? 'down' : undefined} line={line} />
+    <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {state?.error ? <p role="alert" className="note note-error pop">{state.error}</p> : null}
       {isSignUp ? <input type="hidden" name="adult" value={adult ? '1' : ''} /> : null}
 

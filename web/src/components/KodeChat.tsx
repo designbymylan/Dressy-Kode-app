@@ -8,7 +8,6 @@ import { OutfitCard } from '@/components/OutfitCard';
 import { ErrorNote, buttonPrimary, buttonQuiet } from '@/components/ui';
 import { KodeThinking } from '@/components/KodeThinking';
 import { Icon } from '@/components/icons';
-import { Kodi, type KodiLook, type KodiMood } from '@/components/Kodi';
 import { THINKING } from '@/lib/thinking';
 
 const SUGGESTIONS = [
@@ -51,18 +50,6 @@ export function KodeChat({
   const tooFew = pieces < 2;
   const closed = tooFew || left === 0;
 
-  // La tête de Kodi : il fait coucou en arrivant, écoute quand on écrit,
-  // réfléchit pendant la réponse, puis réagit à ce qu'il a trouvé.
-  const [react, setReact] = useState<KodiMood | null>('wave');
-  const [focused, setFocused] = useState(false);
-  useEffect(() => {
-    if (!react) return;
-    const t = setTimeout(() => setReact(null), 2600);
-    return () => clearTimeout(t);
-  }, [react]);
-  const mood: KodiMood = busy ? 'thinking' : error ? 'sad' : react ?? (closed ? 'sleepy' : focused || text ? 'listening' : 'idle');
-  const look: KodiLook | undefined = busy ? 'up-left' : focused || text ? 'down' : undefined;
-
   // La dernière bulle reste visible au-dessus du champ de saisie.
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end', behavior: messages.length > initial.length ? 'smooth' : 'auto' });
@@ -99,8 +86,6 @@ export function KodeChat({
     } else {
       setMessages((m) => [...m.filter((x) => x.id !== temp.id), ...res.messages]);
       setUsage(res.usage);
-      // Une tenue trouvée le ravit ; une simple réponse le rend content.
-      setReact(res.messages.some((m) => m.outfit) ? 'love' : 'happy');
     }
     setBusy(false);
   }
@@ -151,15 +136,7 @@ export function KodeChat({
         padding: 'calc(env(safe-area-inset-top, 0px) + 44px) 20px 250px', display: 'flex', flexDirection: 'column', gap: 16,
       }}
     >
-      <header style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
-        <div
-          style={{
-            width: 132, height: 132, display: 'grid', placeItems: 'center', borderRadius: '50%',
-            background: 'radial-gradient(circle, color-mix(in srgb, var(--butter) 55%, transparent) 0%, transparent 68%)',
-          }}
-        >
-          <Kodi mood={mood} look={look} track={!look} size={104} enter shadow />
-        </div>
+      <header style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center', paddingTop: 12 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <h1 style={{ fontSize: 26 }}>Kodi</h1>
           <span className="dk-tag dk-tag--butter">IA</span>
@@ -184,13 +161,13 @@ export function KodeChat({
       </header>
 
       <div role="log" aria-live="polite" aria-busy={busy} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div className="kodi-say" style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
-          <Kodi mood="wave" size={34} decorative tap={false} />
-          <p className="kodi-say__bubble">
-            {name ? `Salut ${name}. ` : 'Salut. '}
-            Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà.
-          </p>
-        </div>
+        <p
+          className="pop"
+          style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--butter)', color: 'var(--butter-ink)', borderRadius: '20px 20px 20px 6px' }}
+        >
+          {name ? `Salut ${name}. ` : 'Salut. '}
+          Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà.
+        </p>
 
         {messages.map((m) =>
           m.author === 'user' ? (
@@ -205,10 +182,12 @@ export function KodeChat({
             </p>
           ) : (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div className="kodi-say" style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
-                <Kodi mood={m.outfit ? 'love' : 'idle'} size={34} decorative tap={false} />
-                <p className="kodi-say__bubble" style={{ whiteSpace: 'pre-wrap', animation: 'none' }}>{m.body}</p>
-              </div>
+              <p
+                className="pop"
+                style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--butter)', color: 'var(--butter-ink)', borderRadius: '20px 20px 20px 6px' }}
+              >
+                {m.body}
+              </p>
               {m.outfit ? (
                 <OutfitCard outfit={m.outfit} assemble={!known.has(m.id)}>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -319,8 +298,6 @@ export function KodeChat({
                     grow();
                   }}
                   onKeyDown={onKey}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
                   placeholder="Écris à Kodi…"
                   style={{
                     flex: 1, border: 'none', outline: 'none', resize: 'none', background: 'transparent',

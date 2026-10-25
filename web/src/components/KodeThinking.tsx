@@ -2,16 +2,13 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { OrbStep } from '@/lib/jobs';
-import { Kodi, type KodiMood } from '@/components/Kodi';
-
-/** La tête de Kodi selon l'étape : il cherche, il dessine, il vérifie, il range. */
-const STEP_MOOD: Partial<Record<OrbStep, KodiMood>> = { store: 'happy' };
+import { Orb } from '@/components/Orb';
 
 /**
- * « Kodi réfléchit » : Kodi en personne, qui réfléchit (petits points
- * au-dessus de l'auvent), et une phrase qui change toutes les deux
- * secondes environ, comme s'il commentait ce qu'il fait. Aucun nom de
- * modèle ni de service n'apparaît jamais à l'écran.
+ * « Kodi réfléchit » : son orbe, qui tourne et change de couleur selon
+ * l'étape, et une phrase qui change toutes les deux secondes environ,
+ * comme s'il commentait ce qu'il fait. Aucun nom de modèle ni de service
+ * n'apparaît jamais à l'écran.
  */
 export function KodeThinking({
   phrases,
@@ -46,7 +43,7 @@ export function KodeThinking({
       role="status"
       style={{ justifyContent: center ? 'center' : undefined, ...style }}
     >
-      <Kodi mood={(step && STEP_MOOD[step]) || 'thinking'} size={Math.round(size * 1.45)} decorative tap={false} />
+      <Orb size={Math.round(size * 1.45)} step={step} />
       <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>
         <span key={i} className="kode-phrase">{phrases[i % phrases.length]}</span>
         <span className="dots" aria-hidden="true"><i /><i /><i /></span>

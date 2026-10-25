@@ -8,7 +8,6 @@ import { outfitViews, OUTFIT_SELECT, type OutfitRow } from '@/lib/kode';
 import { OutfitCard } from '@/components/OutfitCard';
 import { WearButton } from '@/components/WearButton';
 import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
-import { Kodi } from '@/components/Kodi';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -62,7 +61,6 @@ export default async function Accueil() {
         </section>
       ) : n === 0 ? (
         <Card center i={1}>
-          <Kodi mood="wave" size={104} track shadow />
           <h2 style={{ fontSize: 22 }}>On commence par <em className="accent">tes vêtements</em></h2>
           <p className="lead small">
             Ton espace est prêt et il est vide : rien n&apos;y est ajouté sans toi.
@@ -75,7 +73,6 @@ export default async function Accueil() {
         </Card>
       ) : (
         <Card center i={1}>
-          <Kodi mood={n < 2 ? 'wink' : 'happy'} size={96} track shadow />
           <h2 style={{ fontSize: 22 }}>Tenue du <em className="accent">jour</em></h2>
           <p className="lead small">
             {n} pièce{n > 1 ? 's' : ''} dans ton dressing.{' '}
