@@ -18,7 +18,7 @@ export default async function Accueil() {
   if (!viewer) redirect('/bienvenue');
   const supabase = await createClient();
 
-  const [{ count }, { data: planned }] = await Promise.all([
+  const [{ count }, { data: planned }, { data: semaine }] = await Promise.all([
     supabase.from('garments').select('id', { count: 'exact', head: true }),
     // La tenue prévue pour aujourd'hui (par Kodi ou à la main) passe avant tout le reste.
     supabase
@@ -27,6 +27,13 @@ export default async function Accueil() {
       .eq('space_id', viewer.spaceId)
       .eq('day', parisDay(0))
       .maybeSingle(),
+    // Les sept jours à venir, pour la bande « Ta semaine ».
+    supabase
+      .from('planned_days')
+      .select('day, outfit_id')
+      .eq('space_id', viewer.spaceId)
+      .gte('day', parisDay(0))
+      .lte('day', parisDay(6)),
   ]);
 
   const n = count ?? 0;
@@ -92,6 +99,51 @@ export default async function Accueil() {
           )}
         </Card>
       )}
+
+      {n > 0 ? <Semaine jours={semaine ?? []} /> : null}
     </Screen>
+  );
+}
+
+const JOURS_COURTS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const dot = (color: string): CSSProperties => ({ width: 5, height: 5, borderRadius: 999, background: color });
+
+/**
+ * « Ta semaine » : sept jours à partir d'aujourd'hui, un point pour chaque
+ * tenue prévue. Un toucher ouvre le calendrier du mois.
+ */
+function Semaine({ jours }: { jours: { day: string; outfit_id: string | null }[] }) {
+  const prevus = new Set(jours.filter((j) => j.outfit_id).map((j) => j.day));
+  const semaine = Array.from({ length: 7 }, (_, i) => parisDay(i));
+
+  return (
+    <section className="rise" style={{ '--i': 2, display: 'flex', flexDirection: 'column', gap: 12 } as CSSProperties}>
+      <h2 className="section-title">Ta <em className="accent">semaine</em> <Link href="/calendrier">Calendrier</Link></h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+        {semaine.map((day, i) => {
+          const aujourdhui = i === 0;
+          const lettre = JOURS_COURTS[new Date(`${day}T12:00:00Z`).getUTCDay()];
+          return (
+            <Link
+              key={day}
+              href={`/calendrier?mois=${day.slice(0, 7)}`}
+              aria-label={`${Number(day.slice(8))}${prevus.has(day) ? ', tenue prévue' : ''}`}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 0', borderRadius: 18,
+                color: aujourdhui ? '#000000' : 'var(--ink)',
+                background: aujourdhui ? 'var(--blue-glass)' : 'var(--glass)',
+                border: `1px solid ${aujourdhui ? 'rgba(255, 255, 255, 0.7)' : 'var(--glass-edge)'}`,
+              }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 500, opacity: aujourdhui ? 0.8 : 1, color: aujourdhui ? '#000000' : 'var(--muted)' }}>{lettre}</span>
+              <span style={{ fontSize: 15, fontWeight: aujourdhui ? 600 : 500 }}>{Number(day.slice(8))}</span>
+              <span style={{ height: 5, display: 'flex' }}>
+                {prevus.has(day) ? <span style={dot(aujourdhui ? '#000000' : 'var(--blue-ink)')} /> : null}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
