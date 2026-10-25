@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { K } from '@/components/Logo';
-import { Kodi, type KodiMood } from '@/components/Kodi';
 
 const SEEN = 'dk-intro';
 const LENGTH = 2900;
@@ -16,20 +15,14 @@ export const INTRO_SCRIPT = `try{if(sessionStorage.getItem('${SEEN}')==='1')docu
 
 /**
  * L'intro (13/10), une fois par visite : le K se coud trait par trait,
- * l'étincelle de Kodi s'allume, une couture se pique, DRESSKODE se resserre ;
- * Kodi arrive alors en rebond sous la marque, déroule son auvent et fait
- * coucou (21/10), puis la caméra plonge dans le K et l'app apparaît derrière. Noir sur blanc
+ * l'étincelle de Kodi s'allume, une couture se pique, DRESSKODE se resserre,
+ * puis la caméra plonge dans le K et l'app apparaît derrière (la mascotte
+ * qui s'y ajoutait le 21/10 a été abandonnée le 25/10). Noir sur blanc
  * en clair, blanc sur noir en sombre. Un toucher ou Échap la passe ;
  * « Réduire les animations » la réduit à un fondu (`globals.css`, `.intro`).
  */
 export function Intro() {
   const [state, setState] = useState<'on' | 'leaving' | 'gone'>('on');
-  // Kodi arrive (0,75 s), puis fait coucou tant que l'intro dure.
-  const [kodi, setKodi] = useState<KodiMood>('idle');
-  useEffect(() => {
-    const t = setTimeout(() => setKodi('wave'), 1300);
-    return () => clearTimeout(t);
-  }, []);
 
   useEffect(() => {
     let seen = false;
@@ -79,9 +72,6 @@ export function Intro() {
         </svg>
         <i className="intro-seam" />
         <span className="brand intro-word">Dresskode</span>
-        <span className="intro-kodi" style={{ display: 'block' }}>
-          <Kodi mood={kodi} size={84} decorative tap={false} shadow />
-        </span>
       </div>
     </div>
   );

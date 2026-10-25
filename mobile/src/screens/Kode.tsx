@@ -22,7 +22,6 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { KodeThinking } from '../ui/KodeThinking';
-import { Kodi } from '../ui/Kodi';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -110,10 +109,6 @@ export function Kode() {
       <Animated.ScrollView ref={list as never} onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
-            {/* Kodi en personne, qui salue (refonte du 21/10). */}
-            <View className="items-center" style={{ paddingTop: 4 }}>
-              <Kodi mood="wave" size={104} track shadow enter testID="kode-mascot" />
-            </View>
             <Card style={{ padding: 16, gap: 12 }}>
               <Tag label="Kodi" icon="kode" />
               <T v="cardTitle" style={{ fontSize: 22, lineHeight: 27 }} accessibilityRole="header">
@@ -205,12 +200,9 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
     <Animated.View entering={FadeInDown.duration(320)} style={{ alignSelf: 'flex-start', width: '94%' }} accessibilityLiveRegion="polite">
       {/* La réponse de Kodi : un bandeau de service beurre (21/10), texte noir en clair comme en sombre. */}
       <Card className="bg-butter" style={{ padding: 14, gap: 12, borderBottomLeftRadius: 8 }}>
-        <View className="flex-row items-center" style={{ gap: 8 }}>
-          <Kodi mood={fresh ? 'talking' : 'idle'} size={30} tap={false} decorative />
-          <T v="label" style={{ color: c['butter-ink'] }}>
-            Kodi
-          </T>
-        </View>
+        <T v="label" style={{ color: c['butter-ink'] }}>
+          Kodi
+        </T>
         <T v="body" style={{ color: c['butter-ink'] }}>{m.text}</T>
         {m.outfit && pieces.length > 0 && (
           <>

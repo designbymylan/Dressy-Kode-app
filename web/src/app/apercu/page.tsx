@@ -1,19 +1,20 @@
 import type { CSSProperties } from 'react';
 import { notFound } from 'next/navigation';
 import { Icon, type IconName } from '@/components/icons';
-import { Kodi, type KodiMood } from '@/components/Kodi';
+import type { OrbStep } from '@/lib/jobs';
+import { Orb } from '@/components/Orb';
 import { Pricing } from '@/components/Pricing';
 import { Segment } from '@/components/Segment';
 import { TabBar } from '@/components/TabBar';
 import { Cut, ProgressBar, Screen, Title } from '@/components/ui';
-import { usageMood } from '@/lib/usage';
+import { usageLine } from '@/lib/usage';
 
 /**
  * Planche du design du 21/10, sans compte ni base : palette et contrastes,
  * boutons de verre, sélection en bleu, icônes pleines (survoler pour voir
- * leur geste), humeurs de Kodi, barre de progression dans la section
- * découpée, tarifs et barre de navigation. Fermée par défaut : elle ne
- * s'ouvre qu'avec DRESSY_APERCU=1 dans l'environnement du serveur.
+ * leur geste), barre de progression dans la section découpée, tarifs et
+ * barre de navigation. Fermée par défaut : elle ne s'ouvre qu'avec
+ * DRESSY_APERCU=1 dans l'environnement du serveur.
  */
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,13 @@ const SWATCHES = [
   { name: 'Chocopie', hex: '#432F2E', ink: '#FFFFFF', note: 'rond de Kodi, points forts · 12,5:1' },
 ];
 
-const MOODS: KodiMood[] = ['idle', 'wave', 'happy', 'love', 'thinking', 'listening', 'surprised', 'wink', 'sleepy', 'sad', 'shy', 'celebrate', 'talking'];
+const ORB_STEPS: { step?: OrbStep; label: string }[] = [
+  { step: undefined, label: 'nav (idle)' },
+  { step: 'look', label: 'repérage' },
+  { step: 'draw', label: 'dessin' },
+  { step: 'check', label: 'contrôle' },
+  { step: 'store', label: 'rangement' },
+];
 
 const ICONS: IconName[] = [
   'home', 'hanger', 'calendar', 'user', 'search', 'sliders', 'bell', 'plus', 'camera', 'image', 'sparkle', 'heart',
@@ -37,7 +44,7 @@ export default async function Apercu({ searchParams }: { searchParams: Promise<{
   if (process.env.DRESSY_APERCU !== '1') notFound();
   const { onglet = '/dressing' } = await searchParams;
   const usage = { total: 29, worn: 18, pct: 62 };
-  const kodi = usageMood(usage);
+  const line = usageLine(usage);
   const categories = [
     { label: 'Hauts', worn: 7, total: 9 }, { label: 'Bas', worn: 5, total: 6 },
     { label: 'Robes', worn: 1, total: 4 }, { label: 'Chaussures', worn: 2, total: 5 },
@@ -83,6 +90,18 @@ export default async function Apercu({ searchParams }: { searchParams: Promise<{
         </section>
 
         <section className="glass card">
+          <h2 className="section-title">Orbe</h2>
+          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+            {ORB_STEPS.map((o) => (
+              <figure key={o.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <Orb size={44} step={o.step} />
+                <figcaption className="small muted">{o.label}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section className="glass card">
           <h2 className="section-title">Icônes pleines</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
             {ICONS.map((n) => (
@@ -93,29 +112,14 @@ export default async function Apercu({ searchParams }: { searchParams: Promise<{
           </div>
         </section>
 
-        <section className="glass card">
-          <h2 className="section-title">Kodi</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-            {MOODS.map((m) => (
-              <figure key={m} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <Kodi mood={m} size={84} track shadow />
-                <figcaption className="small muted">{m}</figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-
         <Cut close label="Garde-robe exploitée">
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span className="eyebrow">Garde-robe exploitée</span>
-              <p className="stat" style={{ fontSize: 26, lineHeight: 1.1 }}>{usage.worn} sur {usage.total} pièces</p>
-              <span className="small muted">portées ces 90 derniers jours</span>
-            </div>
-            <Kodi mood={kodi.mood} size={66} track />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span className="eyebrow">Garde-robe exploitée</span>
+            <p className="stat" style={{ fontSize: 26, lineHeight: 1.1 }}>{usage.worn} sur {usage.total} pièces</p>
+            <span className="small muted">portées ces 90 derniers jours</span>
           </div>
           <ProgressBar value={usage.pct} label="Part de ta garde-robe portée" />
-          <p className="small" style={{ color: 'var(--on-panel-muted)' }}>{kodi.line}</p>
+          <p className="small" style={{ color: 'var(--on-panel-muted)' }}>{line}</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 14px' }}>
             {categories.map((c) => (
               <div key={c.label} style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>

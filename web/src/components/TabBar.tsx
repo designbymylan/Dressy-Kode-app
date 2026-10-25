@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Icon, NAV_LINES } from '@/components/icons';
-import { Kodi, type KodiLook, type KodiMood } from '@/components/Kodi';
+import { Orb } from '@/components/Orb';
 
 const TABS = [
   { href: '/accueil', label: 'Accueil', icon: 'home' },
@@ -19,9 +19,9 @@ const TABS = [
  * La barre de la référence « Inspiration Navbar » (21/10), élément par
  * élément : barre arrondie, bosse centrale qui porte le rond, petit trait
  * au-dessus de l'onglet actif qui glisse d'un onglet à l'autre, icône au
- * trait qui devient pleine et bleue, tous les noms écrits. Au centre, Kodi :
- * il regarde l'onglet choisi et sursaute quand on change d'onglet. Elle
- * reste en verre (décision du 03/10).
+ * trait qui devient pleine et bleue, tous les noms écrits. Au centre,
+ * l'orbe de Kodi (25/10) : il tourne, et ouvre la conversation au toucher.
+ * Elle reste en verre (décision du 03/10).
  */
 export function TabBar({ active }: { active?: string } = {}) {
   const path = usePathname();
@@ -43,22 +43,8 @@ export function TabBar({ active }: { active?: string } = {}) {
     return () => ro.disconnect();
   }, []);
 
-  const [mood, setMood] = useState<KodiMood>('idle');
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    setMood(index === 2 ? 'happy' : 'surprised');
-    const t = window.setTimeout(() => setMood('idle'), 900);
-    return () => window.clearTimeout(t);
-  }, [index]);
-
   // L'atelier de tenue a sa propre barre d'action : la navigation s'efface.
   if (pathname.startsWith('/tenues/nouvelle')) return null;
-
-  const look: KodiLook = index < 0 ? 'center' : index < 2 ? 'left' : index > 2 ? 'right' : 'up';
 
   const outline = width ? silhouette(width) : null;
 
@@ -96,7 +82,7 @@ export function TabBar({ active }: { active?: string } = {}) {
             return (
               <Link key={tab.href} href={tab.href} className="dk-nav__center" aria-current={on ? 'page' : undefined} aria-label="Kodi, ton styliste">
                 <span className="dk-nav__orb">
-                  <Kodi size={44} mood={on && mood === 'idle' ? 'wink' : mood} look={look} decorative tap={false} />
+                  <Orb size={46} />
                 </span>
                 <span className="dk-nav__label" aria-hidden="true">{tab.label}</span>
               </Link>

@@ -1,5 +1,3 @@
-import type { KodiMood } from '@/components/Kodi';
-
 /** Fenêtre sur laquelle une pièce compte comme « portée ». */
 export const WINDOW_DAYS = 90;
 
@@ -38,12 +36,12 @@ export function usageOf(
   };
 }
 
-/** Ce que Kodi dit de la barre, et la tête qu'il fait. */
-export function usageMood(u: Pick<Usage, 'total' | 'worn' | 'pct'>): { mood: KodiMood; line: string } {
-  if (!u.total) return { mood: 'wave', line: 'Ajoute tes pièces, je m’occupe du reste.' };
-  if (!u.worn) return { mood: 'thinking', line: 'Dis-moi ce que tu portes : « Je l’ai portée » dans la fiche d’une pièce, ou « Je la porte » sur ta tenue du jour.' };
-  if (u.pct < 25) return { mood: 'sleepy', line: 'La plupart de tes pièces dorment. On en réveille une demain ?' };
-  if (u.pct < 50) return { mood: 'wink', line: 'Bon début. L’autre moitié de ton dressing t’attend.' };
-  if (u.pct < 80) return { mood: 'happy', line: 'Tu fais tourner ton dressing, c’est beau à voir.' };
-  return { mood: 'celebrate', line: 'Presque tout ton dressing vit. Bravo !' };
+/** Ce que Kodi dit de la barre. */
+export function usageLine(u: Pick<Usage, 'total' | 'worn' | 'pct'>): string {
+  if (!u.total) return 'Ajoute tes pièces, je m’occupe du reste.';
+  if (!u.worn) return 'Dis-moi ce que tu portes : « Je l’ai portée » dans la fiche d’une pièce, ou « Je la porte » sur ta tenue du jour.';
+  if (u.pct < 25) return 'La plupart de tes pièces dorment. On en réveille une demain ?';
+  if (u.pct < 50) return 'Bon début. L’autre moitié de ton dressing t’attend.';
+  if (u.pct < 80) return 'Tu fais tourner ton dressing, c’est beau à voir.';
+  return 'Presque tout ton dressing vit. Bravo !';
 }

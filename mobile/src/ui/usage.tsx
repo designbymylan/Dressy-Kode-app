@@ -5,7 +5,6 @@ import Svg, { Path } from 'react-native-svg';
 import { CATEGORIES, type Piece } from '../data/wardrobe';
 import { useTheme } from '../theme/ThemeProvider';
 import { F } from '../theme/fonts';
-import { Kodi, type KodiMood } from './Kodi';
 import { T } from './T';
 
 /** Fenêtre sur laquelle une pièce compte comme « portée » (web : lib/usage.ts). */
@@ -30,14 +29,14 @@ export function usageOf(pieces: Piece[]): Usage {
   };
 }
 
-/** Ce que Kodi dit de la barre, et la tête qu'il fait (mêmes phrases que le web). */
-export function usageMood(u: Pick<Usage, 'total' | 'worn' | 'pct'>): { mood: KodiMood; line: string } {
-  if (!u.total) return { mood: 'wave', line: 'Ajoute tes pièces, je m’occupe du reste.' };
-  if (!u.worn) return { mood: 'thinking', line: 'Dis-moi ce que tu portes : « Je la porte » dans la fiche d’une pièce, ou sur ta tenue du jour.' };
-  if (u.pct < 25) return { mood: 'sleepy', line: 'La plupart de tes pièces dorment. On en réveille une demain ?' };
-  if (u.pct < 50) return { mood: 'wink', line: 'Bon début. L’autre moitié de ton dressing t’attend.' };
-  if (u.pct < 80) return { mood: 'happy', line: 'Tu fais tourner ton dressing, c’est beau à voir.' };
-  return { mood: 'celebrate', line: 'Presque tout ton dressing vit. Bravo !' };
+/** Ce que Kodi dit de la barre (mêmes phrases que le web). */
+export function usageLine(u: Pick<Usage, 'total' | 'worn' | 'pct'>): string {
+  if (!u.total) return 'Ajoute tes pièces, je m’occupe du reste.';
+  if (!u.worn) return 'Dis-moi ce que tu portes : « Je la porte » dans la fiche d’une pièce, ou sur ta tenue du jour.';
+  if (u.pct < 25) return 'La plupart de tes pièces dorment. On en réveille une demain ?';
+  if (u.pct < 50) return 'Bon début. L’autre moitié de ton dressing t’attend.';
+  if (u.pct < 80) return 'Tu fais tourner ton dressing, c’est beau à voir.';
+  return 'Presque tout ton dressing vit. Bravo !';
 }
 
 /**
@@ -101,27 +100,24 @@ export function Cut({ children, style, testID, label }: { children: ReactNode; s
 export function UsagePanel({ pieces }: { pieces: Piece[] }) {
   const { c } = useTheme();
   const u = usageOf(pieces);
-  const kodi = usageMood(u);
+  const line = usageLine(u);
   if (!u.total) return null;
   return (
     <Cut testID="dressing-usage" label="Garde-robe exploitée">
-      <View className="flex-row items-end justify-between" style={{ gap: 12 }}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <T v="label" style={{ color: c['on-panel-muted'] }}>
-            Garde-robe exploitée
-          </T>
-          <T v="title" style={{ color: c['on-panel'], fontSize: 26, lineHeight: 30 }}>
-            {u.worn} sur {u.total} pièce{u.total > 1 ? 's' : ''}
-          </T>
-          <T v="caption" style={{ color: c['on-panel-muted'] }}>
-            portée{u.worn > 1 ? 's' : ''} ces {WINDOW_DAYS} derniers jours
-          </T>
-        </View>
-        <Kodi mood={kodi.mood} size={66} track />
+      <View style={{ gap: 4 }}>
+        <T v="label" style={{ color: c['on-panel-muted'] }}>
+          Garde-robe exploitée
+        </T>
+        <T v="title" style={{ color: c['on-panel'], fontSize: 26, lineHeight: 30 }}>
+          {u.worn} sur {u.total} pièce{u.total > 1 ? 's' : ''}
+        </T>
+        <T v="caption" style={{ color: c['on-panel-muted'] }}>
+          portée{u.worn > 1 ? 's' : ''} ces {WINDOW_DAYS} derniers jours
+        </T>
       </View>
       <ProgressBar value={u.pct} label={`Part de ta garde-robe portée ces ${WINDOW_DAYS} derniers jours`} color={c['on-panel']} onColor={c.panel} />
       <T v="caption" style={{ color: c['on-panel'] }}>
-        {kodi.line}
+        {line}
       </T>
       {u.categories.length > 1 && (
         <View className="flex-row flex-wrap" style={{ rowGap: 14, columnGap: 12 }}>
