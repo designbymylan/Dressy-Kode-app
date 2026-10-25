@@ -49,9 +49,9 @@ export function Shop() {
   const nav = useNavigation<Nav>();
   const route = useRoute<Route<'Shop'>>();
   const insets = useSafeAreaInsets();
-  // Connecté, les achats ne sont pas encore branchés : aucun bouton d'achat n'est montré.
-  const connecte = s.account === 'connecte';
   const { y, onScroll } = useHeaderScroll();
+  // Connecté, les achats ne sont pas encore branchés : ils renvoient vers les offres.
+  const connecte = s.account === 'connecte';
   const { c } = useTheme();
   const [open, setOpen] = useState<string | null>(null);
   const [bundle, setBundle] = useState(false);
@@ -93,8 +93,8 @@ export function Shop() {
         <View className="flex-row flex-wrap" style={{ gap: 10 }}>
           <FeatureCard testID="shop-places" icon="hanger" title="Places" right={limit === null ? 'Sans limite' : `${s.pieces.length} / ${limit}`}>
             {limit !== null && bar(s.pieces.length, limit)}
-            {limit !== null && !connecte && (
-              <T testID="buy-places" v="small" tone="ink2" onPress={a.buyPlaces} accessibilityRole="button" suppressHighlighting style={{ paddingVertical: 6 }}>
+            {limit !== null && (
+              <T testID="buy-places" v="small" tone="ink2" onPress={connecte ? () => nav.navigate('Offers') : a.buyPlaces} accessibilityRole="button" suppressHighlighting style={{ paddingVertical: 6 }}>
                 +30 places · 4,99 €
               </T>
             )}
@@ -141,11 +141,9 @@ export function Shop() {
       <ScrollEdge y={y} />
       <CloseButton />
       <BottomFade />
-      {!connecte && (
-        <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16 }}>
-          <Button testID="shop-cta" label={cta} onPress={() => (pick === 'tout' ? setBundle(true) : setOpen(pick))} />
-        </View>
-      )}
+      <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16 }}>
+        <Button testID="shop-cta" label={cta} onPress={() => (pick === 'tout' ? setBundle(true) : setOpen(pick))} />
+      </View>
 
       <Sheet
         visible={!!pack}
@@ -156,18 +154,17 @@ export function Shop() {
         footer={
           pack && (
             <View style={{ gap: 6 }}>
-              {!connecte && (
-                <Button
-                  testID="pack-sheet-buy"
-                  label={owns(pack.id) ? 'Ouvrir' : `${pack.cta} · ${pack.price}`}
-                  icon={owns(pack.id) ? undefined : 'lock'}
-                  onPress={() => {
-                    if (!owns(pack.id)) a.buyPack(pack.id);
-                    setOpen(null);
-                    if (pack.id === 'occasion') nav.navigate('Event', { id: 'e5' });
-                  }}
-                />
-              )}
+              <Button
+                testID="pack-sheet-buy"
+                label={owns(pack.id) ? 'Ouvrir' : `${pack.cta} · ${pack.price}`}
+                icon={owns(pack.id) ? undefined : 'lock'}
+                onPress={() => {
+                  setOpen(null);
+                  if (connecte && !owns(pack.id)) return nav.navigate('Offers');
+                  if (!owns(pack.id)) a.buyPack(pack.id);
+                  if (pack.id === 'occasion') nav.navigate('Event', { id: 'e5' });
+                }}
+              />
               {pack.included && !inPlan && (
                 <T v="small" tone="ink2" style={{ textAlign: 'center' }}>
                   Déjà inclus dans Sapologue.
@@ -208,17 +205,16 @@ export function Shop() {
         kicker="Achat unique"
         title="Les cinq packs"
         footer={
-          connecte ? null : (
-            <Button
-              testID="bundle-pay"
-              label={`Payer ${price(BUNDLE)}`}
-              icon="lock"
-              onPress={() => {
-                PACKS.forEach((p) => a.buyPack(p.id));
-                setBundle(false);
-              }}
-            />
-          )
+          <Button
+            testID="bundle-pay"
+            label={`Payer ${price(BUNDLE)}`}
+            icon="lock"
+            onPress={() => {
+              setBundle(false);
+              if (connecte) nav.navigate('Offers');
+              else PACKS.forEach((p) => a.buyPack(p.id));
+            }}
+          />
         }
       >
         <T v="body" tone="ink2">

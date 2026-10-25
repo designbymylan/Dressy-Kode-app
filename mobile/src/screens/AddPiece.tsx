@@ -222,10 +222,10 @@ export function AddPiece() {
               <Card className="bg-butter" style={{ gap: 10 }} testID="add-full">
                 <T v="cardTitle">Ton dressing est plein.</T>
                 <T v="body" tone="ink2">
-                  {s.account === 'connecte' ? 'Passe à Sapologue : pièces illimitées.' : 'Tu pourrais ajouter 30 places, ou passer à Sapologue : pièces illimitées.'}
+                  Tu pourrais ajouter 30 places, ou passer à Sapologue : pièces illimitées.
                 </T>
                 <View className="flex-row" style={{ gap: 8 }}>
-                  {s.account !== 'connecte' && <Button label="+30 places · 4,99 €" size="m" grow onPress={a.buyPlaces} />}
+                  <Button label="+30 places · 4,99 €" size="m" grow onPress={s.account === 'connecte' ? () => nav.navigate('Offers') : a.buyPlaces} />
                   <Button label="Les offres" size="m" variant="secondary" grow onPress={() => nav.navigate('Offers')} />
                 </View>
               </Card>
