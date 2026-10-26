@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 
@@ -34,17 +35,18 @@ export type Viewer = {
  * le cloisonnement, pas la requête, une requête oubliée ne peut donc pas
  * faire fuiter l'espace d'une autre personne.
  */
-export async function getViewer(): Promise<Viewer | null> {
+export const getViewer = cache(async (): Promise<Viewer | null> => {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: space } = await supabase
-    .from('spaces')
-    .select('id, name')
-    .limit(1)
-    .maybeSingle();
+  // L'espace et le profil ne dépendent pas l'un de l'autre : on les lit en même temps.
+  // `cache` (React) garde le résultat pour toute la requête : la mise en page et la page ne le relisent pas.
+  const [{ data: space }, { data: profile }] = await Promise.all([
+    supabase.from('spaces').select('id, name').limit(1).maybeSingle(),
+    supabase.from('profiles').select('display_name, onboarded_at').eq('id', user.id).maybeSingle(),
+  ]);
   if (!space) return null;
 
   const { data: settings } = await supabase
@@ -53,12 +55,6 @@ export async function getViewer(): Promise<Viewer | null> {
     .eq('space_id', space.id)
     .maybeSingle();
   if (!settings) return null;
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name, onboarded_at')
-    .eq('id', user.id)
-    .maybeSingle();
 
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
   const full = String(meta.given_name ?? meta.full_name ?? meta.name ?? '').trim();
@@ -73,7 +69,7 @@ export async function getViewer(): Promise<Viewer | null> {
     spaceName: space.name,
     settings: settings as Settings,
   };
-}
+});
 
 /**
  * Thème à poser sur <html>. « auto » est rendu tel quel : c'est la requête
