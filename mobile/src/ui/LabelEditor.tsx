@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TextInput, View } from 'react-native';
-import { CATEGORIES, COLOURS, SEASONS, type CategoryId, type Piece, type Season } from '../data/wardrobe';
+import { CATEGORIES, COLOURS, type CategoryId, type Piece } from '../data/wardrobe';
 import type { GarmentKind } from './Garment';
 import { useTheme } from '../theme/ThemeProvider';
 import { F } from '../theme/fonts';
@@ -11,16 +11,6 @@ import { Sheet } from './Sheet';
 
 /** Le type d'illustration par défaut quand la catégorie change. */
 const KIND_FOR: Record<CategoryId, GarmentKind> = { manteaux: 'veste', hauts: 'tshirt', bas: 'pantalon', robes: 'robe', chaussures: 'baskets', accessoires: 'sac' };
-
-/** « 12,99 » ou « 12.99 » → 12.99 ; vide → pas de prix ; illisible → null. */
-function readPrice(text: string): number | undefined | null {
-  const t = text.trim().replace(/\s|€/g, '').replace(',', '.');
-  if (!t) return undefined;
-  const n = Number(t);
-  return Number.isFinite(n) && n >= 0 && n < 100000 ? Math.round(n * 100) / 100 : null;
-}
-
-const priceText = (n?: number) => (n == null ? '' : String(n).replace('.', ','));
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -34,21 +24,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /**
- * L'étiquette d'une pièce, corrigée à la main : quand Kodi s'est trompé de
- * nom, de couleur ou de matière, ou pour noter le prix. Rien n'est perdu
- * tant que « Enregistrer » n'est pas touché.
+ * L'identité d'une pièce, corrigée à la main : quand Kodi s'est trompé de nom,
+ * de catégorie ou de couleur. Le reste (matière, taille, prix…) se renseigne
+ * dans la fiche. Rien n'est perdu tant que « Enregistrer » n'est pas touché.
  */
 export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece; visible: boolean; onClose: () => void; onSave: (p: Piece) => void }) {
   const { c } = useTheme();
   const [name, setName] = useState(piece.name);
   const [category, setCategory] = useState<CategoryId>(piece.category);
   const [colorId, setColorId] = useState<string | undefined>(piece.colorId ?? COLOURS.find((x) => x.label === piece.color)?.id);
-  const [material, setMaterial] = useState(piece.material);
-  const [brand, setBrand] = useState(piece.brand ?? '');
-  const [size, setSize] = useState(piece.size ?? '');
-  const [fit, setFit] = useState(piece.fit ?? '');
-  const [season, setSeason] = useState<Season>(piece.season);
-  const [price, setPrice] = useState(priceText(piece.price));
 
   // Chaque ouverture repart de l'étiquette enregistrée.
   useEffect(() => {
@@ -56,16 +40,9 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
     setName(piece.name);
     setCategory(piece.category);
     setColorId(piece.colorId ?? COLOURS.find((x) => x.label === piece.color)?.id);
-    setMaterial(piece.material);
-    setBrand(piece.brand ?? '');
-    setSize(piece.size ?? '');
-    setFit(piece.fit ?? '');
-    setSeason(piece.season);
-    setPrice(priceText(piece.price));
   }, [visible, piece]);
 
-  const parsed = readPrice(price);
-  const ok = name.trim().length > 0 && parsed !== null;
+  const ok = name.trim().length > 0;
   const input = { minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 } as const;
 
   const save = () => {
@@ -83,12 +60,6 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
       color: colour?.label ?? piece.color,
       tint,
       swatch: tint ?? colour?.hex ?? piece.swatch,
-      material: material.trim(),
-      brand: brand.trim() || undefined,
-      size: size.trim() || undefined,
-      fit: fit.trim() || undefined,
-      season,
-      price: parsed ?? undefined,
     });
   };
 
@@ -96,8 +67,8 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
     <Sheet
       visible={visible}
       onClose={onClose}
-      kicker="L’étiquette"
-      title="Modifier l’étiquette"
+      kicker="L’identité"
+      title="Nom, catégorie, couleur"
       testID="label-editor"
       footer={<Button testID="label-save" label="Enregistrer" disabled={!ok} onPress={save} />}
     >
@@ -120,54 +91,6 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
               <Chip key={x.id} testID={`label-colour-${x.id}`} label={x.label} dot={x.hex} on={colorId === x.id} onPress={() => setColorId(x.id)} />
             ))}
           </View>
-        </Field>
-
-        <Field label="Matière">
-          <TextInput testID="label-material" value={material} onChangeText={setMaterial} maxLength={80} placeholder="Par exemple : denim de coton" placeholderTextColor={c.ink2} accessibilityLabel="Matière" className="bg-sunk" style={input} />
-        </Field>
-
-        <Field label="Marque">
-          <TextInput testID="label-brand" value={brand} onChangeText={setBrand} maxLength={60} placeholder="Facultatif" placeholderTextColor={c.ink2} accessibilityLabel="Marque" className="bg-sunk" style={input} />
-        </Field>
-
-        <Field label="Taille">
-          <TextInput testID="label-size" value={size} onChangeText={setSize} maxLength={20} placeholder="Par exemple : M, 38, 42" placeholderTextColor={c.ink2} accessibilityLabel="Taille" className="bg-sunk" style={input} />
-        </Field>
-
-        <Field label="Coupe">
-          <TextInput testID="label-fit" value={fit} onChangeText={setFit} maxLength={40} placeholder="Par exemple : slim, droite, oversize" placeholderTextColor={c.ink2} accessibilityLabel="Coupe" className="bg-sunk" style={input} />
-        </Field>
-
-        <Field label="Saison">
-          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-            {SEASONS.map((x) => (
-              <Chip key={x} testID={`label-season-${x}`} label={x[0].toUpperCase() + x.slice(1)} on={season === x} onPress={() => setSeason(x)} />
-            ))}
-          </View>
-        </Field>
-
-        <Field label="Prix d’achat">
-          <TextInput
-            testID="label-price"
-            value={price}
-            onChangeText={setPrice}
-            maxLength={9}
-            keyboardType="decimal-pad"
-            placeholder="Par exemple : 39,90"
-            placeholderTextColor={c.ink2}
-            accessibilityLabel="Prix d’achat en euros"
-            className="bg-sunk"
-            style={input}
-          />
-          {parsed === null ? (
-            <T v="small" tone="caution">
-              Un prix en euros, par exemple 39,90.
-            </T>
-          ) : (
-            <T v="small" tone="ink2">
-              Il sert à calculer le coût par port. Tu peux le laisser vide.
-            </T>
-          )}
         </Field>
       </View>
     </Sheet>

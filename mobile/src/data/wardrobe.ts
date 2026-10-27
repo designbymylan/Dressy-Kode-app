@@ -6,6 +6,7 @@
  */
 import type { GarmentKind } from '../ui/Garment';
 import { photo } from './photos';
+import type { Fiche } from './fiche';
 
 export type CategoryId = 'manteaux' | 'hauts' | 'bas' | 'robes' | 'chaussures' | 'accessoires';
 export type Season = 'toute l’année' | 'mi-saison' | 'hiver' | 'été';
@@ -33,6 +34,8 @@ export type Piece = {
   brand?: string;
   size?: string;
   fit?: string;
+  /** La fiche technique : composition, motif, entretien, achat… (`data/fiche.ts`). */
+  fiche?: Fiche;
   /** Fois où elle a signalé un rendu incorrect (deux au plus). */
   reports?: number;
 };

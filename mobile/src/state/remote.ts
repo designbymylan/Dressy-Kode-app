@@ -8,6 +8,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { COLOR_CHOICES, COLOURS, type CategoryId, type Piece, type Season } from '../data/wardrobe';
+import { cleanFiche } from '../data/fiche';
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
 import type { Bloc, Contexte, JourMeteo } from './contexte';
@@ -115,11 +116,11 @@ type GarmentRow = {
   id: string; name: string; category_id: string; kind: string | null; tint: string | null; season: string | null;
   colors: string[] | null; material: string | null; purchase_price_cents: number | null; created_at: string;
   thumb_path: string | null; image_path: string | null;
-  brand: string | null; size: string | null; fit: string | null; reports: number | null;
+  brand: string | null; size: string | null; fit: string | null; fiche: unknown; reports: number | null;
 };
 type StatRow = { garment_id: string; wear_count: number | null; last_worn_on: string | null };
 
-const GARMENT_SELECT = 'id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at, thumb_path, image_path, brand, size, fit, reports';
+const GARMENT_SELECT = 'id, name, category_id, kind, tint, season, colors, material, purchase_price_cents, created_at, thumb_path, image_path, brand, size, fit, fiche, reports';
 
 const KODE_COLOURS: Record<string, [string, string]> = Object.fromEntries(COLOURS.map((c) => [c.id, [c.label, c.hex]]));
 
@@ -164,6 +165,7 @@ function toPiece(g: GarmentRow, st: StatRow | undefined, image?: string): Piece 
     brand: g.brand ?? undefined,
     size: g.size ?? undefined,
     fit: g.fit ?? undefined,
+    fiche: cleanFiche(g.fiche),
     reports: g.reports ?? 0,
   };
 }
@@ -494,8 +496,8 @@ export async function addPieces(session: Session, pieces: Piece[]): Promise<stri
 }
 
 /**
- * L'étiquette corrigée à la main (nom, catégorie, couleur, matière, saison,
- * prix). Le type de pièce ne change qu'avec la catégorie : sinon on garde
+ * L'étiquette et la fiche technique corrigées à la main (nom, catégorie,
+ * couleur, matière, saison, prix, composition, achat…). Le type de pièce ne change qu'avec la catégorie : sinon on garde
  * celui, plus fin, que Kodi avait noté.
  */
 export async function updatePiece(id: string, p: Piece, categoryChanged: boolean) {
@@ -509,6 +511,7 @@ export async function updatePiece(id: string, p: Piece, categoryChanged: boolean
     brand: p.brand?.trim().slice(0, 60) || null,
     size: p.size?.trim().slice(0, 20) || null,
     fit: p.fit?.trim().slice(0, 40) || null,
+    fiche: cleanFiche(p.fiche) ?? null,
     season: SEASON_ID[p.season] ?? null,
     purchase_price_cents: p.price != null ? Math.round(p.price * 100) : null,
     updated_at: new Date().toISOString(),

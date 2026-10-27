@@ -62,7 +62,10 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   conseil d'éviter le visage), consigne facultative (« seulement la veste »),
   précisions facultatives sur la pièce (marque, taille, coupe, matière, note),
   pièces détourées, étiquettes (nom, catégorie, couleur, matière, saison,
-  prix), ports, signalements « rendu incorrect » (niveau de reprise et
+  prix), fiche technique facultative (composition, motif, manches,
+  longueur, particularités, entretien, pays de fabrication, lieu et mois
+  d'achat, état, occasions ; colonne `garments.fiche`, jamais envoyée à
+  l'IA), ports, signalements « rendu incorrect » (niveau de reprise et
   contrôles de l'image, sans la photo).
 - **Tables et fichiers** : `ai_jobs` (dont le journal de découpe : méthode,
   contrôles, durées, jetons), `ai_images`, `garments`, `garment_reports`,

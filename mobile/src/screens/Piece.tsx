@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { CATEGORIES, MONTHS_SHORT, addedLabel, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
+import { CATEGORIES, MONTHS_SHORT, addedLabel, costPerWear, dayDate, forms, isNew, sinceLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { Glass } from '../ui/Glass';
@@ -19,6 +19,9 @@ import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { LabelEditor } from '../ui/LabelEditor';
+import { FicheCard } from '../ui/FicheCard';
+import { FieldSheet } from '../ui/FicheEditor';
+import type { FieldId } from '../data/fiche';
 import type { Nav, Route } from '../navigation/types';
 
 /** Ce qui va avec une pièce : une règle simple et lisible, pas une boîte noire. */
@@ -100,6 +103,8 @@ export function PieceScreen() {
   const top = useStackTop();
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
+  // La fiche : un champ seul, ou le pas à pas sur plusieurs champs.
+  const [open, setOpen] = useState<{ ids: FieldId[]; i: number } | null>(null);
   const piece = s.pieces.find((p) => p.id === params.id);
   const grow = useGrowFrom(params.from);
 
@@ -128,7 +133,6 @@ export function PieceScreen() {
   const art = Math.min(220, width * 0.56);
   const tag = wornToday ? `Porté${f.e} aujourd’hui` : piece.wears === 0 ? (isNew(piece) ? 'Nouveau' : `Jamais porté${f.e}`) : cat.short;
   const usage = [`${piece.wears} port${piece.wears > 1 ? 's' : ''}`, cpw ? `${cpw} par port` : null].filter(Boolean).join(' · ');
-  const priceTxt = piece.price != null ? `${piece.price.toFixed(2).replace('.', ',').replace(',00', '')} €` : null;
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-piece">
@@ -161,24 +165,18 @@ export function PieceScreen() {
 
         <View style={{ gap: 10 }}>
           <View className="flex-row items-center justify-between">
-            <T v="bodyStrong" style={{ fontSize: 15 }} accessibilityRole="header">
-              L’étiquette
-            </T>
-            <T testID="label-edit" v="label" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 16 }}>
+            <View className="flex-row flex-wrap" style={{ flex: 1, gap: 8 }}>
+              <DotChip label={piece.color} swatch={piece.swatch} />
+              <DotChip label={cat.short} />
+              <DotChip label={cap(addedLabel(piece.addedDaysAgo))} />
+            </View>
+            <T testID="label-edit" v="label" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier le nom, la catégorie, la couleur" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 16 }}>
               Modifier
             </T>
           </View>
-          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-            <DotChip label={piece.color} swatch={piece.swatch} />
-            {piece.material ? <DotChip label={cap(piece.material)} /> : null}
-            {piece.brand ? <DotChip label={piece.brand} /> : null}
-            {piece.size ? <DotChip label={`Taille ${piece.size}`} /> : null}
-            {piece.fit ? <DotChip label={cap(piece.fit)} /> : null}
-            <DotChip label={cap(piece.season)} />
-            {priceTxt && <DotChip label={priceTxt} />}
-            <DotChip label={cap(addedLabel(piece.addedDaysAgo))} />
-          </View>
         </View>
+
+        <FicheCard piece={piece} onEdit={(id) => setOpen({ ids: [id], i: 0 })} onGuide={(ids) => setOpen({ ids, i: 0 })} />
 
         <Button
           testID="piece-coeur"
@@ -186,7 +184,6 @@ export function PieceScreen() {
           icon="heart"
           variant={s.coeurs.includes(piece.id) ? 'primary' : 'secondary'}
           size="m"
-          grow
           onPress={() => a.coeur(piece.id)}
         />
         <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
@@ -248,13 +245,26 @@ export function PieceScreen() {
 
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">
         {/* La feuille du menu se referme d'abord : sur iPhone, deux modales ne s'ouvrent pas l'une sur l'autre. */}
-        <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
+        <Row icon="edit" title="Modifier le nom, la couleur" detail="Nom, catégorie, couleur" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
         {reportable && (
           <Row icon="edit" title="Rendu incorrect" detail="Kodi reprend la découpe de cette pièce" testID="piece-report" onPress={() => { setMenu(false); void a.reportPiece(piece.id); }} />
         )}
         <Row icon="share" title="Prêter ou donner à une amie" onPress={() => { setMenu(false); nav.navigate('Share', { id: piece.id }); }} />
         <Row icon="trash" title="Retirer du dressing" detail="Tu pourras annuler juste après" last onPress={() => { setMenu(false); nav.goBack(); a.removePiece(piece.id); }} testID="piece-remove" />
       </Sheet>
+
+      <FieldSheet
+        piece={piece}
+        field={open ? open.ids[open.i] : null}
+        step={open && open.ids.length > 1 ? { n: open.i + 1, total: open.ids.length } : undefined}
+        onClose={() => setOpen(null)}
+        onSave={(p, next) => {
+          a.updatePiece(p, true);
+          // Pas à pas : le champ suivant s'ouvre tout de suite ; sinon la feuille se referme.
+          setOpen((o) => (o && next && o.i + 1 < o.ids.length ? { ...o, i: o.i + 1 } : null));
+        }}
+        onSkip={() => setOpen((o) => (o && o.i + 1 < o.ids.length ? { ...o, i: o.i + 1 } : null))}
+      />
 
       <LabelEditor piece={piece} visible={editing} onClose={() => setEditing(false)} onSave={(p) => { setEditing(false); a.updatePiece(p); }} />
     </View>

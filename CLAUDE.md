@@ -278,6 +278,19 @@ demandé par l'utilisateur pour lever les freins de la cible :
   chaque photo part chez Kode pendant qu'on prend la suivante. Aussi au
   premier portant du questionnaire ; la démonstration garde une photo.
 
+**Fiche technique d'une pièce (27/10), demandée par l'utilisateur** sur des
+fiches produit de référence (composition, coupe, particularités) : la fiche
+pièce mobile montre « La fiche », une carte de lignes par rubrique (matière et
+coupe, usage, origine et achat) avec la part renseignée et un pas à pas
+« Compléter ». Chaque ligne ouvre une feuille de choix (puces, peu de clavier) :
+composition en fibres et pourcentages (total 100), taille et coupe selon la
+catégorie, manches, longueur, motif, particularités, entretien, pays de
+fabrication (recherche), lieu et mois d'achat, prix, état, occasions. Code :
+`data/fiche.ts` (listes, lecture et écriture sûres), `ui/FicheCard.tsx`,
+`ui/FicheEditor.tsx` ; `LabelEditor` ne garde que nom, catégorie, couleur.
+Stockage : colonne `garments.fiche` (migration `fiche_piece`), jamais envoyée
+à Kode ; marque, taille, coupe, matière, saison et prix gardent leurs colonnes.
+
 **RGPD (09/10)**, demandé par l'utilisateur (détail et reste à faire :
 `docs/rgpd/README.md`) :
 
