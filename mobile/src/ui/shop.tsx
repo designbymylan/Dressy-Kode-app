@@ -7,13 +7,14 @@
  * qui reste en bas. Aucune pastille de réduction : l'économie se lit par le
  * prix barré.
  */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { motion, space } from '../theme/tokens';
 import { F } from '../theme/fonts';
 import { T } from './T';
 import { Tap } from './Tap';
@@ -197,6 +198,63 @@ export function BottomFade({ height = 130 }: { height?: number }) {
         </Defs>
         <Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" />
       </Svg>
+    </View>
+  );
+}
+
+/**
+ * Un choix à deux cases (27/10), d'après la page d'abonnement envoyée : un
+ * plateau gris, et un fond clair qui glisse sous la case choisie. `tray`
+ * donne le grand plateau des durées ; sinon c'est la capsule des offres.
+ * « Réduire les animations » pose le fond sans le faire glisser.
+ */
+export function SlideChoice<V extends string>({ value, onChange, label, options, tray, testID }: { value: V; onChange: (v: V) => void; label: string; options: { value: V; a11y: string; node: (on: boolean) => ReactNode; testID?: string }[]; tray?: boolean; testID?: string }) {
+  const { c } = useTheme();
+  const reduced = useReducedMotion();
+  const [w, setW] = useState(0);
+  const pad = tray ? 6 : 4;
+  const cell = Math.max(0, (w - pad * 2) / options.length);
+  const idx = Math.max(0, options.findIndex((o) => o.value === value));
+  const x = useSharedValue(0);
+  useEffect(() => {
+    x.value = reduced || !w ? idx * cell : withSpring(idx * cell, motion.spring);
+  }, [idx, cell, w, reduced, x]);
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  return (
+    <View
+      testID={testID}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={label}
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      style={{ flexDirection: 'row', padding: pad, borderRadius: tray ? 24 : 999, backgroundColor: c.stage, ...(tray ? null : { alignSelf: 'center', width: 280 }) }}
+    >
+      {/* Pas de className : le fond est animé (voir en tête de CLAUDE.md). */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          { position: 'absolute', top: pad, bottom: pad, left: pad, width: cell, borderRadius: tray ? 18 : 999, backgroundColor: tray ? c.paper : c['glass-strong'], borderWidth: 1, borderColor: tray ? c.rule : c['glass-border'] },
+          slide,
+        ]}
+      />
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Tap
+            key={o.value}
+            testID={o.testID}
+            onPress={() => onChange(o.value)}
+            outerStyle={{ flex: 1 }}
+            style={tray ? { paddingVertical: 13, paddingHorizontal: 14, gap: 3 } : { minHeight: 40, alignItems: 'center', justifyContent: 'center' }}
+            scaleTo={1}
+            feedback="select"
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            accessibilityLabel={o.a11y}
+          >
+            {o.node(on)}
+          </Tap>
+        );
+      })}
     </View>
   );
 }

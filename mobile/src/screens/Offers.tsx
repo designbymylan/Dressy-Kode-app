@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { euros } from '../data/wardrobe';
@@ -17,12 +17,13 @@ import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Button } from '../ui/Button';
-import { Segmented } from '../ui/controls';
 import { Icon, type IconName } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
 import { Ambient } from '../ui/Ambient';
 import { ScrollEdge, useHeaderScroll } from '../ui/layout';
-import { BottomFade, CloseButton, FeatureCard, Fold, Promise, RadioRow, Reassure, Scribble } from '../ui/shop';
+import { CloseButton, SlideChoice } from '../ui/shop';
+import { Tag } from '../ui/bits';
+import { F } from '../theme/fonts';
 import type { Nav } from '../navigation/types';
 
 type Feature = { label: string; note: string; icon: IconName; soon?: boolean };
@@ -53,79 +54,124 @@ export function Offers() {
   const nav = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { y, onScroll } = useHeaderScroll();
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const [period, setPeriod] = useState<Period>('an');
   const [choice, setChoice] = useState<PlanId | null>(null);
   const [confirm, setConfirm] = useState(false);
-  const [all, setAll] = useState(false);
   // Couture, qui n'est plus vendue, compte comme l'offre du dessus.
   const rank = (id: PlanId) => (id === 'couture' ? PLANS.length : PLANS.findIndex((p) => p.id === id));
   const flagged = PLANS.find((p) => p.flagged)!;
   // Sans choix : l'offre recommandée pour qui est en dessous, sinon l'offre du dessus.
   const fallback = rank(s.plan) < rank(flagged.id) ? flagged.id : PAID.find((p) => rank(p.id) > rank(s.plan))?.id ?? null;
-  const pick = choice ?? fallback;
-  const picked = PLANS.find((p) => p.id === pick);
-  const shown = picked ?? PLANS.find((p) => p.id === s.plan) ?? flagged;
+  const pick = fallback;
+  const picked = PLANS.find((p) => p.id === (choice ?? pick));
   const year = period === 'an';
   // Le mois offert vaut pour une première souscription annuelle (web/src/lib/plans.ts).
   const firstYear = s.plan === 'decouverte';
 
+  // Ce que montre la page : l'offre payante choisie (Revenir à Découverte ne change pas la vue).
+  const view = PAID.find((p) => p.id === (choice && choice !== 'decouverte' ? choice : pick)) ?? flagged;
+  const mine = view.id === s.plan;
+  const perMonth = year ? Math.round(view.cents.an / 12) : view.cents.mois;
+
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-offers">
       <Ambient />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 50, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 120, gap: 12 }}>
-        <Scribble />
-        <Promise
-          testID="offers-discount"
-          title={`−${bestSaving()} %\nsur l’année`}
-          lead={`Dès ${price(fromWeekly())} par semaine`}
-          note={firstYear ? 'L’année au meilleur prix, et le premier mois offert.' : 'L’année au meilleur prix, et tu arrêtes quand tu veux.'}
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 56, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 120, gap: 18 }}>
+        <T v="title" accessibilityRole="header" testID="offers-title" style={{ textAlign: 'center', paddingHorizontal: 40 }}>
+          {`Passe à ${view.name}`}
+        </T>
+
+        <SlideChoice
+          testID="offers-plans"
+          label="Offre"
+          value={view.id}
+          onChange={setChoice}
+          options={PAID.map((p) => ({
+            value: p.id,
+            a11y: `${p.name}${p.id === s.plan ? ', ton offre actuelle' : ''}`,
+            testID: `plan-${p.id}`,
+            node: (on) => (
+              <T v="body" style={{ ...F.s600, color: on ? c.ink : c.ink2 }}>
+                {p.name}
+              </T>
+            ),
+          }))}
         />
 
-        <Fold label="Ce qui est inclus" open={all} onPress={() => setAll(!all)} />
-        <View className="flex-row flex-wrap" style={{ gap: 10 }} testID="offers-included">
-          {(all ? shown.features : shown.features.slice(0, 2)).map((f) => (
-            <FeatureCard key={f.label} icon={f.icon} title={f.label} note={f.soon ? `${f.note} Bientôt.` : f.note} />
+        <Animated.View key={view.id} entering={FadeIn.duration(280)} testID="offers-included" style={{ paddingHorizontal: 16, paddingVertical: 4, borderRadius: 28, backgroundColor: c.card, borderWidth: 1, borderColor: c['card-edge'] }}>
+          {view.features.map((f, i) => (
+            <View key={f.label} className="flex-row items-center" style={{ gap: 14, paddingVertical: 14, borderTopWidth: i ? 1 : 0, borderColor: c.rule }}>
+              <Icon name={f.icon} size={22} color={c.ink} strokeWidth={1.7} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <T v="body" style={{ ...F.s600, fontSize: 14, lineHeight: 18 }}>
+                  {f.label}
+                  {f.soon ? ' · bientôt' : ''}
+                </T>
+                <T v="small" tone="ink2">
+                  {f.note}
+                </T>
+              </View>
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ink }}>
+                <Icon name="check" size={13} color={c.paper} strokeWidth={2.6} flat />
+              </View>
+            </View>
           ))}
-        </View>
+        </Animated.View>
 
-        <View className="items-center" style={{ paddingTop: 4 }}>
-          <Segmented
-            label="Période de paiement"
-            value={period}
-            onChange={setPeriod}
-            options={[
-              { value: 'mois', label: 'Au mois' },
-              { value: 'an', label: 'À l’année' },
-            ]}
+        <SlideChoice
+          tray
+          testID="offers-period"
+          label="Durée"
+          value={period}
+          onChange={setPeriod}
+          options={(['an', 'mois'] as const).map((p) => ({
+            value: p,
+            a11y: `${p === 'an' ? 'Annuel' : 'Mensuel'}, ${price(view.cents[p])}`,
+            testID: `period-${p}`,
+            node: (on) => (
+              <>
+                <T v="small" style={{ color: on ? c.ink : c.ink2 }}>
+                  {p === 'an' ? 'Annuel' : 'Mensuel'}
+                </T>
+                <Animated.View key={`${view.id}${p}`} entering={FadeIn.duration(260)}>
+                  <T v="stat" style={{ color: on ? c.ink : c.ink2 }}>
+                    {price(view.cents[p])}
+                  </T>
+                </Animated.View>
+                <T v="small" style={{ color: on ? c.ink : c.ink2 }}>
+                  {`${price(p === 'an' ? Math.round(view.cents.an / 12) : view.cents.mois)} par mois`}
+                </T>
+              </>
+            ),
+          }))}
+        />
+
+        <T v="body" style={{ textAlign: 'center' }}>
+          <T v="bodyStrong">{`${price(perMonth)} par mois`}</T>
+          {year ? ', facturé une fois par an.' : ', facturé chaque mois.'}
+        </T>
+        <T v="small" tone="ink2" style={{ textAlign: 'center', marginTop: -8 }}>
+          {`${year && firstYear ? 'Premier mois offert. ' : ''}Sans engagement, tu arrêtes en un geste depuis Réglages. Prix TTC, paiement sécurisé.`}
+        </T>
+
+        {mine ? (
+          <View className="items-center">
+            <Tag label="C’est ton offre" />
+          </View>
+        ) : (
+          <Button
+            testID="offers-cta"
+            variant={scheme === 'dark' ? 'primary' : 'dark'}
+            label={`${rank(view.id) > rank(s.plan) ? 'Choisir' : 'Revenir à'} ${view.name} ${year ? 'Annuel' : 'Mensuel'}`}
+            onPress={() => {
+              setChoice(view.id);
+              setConfirm(true);
+            }}
           />
-        </View>
+        )}
 
-        <View accessibilityRole="radiogroup" accessibilityLabel="Offres" style={{ gap: 8 }}>
-          {PAID.map((p) => (
-            <RadioRow
-              key={p.id}
-              testID={`plan-${p.id}`}
-              name={p.name}
-              note={p.note}
-              price={year ? `${price(p.cents.an)} /an` : `${price(p.cents.mois)} /mois`}
-              struck={year ? price(p.cents.mois * 12) : undefined}
-              on={p.id === pick}
-              mine={p.id === s.plan}
-              onPress={() => setChoice(p.id)}
-            />
-          ))}
-        </View>
-
-        <Reassure
-          items={[
-            { icon: 'check', text: 'Sans engagement. Tu arrêtes en un geste, depuis Réglages.' },
-            { icon: 'lock', text: firstYear ? 'Paiement sécurisé, et ton premier mois offert sur l’année.' : 'Paiement sécurisé, dans ton navigateur.' },
-            { icon: 'bag', text: 'Plutôt à l’unité ? Les packs commencent à 0,99 €.' },
-          ]}
-        />
-
-        <View className="flex-row justify-center" style={{ gap: 18, paddingTop: 4 }}>
+        <View className="flex-row justify-center" style={{ gap: 18 }}>
           <T testID="offers-shop" v="label" tone="ink2" onPress={() => nav.navigate('Shop')} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 12 }}>
             La boutique
           </T>
@@ -146,19 +192,10 @@ export function Offers() {
             </T>
           )}
         </View>
-        <T v="small" tone="ink2" style={{ textAlign: 'center' }}>
-          Prix TTC. Le mois offert vaut pour la première souscription annuelle.
-        </T>
       </Animated.ScrollView>
 
       <ScrollEdge y={y} />
       <CloseButton />
-      <BottomFade />
-      {picked && picked.cents.mois > 0 && (
-        <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16 }}>
-          <Button testID="offers-cta" label={`${rank(picked.id) > rank(s.plan) ? 'Passer à' : 'Revenir à'} ${picked.name} · ${price(picked.cents[period])}`} onPress={() => setConfirm(true)} />
-        </View>
-      )}
 
       <Sheet
         visible={confirm && !!picked}
