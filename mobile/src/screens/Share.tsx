@@ -41,7 +41,9 @@ export function ShareScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const text = message ?? defaults[mode];
-  const name = FRIENDS.find((x) => x.id === friend)?.name;
+  // Pas encore de liste d'amies réelle : seul le compte de démonstration en montre.
+  const amies = s.account === 'demo' ? FRIENDS : [];
+  const name = amies.find((x) => x.id === friend)?.name;
 
   if (sent && name) {
     return (
@@ -51,7 +53,7 @@ export function ShareScreen() {
           <Icon name="check" size={40} color={c.positive} strokeWidth={2.2} />
         </Animated.View>
         <T v="title" style={{ textAlign: 'center' }}>
-          Envoyé à {name}.
+          Partage simulé avec {name}.
         </T>
         <T v="body" tone="ink2" style={{ textAlign: 'center', maxWidth: 300 }}>
           {mode === 'preter' ? `Tu retrouveras le prêt dans Moi, avec la date de retour (${back}).` : mode === 'donner' ? 'Si elle accepte, la pièce quittera ton dressing.' : 'Tu verras sa réponse dans tes notifications.'}
@@ -114,8 +116,13 @@ export function ShareScreen() {
           <T v="kicker" tone="ink2">
             À qui ?
           </T>
+          {amies.length === 0 && (
+            <T v="body" tone="ink2" testID="share-sans-amie">
+              Pas encore d’amie dans l’app : le partage entre amies arrive bientôt.
+            </T>
+          )}
           <View className="flex-row" style={{ gap: 12 }}>
-            {FRIENDS.map((x) => (
+            {amies.map((x) => (
               <Tap key={x.id} testID={`friend-${x.id}`} onPress={() => setFriend(x.id)} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: friend === x.id }} accessibilityLabel={x.name} style={{ alignItems: 'center', gap: 6 }}>
                 <Avatar name={x.name} size={52} on={friend === x.id} />
                 <T v="small" tone={friend === x.id ? 'ink' : 'ink2'}>
@@ -143,19 +150,13 @@ export function ShareScreen() {
 
         <Button
           testID="share-send"
-          label={name ? `Envoyer à ${name}` : 'Choisis une amie'}
+          label={name ? `Envoyer à ${name}` : amies.length ? 'Choisis une amie' : 'Pas encore d’amie à qui envoyer'}
           disabled={!name}
           icon="send"
           onPress={() => {
             a.share({ id: `s${Date.now()}`, pieceId: piece.id, friend: name!, mode });
             setSent(true);
           }}
-        />
-        <Button
-          label="Copier le lien"
-          variant="plain"
-          icon="link"
-          onPress={() => a.toast('Lien copié : il expire dans 7 jours')}
         />
       </Animated.ScrollView>
     </View>
