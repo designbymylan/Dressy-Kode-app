@@ -26,7 +26,7 @@ function rowsFor(id: PlanId): Row[] {
   const take = (...icons: string[]): Row[] => icons.map((i) => ({ icon: i as IconName, title: pick(i).title, sub: pick(i).sub, soon: pick(i).soon }));
   if (id === 'capsule') return take('hanger', 'sparkle', 'cloud', 'chart');
   return [
-    { icon: 'check', title: 'Tout Fashion', sub: 'Dressing, tenue du jour, suivi' },
+    { icon: 'hanger', title: 'Tout Fashion', sub: 'Dressing, tenue du jour, suivi' },
     ...take('infinity', 'party', 'layers'),
   ];
 }
@@ -58,7 +58,7 @@ export function Pricing({ current, trial }: { current: PlanId | null; trial: boo
       <ul key={plan.id} className="pr-list pr__swap">
         {rowsFor(plan.id).map((r) => (
           <li key={r.title} className="pr-list__row">
-            <Icon name={r.icon} size={22} />
+            <span className="pr-list__ico" aria-hidden="true"><Icon name={r.icon} size={24} /></span>
             <span className="pr-list__text">
               <strong>{r.title}{r.soon ? <span className="muted" style={{ fontWeight: 500 }}> · bientôt</span> : null}</strong>
               <span className="muted">{r.sub}</span>

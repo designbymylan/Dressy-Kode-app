@@ -102,7 +102,9 @@ export function Offers() {
         <Animated.View key={view.id} entering={FadeIn.duration(280)} testID="offers-included" style={{ paddingHorizontal: 16, paddingVertical: 4, borderRadius: 28, backgroundColor: c.card, borderWidth: 1, borderColor: c['card-edge'] }}>
           {view.features.map((f, i) => (
             <View key={f.label} className="flex-row items-center" style={{ gap: 14, paddingVertical: 14, borderTopWidth: i ? 1 : 0, borderColor: c.rule }}>
-              <Icon name={f.icon} size={22} color={c.ink} strokeWidth={1.7} />
+              <View style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: c.stage }}>
+                <Icon name={f.icon} size={24} color={c.ink} strokeWidth={1.8} />
+              </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <T v="body" style={{ ...F.s600, fontSize: 14, lineHeight: 18 }}>
                   {f.label}

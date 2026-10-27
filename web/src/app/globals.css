@@ -1754,6 +1754,7 @@ details[open] > .dk-row .dk-ico[data-anim='nudge'] { transform: rotate(90deg); }
 .pr-list { list-style: none; display: flex; flex-direction: column; padding: 6px 16px; border-radius: var(--r-card); background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: var(--shadow-glass); }
 .pr-list__row { display: flex; align-items: center; gap: 14px; padding: 14px 0; }
 .pr-list__row + .pr-list__row { border-top: 1px solid var(--rule); }
+.pr-list__ico { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 14px; background: var(--stage); }
 .pr-list__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.3; }
 .pr-list__text .muted { font-size: 12.5px; }
 
