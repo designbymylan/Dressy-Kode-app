@@ -9,7 +9,7 @@ import { getViewer, type Theme } from '@/lib/space';
 import { enabledProviders, siteOrigin, type Provider } from '@/lib/auth';
 import { parisDay } from '@/lib/dates';
 import { loadMessages, loadUsage, type KodeMessage, type KodeUsage } from '@/lib/kode';
-import { isPeriod, isPlan } from '@/lib/plans';
+import { isPeriod, isPlacePack, isPlan } from '@/lib/plans';
 import {
   GENDERS, GOALS, STYLES, ITEMS, JEWELRY, METALS, ACCESSORIES, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, NO_JEWELRY, type Answers,
@@ -328,6 +328,22 @@ export async function reportGarment(garmentId: string): Promise<FormResult> {
   return undefined;
 }
 
+/**
+ * « Image propre » : Kodi redessine la pièce à partir de sa photo (une
+ * génération). La base refuse, sans rien appeler, quand il n'en reste plus.
+ */
+export async function requestCleanImage(garmentId: string): Promise<FormResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('request_clean_image', { target: garmentId });
+  if (error) {
+    return error.hint === 'quota'
+      ? { error: 'Tu as utilisé tes générations.', code: 'quota' }
+      : { error: error.message || "Kodi n'a pas pu démarrer. Réessaie dans un instant." };
+  }
+  revalidatePath('/dressing');
+  return undefined;
+}
+
 export async function retryAiJob(jobId: string): Promise<FormResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc('retry_ai_job', { target: jobId });
@@ -491,6 +507,19 @@ export async function startCheckout(_prev: FormResult, formData: FormData): Prom
   if (!isPlan(plan) || !isPeriod(period)) return { error: 'Choisis une offre.' };
 
   const res = await billingPage({ action: 'checkout', plan, period });
+  if ('error' in res) return res;
+  redirect(res.url);
+}
+
+/** Un pack de places (+10 ou +30) : paiement unique chez Stripe. Des places, jamais des générations. */
+export async function buyPlaces(_prev: FormResult, formData: FormData): Promise<FormResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+
+  const pack = formData.get('pack');
+  if (!isPlacePack(pack)) return { error: 'Choisis un pack.' };
+
+  const res = await billingPage({ action: 'places', pack });
   if ('error' in res) return res;
   redirect(res.url);
 }

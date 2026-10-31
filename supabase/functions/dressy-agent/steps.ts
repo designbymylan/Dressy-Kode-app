@@ -43,6 +43,7 @@ export const SAY = {
   refused: "Kodi n'a pas pu dessiner cette pièce. Essaie avec une autre photo.",
   nothing: "Kodi n'a trouvé aucune pièce à ranger sur cette photo. Essaie avec une photo où elle se voit en entier.",
   photo: 'Kodi ne retrouve plus ta photo. Confie-la de nouveau.',
+  quota: "Tu as utilisé tes générations. Passe à une offre pour continuer à générer des images.",
 } as const;
 
 const env = (name: string) => Deno.env.get(name)?.trim() || undefined;
@@ -57,7 +58,11 @@ export const MODELS = {
   survey: env('CLAUDE_SURVEY_MODEL') ?? 'claude-sonnet-5',
   segment: env('GEMINI_SEGMENT_MODEL') ?? 'gemini-2.5-flash',
   segmentStrong: env('GEMINI_SEGMENT_MODEL_STRONG') ?? 'gemini-2.5-pro',
+  // Nano Banana 2 (2K) pour les abonnées, sa version Lite (1K) pour le gratuit.
+  // Les identifiants se règlent dans les secrets Supabase (GEMINI_IMAGE_MODEL,
+  // GEMINI_IMAGE_MODEL_LITE) : le code ne les devine pas.
   gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
+  geminiLite: env('GEMINI_IMAGE_MODEL_LITE') ?? env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
 };
 
 export const EFFORT = {
@@ -102,9 +107,10 @@ function httpError(who: string, status: number, text: string): AgentError {
 
 // ---------------------------------------------------------------- Nano Banana
 
-export async function generate(prompt: string, sources: Img[], opts: { search?: boolean } = {}): Promise<Img & { usage: Usage; searched: boolean }> {
+export async function generate(prompt: string, sources: Img[], opts: { search?: boolean; model?: string; size?: '1K' | '2K' } = {}): Promise<Img & { usage: Usage; searched: boolean }> {
   const key = secret('GEMINI_API_KEY');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}:generateContent`;
+  const model = opts.model ?? MODELS.gemini;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   // Consigne d'abord, puis les photos de référence : Nano Banana redessine la
   // pièce à partir de la vraie, au lieu de l'imaginer d'après le texte.
@@ -123,7 +129,7 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
       body: JSON.stringify({ contents: [{ parts }], generationConfig, ...(withSearch ? { tools: search } : {}) }),
     });
 
-  const size = { aspectRatio: '1:1', imageSize: '1K' };
+  const size = { aspectRatio: '1:1', imageSize: opts.size ?? '1K' };
   let searched = Boolean(opts.search);
   let res: Response;
   try {
@@ -169,7 +175,7 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
     // Avec la recherche, le modèle répond parfois en texte seul : on redessine sans.
     if (searched) {
       console.warn('Nano Banana : aucune image avec la recherche, dessin sans');
-      return generate(prompt, sources, { search: false });
+      return generate(prompt, sources, { ...opts, search: false });
     }
     throw new AgentError(SAY.refused, "Nano Banana n'a renvoyé aucune image");
   }

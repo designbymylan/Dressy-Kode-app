@@ -1,7 +1,8 @@
 /**
  * Abonnements : ouvre le paiement Stripe ou le portail client.
  *
- *   POST { action: 'checkout', plan, period }  →  { url }
+ *   POST { action: 'checkout', plan, period }  →  { url }   (abonnement, au mois)
+ *   POST { action: 'places', pack }            →  { url }   (achat unique : +10 ou +30 places)
  *   POST { action: 'portal' }                  →  { url }
  *   GET                                        →  état de la configuration
  *
@@ -12,7 +13,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { envKey, secret, appUrl } from '../_shared/env.ts';
-import { ENTITLED, TRIAL_DAYS, isPeriod, isPlan, lookupKey } from '../_shared/billing.ts';
+import { ENTITLED, PLACE_PACKS, isPeriod, isPlacePack, isPlan, lookupKey, placesLookupKey } from '../_shared/billing.ts';
 
 class BillingError extends Error {
   constructor(message: string, readonly status = 400) {
@@ -100,6 +101,31 @@ async function handle(token: string, input: Record<string, unknown>): Promise<{ 
     return { url: await portal(s, known.stripe_customer_id) };
   }
 
+  if (input.action === 'places') {
+    if (!isPlacePack(input.pack)) throw new BillingError('Choisis un pack.');
+    const pack = input.pack;
+    const customer = await customerFor(s, space.id, user.email);
+    const key = placesLookupKey(pack);
+    const { data: prices } = await s.prices.list({ lookup_keys: [key], active: true, limit: 1 });
+    if (!prices.length) {
+      console.error(`prix ${key} introuvable chez Stripe : lancer tools/stripe-setup.mjs`);
+      throw new BillingError('Ce pack n’est pas encore en vente. Réessaie un peu plus tard.', 503);
+    }
+    // Le webhook crédite les places à partir de ces repères, jamais d'un montant lu côté client.
+    const session = await s.checkout.sessions.create({
+      mode: 'payment',
+      customer,
+      client_reference_id: space.id,
+      line_items: [{ price: prices[0].id, quantity: 1 }],
+      metadata: { space_id: space.id, pack, places: String(PLACE_PACKS[pack].places) },
+      locale: 'fr',
+      success_url: `${appUrl()}/moi?places=merci`,
+      cancel_url: `${appUrl()}/moi`,
+    });
+    if (!session.url) throw new Error('Stripe n’a pas rendu de page de paiement.');
+    return { url: session.url };
+  }
+
   if (input.action !== 'checkout') throw new BillingError('Action inconnue.');
   if (!isPlan(input.plan) || !isPeriod(input.period)) throw new BillingError('Offre inconnue.');
 
@@ -128,8 +154,6 @@ async function handle(token: string, input: Record<string, unknown>): Promise<{ 
     line_items: [{ price: prices[0].id, quantity: 1 }],
     subscription_data: {
       metadata: { space_id: space.id },
-      // Le mois offert de l'annuel, une seule fois : pas à qui a déjà été abonné.
-      ...(input.period === 'an' && !subs.length ? { trial_period_days: TRIAL_DAYS } : {}),
     },
     allow_promotion_codes: true,
     locale: 'fr',

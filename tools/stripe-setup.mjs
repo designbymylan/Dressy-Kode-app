@@ -4,11 +4,15 @@
  *
  *   STRIPE_SECRET_KEY=sk_test_… APP_URL=https://… node tools/stripe-setup.mjs
  *
- *   1. les deux produits (Fashion et Sapologue, identifiants dressy_capsule
- *      et dressy_atelier) ; un nom changé dans plans.ts est repris ;
- *   2. leurs quatre prix, retrouvés par lookup_key (dressy_<offre>_<mois|an>) :
- *      un montant changé dans web/src/lib/plans.ts crée un nouveau prix, qui
- *      reprend la clé ; les abonnés en cours gardent l'ancien ;
+ *   1. les deux produits d'abonnement (Fashion et Sapologue, identifiants
+ *      dressy_capsule et dressy_atelier) et les deux packs de places
+ *      (dressy_places_petit, dressy_places_moyen) ; un nom changé dans
+ *      plans.ts est repris ;
+ *   2. leurs prix, retrouvés par lookup_key (dressy_<offre>_mois, et
+ *      dressy_places_<pack> en paiement unique) : un montant changé dans
+ *      web/src/lib/plans.ts crée un nouveau prix, qui reprend la clé ; les
+ *      abonnés en cours gardent l'ancien. Plus d'annuel depuis le 31/10 : les
+ *      anciens prix annuels, s'ils existent, sont archivés ;
  *   3. le portail client (changer d'offre, résilier, factures, carte) ;
  *   4. le webhook vers l'Edge Function stripe-webhook, dont le secret
  *      n'est affiché qu'à sa création.
@@ -16,7 +20,7 @@
  * Une clé live (sk_live_…) est refusée sans --live : on règle tout en mode
  * test d'abord, on refait la même commande en live le jour du lancement.
  */
-import { PLANS, lookupKey } from '../web/src/lib/plans.ts';
+import { PLANS, PLACE_PACKS, lookupKey, placesLookupKey } from '../web/src/lib/plans.ts';
 
 const API = process.env.STRIPE_API_BASE ?? 'https://api.stripe.com';
 const API_VERSION = '2026-08-26.dahlia'; // la même que les Edge Functions
@@ -26,6 +30,7 @@ const SUPABASE_URL = (process.env.SUPABASE_URL ?? 'https://pxjlbtevrexlckhxskdn.
 const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/stripe-webhook`;
 const EVENTS = [
   'checkout.session.completed',
+  'checkout.session.async_payment_succeeded',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
@@ -78,7 +83,6 @@ async function api(method, path, body) {
   return json;
 }
 
-const INTERVAL = { mois: 'month', an: 'year' };
 const euro = (cents) => `${(cents / 100).toFixed(2).replace('.', ',')} €`;
 
 // ---------------------------------------------------------------- 1. produits
@@ -109,40 +113,76 @@ async function product(plan) {
   return id;
 }
 
+async function placeProduct(pack) {
+  const id = `dressy_places_${pack.id}`;
+  const name = `Dressy ${pack.name} de garde-robe`;
+  try {
+    const existing = await api('GET', `/products/${id}`);
+    if (!existing.active || existing.name !== name) await api('POST', `/products/${id}`, { active: true, name });
+    console.log(`  produit ${id} : ${existing.name === name ? 'déjà là' : 'mis à jour'}`);
+    return id;
+  } catch (err) {
+    if (err.status !== 404) throw err;
+  }
+  await api('POST', '/products', { id, name, metadata: { pack: pack.id, places: pack.places } });
+  console.log(`  produit ${id} : créé`);
+  return id;
+}
+
 // ---------------------------------------------------------------- 2. prix
 
 async function prices(products) {
-  const keys = PLANS.flatMap((p) => ['mois', 'an'].map((period) => lookupKey(p.id, period)));
+  const keys = [
+    ...PLANS.map((p) => lookupKey(p.id, 'mois')),
+    ...PLANS.map((p) => `dressy_${p.id}_an`), // anciens prix annuels, à archiver
+    ...PLACE_PACKS.map((p) => placesLookupKey(p.id)),
+  ];
   const query = keys.map((k) => `lookup_keys[]=${encodeURIComponent(k)}`).join('&');
   const { data: existing } = await api('GET', `/prices?${query}&active=true&limit=100`);
   const byKey = new Map(existing.map((p) => [p.lookup_key, p]));
   const ids = new Map();
 
-  for (const plan of PLANS) {
-    for (const period of ['mois', 'an']) {
-      const key = lookupKey(plan.id, period);
-      const cents = plan.cents[period];
-      const current = byKey.get(key);
-      if (current && current.unit_amount === cents && current.currency === 'eur' && current.recurring?.interval === INTERVAL[period]) {
-        console.log(`  prix ${key} : ${euro(cents)}, déjà là`);
-        ids.set(key, current.id);
-        continue;
-      }
-      const created = await api('POST', '/prices', {
-        product: products.get(plan.id),
-        currency: 'eur',
-        unit_amount: cents,
-        recurring: { interval: INTERVAL[period] },
-        tax_behavior: 'inclusive', // prix affichés TTC
-        lookup_key: key,
-        transfer_lookup_key: current ? true : undefined,
-        nickname: `${plan.name} ${period === 'an' ? 'annuel' : 'mensuel'}`,
-        metadata: { plan: plan.id, period },
-      });
-      if (current) await api('POST', `/prices/${current.id}`, { active: false });
-      console.log(`  prix ${key} : ${euro(cents)}, ${current ? `remplace ${euro(current.unit_amount)}` : 'créé'}`);
-      ids.set(key, created.id);
+  for (const old of existing.filter((p) => p.lookup_key.endsWith('_an'))) {
+    await api('POST', `/prices/${old.id}`, { active: false });
+    console.log(`  prix ${old.lookup_key} : archivé (plus d'annuel)`);
+  }
+
+  const ensure = async ({ key, cents, product, recurring, nickname, metadata }) => {
+    const current = byKey.get(key);
+    const same = current && current.unit_amount === cents && current.currency === 'eur'
+      && (recurring ? current.recurring?.interval === 'month' : !current.recurring);
+    if (same) {
+      console.log(`  prix ${key} : ${euro(cents)}, déjà là`);
+      ids.set(key, current.id);
+      return;
     }
+    const created = await api('POST', '/prices', {
+      product,
+      currency: 'eur',
+      unit_amount: cents,
+      recurring: recurring ? { interval: 'month' } : undefined,
+      tax_behavior: 'inclusive', // prix affichés TTC
+      lookup_key: key,
+      transfer_lookup_key: current ? true : undefined,
+      nickname,
+      metadata,
+    });
+    if (current) await api('POST', `/prices/${current.id}`, { active: false });
+    console.log(`  prix ${key} : ${euro(cents)}, ${current ? `remplace ${euro(current.unit_amount)}` : 'créé'}`);
+    ids.set(key, created.id);
+  };
+
+  for (const plan of PLANS) {
+    await ensure({
+      key: lookupKey(plan.id, 'mois'), cents: plan.cents.mois, product: products.get(plan.id), recurring: true,
+      nickname: `${plan.name} mensuel`, metadata: { plan: plan.id, period: 'mois' },
+    });
+  }
+  for (const pack of PLACE_PACKS) {
+    await ensure({
+      key: placesLookupKey(pack.id), cents: pack.cents, product: products.get(`places_${pack.id}`), recurring: false,
+      nickname: pack.name, metadata: { pack: pack.id, places: pack.places },
+    });
   }
   return ids;
 }
@@ -168,7 +208,7 @@ async function portal(products, priceIds) {
         proration_behavior: 'create_prorations',
         products: PLANS.map((p) => ({
           product: products.get(p.id),
-          prices: ['mois', 'an'].map((period) => priceIds.get(lookupKey(p.id, period))),
+          prices: [priceIds.get(lookupKey(p.id, 'mois'))],
         })),
       },
     },
@@ -215,6 +255,7 @@ console.log(`Stripe, mode ${LIVE ? 'LIVE' : 'test'}\n`);
 console.log('1. Produits');
 const products = new Map();
 for (const plan of PLANS) products.set(plan.id, await product(plan));
+for (const pack of PLACE_PACKS) products.set(`places_${pack.id}`, await placeProduct(pack));
 
 console.log('\n2. Prix');
 const priceIds = await prices(products);

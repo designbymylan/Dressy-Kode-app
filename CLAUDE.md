@@ -412,6 +412,42 @@ ni dans ses bulles, ni à la connexion, ni à l'intro, ni sur l'accueil, ni
 sur les messages d'erreur ; le strict nécessaire, c'est la navigation et
 le travail de Kodi, rien de plus.
 
+**Offres, places et générations (brief v6, 31/10), demandé par l'utilisateur.**
+Remplace les prix, les limites et l'annuel du 21/10, web et mobile.
+
+- **Deux abonnements, au mois seulement** : **Fashion 8,99 €** (`capsule`,
+  50 pièces, 50 générations par mois) et **Sapologue 14,99 €** (`atelier`,
+  100 pièces, 100 générations par mois, Kodi sans limite). Plus d'annuel ni
+  de mois offert. Découverte : 15 pièces, 4 générations offertes à vie, sans
+  renouvellement. Aucune mention de Couture. Source des montants :
+  `web/src/lib/plans.ts` ; limites : `plan_limits()` et `plan_generations()`
+  (migration `quotas_generation`).
+- **Packs de places** (boutique) : +10 places 1,99 € (`petit`), +30 places
+  4,99 € (`moyen`), paiement unique Stripe (`dressy_places_<pack>`), sans
+  limite d'achats, **des places et jamais des générations**. Ils s'ajoutent à
+  la limite de l'offre (`piece_limit`, table `place_packs`, créditée par le
+  webhook). Plein : l'offre du dessus d'abord, les packs en option.
+- **Une génération = un appel à Nano Banana** : « Image propre » (fiche
+  pièce, `request_clean_image`) et la 2e reprise de « Rendu incorrect ». Le
+  détourage ne consomme rien. Prise avant l'appel (`generation_reserve`),
+  rendue si l'appel échoue ou est refusé (`generation_settle`), jamais
+  prise si l'image est en cache (`generation_cache`, clé photo + pièce +
+  modèle + version de la consigne, `quota.ts`). Aucune relance automatique.
+  Modèle Lite en 1K pour Découverte, complet en 2K pour les abonnées
+  (secrets `GEMINI_IMAGE_MODEL_LITE` et `GEMINI_IMAGE_MODEL`).
+- **Fin des générations offertes** : un seul écran (`/generations`,
+  `screens/Generations.tsx`), Sapologue en avant, Fashion en plus petit,
+  « Continuer sans générer », ni pack ni prix annuel. À zéro, « Image
+  propre » est éteinte et dit pourquoi. Un abonné ne voit pas le compteur
+  des offertes. `FREE_GENERATION_QUOTA` (`free_generation_quota()`, 4, entre
+  3 et 5) ne sort jamais de la base : le client ne lit que ce qui reste
+  (`generation_status`).
+- **Mesures de la bêta** : `generation_log` (offre, source, cache, modèle,
+  statut, coût estimé en dollars, Anthropic et Google séparés), vues
+  `generation_costs` et `generation_free_funnel`. Prix estimés réglables par
+  secrets (`COST_*`). Tests : `npm run test:quotas` (SQL, base jetable),
+  `test:agent`, `test:billing`.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 

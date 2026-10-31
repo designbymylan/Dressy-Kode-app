@@ -149,9 +149,28 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Données** : offre, état de l'abonnement, identifiant client chez le
   prestataire, historique des paiements. Les coordonnées bancaires ne
   passent jamais par Dresskode.
-- **Tables** : `subscriptions`, `billing_customers`.
+- **Tables** : `subscriptions`, `billing_customers`, `place_packs` (packs de
+  places achetés, 31/10).
 - **Destinataires** : Supabase ; Stripe.
 - **Durée** : tant que le compte existe ; factures, 10 ans chez Stripe.
+
+### 7 bis. Compteur et mesure des générations d'image (31/10)
+
+- **Finalité** : compter et plafonner les images dessinées pour le dressing
+  (4 offertes à vie, 50 ou 100 par mois selon l'offre), suivre les coûts de
+  la bêta (Anthropic et Google séparés), éviter de repayer une image déjà
+  dessinée (cache).
+- **Base** : intérêt légitime (maîtrise des coûts, art. 6.1.f) ; exécution du
+  contrat pour le plafond de l'offre.
+- **Données** : identifiant, offre, nombre de générations restantes ; par
+  appel : modèle, statut, coût estimé, utilisé le cache ou non. Aucune photo ni
+  texte dans le journal. Le cache garde l'image dessinée de la pièce, jamais la
+  personne : on ne dessine aucune personne.
+- **Tables** : `generation_quota`, `generation_log`, `generation_cache`
+  (fermées au client, lues seulement par le compteur affiché).
+- **Destinataires** : Supabase ; Google (le dessin, déjà décrit au §2).
+- **Durée** : journal, 13 mois ; images en cache, 30 jours (fonction `menage`,
+  RPC `purge_generation`) ; le tout part avec le compte.
 
 ## 8. Rappels
 

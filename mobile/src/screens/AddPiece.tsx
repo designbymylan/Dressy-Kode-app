@@ -6,7 +6,8 @@ import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSh
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { CATEGORIES, GALLERY, type Found, type Piece, type Season } from '../data/wardrobe';
-import { pieceLimit, useStore } from '../state/store';
+import { PLACE_PACKS, pieceLimit, useStore } from '../state/store';
+import { euros } from '../data/wardrobe';
 import * as remote from '../state/remote';
 import { CAMERA_BLOCKED, cameraAccess, shootBurst, type Shot } from '../lib/camera';
 import { groupByPhoto, isActive, isPiece, jobNote, jobPhrases, jobStep, jobTitle, scanPieces, type Box, type JobRow, type Reveal } from '../state/jobs';
@@ -222,11 +223,15 @@ export function AddPiece() {
               <Card className="bg-butter" style={{ gap: 10 }} testID="add-full">
                 <T v="cardTitle">Ton dressing est plein.</T>
                 <T v="body" tone="ink2">
-                  Tu pourrais ajouter 30 places, ou passer à Sapologue : pièces illimitées.
+                  {s.plan === 'atelier' || s.plan === 'couture'
+                    ? 'Tu pourrais ajouter des places à ton dressing.'
+                    : `Tu pourrais passer à ${s.plan === 'capsule' ? 'Sapologue : 100 pièces' : 'Fashion : 50 pièces'}, ou seulement ajouter des places.`}
                 </T>
+                {s.plan !== 'atelier' && s.plan !== 'couture' && <Button testID="add-full-offers" label="Voir les offres" size="m" onPress={() => nav.navigate('Offers')} />}
                 <View className="flex-row" style={{ gap: 8 }}>
-                  <Button label="+30 places · 4,99 €" size="m" grow onPress={s.account === 'connecte' ? () => nav.navigate('Offers') : a.buyPlaces} />
-                  <Button label="Les offres" size="m" variant="secondary" grow onPress={() => nav.navigate('Offers')} />
+                  {PLACE_PACKS.map((p) => (
+                    <Button key={p.id} testID={`add-places-${p.id}`} label={`${p.name} · ${euros(p.cents / 100)}`} size="m" variant="secondary" grow onPress={() => a.buyPlaces(p.id)} />
+                  ))}
                 </View>
               </Card>
             ) : (

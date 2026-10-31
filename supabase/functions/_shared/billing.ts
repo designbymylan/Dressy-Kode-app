@@ -4,12 +4,12 @@
  * (supabase/functions/_shared/billing.test.ts).
  *
  * Les identifiants et la forme des clés suivent web/src/lib/plans.ts.
- * Depuis le 21/10, deux offres : `capsule` porte Fashion, `atelier`
- * Sapologue. Couture n'est plus vendue (aucun abonné ne l'avait).
+ * Deux offres, au mois : `capsule` porte Fashion, `atelier` Sapologue.
+ * Couture et l'annuel ne sont plus vendus (aucun abonné ne les avait).
  */
 
 export const PLAN_IDS = ['capsule', 'atelier'] as const;
-export const PERIODS = ['mois', 'an'] as const;
+export const PERIODS = ['mois'] as const; // l'annuel n'est plus vendu (brief v6, 31/10)
 
 export type PlanId = (typeof PLAN_IDS)[number];
 export type Period = (typeof PERIODS)[number];
@@ -17,7 +17,14 @@ export type Period = (typeof PERIODS)[number];
 /** Un abonnement dans ces états ouvre les droits de son offre. */
 export const ENTITLED = ['active', 'trialing', 'past_due'] as const;
 
-export const TRIAL_DAYS = 30;
+/** Les packs de places (achat à l'unité) : des places de garde-robe, jamais des générations. */
+export const PLACE_PACKS = {
+  petit: { places: 10, cents: 199 },
+  moyen: { places: 30, cents: 499 },
+} as const;
+export type PlacePackId = keyof typeof PLACE_PACKS;
+export const isPlacePack = (v: unknown): v is PlacePackId => typeof v === 'string' && Object.hasOwn(PLACE_PACKS, v);
+export const placesLookupKey = (pack: PlacePackId) => `dressy_places_${pack}`;
 
 export const isPlan = (v: unknown): v is PlanId => (PLAN_IDS as readonly unknown[]).includes(v);
 export const isPeriod = (v: unknown): v is Period => (PERIODS as readonly unknown[]).includes(v);

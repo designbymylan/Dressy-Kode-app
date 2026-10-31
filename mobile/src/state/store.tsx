@@ -30,15 +30,28 @@ export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean }
 
 /**
  * Mêmes valeurs que public.plan_limits() côté base (migration
- * offres_fashion_sapologue, 21/10). null : sans limite. `capsule` porte
+ * quotas_generation, brief v6 du 31/10). null : sans limite. `capsule` porte
  * Fashion, `atelier` Sapologue ; Couture n'est plus vendue.
  */
 export const LIMITS: Record<PlanId, { pieces: number | null; questions: number | null }> = {
-  decouverte: { pieces: 30, questions: 5 },
-  capsule: { pieces: 120, questions: 30 },
-  atelier: { pieces: null, questions: null },
-  couture: { pieces: null, questions: null },
+  decouverte: { pieces: 15, questions: 5 },
+  capsule: { pieces: 50, questions: 30 },
+  atelier: { pieces: 100, questions: null },
+  couture: { pieces: 100, questions: null },
 };
+
+/** Les packs de places de la boutique (mêmes montants que web/src/lib/plans.ts). */
+export const PLACE_PACKS = [
+  { id: 'petit', places: 10, cents: 199, name: '+10 places' },
+  { id: 'moyen', places: 30, cents: 499, name: '+30 places' },
+] as const;
+export type PlacePackId = (typeof PLACE_PACKS)[number]['id'];
+
+/**
+ * Les générations offertes de la démonstration. Connecté, le compteur vient
+ * de la base et ce nombre n'est jamais lu : l'app n'affiche que ce qui reste.
+ */
+const DEMO_GENERATIONS = 4;
 
 export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> = {
   tenue: { title: 'Tenue du jour', note: 'Ta tenue, de la tête aux pieds' },
@@ -128,6 +141,8 @@ type State = {
   plan: PlanId;
   period: Period;
   extraPlaces: number;
+  /** Générations d'image restantes (Image propre) ; null tant que la base n'a pas répondu. */
+  gen: number | null;
   packs: string[];
   modules: ModuleState[];
   density: 'aeree' | 'dense';
@@ -176,6 +191,7 @@ const initial: State = {
   plan: 'decouverte',
   period: 'mois',
   extraPlaces: 0,
+  gen: DEMO_GENERATIONS,
   packs: [],
   modules: DEFAULT_MODULES,
   density: 'aeree',
@@ -237,9 +253,10 @@ type Action =
   | { t: 'ask'; message: KodeMessage }
   | { t: 'answer'; message: KodeMessage; refund?: boolean }
   | { t: 'setPlan'; plan: PlanId; period: Period }
-  | { t: 'planSync'; plan: PlanId; period: Period; kodeUsed: number }
+  | { t: 'planSync'; plan: PlanId; period: Period; kodeUsed: number; extraPlaces: number; gen: number | null }
+  | { t: 'gen'; gen: number | null }
   | { t: 'buyPack'; id: string }
-  | { t: 'buyPlaces' }
+  | { t: 'buyPlaces'; places: number }
   | { t: 'toggleModule'; id: HomeModule }
   | { t: 'moveModule'; id: HomeModule; by: -1 | 1 }
   | { t: 'resetModules' }
@@ -293,6 +310,8 @@ function reducer(s: State, a: Action): State {
         journal: acc.journal,
         messages: acc.messages,
         kodeUsed: acc.kodeUsed,
+        extraPlaces: acc.extraPlaces,
+        gen: acc.gen,
         plan: acc.plan,
         period: acc.period,
       };
@@ -393,12 +412,14 @@ function reducer(s: State, a: Action): State {
       return { ...s, plan: a.plan, period: a.period, toast: { id: ++toastId, text: a.plan === 'decouverte' ? 'Retour à Découverte' : 'Ton offre est active' } };
     case 'planSync': {
       const changed = a.plan !== s.plan;
-      return { ...s, plan: a.plan, period: a.period, kodeUsed: a.kodeUsed, toast: changed ? { id: ++toastId, text: a.plan === 'decouverte' ? 'Retour à Découverte' : 'Ton offre est active' } : s.toast };
+      return { ...s, plan: a.plan, period: a.period, kodeUsed: a.kodeUsed, extraPlaces: a.extraPlaces, gen: a.gen, toast: changed ? { id: ++toastId, text: a.plan === 'decouverte' ? 'Retour à Découverte' : 'Ton offre est active' } : s.toast };
     }
     case 'buyPack':
       return s.packs.includes(a.id) ? s : { ...s, packs: [...s.packs, a.id], toast: { id: ++toastId, text: 'Achat confirmé, c’est débloqué' } };
     case 'buyPlaces':
-      return { ...s, extraPlaces: s.extraPlaces + 1, toast: { id: ++toastId, text: '+30 places ajoutées à ton dressing' } };
+      return { ...s, extraPlaces: s.extraPlaces + a.places, toast: { id: ++toastId, text: `+${a.places} places ajoutées à ton dressing` } };
+    case 'gen':
+      return { ...s, gen: a.gen };
     case 'toggleModule': {
       // Affichée ou masquée, la section se range à la frontière des deux groupes.
       const m = s.modules.find((x) => x.id === a.id);
@@ -466,7 +487,7 @@ function refreshDemo(pieces: Piece[]): Piece[] {
   return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
 }
 
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -845,7 +866,53 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       },
       // Connecté, pas d'achat branché : les écrans n'affichent plus ces boutons.
       buyPack: (id: string) => (live() ? undefined : dispatch({ t: 'buyPack', id })),
-      buyPlaces: () => (live() ? undefined : dispatch({ t: 'buyPlaces' })),
+      // Connecté : paiement unique chez Stripe, les places arrivent par le webhook (relues au retour).
+      // Démonstration : le paiement est simulé.
+      buyPlaces: (pack: PlacePackId) => {
+        const p = PLACE_PACKS.find((x) => x.id === pack);
+        if (!p) return;
+        if (!live()) return dispatch({ t: 'buyPlaces', places: p.places });
+        remote
+          .buyPlacePack(pack)
+          .then((r) => {
+            if (!r.ok) return dispatch({ t: 'toast', text: r.message, warn: true });
+            dispatch({ t: 'toast', text: 'Le paiement sécurisé s’ouvre dans ton navigateur' });
+            return Linking.openURL(r.url);
+          })
+          .catch(() => dispatch({ t: 'toast', text: NETWORK, warn: true }));
+      },
+      /**
+       * « Image propre » : Kodi redessine la pièce (une génération). Rend 'quota' quand il n'en reste
+       * plus : l'écran ouvre alors l'écran d'abonnement, sans rien appeler.
+       */
+      cleanImage: async (id: string): Promise<'ok' | 'quota' | 'erreur'> => {
+        const s = getState();
+        if (!live()) {
+          if (s.gen !== null && s.gen <= 0) return 'quota';
+          dispatch({ t: 'gen', gen: Math.max(0, (s.gen ?? DEMO_GENERATIONS) - 1) });
+          dispatch({ t: 'toast', text: 'Kodi redessine ta pièce' });
+          return 'ok';
+        }
+        if (s.gen !== null && s.gen <= 0) return 'quota';
+        try {
+          const r = await remote.cleanPiece(id);
+          if (r.ok) {
+            // La base rend ce qui restait avant le dessin ; l'agent prend la génération, rendue s'il échoue.
+            dispatch({ t: 'gen', gen: r.left !== undefined ? Math.max(0, r.left - 1) : s.gen === null ? null : Math.max(0, s.gen - 1) });
+            dispatch({ t: 'toast', text: 'Kodi redessine ta pièce' });
+            return 'ok';
+          }
+          if (r.quota) {
+            dispatch({ t: 'gen', gen: 0 });
+            return 'quota';
+          }
+          dispatch({ t: 'toast', text: r.message, warn: true });
+          return 'erreur';
+        } catch {
+          dispatch({ t: 'toast', text: NETWORK, warn: true });
+          return 'erreur';
+        }
+      },
       toggleModule: (id: HomeModule) => dispatch({ t: 'toggleModule', id }),
       moveModule: (id: HomeModule, by: -1 | 1) => dispatch({ t: 'moveModule', id, by }),
       resetModules: () => dispatch({ t: 'resetModules' }),
@@ -1040,9 +1107,10 @@ export function useStore() {
 
 /* ---- Valeurs dérivées : un seul endroit pour les calculer ---- */
 
+/** Les places : celles de l'offre, plus les packs achetés (qui s'y ajoutent, sans la remplacer). */
 export const pieceLimit = (s: State) => {
   const base = LIMITS[s.plan].pieces;
-  return base === null ? null : base + s.extraPlaces * 30;
+  return base === null ? null : base + s.extraPlaces;
 };
 
 export const questionsLeft = (s: State) => {

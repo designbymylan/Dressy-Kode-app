@@ -46,6 +46,10 @@ export type Account = {
   journal: Record<Iso, string[]>;
   messages: KodeMessage[];
   kodeUsed: number;
+  /** Places ajoutées par les packs achetés (+10, +30). */
+  extraPlaces: number;
+  /** Générations restantes (Image propre) ; null si la base ne répond pas. */
+  gen: number | null;
   plan: PlanId;
   period: Period;
 };
@@ -285,7 +289,7 @@ export async function loadAccount(): Promise<Account | null> {
   if (space.error) throw new Error(`espace : ${space.error.message}`);
   const spaceId = space.data.id as string;
 
-  const [profile, style, silhouette, settings, garments, stats, subs, usage, planned, messages, events, trips] = await Promise.all([
+  const [profile, style, silhouette, settings, garments, stats, subs, usage, packs, gen, planned, messages, events, trips] = await Promise.all([
     sb.from('profiles').select('display_name, last_name, username, name_display, avatar_url, age_range, onboarded_at, created_at').eq('id', user.id).single(),
     sb.from('style_profile').select('gender, styles, colours, avoid_colours, occasions').eq('space_id', spaceId).single(),
     sb.from('silhouettes').select('shape, shape_source, height_cm, weight_kg, measurements, usual_sizes').eq('space_id', spaceId).single(),
@@ -294,6 +298,8 @@ export async function loadAccount(): Promise<Account | null> {
     sb.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),
     sb.from('subscriptions').select('plan, period, status').eq('space_id', spaceId).in('status', ['active', 'trialing', 'past_due']),
     sb.rpc('kode_usage', { target: spaceId }),
+    sb.from('place_packs').select('places').eq('space_id', spaceId),
+    sb.rpc('generation_status', { p_space: spaceId }),
     // Le calendrier montre le mois passé et les mois à venir.
     sb.from('planned_days')
       .select('day, trip_id, outfits(name, outfit_items(garment_id))')
@@ -386,21 +392,39 @@ export async function loadAccount(): Promise<Account | null> {
     journal,
     messages: ((messages.data ?? []) as unknown as MessageRow[]).reverse().map(toMessage),
     kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
+    extraPlaces: placesOf(packs.data),
+    gen: remainingOf(gen.data),
     plan: best?.plan ?? 'decouverte',
     period: best?.period ?? 'mois',
   };
 }
 
-/** L'offre et le compteur de Kodi seulement : relus au retour du paiement. */
-export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 'period' | 'kodeUsed'>> {
+const placesOf = (rows: unknown) => ((rows ?? []) as { places: number }[]).reduce((n, r) => n + (r.places ?? 0), 0);
+
+/** Les générations restantes, telles que la base les rend ; null si elle ne répond pas. */
+const remainingOf = (data: unknown): number | null => {
+  const row = (Array.isArray(data) ? data[0] : data) as { remaining?: number } | null;
+  return row && typeof row.remaining === 'number' ? row.remaining : null;
+};
+
+/** L'offre, les compteurs et les places seulement : relus au retour du paiement. */
+export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 'period' | 'kodeUsed' | 'extraPlaces' | 'gen'>> {
   const sb = db();
-  const [subs, usage] = await Promise.all([
+  const [subs, usage, packs, gen] = await Promise.all([
     sb.from('subscriptions').select('plan, period').eq('space_id', spaceId).in('status', ['active', 'trialing', 'past_due']),
     sb.rpc('kode_usage', { target: spaceId }),
+    sb.from('place_packs').select('places').eq('space_id', spaceId),
+    sb.rpc('generation_status', { p_space: spaceId }),
   ]);
   const rank = { couture: 3, atelier: 2, capsule: 1 } as Record<string, number>;
   const best = ((subs.data ?? []) as { plan: PlanId; period: Period }[]).sort((a, b) => (rank[b.plan] ?? 0) - (rank[a.plan] ?? 0))[0];
-  return { plan: best?.plan ?? 'decouverte', period: best?.period ?? 'mois', kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0 };
+  return {
+    plan: best?.plan ?? 'decouverte',
+    period: best?.period ?? 'mois',
+    kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
+    extraPlaces: placesOf(packs.data),
+    gen: remainingOf(gen.data),
+  };
 }
 
 /* ---- Écritures ---- */
@@ -843,6 +867,27 @@ export async function billing(plan: PlanId, period: Period): Promise<Result<{ ur
   const { data, error } = await db().functions.invoke<{ url: string }>('billing', { body });
   if (error || !data?.url) return { ok: false, ...(await functionError(error, 'Le paiement n’a pas pu s’ouvrir. Réessaie dans un instant.')) };
   return { ok: true, url: data.url };
+}
+
+/** Un pack de places (+10 ou +30) : paiement unique chez Stripe, rend l'adresse à ouvrir. */
+export async function buyPlacePack(pack: 'petit' | 'moyen'): Promise<Result<{ url: string }>> {
+  const { data, error } = await db().functions.invoke<{ url: string }>('billing', { body: { action: 'places', pack } });
+  if (error || !data?.url) return { ok: false, ...(await functionError(error, 'Le paiement n’a pas pu s’ouvrir. Réessaie dans un instant.')) };
+  return { ok: true, url: data.url };
+}
+
+/**
+ * « Image propre » : Kodi redessine la pièce à partir de sa photo (une
+ * génération). Refusé par la base, sans rien appeler, quand il n'en reste plus.
+ */
+export async function cleanPiece(id: string): Promise<{ ok: true; left?: number } | { ok: false; message: string; quota?: boolean }> {
+  if (!isUuid(id)) return { ok: false, message: 'Cette pièce n’a pas de photo à redessiner.' };
+  const { data, error } = await db().rpc('request_clean_image', { target: id });
+  if (error) {
+    const hint = (error as { hint?: string }).hint;
+    return hint === 'quota' ? { ok: false, message: 'Tu as utilisé tes générations.', quota: true } : { ok: false, message: error.message };
+  }
+  return { ok: true, left: typeof data === 'number' ? data : undefined };
 }
 
 /* ---- Photos confiées à Kodi (Edge Function dressy-agent) ---- */

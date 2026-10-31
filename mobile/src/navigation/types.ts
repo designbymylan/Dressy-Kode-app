@@ -42,6 +42,8 @@ export type RootParams = {
   Confidentialite: undefined;
   Share: { id: string };
   Offers: undefined;
+  /** La fin des générations offertes (brief v6, 31/10) : l'abonnement d'abord, sans pack. */
+  Generations: undefined;
   Shop: { pack?: string } | undefined;
   States: undefined;
 };

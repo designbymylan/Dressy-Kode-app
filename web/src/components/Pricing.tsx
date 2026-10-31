@@ -6,12 +6,11 @@ import { openPortal, startCheckout, type FormResult } from '@/app/actions';
 import { Icon, type IconName } from '@/components/icons';
 import { SubmitButton } from '@/components/SubmitButton';
 import { ErrorNote } from '@/components/ui';
-import { COMPARE, FREE_PLAN, PLANS, euros, type Period, type Plan, type PlanId } from '@/lib/plans';
+import { COMPARE, FREE_PLAN, PLANS, euros, type PlanId } from '@/lib/plans';
 
 /**
  * Les deux offres (27/10), d'après la référence d'abonnement envoyée : un
- * titre, la liste de ce qui est inclus dans une carte, deux cartes de durée
- * (l'année, le mois) dont la choisie monte sur un fond gris, la phrase du prix
+ * titre, la liste de ce qui est inclus dans une carte, la phrase du prix
  * et un grand bouton. Pas de remise en avant : les prix sont ceux de plans.ts.
  * Le fond qui glisse d'une durée ou d'une offre à l'autre est le seul
  * mouvement ; « Réduire les animations » le coupe (.pr-* dans globals.css).
@@ -26,19 +25,17 @@ function rowsFor(id: PlanId): Row[] {
   const take = (...icons: string[]): Row[] => icons.map((i) => ({ icon: i as IconName, title: pick(i).title, sub: pick(i).sub, soon: pick(i).soon }));
   if (id === 'capsule') return take('hanger', 'sparkle', 'cloud', 'chart');
   return [
-    { icon: 'hanger', title: 'Tout Fashion', sub: 'Dressing, tenue du jour, suivi' },
+    { icon: 'hanger', title: 'Tout Fashion', sub: '100 pièces, 100 générations par mois' },
     ...take('infinity', 'party', 'layers'),
   ];
 }
 
-export function Pricing({ current, trial }: { current: PlanId | null; trial: boolean }) {
+export function Pricing({ current }: { current: PlanId | null; trial?: boolean }) {
   const [pick, setPick] = useState<PlanId>(current === 'atelier' ? 'capsule' : 'atelier');
-  const [period, setPeriod] = useState<Period>('an');
   const [checkout, checkoutAction] = useActionState<FormResult, FormData>(startCheckout, undefined);
   const [portal, portalAction] = useActionState<FormResult, FormData>(openPortal, undefined);
   const plan = PLANS.find((p) => p.id === pick)!;
   const error = checkout?.error ?? portal?.error;
-  const perMonth = period === 'an' ? Math.round(plan.cents.an / 12) : plan.cents.mois;
 
   return (
     <section id="offres" aria-label="Offres" className="rise pr" style={{ scrollMarginTop: 60 }}>
@@ -68,23 +65,10 @@ export function Pricing({ current, trial }: { current: PlanId | null; trial: boo
         ))}
       </ul>
 
-      <div role="radiogroup" aria-label="Durée" className="pr-tray" data-on={period === 'an' ? 0 : 1}>
-        <span className="pr-tray__thumb" aria-hidden="true" />
-        {(['an', 'mois'] as const).map((p) => (
-          <button key={p} type="button" role="radio" aria-checked={period === p} onClick={() => setPeriod(p)} className="pr-tray__opt">
-            <span className="pr-tray__label">{p === 'an' ? 'Annuel' : 'Mensuel'}</span>
-            <strong key={`${plan.id}${p}`} className="pr-tray__price pr__swap">{euros(plan.cents[p])}</strong>
-            <span className="pr-tray__sub">{p === 'an' ? `soit ${euros(Math.round(plan.cents.an / 12))} par mois` : 'sans engagement'}</span>
-          </button>
-        ))}
-      </div>
-
       <p className="pr__line" aria-live="polite">
-        <strong key={`${plan.id}${period}`} className="pr__swap">{euros(perMonth)} par mois</strong>
-        {period === 'an' ? ', facturé une fois par an.' : ', facturé chaque mois.'}
+        <strong key={plan.id} className="pr__swap">{euros(plan.cents.mois)} par mois</strong>, facturé chaque mois.
       </p>
       <p className="pr__fine">
-        {period === 'an' && trial && !current ? 'Premier mois offert. ' : ''}
         Sans engagement, résiliable à tout moment depuis Mon compte. Prix TTC, paiement sécurisé par Stripe.
       </p>
 
@@ -102,9 +86,9 @@ export function Pricing({ current, trial }: { current: PlanId | null; trial: boo
       ) : (
         <form action={checkoutAction}>
           <input type="hidden" name="plan" value={plan.id} />
-          <input type="hidden" name="period" value={period} />
+          <input type="hidden" name="period" value="mois" />
           <SubmitButton
-            label={period === 'an' && trial ? 'Commencer mon mois offert' : `Choisir ${plan.name} ${period === 'an' ? 'Annuel' : 'Mensuel'}`}
+            label={`Choisir ${plan.name}`}
             pending="Ouverture du paiement"
             className="btn pr__cta btn-block"
           />

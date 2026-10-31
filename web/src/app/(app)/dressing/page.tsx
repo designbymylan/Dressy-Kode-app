@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
 import { ACTIVE_STATUSES, JOB_SELECT, jobsFilter, type JobRow } from '@/lib/jobs';
 import { loadPieces, signAll } from '@/lib/garments';
+import { loadGeneration } from '@/lib/generations';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { parisDay } from '@/lib/dates';
 import { usageLine, usageOf, WINDOW_DAYS } from '@/lib/usage';
@@ -22,7 +23,7 @@ export default async function Dressing({
   if (!viewer) redirect('/connexion');
   const supabase = await createClient();
 
-  const [items, { data: jobRows }, { data: statRows }] = await Promise.all([
+  const [items, { data: jobRows }, { data: statRows }, generation] = await Promise.all([
     loadPieces(supabase),
     supabase
       .from('ai_jobs')
@@ -31,6 +32,7 @@ export default async function Dressing({
       .or(jobsFilter())
       .order('created_at'),
     supabase.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', viewer.spaceId),
+    loadGeneration(supabase, viewer.spaceId),
   ]);
   const stats: Record<string, WearStat> = Object.fromEntries(
     ((statRows ?? []) as { garment_id: string; wear_count: number | null; last_worn_on: string | null }[])
@@ -132,7 +134,7 @@ export default async function Dressing({
         </Card>
       ) : (
         <>
-          <DressingRails rails={rails.filter((r) => r.pieces.length > 0)} stats={stats} />
+          <DressingRails rails={rails.filter((r) => r.pieces.length > 0)} stats={stats} generation={generation} />
 
           <div className="rise" style={{ '--i': 2 + rails.length, display: 'grid', gap: 10 } as CSSProperties}>
             <Link href="/dressing/ajouter" className="btn btn-primary btn-block">

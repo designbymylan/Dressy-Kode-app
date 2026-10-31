@@ -123,6 +123,11 @@ export function PieceScreen() {
   const wornToday = piece.lastWorn === 0;
   // Seule une pièce découpée d'une photo du compte peut être reprise, deux fois au plus.
   const reportable = s.account === 'connecte' && !!piece.image && (piece.reports ?? 0) < 2;
+  // « Image propre » : une génération. Connecté, seule une pièce venue d'une photo ; la démonstration le simule.
+  const cleanable = s.account !== 'connecte' || !!piece.image;
+  const left = s.gen;
+  const free = s.plan === 'decouverte';
+  const noGen = left !== null && left <= 0;
 
   const stageH = Math.min(440, Math.round(width * 1.1));
   const art = Math.min(220, width * 0.56);
@@ -249,6 +254,28 @@ export function PieceScreen() {
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">
         {/* La feuille du menu se referme d'abord : sur iPhone, deux modales ne s'ouvrent pas l'une sur l'autre. */}
         <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
+        {cleanable && left !== null && (
+          noGen ? (
+            <>
+              {/* À zéro : la ligne est éteinte et dit pourquoi ; un seul chemin mène aux offres. */}
+              <Row icon="image" title="Image propre" detail={free ? 'Tu as utilisé tes générations offertes.' : 'Tes générations reviennent le 1er du mois.'} testID="piece-clean-off" />
+              {free && <Row icon="lock" title="Voir les offres" testID="piece-clean-offers" onPress={() => { setMenu(false); setTimeout(() => nav.navigate('Generations'), 380); }} />}
+            </>
+          ) : (
+            <Row
+              icon="image"
+              title="Image propre"
+              detail={`Kodi redessine cette pièce sur fond net · ${left} ${free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}`}
+              testID="piece-clean"
+              onPress={() => {
+                setMenu(false);
+                void a.cleanImage(piece.id).then((r) => {
+                  if (r === 'quota') nav.navigate('Generations');
+                });
+              }}
+            />
+          )
+        )}
         {reportable && (
           <Row icon="edit" title="Rendu incorrect" detail="Kodi reprend la découpe de cette pièce" testID="piece-report" onPress={() => { setMenu(false); void a.reportPiece(piece.id); }} />
         )}

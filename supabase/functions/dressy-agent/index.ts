@@ -16,8 +16,11 @@
  *       rangement dans le dressing.
  *
  * « Rendu incorrect » (fiche pièce) remet la tâche en file : 1re fois, la
- * découpe reprend avec le modèle le plus fort ; 2e fois seulement, Nano Banana
- * redessine la pièce. C'est le seul cas de génération d'image.
+ * découpe reprend avec le modèle le plus fort ; 2e fois, Nano Banana redessine
+ * la pièce. « Image propre » (fiche pièce) la redessine aussi, à la demande.
+ * Ce sont les seuls cas de génération d'image, et chacun prend une génération
+ * au compteur de la personne (quota.ts, migration quotas_generation) : rendue
+ * si le dessin échoue, jamais prise si l'image est déjà en cache.
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
  * ce qui a déjà été fait (repérage).
@@ -30,6 +33,7 @@ import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, segment, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
+import { cacheKey, drawWithQuota, imageSettings, price, tokenCost, type Ports } from './quota.ts';
 import { cutoutBackground, crop, downscale, type Raster } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
 import { CUTOUT } from './config.ts';
@@ -59,6 +63,8 @@ type Job = {
   details: Details | null;
   /** 0 : première découpe ; 1 et 2 : reprises après un « rendu incorrect ». */
   redo: number;
+  /** « Image propre » demandée : la pièce est redessinée (une génération). */
+  clean: boolean;
 };
 
 type Details = { brand?: string; size?: string; fit?: string; material?: string; note?: string };
@@ -85,6 +91,31 @@ async function setJob(job: Job, patch: Record<string, unknown>) {
   const { error } = await db.from('ai_jobs').update(patch).eq('id', job.id);
   if (error) throw new Error(`mise à jour de la pièce : ${error.message}`);
   Object.assign(job, patch);
+}
+
+// ---------------------------------------------------------------- mesures
+
+/** Prix estimés en dollars, réglables dans les secrets sans toucher au code. */
+const COST = {
+  image1k: price(Deno.env.get('COST_IMAGE_1K_USD'), 0.04),
+  image2k: price(Deno.env.get('COST_IMAGE_2K_USD'), 0.1),
+  claude: { in: price(Deno.env.get('COST_CLAUDE_IN_PER_M_USD'), 3), out: price(Deno.env.get('COST_CLAUDE_OUT_PER_M_USD'), 15) },
+  gemini: { in: price(Deno.env.get('COST_GEMINI_IN_PER_M_USD'), 0.3), out: price(Deno.env.get('COST_GEMINI_OUT_PER_M_USD'), 2.5) },
+};
+
+/** Note un appel qui ne prend rien au compteur (repérage, segmentation, image en cache). Jamais bloquant. */
+async function note(job: Job, provider: 'google' | 'anthropic', kind: 'dessin' | 'segmentation' | 'reperage', model: string, status: 'succes' | 'echec', cacheHit: boolean, costUsd: number) {
+  const { error } = await db.rpc('generation_note', {
+    p_user: job.requested_by, p_space: job.space_id, p_job: job.id, p_provider: provider, p_kind: kind,
+    p_model: model, p_status: status, p_cache_hit: cacheHit, p_cost: costUsd,
+  });
+  if (error) console.warn('mesure non enregistrée :', error.message);
+}
+
+async function sha256(bytes: Uint8Array | string): Promise<string> {
+  const data = typeof bytes === 'string' ? new TextEncoder().encode(bytes) : bytes;
+  const digest = await crypto.subtle.digest('SHA-256', data as BufferSource);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function download(bucket: string, path: string): Promise<Img> {
@@ -132,6 +163,8 @@ async function surveyPhoto(job: Job, sources: Img[], log: (m: string) => void): 
     const t0 = Date.now();
     const found = await survey({ sources, hint: job.user_input, gender: profile?.gender ?? null });
     log(`repérage (${MODELS.survey}) → ${found.pieces.length} pièce(s) en ${Date.now() - t0} ms : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
+    const u = (found.usage ?? {}) as Record<string, unknown>;
+    await note(job, 'anthropic', 'reperage', MODELS.survey, 'succes', false, tokenCost(u.input_tokens, u.output_tokens, COST.claude));
     if (!found.pieces.length) throw new AgentError(SAY.nothing, found.note || 'aucune pièce repérée');
 
     // La photo compte déjà pour une pièce dans la limite de l'offre ; les
@@ -225,6 +258,8 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
     j.ms.segmentation = Date.now() - t;
     j.usage.segmentation = seg.usage;
     j.modele = seg.model;
+    const gu = (seg.usage ?? {}) as Record<string, unknown>;
+    await note(job, 'google', 'segmentation', seg.model, 'succes', false, tokenCost(gu.promptTokenCount, gu.candidatesTokenCount, COST.gemini));
     const chosen = pickSegment(seg.segments, job.redo >= 1 ? null : target.box);
     if (!chosen?.mask) {
       log(`segmentation (${seg.model}) : aucun masque`);
@@ -264,9 +299,10 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
 }
 
 /**
- * Dernier recours, après deux « rendu incorrect » : Nano Banana redessine la
- * pièce à partir de la photo, sur un fond uni retiré ensuite. C'est le seul
- * endroit où une image est générée.
+ * Nano Banana redessine la pièce à partir de la photo, sur un fond uni retiré
+ * ensuite : après deux « rendu incorrect », ou à la demande (« Image propre »).
+ * C'est le seul endroit où une image est générée, donc le seul qui prend une
+ * génération au compteur.
  */
 async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
@@ -277,17 +313,71 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     backdropClause(target.colors, target.hex, isMetal(target)),
   ].filter(Boolean).join('\n\n');
 
-  await setJob(job, { status: 'generating', refined_prompt: prompt, image_model: MODELS.gemini });
+  // L'offre décide du modèle et de la taille : Lite en 1K pour le gratuit, 2K pour les abonnées.
+  const { data: planData } = await db.rpc('space_plan', { target: job.space_id });
+  const plan = typeof planData === 'string' ? planData : 'decouverte';
+  const { model, size } = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
+
+  const photoHash = await sha256(sources[0].bytes);
+  const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors]));
+  const key = cacheKey({ photoHash, pieceHash, model });
+
+  await setJob(job, { status: 'generating', refined_prompt: prompt, image_model: model });
+
   let t = Date.now();
-  const img = await generate(prompt, sources);
+  let usage: unknown = null;
+  const ports: Ports<Img> = {
+    cacheGet: async (k) => {
+      const { data } = await db.from('generation_cache').select('image_path').eq('space_id', job.space_id).eq('cache_key', k).maybeSingle();
+      if (!data) return null;
+      try {
+        return await download('ai-generated', data.image_path);
+      } catch {
+        return null; // fichier échu : on redessine
+      }
+    },
+    cachePut: async (k, image) => {
+      const path = `${job.space_id}/cache-${photoHash.slice(0, 16)}-${pieceHash.slice(0, 16)}.png`;
+      await upload('ai-generated', path, image);
+      await db.from('generation_cache').upsert({ space_id: job.space_id, cache_key: k, image_path: path });
+    },
+    reserve: async () => {
+      const { data, error } = await db.rpc('generation_reserve', { p_user: job.requested_by, p_space: job.space_id, p_job: job.id, p_model: model });
+      if (error) throw new AgentError(SAY.failed, `réservation de la génération : ${error.message}`);
+      const r = data as { ok: boolean; log_id?: string; plan: string };
+      return r.ok ? { ok: true, logId: r.log_id!, plan: r.plan } : { ok: false, plan: r.plan };
+    },
+    settle: async (logId, status, cost) => {
+      const { error } = await db.rpc('generation_settle', { p_log: logId, p_status: status, p_cost: cost });
+      if (error) throw new Error(error.message);
+    },
+    noteCacheHit: () => note(job, 'google', 'dessin', model, 'succes', true, 0),
+    call: async () => {
+      const img = await generate(prompt, sources, { model, size });
+      usage = img.usage;
+      return { bytes: img.bytes, mime: img.mime };
+    },
+    isRejection: (e) => e instanceof AgentError && e.message === SAY.refused,
+    cost: () => (size === '2K' ? COST.image2k : COST.image1k),
+  };
+
+  const drawn = await drawWithQuota(key, ports, plan);
+  if (drawn.kind === 'empty') {
+    // Aucune API appelée. La pièce reste telle qu'elle était, et la personne lit pourquoi.
+    throw new AgentError(SAY.quota, `plus de génération (offre ${drawn.plan})`);
+  }
+  const img = drawn.image;
   j.ms.generation = Date.now() - t;
-  j.usage.generation = img.usage;
-  j.modele = MODELS.gemini;
-  log(`Nano Banana → ${Math.round(img.bytes.length / 1024)} Ko en ${j.ms.generation} ms`);
+  j.usage.generation = usage;
+  j.modele = model;
+  log(`Nano Banana (${size}${drawn.kind === 'cache' ? ', depuis le cache' : ''}) → ${Math.round(img.bytes.length / 1024)} Ko en ${j.ms.generation} ms`);
 
   await setJob(job, { status: 'cutout' });
   t = Date.now();
-  const lit = cutoutBackground(decode(img.bytes, img.mime), { garment: garmentRgbs(target.colors, target.hex) });
+  // Un dessin en 2K est ramené à la taille de travail : le canevas final fait 1 024 px.
+  const raw = decode(img.bytes, img.mime);
+  const sized = Math.max(raw.width, raw.height) > 2000 ? downscale(raw, 1800) : raw;
+  const lit = cutoutBackground(sized, { garment: garmentRgbs(target.colors, target.hex) });
   const { cut, oneShare } = cleanSpecks(lit);
   const checks = runChecks(cut, oneShare, target.hex?.[0] ?? null);
   j.ms.detourage = Date.now() - t;
@@ -364,7 +454,7 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
     }
   }
 
-  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j });
+  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j, clean: false });
   log(`rangée dans le dressing : ${t.name} (${j.methode}, ${Object.entries(j.ms).map(([k, v]) => `${k} ${v} ms`).join(', ')})`);
 }
 
@@ -384,7 +474,7 @@ async function runOnce() {
     const missing = KEYS.filter((k) => !Deno.env.get(k));
     if (missing.length) throw new AgentError(SAY.notReady, `${missing.join(', ')} absente(s) des secrets Supabase`);
 
-    if (job.garment_id && !job.redo) {
+    if (job.garment_id && !job.redo && !job.clean) {
       await setJob(job, { status: 'done', error: null });
       return;
     }
@@ -392,7 +482,7 @@ async function runOnce() {
 
     const sources = await loadSources(job);
     const target = job.target ?? await surveyPhoto(job, sources, log);
-    if (job.redo >= 2) await redraw(job, targetOf(job), sources, log);
+    if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log);
     else await cutOut(job, target, sources, log);
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
@@ -401,7 +491,7 @@ async function runOnce() {
     const detail = err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : String(err);
     log(`échec : ${detail}`);
     // Une reprise ratée laisse la pièce telle qu'elle était : seule la tâche garde la trace.
-    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message }).eq('id', job.id);
+    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false }).eq('id', job.id);
   }
 }
 

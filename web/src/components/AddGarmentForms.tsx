@@ -3,7 +3,8 @@
 import { useActionState, useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { addGarment, requestAiGarments, type FormResult } from '@/app/actions';
+import { addGarment, buyPlaces, requestAiGarments, type FormResult } from '@/app/actions';
+import { PLACE_PACKS, euros } from '@/lib/plans';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import { CATEGORIES } from '@/lib/wardrobe';
 import { COLOURS } from '@/lib/onboarding';
@@ -12,15 +13,36 @@ import { SubmitButton } from '@/components/SubmitButton';
 import { KodeThinking } from '@/components/KodeThinking';
 import { THINKING } from '@/lib/thinking';
 
-/** Le message d'erreur, et le chemin vers les offres quand le dressing est plein. */
+/** Un pack de places : paiement unique chez Stripe, des places et rien d'autre. */
+function PlacePack({ id, label }: { id: string; label: string }) {
+  const [state, action] = useActionState<FormResult, FormData>(buyPlaces, undefined);
+  return (
+    <form action={action} style={{ display: 'grid', gap: 6 }}>
+      <input type="hidden" name="pack" value={id} />
+      <SubmitButton label={label} pending="Ouverture du paiement" className="btn btn-glass btn-sm" />
+      {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
+    </form>
+  );
+}
+
+/**
+ * Le message d'erreur. Quand le dressing est plein : l'offre du dessus
+ * d'abord (elle accueille plus de pièces), les packs de places en option.
+ */
 function Problem({ error, code }: { error: string; code?: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <ErrorNote>{error}</ErrorNote>
       {code === 'pieces' ? (
-        <Link href="/offres" className="btn btn-glass btn-sm" style={{ alignSelf: 'center' }}>
-          Voir les offres
-        </Link>
+        <>
+          <Link href="/offres" className="btn btn-sm" style={{ alignSelf: 'center' }}>
+            Voir les offres
+          </Link>
+          <p className="small muted center">Ou ajoute seulement des places :</p>
+          {PLACE_PACKS.map((p) => (
+            <PlacePack key={p.id} id={p.id} label={`${p.name} · ${euros(p.cents)}`} />
+          ))}
+        </>
       ) : null}
     </div>
   );

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransitio
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Piece } from '@/lib/garments';
-import { reportGarment, togglePieceWear } from '@/app/actions';
+import { reportGarment, requestCleanImage, togglePieceWear } from '@/app/actions';
+import { isFree, type Generation } from '@/lib/generations';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Icon, ICON } from '@/components/ui';
 
@@ -67,7 +68,7 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('
  *   la fiche de la pièce, et s'y replie à la fermeture. L'œil ne perd
  *   jamais la pièce.
  */
-export function DressingRails({ rails, stats }: { rails: RailView[]; stats: Record<string, WearStat> }) {
+export function DressingRails({ rails, stats, generation = null }: { rails: RailView[]; stats: Record<string, WearStat>; generation?: Generation | null }) {
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<Piece | null>(null);
   const origin = useRef<HTMLElement | null>(null);
@@ -131,6 +132,7 @@ export function DressingRails({ rails, stats }: { rails: RailView[]; stats: Reco
           piece={open}
           stat={stats[open.id]}
           goes={goes(open)}
+          generation={generation}
           origin={origin}
           onClosed={() => {
             const back = origin.current?.closest('button');
@@ -148,12 +150,14 @@ function PieceSheet({
   piece,
   stat,
   goes,
+  generation,
   origin,
   onClosed,
 }: {
   piece: Piece;
   stat: WearStat | undefined;
   goes: number;
+  generation: Generation | null;
   origin: RefObject<HTMLElement | null>;
   onClosed: () => void;
 }) {
@@ -255,6 +259,7 @@ function PieceSheet({
           <Link href={`/tenues/nouvelle?avec=${piece.id}`} className="btn btn-glass btn-block">
             <Icon d={ICON.sparkle} size={18} /> Composer une tenue avec
           </Link>
+          <CleanImage id={piece.id} generation={generation} />
           <ReportRender id={piece.id} reports={piece.reports} />
           <button ref={closeBtn} type="button" className="btn btn-glass btn-block" onClick={close}>
             Fermer
@@ -299,6 +304,70 @@ function WornToday({ id, initial }: { id: string; initial: boolean }) {
       >
         <Icon name={on ? 'check' : 'hanger'} size={18} />
         {on ? 'Portée aujourd’hui' : 'Je l’ai portée aujourd’hui'}
+      </button>
+      {error ? <p role="alert" className="small" style={{ color: 'var(--danger)' }}>{error}</p> : null}
+    </>
+  );
+}
+
+/**
+ * « Image propre » : Kodi redessine la pièce à partir de sa photo, sur fond
+ * net. C'est une génération : le gratuit en a quelques-unes offertes, une
+ * abonnée en a un peu plus chaque mois. À zéro, le bouton est désactivé et
+ * dit pourquoi ; un seul chemin mène aux offres. Rien ne part sans le geste.
+ */
+function CleanImage({ id, generation }: { id: string; generation: Generation | null }) {
+  const router = useRouter();
+  const [sent, setSent] = useState(false);
+  const [left, setLeft] = useState(generation?.remaining ?? 0);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  // La base ne répond pas (ou la fonction n'est pas encore en ligne) : on ne propose rien.
+  if (!generation) return null;
+  const free = isFree(generation);
+
+  if (sent) {
+    return <p role="status" className="small muted center">Kodi redessine cette pièce, elle se met à jour dans un instant.</p>;
+  }
+
+  if (left <= 0) {
+    return (
+      <>
+        <button type="button" className="btn btn-glass btn-block" disabled aria-describedby={`clean-${id}`}>
+          Image propre
+        </button>
+        <p id={`clean-${id}`} className="small muted center">
+          {free ? (
+            <>Tu as utilisé tes générations offertes. <Link href="/generations">Voir les offres</Link></>
+          ) : (
+            'Tes générations reviennent le 1er du mois.'
+          )}
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="btn btn-glass btn-block"
+        disabled={pending}
+        onClick={() => {
+          setError(null);
+          start(async () => {
+            const res = await requestCleanImage(id);
+            if (res?.code === 'quota') return setLeft(0);
+            if (res?.error) return setError(res.error);
+            setLeft((n) => Math.max(0, n - 1));
+            setSent(true);
+            setTimeout(() => router.refresh(), 8000);
+            setTimeout(() => router.refresh(), 20000);
+          });
+        }}
+      >
+        Image propre · {left} {free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}
       </button>
       {error ? <p role="alert" className="small" style={{ color: 'var(--danger)' }}>{error}</p> : null}
     </>

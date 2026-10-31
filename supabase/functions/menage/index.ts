@@ -8,7 +8,10 @@
  * - conversations avec Kodi : archivées, deux mois (le quota se compte au
  *   mois) ; toutes, douze mois ;
  * - demandes de dessin terminées ou en échec : 90 jours (la pièce dessinée
- *   reste dans le dressing).
+ *   reste dans le dressing) ;
+ * - journal des générations (mesures de la bêta) : 13 mois ; images en cache
+ *   des générations : 30 jours (comme les photos dont elles viennent) ; une
+ *   génération restée « en cours » plus d'une heure est rendue.
  *
  * Déployée SANS vérification JWT : elle ne prend aucune entrée et ne fait
  * qu'appliquer ces durées. L'appeler plus souvent n'efface rien de plus.
@@ -43,13 +46,24 @@ async function compter(q: PromiseLike<{ count: number | null; error: { message: 
   return count ?? 0;
 }
 
+/** Journal des générations et images en cache échus. Les fichiers partent avec leur ligne. */
+async function ranger(): Promise<{ generations: number; cache: number }> {
+  const { data, error } = await admin.rpc('purge_generation', { older_log: '13 months', older_cache: '30 days' });
+  if (error) throw new Error(`journal des générations : ${error.message}`);
+  const row = (data as { cache_paths: string[]; logs: number }[] | null)?.[0];
+  const paths = row?.cache_paths ?? [];
+  if (paths.length) await admin.storage.from('ai-generated').remove(paths);
+  return { generations: row?.logs ?? 0, cache: paths.length };
+}
+
 Deno.serve(async () => {
   try {
     const fichiers = await fichiersEchus();
     const archives = await compter(admin.from('kode_messages').delete({ count: 'exact' }).eq('archived', true).lt('created_at', ilYa(61)), 'conversations archivées');
     const anciennes = await compter(admin.from('kode_messages').delete({ count: 'exact' }).lt('created_at', ilYa(366)), 'conversations');
     const demandes = await compter(admin.from('ai_jobs').delete({ count: 'exact' }).in('status', ['done', 'failed']).lt('updated_at', ilYa(90)), 'demandes de dessin');
-    const bilan = { fichiers, messages: archives + anciennes, demandes };
+    const { generations, cache } = await ranger();
+    const bilan = { fichiers, messages: archives + anciennes, demandes, generations, cache };
     console.log('[menage]', JSON.stringify(bilan));
     return Response.json({ ok: true, ...bilan });
   } catch (e) {

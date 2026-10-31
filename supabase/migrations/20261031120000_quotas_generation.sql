@@ -278,6 +278,19 @@ declare
 begin
   perform pg_advisory_xact_lock(hashtextextended('generation:' || p_user::text, 0));
   select * into s from public.generation_sync(p_user, p_space);
+
+  -- Un passage tué en route (limite de durée, déploiement) est repris par la
+  -- file : la génération déjà prise pour cette pièce sert, elle n'est pas
+  -- prise deux fois.
+  if p_job is not null then
+    select l.id into log_id from public.generation_log l
+    where l.job_id = p_job and l.kind = 'dessin' and l.status = 'en_cours' and l.counted
+    order by l.created_at desc limit 1;
+    if found then
+      return jsonb_build_object('ok', true, 'log_id', log_id, 'plan', s.plan, 'source', s.source, 'remaining', s.remaining);
+    end if;
+  end if;
+
   if s.remaining <= 0 then
     return jsonb_build_object('ok', false, 'plan', s.plan);
   end if;
@@ -496,7 +509,14 @@ as $$
 declare
   paths text[];
   n int;
+  stale record;
 begin
+  -- Une génération restée « en cours » plus d'une heure n'a jamais abouti
+  -- (passage tué avant la fin) : elle est rendue.
+  for stale in select id from public.generation_log where status = 'en_cours' and created_at < now() - interval '1 hour' loop
+    perform public.generation_settle(stale.id, 'echec', 0);
+  end loop;
+
   select coalesce(array_agg(image_path), '{}') into paths from public.generation_cache where created_at < now() - older_cache;
   delete from public.generation_cache where created_at < now() - older_cache;
   delete from public.generation_log where created_at < now() - older_log;
@@ -507,3 +527,61 @@ $$;
 
 revoke all on function public.purge_generation(interval, interval) from public, anon, authenticated;
 grant execute on function public.purge_generation(interval, interval) to service_role;
+
+-- ---------------------------------------------------------------- « Rendu incorrect »
+
+-- La 2e reprise redessine la pièce (une génération) : refusée d'avance, sans
+-- consommer la reprise, quand il n'en reste plus.
+create or replace function public.report_garment(target uuid)
+returns smallint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  me uuid := (select auth.uid());
+  g public.garments;
+  j public.ai_jobs;
+  next_level smallint;
+  s record;
+begin
+  select * into g from public.garments where id = target for update;
+  if not found or not public.is_space_member(g.space_id) then
+    raise exception 'Pièce introuvable.' using errcode = 'P0001';
+  end if;
+  if g.reports >= 2 then
+    raise exception 'Cette pièce a déjà été reprise deux fois. Retire-la et ajoute-la avec une autre photo.'
+      using errcode = 'P0001';
+  end if;
+
+  select * into j from public.ai_jobs where garment_id = target order by created_at desc limit 1 for update;
+  if not found then
+    raise exception 'Cette pièce n''a pas de photo à reprendre. Ajoute-la de nouveau avec une photo.'
+      using errcode = 'P0001';
+  end if;
+  if j.status <> 'done' then
+    raise exception 'Kodi reprend déjà cette pièce.' using errcode = 'P0001';
+  end if;
+
+  next_level := g.reports + 1;
+  if next_level = 2 then
+    perform pg_advisory_xact_lock(hashtextextended('generation:' || me::text, 0));
+    select * into s from public.generation_sync(me, g.space_id);
+    if s.remaining <= 0 then
+      raise exception 'Tu as utilisé tes générations.' using errcode = 'P0001', hint = 'quota';
+    end if;
+  end if;
+
+  insert into public.garment_reports (garment_id, space_id, level, before)
+  values (target, g.space_id, next_level, j.cutout - 'usage' - 'reperage');
+
+  update public.garments set reports = next_level where id = target;
+  update public.ai_jobs
+  set status = 'queued', redo = next_level, runs = 0, error = null, claimed_at = null, requested_by = me
+  where id = j.id;
+  return next_level;
+end
+$$;
+
+revoke all on function public.report_garment(uuid) from public, anon;
+grant execute on function public.report_garment(uuid) to authenticated;

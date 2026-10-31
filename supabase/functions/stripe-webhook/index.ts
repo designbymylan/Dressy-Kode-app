@@ -13,7 +13,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { envKey, secret } from '../_shared/env.ts';
-import { spaceOf, subscriptionRow } from '../_shared/billing.ts';
+import { PLACE_PACKS, isPlacePack, spaceOf, subscriptionRow } from '../_shared/billing.ts';
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!, envKey('SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEYS'), {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -23,10 +23,12 @@ const crypto = Stripe.createSubtleCryptoProvider();
 
 const HANDLED = new Set([
   'checkout.session.completed',
+  'checkout.session.async_payment_succeeded',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
 ]);
+// Un paiement unique asynchrone (virement…) confirme plus tard.
 
 async function sync(s: Stripe, subscriptionId: string, spaceHint: string | null) {
   const sub = await s.subscriptions.retrieve(subscriptionId);
@@ -52,6 +54,27 @@ async function sync(s: Stripe, subscriptionId: string, spaceHint: string | null)
   const { error } = await admin.from('subscriptions').upsert({ ...row, updated_at: new Date().toISOString() });
   if (error) throw new Error(`enregistrement de l'abonnement : ${error.message}`);
   console.log(`abonnement ${sub.id} → ${row.plan}/${row.period}, ${row.status} (${spaceId.slice(0, 8)})`);
+}
+
+/**
+ * Un pack de places payé : crédité une seule fois (la session Stripe est
+ * unique en base, un webhook rejoué ne compte pas deux fois). Le pack et
+ * le nombre de places viennent de NOTRE table, pas des métadonnées seules.
+ */
+async function creditPlaces(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') return;
+  const pack = session.metadata?.pack;
+  const spaceId = spaceOf({ metadata: session.metadata }, session.client_reference_id);
+  if (!spaceId || !isPlacePack(pack)) {
+    console.error(`paiement ${session.id} : pack ou espace introuvable, ignoré`);
+    return;
+  }
+  const { error } = await admin.from('place_packs').upsert(
+    { space_id: spaceId, pack, places: PLACE_PACKS[pack].places, stripe_session_id: session.id },
+    { onConflict: 'stripe_session_id', ignoreDuplicates: true },
+  );
+  if (error) throw new Error(`enregistrement du pack : ${error.message}`);
+  console.log(`pack ${pack} (+${PLACE_PACKS[pack].places}) → ${spaceId.slice(0, 8)}`);
 }
 
 Deno.serve(async (req) => {
@@ -81,9 +104,11 @@ Deno.serve(async (req) => {
   if (!HANDLED.has(event.type)) return Response.json({ received: true, ignored: event.type });
 
   try {
-    if (event.type === 'checkout.session.completed') {
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (session.mode === 'subscription' && session.subscription) {
+      if (session.mode === 'payment') {
+        await creditPlaces(session);
+      } else if (session.mode === 'subscription' && session.subscription) {
         const id = typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
         await sync(s, id, session.client_reference_id);
       }

@@ -1,10 +1,8 @@
 /**
- * Les offres (09/10), copie de la maquette validée, elle-même tirée de la
- * page d'abonnement envoyée par l'utilisatrice : la remise en grand, la
- * phrase forte, ce qui est inclus en deux cartes, le choix au mois ou à
- * l'année, trois lignes à cocher avec le prix barré, la réassurance qui
- * défile et le bouton noir en bas. Ni patch ni faux avis. Découverte, l'offre
- * gratuite, se retrouve par un lien discret en bas de page.
+ * Les offres (09/10, au mois seulement depuis le 31/10), d'après la page
+ * d'abonnement envoyée par l'utilisatrice : le titre, ce qui est inclus, la
+ * phrase du prix et le bouton noir en bas. Ni patch ni faux avis. Découverte,
+ * l'offre gratuite, se retrouve par un lien discret en bas de page.
  */
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -12,7 +10,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { euros } from '../data/wardrobe';
-import { useStore, type Period, type PlanId } from '../state/store';
+import { useStore, type PlanId } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -33,19 +31,13 @@ type Feature = { label: string; note: string; icon: IconName; soon?: boolean };
  * 21/10) : Fashion (`capsule`) et Sapologue (`atelier`). Couture n'est plus
  * vendue ; un abonnement qui l'aurait encore garde ses droits.
  */
-export const PLANS: { id: PlanId; name: string; note: string; cents: Record<Period, number>; features: Feature[]; flagged?: boolean }[] = [
-  { id: 'decouverte', name: 'Découverte', note: 'Pour essayer, sans carte', cents: { mois: 0, an: 0 }, features: [{ label: 'Jusqu’à 30 pièces', note: 'De quoi commencer ton dressing.', icon: 'hanger' }, { label: '5 questions à Kodi par mois', note: 'Une tenue quand tu hésites.', icon: 'kode' }] },
-  { id: 'capsule', name: 'Fashion', note: 'Ton dressing rangé, et enfin porté', cents: { mois: 699, an: 5999 }, features: [{ label: 'Jusqu’à 120 pièces', note: 'Ton quotidien, rangé et détouré.', icon: 'hanger' }, { label: '30 questions à Kodi par mois', note: 'Pour les jours où tu hésites.', icon: 'kode' }, { label: 'Tenue du jour et agenda', note: 'Kodi prépare ta semaine avec la météo.', icon: 'calendar' }, { label: 'Suivi de ta garde-robe', note: 'Ce que tu portes vraiment, pièce par pièce.', icon: 'chart' }] },
-  { id: 'atelier', name: 'Sapologue', note: 'Kodi devient ton styliste personnel', cents: { mois: 1499, an: 12999 }, flagged: true, features: [{ label: 'Pièces illimitées', note: 'Tout ton dressing, rangé et détouré par Kodi.', icon: 'hanger' }, { label: 'Kodi sans limite', note: 'Une tenue pour chaque jour, sans compter tes questions.', icon: 'kode' }, { label: 'Tenues d’occasion et valise de voyage', note: 'Kodi prépare la tenue et la valise.', icon: 'suitcase' }, { label: 'Audit de garde-robe chaque trimestre', note: 'Doublons, oublis et manques.', icon: 'layers', soon: true }] },
+export const PLANS: { id: PlanId; name: string; note: string; cents: { mois: number }; features: Feature[]; flagged?: boolean }[] = [
+  { id: 'decouverte', name: 'Découverte', note: 'Pour essayer, sans carte', cents: { mois: 0 }, features: [{ label: 'Jusqu’à 15 pièces', note: 'De quoi commencer ton dressing.', icon: 'hanger' }, { label: '4 générations offertes', note: 'Pour voir Kodi dessiner tes pièces.', icon: 'image' }, { label: '5 questions à Kodi par mois', note: 'Une tenue quand tu hésites.', icon: 'kode' }] },
+  { id: 'capsule', name: 'Fashion', note: 'Ton dressing rangé, et enfin porté', cents: { mois: 899 }, features: [{ label: 'Jusqu’à 50 pièces', note: 'Ton quotidien, rangé et détouré.', icon: 'hanger' }, { label: '50 générations par mois', note: 'Des images propres, remises à zéro chaque mois.', icon: 'image' }, { label: '30 questions à Kodi par mois', note: 'Pour les jours où tu hésites.', icon: 'kode' }, { label: 'Tenue du jour et agenda', note: 'Kodi prépare ta semaine avec la météo.', icon: 'calendar' }] },
+  { id: 'atelier', name: 'Sapologue', note: 'Kodi devient ton styliste personnel', cents: { mois: 1499 }, flagged: true, features: [{ label: 'Jusqu’à 100 pièces', note: 'Tout ton dressing, rangé et détouré par Kodi.', icon: 'hanger' }, { label: '100 générations par mois', note: 'Des images propres, remises à zéro chaque mois.', icon: 'image' }, { label: 'Kodi sans limite', note: 'Une tenue pour chaque jour, sans compter tes questions.', icon: 'kode' }, { label: 'Tenues d’occasion et valise de voyage', note: 'Kodi prépare la tenue et la valise.', icon: 'suitcase' }, { label: 'Audit de garde-robe chaque trimestre', note: 'Doublons, oublis et manques.', icon: 'layers', soon: true }] },
 ];
 
 export const price = (cents: number) => euros(cents / 100);
-
-/** Ce que l'année fait gagner sur douze mois, arrondi vers le bas pour ne jamais promettre plus. */
-export const saving = (p: (typeof PLANS)[number]) => (p.cents.mois ? Math.floor(((p.cents.mois * 12 - p.cents.an) / (p.cents.mois * 12)) * 100) : 0);
-export const bestSaving = () => Math.max(...PLANS.map(saving));
-/** Le plus petit prix à la semaine, sur l'année, arrondi vers le haut. */
-const fromWeekly = () => Math.min(...PLANS.filter((p) => p.cents.an > 0).map((p) => Math.ceil(p.cents.an / 52)));
 
 const PAID = PLANS.filter((p) => p.cents.mois > 0);
 
@@ -55,7 +47,6 @@ export function Offers() {
   const insets = useSafeAreaInsets();
   const { y, onScroll } = useHeaderScroll();
   const { c, scheme } = useTheme();
-  const [period, setPeriod] = useState<Period>('an');
   const [choice, setChoice] = useState<PlanId | null>(null);
   const [confirm, setConfirm] = useState(false);
   // Couture, qui n'est plus vendue, compte comme l'offre du dessus.
@@ -65,14 +56,10 @@ export function Offers() {
   const fallback = rank(s.plan) < rank(flagged.id) ? flagged.id : PAID.find((p) => rank(p.id) > rank(s.plan))?.id ?? null;
   const pick = fallback;
   const picked = PLANS.find((p) => p.id === (choice ?? pick));
-  const year = period === 'an';
-  // Le mois offert vaut pour une première souscription annuelle (web/src/lib/plans.ts).
-  const firstYear = s.plan === 'decouverte';
 
   // Ce que montre la page : l'offre payante choisie (Revenir à Découverte ne change pas la vue).
   const view = PAID.find((p) => p.id === (choice && choice !== 'decouverte' ? choice : pick)) ?? flagged;
   const mine = view.id === s.plan;
-  const perMonth = year ? Math.round(view.cents.an / 12) : view.cents.mois;
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-offers">
@@ -121,40 +108,12 @@ export function Offers() {
           ))}
         </Animated.View>
 
-        <SlideChoice
-          tray
-          testID="offers-period"
-          label="Durée"
-          value={period}
-          onChange={setPeriod}
-          options={(['an', 'mois'] as const).map((p) => ({
-            value: p,
-            a11y: `${p === 'an' ? 'Annuel' : 'Mensuel'}, ${price(view.cents[p])}`,
-            testID: `period-${p}`,
-            node: (on) => (
-              <>
-                <T v="small" style={{ color: on ? c.ink : c.ink2 }}>
-                  {p === 'an' ? 'Annuel' : 'Mensuel'}
-                </T>
-                <Animated.View key={`${view.id}${p}`} entering={FadeIn.duration(260)}>
-                  <T v="stat" style={{ color: on ? c.ink : c.ink2 }}>
-                    {price(view.cents[p])}
-                  </T>
-                </Animated.View>
-                <T v="small" style={{ color: on ? c.ink : c.ink2 }}>
-                  {`${price(p === 'an' ? Math.round(view.cents.an / 12) : view.cents.mois)} par mois`}
-                </T>
-              </>
-            ),
-          }))}
-        />
-
         <T v="body" style={{ textAlign: 'center' }}>
-          <T v="bodyStrong">{`${price(perMonth)} par mois`}</T>
-          {year ? ', facturé une fois par an.' : ', facturé chaque mois.'}
+          <T v="bodyStrong">{`${price(view.cents.mois)} par mois`}</T>
+          , facturé chaque mois.
         </T>
         <T v="small" tone="ink2" style={{ textAlign: 'center', marginTop: -8 }}>
-          {`${year && firstYear ? 'Premier mois offert. ' : ''}Sans engagement, tu arrêtes en un geste depuis Réglages. Prix TTC, paiement sécurisé.`}
+          Sans engagement, tu arrêtes en un geste depuis Réglages. Prix TTC, paiement sécurisé.
         </T>
 
         {mine ? (
@@ -165,7 +124,7 @@ export function Offers() {
           <Button
             testID="offers-cta"
             variant={scheme === 'dark' ? 'primary' : 'dark'}
-            label={`${rank(view.id) > rank(s.plan) ? 'Choisir' : 'Revenir à'} ${view.name} ${year ? 'Annuel' : 'Mensuel'}`}
+            label={`${rank(view.id) > rank(s.plan) ? 'Choisir' : 'Revenir à'} ${view.name}`}
             onPress={() => {
               setChoice(view.id);
               setConfirm(true);
@@ -211,10 +170,10 @@ export function Offers() {
         footer={
           <Button
             testID="plan-pay"
-            label={picked?.cents.mois === 0 ? 'Confirmer' : year && firstYear ? 'Commencer le mois offert' : `S’abonner · ${picked ? price(picked.cents[period]) : ''}`}
+            label={picked?.cents.mois === 0 ? 'Confirmer' : `S’abonner · ${picked ? price(picked.cents.mois) : ''}`}
             icon={picked?.cents.mois === 0 ? undefined : 'lock'}
             onPress={() => {
-              if (picked) a.setPlan(picked.id, period);
+              if (picked) a.setPlan(picked.id, 'mois');
               setConfirm(false);
               setChoice(null);
             }}
@@ -233,11 +192,11 @@ export function Offers() {
               </View>
             ))}
             <View className="flex-row justify-between" style={{ paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.rule }}>
-              <T v="bodyStrong">{period === 'mois' ? 'Chaque mois' : 'Chaque année'}</T>
-              <T v="bodyStrong">{picked.cents.mois === 0 ? '0 €' : `${price(picked.cents[period])} TTC`}</T>
+              <T v="bodyStrong">Chaque mois</T>
+              <T v="bodyStrong">{picked.cents.mois === 0 ? '0 €' : `${price(picked.cents.mois)} TTC`}</T>
             </View>
             <T v="small" tone="ink2">
-              {picked.cents.mois === 0 ? 'Tes pièces au-delà de 30 restent visibles, mais tu ne pourras plus en ajouter.' : s.account === 'connecte' ? 'Paiement sécurisé, dans ton navigateur. Résiliable à tout moment.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
+              {picked.cents.mois === 0 ? 'Tes pièces au-delà de 15 restent visibles, mais tu ne pourras plus en ajouter.' : s.account === 'connecte' ? 'Paiement sécurisé, dans ton navigateur. Résiliable à tout moment.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
             </T>
           </View>
         )}

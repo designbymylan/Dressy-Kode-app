@@ -10,7 +10,7 @@ import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { LIMITS, pieceLimit, questionsLeft, useStore } from '../state/store';
+import { LIMITS, PLACE_PACKS, pieceLimit, questionsLeft, useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -94,9 +94,13 @@ export function Shop() {
           <FeatureCard testID="shop-places" icon="hanger" title="Places" right={limit === null ? 'Sans limite' : `${s.pieces.length} / ${limit}`}>
             {limit !== null && bar(s.pieces.length, limit)}
             {limit !== null && (
-              <T testID="buy-places" v="small" tone="ink2" onPress={connecte ? () => nav.navigate('Offers') : a.buyPlaces} accessibilityRole="button" suppressHighlighting style={{ paddingVertical: 6 }}>
-                +30 places · 4,99 €
-              </T>
+              <View style={{ gap: 2 }}>
+                {PLACE_PACKS.map((p) => (
+                  <T key={p.id} testID={`buy-places-${p.id}`} v="small" tone="ink2" onPress={() => a.buyPlaces(p.id)} accessibilityRole="button" suppressHighlighting style={{ paddingVertical: 4 }}>
+                    {`${p.name} · ${price(p.cents)}`}
+                  </T>
+                ))}
+              </View>
             )}
           </FeatureCard>
           <FeatureCard testID="shop-questions" icon="kode" title="Questions à Kodi" right={quota === null ? 'Sans limite' : `${used} / ${quota}`}>
