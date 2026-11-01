@@ -13,7 +13,7 @@
  *
  *   Découverte : 15 pièces, 4 générations offertes à vie
  *   Fashion    :  8,99 € par mois, 50 pièces, 50 générations par mois
- *   Sapologue  : 14,99 € par mois, 100 pièces, 100 générations par mois
+ *   Sapologue  : 18,99 € par mois, 100 pièces, 100 générations par mois
  *
  * Module pur, sans alias d'import : le script Node le lit tel quel.
  */
@@ -49,7 +49,7 @@ export const PLANS: Plan[] = [
     id: 'atelier',
     name: 'Sapologue',
     note: 'Kodi devient ton styliste personnel',
-    cents: { mois: 1499 },
+    cents: { mois: 1899 },
     flagged: true,
     features: [
       { label: "Jusqu'à 100 pièces" },

@@ -71,9 +71,9 @@ check('identifiant d’espace mal formé refusé', spaceOf(sub({ metadata: { spa
 check('mêmes offres affichées et vendues', web.PLANS.map((p) => p.id), [...PLAN_IDS]);
 check('mêmes clés de prix', web.PLANS.flatMap((p) => PERIODS.map((d) => web.lookupKey(p.id, d))),
   PLAN_IDS.flatMap((p) => PERIODS.map((d) => lookupKey(p, d))));
-check('prix du brief v6 (Fashion 8,99 €, Sapologue 14,99 €, au mois)', web.PLANS.map((p) => [p.name, web.euros(p.cents.mois)]), [
+check('prix du brief v6 (Fashion 8,99 €, Sapologue 18,99 €, au mois)', web.PLANS.map((p) => [p.name, web.euros(p.cents.mois)]), [
   ['Fashion', '8,99 €'],
-  ['Sapologue', '14,99 €'],
+  ['Sapologue', '18,99 €'],
 ]);
 check('aucun annuel affiché', web.PLANS.every((p) => !('an' in p.cents)), true);
 check('packs de places : mêmes montants affichés et vendus',

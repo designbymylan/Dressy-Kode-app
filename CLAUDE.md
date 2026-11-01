@@ -416,7 +416,7 @@ le travail de Kodi, rien de plus.
 Remplace les prix, les limites et l'annuel du 21/10, web et mobile.
 
 - **Deux abonnements, au mois seulement** : **Fashion 8,99 €** (`capsule`,
-  50 pièces, 50 générations par mois) et **Sapologue 14,99 €** (`atelier`,
+  50 pièces, 50 générations par mois) et **Sapologue 18,99 €** (`atelier`,
   100 pièces, 100 générations par mois, Kodi sans limite). Plus d'annuel ni
   de mois offert. Découverte : 15 pièces, 4 générations offertes à vie, sans
   renouvellement. Aucune mention de Couture. Source des montants :
