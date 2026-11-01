@@ -18,7 +18,7 @@ const check = (label: string, got: unknown, want: unknown) => {
 };
 
 const read = (rel: string) => readFileSync(new URL(rel, import.meta.url), 'utf8');
-const sql = read('../../migrations/20261031120000_quotas_generation.sql');
+const sql = read('../../migrations/20261101165217_quotas_generation.sql');
 const store = read('../../../mobile/src/state/store.tsx');
 const offers = read('../../../mobile/src/screens/Offers.tsx');
 

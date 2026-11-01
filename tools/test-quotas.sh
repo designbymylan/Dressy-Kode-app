@@ -16,6 +16,6 @@ P=(psql -h "$D" -p 5445 -U postgres -v ON_ERROR_STOP=1 -q)
 "${P[@]}" -c "create database t" >/dev/null
 "${P[@]}" -d t -f supabase/tests/quotas_generation.stub.sql
 "${P[@]}" -d t -c "create trigger garments_plan_limit before insert on public.garments for each row execute function public.garments_plan_limit(); create trigger ai_jobs_plan_limit before insert on public.ai_jobs for each row execute function public.ai_jobs_plan_limit();"
-"${P[@]}" -d t -f supabase/migrations/20261031120000_quotas_generation.sql
+"${P[@]}" -d t -f supabase/migrations/20261101165217_quotas_generation.sql
 "${P[@]}" -d t -f supabase/tests/quotas_generation.test.sql 2>&1 | grep -E "NOTICE|ERROR|ECHEC" | sed 's/^psql:[^ ]* NOTICE:  //; s/^NOTICE:  //'
 echo "tout est bon"
