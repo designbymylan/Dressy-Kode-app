@@ -143,6 +143,8 @@ type State = {
   extraPlaces: number;
   /** Générations d'image restantes (Image propre) ; null tant que la base n'a pas répondu. */
   gen: number | null;
+  /** Compte créateur : aucune limite. */
+  creator: boolean;
   packs: string[];
   modules: ModuleState[];
   density: 'aeree' | 'dense';
@@ -192,6 +194,7 @@ const initial: State = {
   period: 'mois',
   extraPlaces: 0,
   gen: DEMO_GENERATIONS,
+  creator: false,
   packs: [],
   modules: DEFAULT_MODULES,
   density: 'aeree',
@@ -253,7 +256,7 @@ type Action =
   | { t: 'ask'; message: KodeMessage }
   | { t: 'answer'; message: KodeMessage; refund?: boolean }
   | { t: 'setPlan'; plan: PlanId; period: Period }
-  | { t: 'planSync'; plan: PlanId; period: Period; kodeUsed: number; extraPlaces: number; gen: number | null }
+  | { t: 'planSync'; plan: PlanId; period: Period; kodeUsed: number; extraPlaces: number; gen: number | null; creator: boolean }
   | { t: 'gen'; gen: number | null }
   | { t: 'buyPack'; id: string }
   | { t: 'buyPlaces'; places: number }
@@ -312,6 +315,7 @@ function reducer(s: State, a: Action): State {
         kodeUsed: acc.kodeUsed,
         extraPlaces: acc.extraPlaces,
         gen: acc.gen,
+        creator: acc.creator,
         plan: acc.plan,
         period: acc.period,
       };
@@ -412,7 +416,7 @@ function reducer(s: State, a: Action): State {
       return { ...s, plan: a.plan, period: a.period, toast: { id: ++toastId, text: a.plan === 'decouverte' ? 'Retour à Découverte' : 'Ton offre est active' } };
     case 'planSync': {
       const changed = a.plan !== s.plan;
-      return { ...s, plan: a.plan, period: a.period, kodeUsed: a.kodeUsed, extraPlaces: a.extraPlaces, gen: a.gen, toast: changed ? { id: ++toastId, text: a.plan === 'decouverte' ? 'Retour à Découverte' : 'Ton offre est active' } : s.toast };
+      return { ...s, plan: a.plan, period: a.period, kodeUsed: a.kodeUsed, extraPlaces: a.extraPlaces, gen: a.gen, creator: a.creator, toast: changed ? { id: ++toastId, text: a.plan === 'decouverte' ? 'Retour à Découverte' : 'Ton offre est active' } : s.toast };
     }
     case 'buyPack':
       return s.packs.includes(a.id) ? s : { ...s, packs: [...s.packs, a.id], toast: { id: ++toastId, text: 'Achat confirmé, c’est débloqué' } };
@@ -487,7 +491,7 @@ function refreshDemo(pieces: Piece[]): Piece[] {
   return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
 }
 
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'creator', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -1109,11 +1113,13 @@ export function useStore() {
 
 /** Les places : celles de l'offre, plus les packs achetés (qui s'y ajoutent, sans la remplacer). */
 export const pieceLimit = (s: State) => {
+  if (s.creator) return null;
   const base = LIMITS[s.plan].pieces;
   return base === null ? null : base + s.extraPlaces;
 };
 
 export const questionsLeft = (s: State) => {
+  if (s.creator) return null;
   const q = LIMITS[s.plan].questions;
   return q === null ? null : Math.max(0, q - s.kodeUsed);
 };

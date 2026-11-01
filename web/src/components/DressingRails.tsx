@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Piece } from '@/lib/garments';
 import { reportGarment, requestCleanImage, togglePieceWear } from '@/app/actions';
-import { isFree, type Generation } from '@/lib/generations';
+import { isCreator, isFree, type Generation } from '@/lib/generations';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Icon, ICON } from '@/components/ui';
 
@@ -367,7 +367,7 @@ function CleanImage({ id, generation }: { id: string; generation: Generation | n
           });
         }}
       >
-        Image propre · {left} {free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}
+        {isCreator(generation) ? 'Image propre' : `Image propre · ${left} ${free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}`}
       </button>
       {error ? <p role="alert" className="small" style={{ color: 'var(--danger)' }}>{error}</p> : null}
     </>

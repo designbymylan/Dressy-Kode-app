@@ -265,7 +265,7 @@ export function PieceScreen() {
             <Row
               icon="image"
               title="Image propre"
-              detail={`Kodi redessine cette pièce sur fond net · ${left} ${free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}`}
+              detail={s.creator ? 'Kodi redessine cette pièce sur fond net' : `Kodi redessine cette pièce sur fond net · ${left} ${free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}`}
               testID="piece-clean"
               onPress={() => {
                 setMenu(false);

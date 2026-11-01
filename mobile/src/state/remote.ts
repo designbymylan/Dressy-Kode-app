@@ -50,6 +50,8 @@ export type Account = {
   extraPlaces: number;
   /** Générations restantes (Image propre) ; null si la base ne répond pas. */
   gen: number | null;
+  /** Compte créateur (administrateur) : aucune limite, aucun compteur. */
+  creator: boolean;
   plan: PlanId;
   period: Period;
 };
@@ -394,12 +396,20 @@ export async function loadAccount(): Promise<Account | null> {
     kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
     extraPlaces: placesOf(packs.data),
     gen: remainingOf(gen.data),
-    plan: best?.plan ?? 'decouverte',
+    creator: isCreator(gen.data),
+    // Le créateur n'a pas d'abonnement : il se présente comme l'offre la plus haute, sans aucune limite.
+    plan: isCreator(gen.data) ? 'atelier' : best?.plan ?? 'decouverte',
     period: best?.period ?? 'mois',
   };
 }
 
 const placesOf = (rows: unknown) => ((rows ?? []) as { places: number }[]).reduce((n, r) => n + (r.places ?? 0), 0);
+
+/** Vrai pour le compte créateur : la base le dit, l'app ne le devine jamais. */
+const isCreator = (data: unknown): boolean => {
+  const row = (Array.isArray(data) ? data[0] : data) as { plan?: string } | null;
+  return row?.plan === 'createur';
+};
 
 /** Les générations restantes, telles que la base les rend ; null si elle ne répond pas. */
 const remainingOf = (data: unknown): number | null => {
@@ -408,7 +418,7 @@ const remainingOf = (data: unknown): number | null => {
 };
 
 /** L'offre, les compteurs et les places seulement : relus au retour du paiement. */
-export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 'period' | 'kodeUsed' | 'extraPlaces' | 'gen'>> {
+export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 'period' | 'kodeUsed' | 'extraPlaces' | 'gen' | 'creator'>> {
   const sb = db();
   const [subs, usage, packs, gen] = await Promise.all([
     sb.from('subscriptions').select('plan, period').eq('space_id', spaceId).in('status', ['active', 'trialing', 'past_due']),
@@ -419,11 +429,12 @@ export async function loadPlan(spaceId: string): Promise<Pick<Account, 'plan' | 
   const rank = { couture: 3, atelier: 2, capsule: 1 } as Record<string, number>;
   const best = ((subs.data ?? []) as { plan: PlanId; period: Period }[]).sort((a, b) => (rank[b.plan] ?? 0) - (rank[a.plan] ?? 0))[0];
   return {
-    plan: best?.plan ?? 'decouverte',
+    plan: isCreator(gen.data) ? 'atelier' : best?.plan ?? 'decouverte',
     period: best?.period ?? 'mois',
     kodeUsed: ((usage.data ?? []) as { used: number }[])[0]?.used ?? 0,
     extraPlaces: placesOf(packs.data),
     gen: remainingOf(gen.data),
+    creator: isCreator(gen.data),
   };
 }
 

@@ -207,5 +207,44 @@ do $$ begin
   raise notice 'ok    le client ne lit que le compteur restant (generation_status)';
 end $$;
 
+-- ------------------------------------------------------------ compte créateur
+insert into auth.users values ('00000000-0000-0000-0000-0000000000c1', 'designbymylan@gmail.com');
+insert into public.profiles values ('00000000-0000-0000-0000-0000000000c1');
+insert into public.spaces values ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000c1');
+insert into public.space_members values ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000c1');
+insert into public.admins values ('00000000-0000-0000-0000-0000000000c1');
+
+select pg_temp.ok('créateur : son offre est « createur »', public.space_plan('00000000-0000-0000-0000-0000000000d1') = 'createur');
+select pg_temp.ok('créateur : aucune limite de pièces', public.piece_limit('00000000-0000-0000-0000-0000000000d1') is null and public.pieces_left('00000000-0000-0000-0000-0000000000d1') is null);
+do $$ declare i int; begin
+  set local role authenticated;
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', true);
+  for i in 1..120 loop insert into public.garments (space_id) values ('00000000-0000-0000-0000-0000000000d1'); end loop;
+  reset role;
+  raise notice 'ok    créateur : 120 pièces ajoutées sans blocage';
+end $$;
+select pg_temp.ok('créateur : des générations, sans compteur gratuit',
+  (select plan = 'createur' and remaining > 100000 from public.generation_sync('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000d1'))
+  and not exists (select 1 from public.generation_quota where user_id = '00000000-0000-0000-0000-0000000000c1' and source = 'trial'));
+do $$ declare r jsonb; i int; begin
+  for i in 1..60 loop
+    r := public.generation_reserve('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000d1', gen_random_uuid(), 'complet');
+    if not (r->>'ok')::boolean then raise exception 'ECHEC : le créateur ne doit jamais être bloqué'; end if;
+    perform public.generation_settle((r->>'log_id')::uuid, 'succes', 0.1);
+  end loop;
+  raise notice 'ok    créateur : 60 générations de suite, jamais bloqué';
+end $$;
+select pg_temp.ok('le créateur est le seul', (select count(*) = 1 from public.admins));
+select pg_temp.ok('un autre compte reste limité', public.space_plan('00000000-0000-0000-0000-0000000000b1') <> 'createur');
+do $$ begin
+  set local role authenticated;
+  begin
+    perform 1 from public.admins;
+    raise exception 'ECHEC : la liste des administrateurs ne doit pas être lisible par le client';
+  exception when insufficient_privilege then null; end;
+  reset role;
+  raise notice 'ok    la liste des administrateurs est fermée au client';
+end $$;
+
 -- Le suivi de la bêta se calcule.
 select pg_temp.ok('suivi : les vues répondent', (select count(*) >= 0 from public.generation_costs) and (select gratuites >= 1 from public.generation_free_funnel));

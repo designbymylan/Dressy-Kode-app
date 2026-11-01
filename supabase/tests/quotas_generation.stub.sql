@@ -4,7 +4,8 @@ create schema auth;
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), current_user) $$;
 create table public.profiles (id uuid primary key);
-create table public.spaces (id uuid primary key default gen_random_uuid());
+create table auth.users (id uuid primary key, email text);
+create table public.spaces (id uuid primary key default gen_random_uuid(), owner_id uuid);
 create table public.space_members (space_id uuid references public.spaces(id), profile_id uuid references public.profiles(id));
 create function public.is_space_member(target uuid) returns boolean language sql stable security definer as $$
   select exists (select 1 from public.space_members m where m.space_id = target and m.profile_id = (select auth.uid())) $$;

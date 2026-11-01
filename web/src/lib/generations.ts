@@ -19,3 +19,6 @@ export async function loadGeneration(supabase: Db, spaceId: string): Promise<Gen
 
 /** Un abonné ne voit pas le compteur des générations offertes. */
 export const isFree = (g: Generation) => g.plan === 'decouverte';
+
+/** Le compte créateur n'a ni compteur ni plafond. */
+export const isCreator = (g: Generation) => g.plan === 'createur';

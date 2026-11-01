@@ -412,6 +412,8 @@ ni dans ses bulles, ni à la connexion, ni à l'intro, ni sur l'accueil, ni
 sur les messages d'erreur ; le strict nécessaire, c'est la navigation et
 le travail de Kodi, rien de plus.
 
+**Compte créateur (01/11), demandé par l'utilisateur** : `designbymylan@gmail.com` est le seul administrateur (table `admins`, fermée au client). Son offre se nomme `createur` (`space_plan`) : pièces, Kodi et générations sans limite, aucun écran d'abonnement. Il sert à tous les essais. Migration `compte_createur`.
+
 **Offres, places et générations (brief v6, 31/10), demandé par l'utilisateur.**
 Remplace les prix, les limites et l'annuel du 21/10, web et mobile.
 
