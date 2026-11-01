@@ -105,11 +105,15 @@ const COST = {
 
 /** Note un appel qui ne prend rien au compteur (repérage, segmentation, image en cache). Jamais bloquant. */
 async function note(job: Job, provider: 'google' | 'anthropic', kind: 'dessin' | 'segmentation' | 'reperage', model: string, status: 'succes' | 'echec', cacheHit: boolean, costUsd: number) {
-  const { error } = await db.rpc('generation_note', {
-    p_user: job.requested_by, p_space: job.space_id, p_job: job.id, p_provider: provider, p_kind: kind,
-    p_model: model, p_status: status, p_cache_hit: cacheHit, p_cost: costUsd,
-  });
-  if (error) console.warn('mesure non enregistrée :', error.message);
+  try {
+    const { error } = await db.rpc('generation_note', {
+      p_user: job.requested_by, p_space: job.space_id, p_job: job.id, p_provider: provider, p_kind: kind,
+      p_model: model, p_status: status, p_cache_hit: cacheHit, p_cost: costUsd,
+    });
+    if (error) console.warn('mesure non enregistrée :', error.message);
+  } catch (err) {
+    console.warn('mesure non enregistrée :', err instanceof Error ? err.message : err);
+  }
 }
 
 async function sha256(bytes: Uint8Array | string): Promise<string> {

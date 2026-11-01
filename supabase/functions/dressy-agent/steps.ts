@@ -7,8 +7,9 @@
  *   Gemini (MODELS.segment) : segmente la pièce, c'est-à-dire rend son masque ;
  *     les pixels restent ceux de la photo. Un modèle plus fort
  *     (MODELS.segmentStrong) reprend après un « rendu incorrect ».
- *   Nano Banana (MODELS.gemini) : ne dessine plus qu'en dernier recours, quand
- *     la personne a signalé deux fois un rendu incorrect.
+ *   Nano Banana (MODELS.gemini) : ne dessine que sur demande (« Image propre »)
+ *     ou quand la personne a signalé deux fois un rendu incorrect ; chaque
+ *     dessin prend une génération au compteur (quota.ts).
  *
  * Rien de ce fichier n'est montré tel quel : un AgentError porte un message
  * écrit pour la personne (qui ne nomme jamais les modèles) et un détail
