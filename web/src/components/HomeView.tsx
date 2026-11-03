@@ -94,8 +94,7 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
         </Card>
       ) : (
         <>
-          {/* La clé change avec les tenues proposées : après « Pas pour moi », la carte repart de l'état serveur. */}
-          <HomeToday key={`${worn}:${outfits.map((o) => o.id).join('|')}`} pieces={pieces} outfits={outfits} worn={worn} />
+          <HomeToday pieces={pieces} outfits={outfits} worn={worn} />
 
           <HomeWeek
             week={week}

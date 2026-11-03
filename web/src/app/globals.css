@@ -2059,3 +2059,188 @@ a.home-chip::after { content: ''; position: absolute; inset: -6px 0; }
   .dress-row { animation: none; }
 }
 .notforme-piece__check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); }
+
+/* ============================================================
+   Calendrier (03/11) : la semaine avec sa météo (l'Agenda de l'app
+   mobile), le mois en grand (le Planning), le jour ouvert avec ses
+   rendez-vous et sa tenue. Mêmes formes que mobile/src/screens/Agenda.tsx
+   et Planning.tsx ; les couleurs viennent toutes des variables du thème.
+   ============================================================ */
+
+.cal-week, .cal-month { padding: 14px; gap: 14px; }
+.cal-week__head { display: flex; align-items: center; justify-content: space-between; }
+.cal-title { font-size: 22px; line-height: 26px; letter-spacing: -0.22px; }
+.cal-month .cal-title { font-size: 30px; line-height: 34px; letter-spacing: -0.3px; }
+.cal-nav { display: flex; gap: 6px; }
+
+/* Les sept jours : lettre, numéro, ciel, températures, un point quand il s'y passe quelque chose. */
+.cal-strip { display: flex; justify-content: space-between; gap: 4px; }
+.cal-day {
+  flex: 1;
+  min-width: 0;
+  height: 142px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 22px;
+  background: var(--stage);
+  color: var(--ink);
+}
+.cal-day[data-today='true']:not([data-on='true']) { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.cal-day[data-on='true'] { background: var(--blue-glass); color: #000000; box-shadow: var(--blue-shadow); }
+.cal-day[data-on='true'] .home-kicker { color: #000000; }
+.cal-day__num { font-size: 24px; line-height: 26px; }
+.cal-day__max { font-size: 13px; line-height: 18px; font-weight: 600; }
+.cal-day__dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+.cal-day__dot[data-busy='true'] { background: currentColor; }
+
+/* Le jour ouvert en une ligne et quelques puces. */
+.cal-summary { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.cal-solo .cal-summary { padding-top: 0; border-top: 0; }
+.cal-summary__line { display: flex; align-items: center; gap: 10px; }
+.cal-summary__line strong { flex: 1; font-size: 15px; line-height: 21px; font-weight: 600; }
+.cal-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--stage);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink);
+}
+.dot-chip i { flex: none; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* Le mois en grand. */
+.cal-grid { display: flex; flex-direction: column; gap: 6px; }
+.cal-grid__row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-cell {
+  min-width: 0;
+  height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0 0;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.cal-cell__num { font-size: 15px; line-height: 18px; font-weight: 600; }
+.cal-cell[data-trip='true'] { background: var(--stage); }
+.cal-cell[data-today='true']:not([data-on='true']) { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.cal-cell[data-on='true'] { background: var(--blue-glass); color: #000000; box-shadow: var(--blue-shadow); }
+.cal-cell[data-past='true'] { opacity: 0.45; }
+.cal-cell:disabled { opacity: 0.3; cursor: not-allowed; }
+.cal-cell__piece { width: 30px; height: 30px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: var(--stage); }
+.cal-cell[data-on='true'] .cal-cell__piece { background: var(--bg); }
+.cal-cell__piece img { width: 100%; height: 100%; object-fit: contain; }
+.cal-cell__piece--bare { background: none; overflow: visible; }
+.cal-cell__dots { display: flex; gap: 3px; height: 5px; }
+.cal-cell__dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* Choisir des jours pour Kodi : la bulle beurre. */
+.cal-choose__bar { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+.cal-kodi {
+  --butter-field: rgba(255, 255, 255, 0.72);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-bottom-left-radius: 8px;
+}
+.cal-kodi .kode-thinking > span { color: var(--butter-ink) !important; }
+.cal-kodi__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: var(--butter-field);
+  color: var(--butter-ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Les rendez-vous du jour. */
+.day-events { padding: 14px; gap: 4px; }
+.event-row {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.event-row__time { flex: none; width: 62px; font-size: 15px; font-weight: 600; }
+.event-row__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+.event-row__body > strong { font-size: 15px; font-weight: 600; }
+.event-row .dk-ico { color: var(--muted); }
+.event-form { display: flex; flex-direction: column; gap: 16px; }
+.event-form__actions {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px 0 4px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* La tenue du jour ouvert. */
+.day-outfit { display: flex; flex-direction: column; gap: 10px; }
+.day-outfit__head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+.day-outfit-empty { padding: 14px; gap: 12px; }
+
+/* « Quelle tenue ? » : les tenues enregistrées. */
+.pick-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.pick-outfit {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 20px;
+  background: var(--stage);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick-outfit__minis { display: flex; flex: none; }
+.pick-mini { width: 38px; height: 38px; margin-left: -8px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; border: 2px solid var(--stage); background: var(--bg); }
+.pick-mini:first-child { margin-left: 0; }
+.pick-mini img { width: 100%; height: 100%; object-fit: contain; }
+.pick-outfit__text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pick-outfit__text strong { font-size: 15px; font-weight: 600; }
+.pick-outfit__text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); }
+
+/* Voyages, rendez-vous à venir. */
+.cal-list { list-style: none; display: flex; flex-direction: column; }
+.cal-list__row { min-height: 52px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--rule); color: var(--ink); }
+.cal-list li:last-child .cal-list__row { border-bottom: 0; }
+.cal-list__row .dk-ico:last-child { color: var(--muted); }
+.cal-list__icon { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 18px; background: var(--stage); }
+.cal-list__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cal-list__text strong { font-size: 15px; font-weight: 600; }
+.cal-list__when { flex: none; width: 86px; }
+.cal-list__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }

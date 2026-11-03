@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react';
+import { useMemo, useState, useTransition, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { createPortal } from 'react-dom';
 import { skipOutfit, wearPieces } from '@/app/actions';
 import { Icon } from '@/components/icons';
 import { Garment, SHAPE_BY_CATEGORY } from '@/components/garments';
+import { Sheet } from '@/components/Sheet';
 import { WornLine } from '@/components/WearButton';
-import { headToToe, rowOf, ROW_NAME, ROW_ORDER, type HomePiece, type Outfit, type RowId } from '@/lib/outfits';
+import { cleTenue, headToToe, rowOf, ROW_NAME, ROW_ORDER, type HomePiece, type Outfit, type RowId } from '@/lib/outfits';
 
 /**
  * La tenue du jour en rangées, de la tête aux pieds (modèle « Dress me » des
@@ -45,23 +44,37 @@ export function PieceImage({ p, size }: { p: Pick<HomePiece, 'url' | 'category_i
 }
 
 export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outfits: Outfit[]; worn: boolean }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
   const [index, setIndex] = useState(0);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
   const [pinned, setPinned] = useState<Set<RowId>>(new Set());
-  const [just, setJust] = useState(false);
+  /** La tenue qu'on vient de porter : la carte la garde telle quelle, même quand le serveur recompose les propositions. */
+  const [frozen, setFrozen] = useState<{ outfit: Outfit; shown: HomePiece[] } | null>(null);
   const [sheet, setSheet] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Les tenues proposées ont changé (une écartée, la météo qui change) : la carte repart de zéro.
+  const sig = outfits.map((o) => cleTenue(o.pieces)).join('|');
+  const [lastSig, setLastSig] = useState(sig);
+  if (sig !== lastSig) {
+    setLastSig(sig);
+    if (!frozen) {
+      setIndex(0);
+      setHidden(new Set());
+      setSwapped({});
+      setPinned(new Set());
+    }
+  }
+
   const byId = useMemo(() => new Map(pieces.map((p) => [p.id, p])), [pieces]);
   const visible = outfits.filter((o) => !hidden.has(o.id));
-  const outfit = visible.length ? visible[index % visible.length] : null;
-  const done = worn || just;
+  // Déjà portée aujourd'hui (le serveur le sait) : c'est elle, la première, qu'on montre.
+  const outfit = frozen ? frozen.outfit : worn ? (outfits[0] ?? null) : visible.length ? visible[index % visible.length] : null;
+  const done = worn || !!frozen;
 
   // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
-  const shown = useMemo(() => {
+  const shownLive = useMemo(() => {
     if (!outfit) return [] as HomePiece[];
     const base = outfit.pieces.map((id) => byId.get(id)).filter((p): p is HomePiece => !!p);
     const out = base.map((p) => {
@@ -82,6 +95,7 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
     }
     return headToToe(list);
   }, [outfit, swapped, pinned, byId, pieces]);
+  const shown = frozen ? frozen.shown : shownLive;
 
   if (!outfit) {
     return (
@@ -97,7 +111,7 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
   const inOutfit = new Set(shown.map((p) => p.id));
   const rows = ROW_ORDER.map((r) => ({ r, items: shown.filter((p) => rowOf(p) === r) })).filter((x) => x.items.length);
   const unchanged = outfit.saved && shown.length === outfit.pieces.length && shown.every((p) => outfit.pieces.includes(p.id));
-  const ports = shown.reduce((n, p) => n + p.wears, 0) + (just ? shown.length : 0);
+  const ports = shown.reduce((n, p) => n + p.wears, 0) + (frozen ? shown.length : 0);
   const colours = shown.map((p) => p.colour).filter((c): c is string => !!c);
 
   /** Une autre tenue : les rangées verrouillées gardent leur pièce, le reste change. */
@@ -111,14 +125,18 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
     setIndex((i) => i + 1);
   }
 
+  /**
+   * « Je la porte » : un port par pièce, et la tenue (ajustée ou non) reste
+   * sur la journée, pour que l'accueil et le calendrier la montrent portée.
+   * L'action serveur rafraîchit la page ; la carte garde sa tenue et joue sa coche.
+   */
   function wear() {
     start(async () => {
       setError(null);
-      const res = await wearPieces({ garmentIds: shown.map((p) => p.id), outfitId: unchanged ? outfit!.saved : null });
+      const res = await wearPieces({ garmentIds: shown.map((p) => p.id), outfitId: unchanged ? outfit!.saved : null, title: outfit!.title });
       if ('error' in res) return setError(res.error);
-      setJust(true);
+      setFrozen({ outfit: outfit!, shown });
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(14);
-      router.refresh();
     });
   }
 
@@ -127,12 +145,11 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
       setError(null);
       const res = await skipOutfit({ garmentIds: shown.map((p) => p.id), reason, targetIds: targets });
       if ('error' in res) return setError(res.error);
-      // La tenue écartée disparaît tout de suite ; le serveur en recompose d'autres sans elle.
+      // La tenue écartée disparaît tout de suite ; le serveur recompose les propositions sans elle.
       setHidden((h) => new Set(h).add(outfit!.id));
       setSwapped({});
       setPinned(new Set());
       setSheet(false);
-      router.refresh();
     });
   }
 
@@ -208,7 +225,7 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
         {outfit.why ? <p>{outfit.why}</p> : null}
       </div>
 
-      {done ? <WornLine total={ports} just={just} colours={colours} /> : null}
+      {done ? <WornLine total={ports} just={!!frozen} colours={colours} /> : null}
       {error ? <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)' }}>{error}</p> : null}
 
       {!done ? (
@@ -231,84 +248,61 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
 function NotForMe({ pieces, busy, onClose, onConfirm }: { pieces: HomePiece[]; busy: boolean; onClose: () => void; onConfirm: (r: Raison | 'sans', targets: string[]) => void }) {
   const [raison, setRaison] = useState<Raison | null>(null);
   const [cibles, setCibles] = useState<string[]>([]);
-  const box = useRef<HTMLDivElement>(null);
   const waiting = raison === 'piece' && cibles.length === 0;
 
-  // Au clavier : le focus entre dans la feuille, Échap la ferme, et le focus revient où il était.
-  useEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
-    box.current?.focus();
-    const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', key);
-    return () => {
-      document.removeEventListener('keydown', key);
-      before?.focus?.();
-    };
-  }, [onClose]);
-
-  // Dans le corps de la page : la carte en verre (backdrop-filter) serait sinon le repère de `position: fixed`.
-  return createPortal(
-    <>
-      <div className="dk-backdrop" onClick={onClose} aria-hidden="true" />
-      <div ref={box} className="dk-sheet" role="dialog" aria-modal="true" aria-labelledby="notforme-title" tabIndex={-1}>
-        <span className="dk-sheet__grip" aria-hidden="true" />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p className="eyebrow">Dis-le à Kodi</p>
-          <h2 id="notforme-title" style={{ fontSize: 24 }}>Pas pour moi</h2>
-        </div>
-        <p className="small muted" style={{ fontSize: 14 }}>
-          Pourquoi ? Kodi s’en souviendra pour tes prochaines tenues. Tu peux aussi passer sans rien dire.
-        </p>
-        <div role="radiogroup" aria-label="La raison" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {RAISONS.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              role="radio"
-              aria-checked={raison === r.id}
-              className="chip"
-              onClick={() => setRaison(raison === r.id ? null : r.id)}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-        {raison === 'piece' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p className="eyebrow">Laquelle ?</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {pieces.map((p) => {
-                const on = cibles.includes(p.id);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className="notforme-piece"
-                    aria-pressed={on}
-                    aria-label={p.name}
-                    onClick={() => setCibles(on ? cibles.filter((x) => x !== p.id) : [...cibles, p.id])}
-                  >
-                    <span className="notforme-piece__art">
-                      <PieceImage p={p} size={52} />
-                      {on ? <span className="notforme-piece__check"><Icon name="check" size={12} /></span> : null}
-                    </span>
-                    <span className="notforme-piece__name">{p.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-        <button
-          type="button"
-          className="btn btn-primary btn-block"
-          disabled={waiting || busy}
-          onClick={() => onConfirm(raison ?? 'sans', raison === 'piece' ? cibles : [])}
-        >
-          {busy ? <><span className="spinner" aria-hidden="true" />Une seconde</> : <><Icon name="refresh" size={18} /> {waiting ? 'Choisis la pièce' : 'Une autre tenue'}</>}
-        </button>
+  return (
+    <Sheet kicker="Dis-le à Kodi" title="Pas pour moi" onClose={onClose}>
+      <p className="small muted" style={{ fontSize: 14 }}>
+        Pourquoi ? Kodi s’en souviendra pour tes prochaines tenues. Tu peux aussi passer sans rien dire.
+      </p>
+      <div role="radiogroup" aria-label="La raison" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {RAISONS.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            role="radio"
+            aria-checked={raison === r.id}
+            className="chip"
+            onClick={() => setRaison(raison === r.id ? null : r.id)}
+          >
+            {r.label}
+          </button>
+        ))}
       </div>
-    </>,
-    document.body,
+      {raison === 'piece' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p className="eyebrow">Laquelle ?</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {pieces.map((p) => {
+              const on = cibles.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="notforme-piece"
+                  aria-pressed={on}
+                  aria-label={p.name}
+                  onClick={() => setCibles(on ? cibles.filter((x) => x !== p.id) : [...cibles, p.id])}
+                >
+                  <span className="notforme-piece__art">
+                    <PieceImage p={p} size={52} />
+                    {on ? <span className="notforme-piece__check"><Icon name="check" size={12} /></span> : null}
+                  </span>
+                  <span className="notforme-piece__name">{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      <button
+        type="button"
+        className="btn btn-primary btn-block"
+        disabled={waiting || busy}
+        onClick={() => onConfirm(raison ?? 'sans', raison === 'piece' ? cibles : [])}
+      >
+        {busy ? <><span className="spinner" aria-hidden="true" />Une seconde</> : <><Icon name="refresh" size={18} /> {waiting ? 'Choisis la pièce' : 'Une autre tenue'}</>}
+      </button>
+    </Sheet>
   );
 }

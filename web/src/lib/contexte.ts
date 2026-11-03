@@ -20,14 +20,20 @@ type Ciel = 'soleil' | 'nuages' | 'pluie' | 'averses' | 'neige' | 'orage' | 'bro
 export type JourMeteo = { date: string; max: number; min: number; ciel: Ciel; libelle: string; pluie: number | null; uv: number | null };
 export type Meteo = { maintenant: { t: number; ressenti: number | null; ciel: Ciel; vent: number | null }; jours: JourMeteo[] };
 export type Ferie = { date: string; nom: string };
+export type Pont = { debut: string; fin: string; jours: number; aPoser: number; feries: string[] };
+export type Vacances = { nom: string; debut: string; fin: string };
 export type Tendance = { kind: string; libelle: string; variation: number | null };
 
 export type Contexte = {
   jour: string;
   ville: Bloc<{ nom: string }>;
   meteo: Bloc<Meteo>;
+  soleil: Bloc<{ lever: string; coucher: string }>;
   feries: Bloc<Ferie[]>;
+  ponts: Bloc<Pont[]>;
+  vacances: Bloc<Vacances[]>;
   tendances: Bloc<Tendance[]>;
+  fete: Bloc<{ prenoms: string }>;
 };
 
 /** Le ciel ramené aux quatre icônes de l'app. */
@@ -82,6 +88,25 @@ export function maintenant(c: Contexte | null): { t: number; kind: Kind; mot?: s
 
 /** Le jour férié d'une date AAAA-MM-JJ, s'il y en a un. */
 export const ferieDu = (c: Contexte | null, day: string) => c?.feries.valeur?.find((f) => f.date === day) ?? null;
+
+/** Les vacances scolaires qui couvrent cette date. */
+export const vacancesDu = (c: Contexte | null, day: string) => c?.vacances.valeur?.find((v) => v.debut <= day && day <= v.fin) ?? null;
+
+/** Le long week-end (pont) qui couvre cette date. */
+export const pontDu = (c: Contexte | null, day: string) => c?.ponts.valeur?.find((p) => p.debut <= day && day <= p.fin) ?? null;
+
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const quantieme = (d: number) => (d === 1 ? '1er' : String(d));
+/** « 1er novembre » à partir d'une date AAAA-MM-JJ. */
+const dateLongue = (iso: string) => `${quantieme(Number(iso.slice(8, 10)))} ${MOIS[Number(iso.slice(5, 7)) - 1]}`;
+
+/** « du 25 au 27 décembre », « du 28 octobre au 3 novembre ». */
+export function periode(debut: string, fin: string): string {
+  return debut.slice(5, 7) === fin.slice(5, 7) ? `du ${quantieme(Number(debut.slice(8, 10)))} au ${dateLongue(fin)}` : `du ${dateLongue(debut)} au ${dateLongue(fin)}`;
+}
+
+/** « 8 h 12 » : une heure du serveur (HH:MM) avec ses espaces insécables. */
+export const hhmm = (x: string) => `${Number(x.slice(0, 2))}\u00a0h\u00a0${x.slice(3, 5)}`;
 
 /** « mise à jour 9 h 10 » : l'heure à laquelle la donnée a été relue, à Paris. */
 function heureMaj(iso: string): string {

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { createOutfit } from '@/app/actions';
+import { useRouter } from 'next/navigation';
+import { createOutfit, planDay } from '@/app/actions';
 import type { Piece } from '@/lib/garments';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Segment } from '@/components/Segment';
@@ -177,8 +178,11 @@ const pick = (n: number) => Math.floor(Math.random() * n);
 /**
  * `start` : la pièce d'où l'on part (« Composer avec », depuis sa fiche) ;
  * elle est posée et verrouillée dans sa rangée, ou ajoutée aux extras.
+ * `day` : le jour qu'on habille (depuis le calendrier) ; la tenue y est
+ * prévue d'un coup, et on revient au calendrier. `dayLabel` le dit en mots.
  */
-export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; start?: string }) {
+export function OutfitBuilder({ pieces, start: startId, day, dayLabel }: { pieces: Piece[]; start?: string; day?: string; dayLabel?: string }) {
+  const router = useRouter();
   const byCat = useMemo(() => {
     const m = new Map<string, Piece[]>();
     for (const p of pieces) m.set(p.category_id, [...(m.get(p.category_id) ?? []), p]);
@@ -265,9 +269,12 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
   const save = () => {
     setError(null);
     start(async () => {
-      const res = await createOutfit({ garmentIds: chosen.map((p) => p.id) });
+      const ids = chosen.map((p) => p.id);
+      // Pour un jour précis : la tenue est créée et prévue d'un coup, puis retour au calendrier.
+      const res = day ? await planDay({ day, garmentIds: ids }) : await createOutfit({ garmentIds: ids });
       if ('error' in res) setError(res.error);
-      else setSaved(res.id);
+      else if (day) router.push(`/calendrier?jour=${day}`);
+      else setSaved('id' in res ? res.id : null);
     });
   };
 
@@ -381,7 +388,7 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
             display: 'flex', gap: 8, background: 'var(--nav-glass)', boxShadow: 'var(--shadow-float)',
           }}
         >
-          <Link href="/tenues" className="btn btn-glass btn-icon" aria-label="Retour aux tenues">
+          <Link href={day ? `/calendrier?jour=${day}` : '/tenues'} className="btn btn-glass btn-icon" aria-label={day ? 'Retour au calendrier' : 'Retour aux tenues'}>
             <Icon d={ICON.back} size={20} width={2} />
           </Link>
           <button type="button" onClick={shuffle} className="btn btn-glass btn-icon" aria-label="Mélanger les pièces non verrouillées">
@@ -396,7 +403,9 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
             className="btn btn-primary"
             style={{ flex: 1, minHeight: 48 }}
           >
-            {pending ? <><span className="spinner" aria-hidden="true" />Kodi range ta tenue</> : `Enregistrer · ${chosen.length} pièce${chosen.length > 1 ? 's' : ''}`}
+            {pending
+              ? <><span className="spinner" aria-hidden="true" />Kodi range ta tenue</>
+              : `${day ? `Prévoir pour ${dayLabel ?? 'ce jour'}` : 'Enregistrer'} · ${chosen.length} pièce${chosen.length > 1 ? 's' : ''}`}
           </button>
         </div>
       </div>

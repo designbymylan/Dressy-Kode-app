@@ -8,7 +8,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getViewer, type Theme } from '@/lib/space';
 import { enabledProviders, siteOrigin, type Provider } from '@/lib/auth';
 import { parisDay } from '@/lib/dates';
-import { loadMessages, loadUsage, type KodeMessage, type KodeUsage } from '@/lib/kode';
+import { loadMessages, loadUsage, type KodeMessage, type KodeUsage, type OutfitView } from '@/lib/kode';
+import { loadSavedOutfits } from '@/lib/agenda';
 import { isPeriod, isPlacePack, isPlan } from '@/lib/plans';
 import {
   GENDERS, GOALS, STYLES, ITEMS, JEWELRY, METALS, ACCESSORIES, COLOURS, AVOID, OCCASIONS,
@@ -659,6 +660,10 @@ export type ActionResult<T extends object = object> = { error: string; code?: st
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const clean = (v: unknown, max: number) => {
+  const s = String(v ?? '').trim().slice(0, max);
+  return s || null;
+};
 const uuids = (list: unknown, max: number): string[] =>
   [...new Set((Array.isArray(list) ? list : []).map(String).filter((x) => UUID.test(x)))].slice(0, max);
 
@@ -702,9 +707,11 @@ async function functionMessage(error: unknown, fallback: string): Promise<{ erro
  * « Je la porte » depuis l'accueil : un port par pièce pour aujourd'hui. La
  * tenue montrée a pu être ajustée (une pièce prise à sa voisine) : seules les
  * pièces comptent. Une pièce déjà notée aujourd'hui ne compte qu'une fois.
- * Si c'est la tenue déjà prévue pour aujourd'hui, la journée est marquée portée.
+ * La tenue reste sur la journée, marquée portée : c'est elle que l'accueil et
+ * le calendrier montrent ensuite. Une tenue déjà enregistrée (prévue pour
+ * aujourd'hui) est reprise telle quelle ; sinon, celle qu'on porte est créée.
  */
-export async function wearPieces(input: { garmentIds: string[]; outfitId?: string | null }): Promise<ActionResult> {
+export async function wearPieces(input: { garmentIds: string[]; outfitId?: string | null; title?: string }): Promise<ActionResult> {
   const viewer = await getViewer();
   if (!viewer) return { error: 'Session expirée.' };
   const ids = uuids(input?.garmentIds, 16);
@@ -717,13 +724,19 @@ export async function wearPieces(input: { garmentIds: string[]; outfitId?: strin
     .upsert(ids.map((garment_id) => ({ garment_id, worn_on: day })), { onConflict: 'garment_id,worn_on', ignoreDuplicates: true });
   if (wears.error) return { error: 'Le port n’a pas pu être noté. Réessaie dans un instant.' };
 
-  const outfitId = input?.outfitId && UUID.test(input.outfitId) ? input.outfitId : null;
+  let outfitId = input?.outfitId && UUID.test(input.outfitId) ? input.outfitId : null;
+  if (!outfitId && ids.length >= 2) {
+    // Si la tenue ne peut pas être gardée, le port reste noté : on ne le défait pas pour autant.
+    const made = await insertOutfit(supabase, viewer.spaceId, ids, clean(input?.title, 80), 'kode');
+    if ('id' in made) outfitId = made.id;
+  }
   if (outfitId) {
     const plan = await supabase.from('planned_days').upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: true });
     if (plan.error) return { error: 'Le calendrier n’a pas pu être mis à jour.' };
   }
 
   revalidatePath('/accueil');
+  revalidatePath('/calendrier');
   revalidatePath('/dressing');
   return { ok: true };
 }
@@ -853,10 +866,11 @@ const momentOf = (time: string | null) => {
 };
 
 const STAKES = ['Tranquille', 'Important', 'Décisif'] as const;
-const clean = (v: unknown, max: number) => {
-  const s = String(v ?? '').trim().slice(0, max);
-  return s || null;
-};
+
+const SETTINGS = ['Intérieur', 'Extérieur', 'Les deux'] as const;
+/** Une liste de mots courts (impressions, contraintes) : dédoublonnée, bornée. */
+const words = (list: unknown, max: number): string[] =>
+  [...new Set((Array.isArray(list) ? list : []).map((x) => String(x).trim().slice(0, 40)).filter(Boolean))].slice(0, max);
 
 export type EventInput = {
   id?: string;
@@ -866,7 +880,10 @@ export type EventInput = {
   kind?: string | null;
   dressCode?: string | null;
   stake?: string | null;
+  impressions?: string[];
   place?: string | null;
+  setting?: string | null;
+  constraints?: string[];
   note?: string | null;
 };
 
@@ -890,7 +907,10 @@ export async function saveEvent(input: EventInput): Promise<ActionResult<{ id: s
     kind: clean(input?.kind, 60),
     dress_code: clean(input?.dressCode, 40),
     stake,
+    impressions: words(input?.impressions, 10),
     place: clean(input?.place, 120),
+    setting: (SETTINGS as readonly string[]).includes(String(input?.setting)) ? String(input.setting) : null,
+    flags: words(input?.constraints, 11),
     note: clean(input?.note, 400),
   };
 
@@ -918,4 +938,12 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
   revalidatePath('/calendrier');
   revalidatePath('/accueil');
   return { ok: true };
+}
+
+/** Les tenues déjà enregistrées, pour en poser une sur un jour (feuille « Changer la tenue »). */
+export async function listSavedOutfits(): Promise<ActionResult<{ outfits: OutfitView[] }>> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const supabase = await createClient();
+  return { ok: true, outfits: await loadSavedOutfits(supabase, viewer) };
 }
