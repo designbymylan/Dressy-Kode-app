@@ -214,7 +214,8 @@ export default async function Moi({
             <span className="dk-row__value">{viewer.spaceName}</span>
           </Row>
           <Row icon="grid" tint="dk-bubble-ico--blue" label="Vue du dressing">
-            <span className="dk-row__value">{DRESSING_VIEW[viewer.settings.dressing_view] ?? viewer.settings.dressing_view}</span>
+            {/* Le dressing s'ouvre en grille (03/11) ; les portants se choisissent depuis le dressing (?vue=portants). */}
+            <span className="dk-row__value">{DRESSING_VIEW.grille}</span>
           </Row>
           {viewer.email ? (
             <Row icon="user" tint="" label="Compte">
