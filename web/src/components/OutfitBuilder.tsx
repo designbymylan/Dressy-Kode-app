@@ -6,7 +6,7 @@ import { createOutfit } from '@/app/actions';
 import type { Piece } from '@/lib/garments';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Segment } from '@/components/Segment';
-import { Icon, ICON } from '@/components/ui';
+import { Icon, ICON, SectionTitle } from '@/components/ui';
 
 /**
  * L'atelier de tenue, sur le modèle des applis de garde-robe les plus
@@ -313,10 +313,9 @@ export function OutfitBuilder({ pieces, start: startId }: { pieces: Piece[]; sta
 
       {EXTRAS.some((e) => list(e.key).length) ? (
         <section className="glass card rise" style={{ '--i': 5, gap: 12 } as CSSProperties}>
-          <h2 className="section-title">
+          <SectionTitle action={<small>{extras.size ? `${extras.size} choisi${extras.size > 1 ? 's' : ''}` : 'facultatif'}</small>}>
             La touche <em className="accent" style={{ fontSize: 20 }}>finale</em>
-            <small>{extras.size ? `${extras.size} choisi${extras.size > 1 ? 's' : ''}` : 'facultatif'}</small>
-          </h2>
+          </SectionTitle>
           <div style={{ display: 'flex', gap: 8 }}>
             {EXTRAS.filter((e) => list(e.key).length).map((e) => (
               <button key={e.key} type="button" className="chip" aria-pressed={extraTab === e.key} onClick={() => setExtraTab(e.key)}>

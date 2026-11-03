@@ -9,7 +9,8 @@ import { KodeChat } from '@/components/KodeChat';
 // certains hébergeurs (10 s) couperait l'action serveur avant la fin.
 export const maxDuration = 60;
 
-export default async function KodiPage() {
+export default async function KodiPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect('/connexion');
   const supabase = await createClient();
@@ -28,6 +29,7 @@ export default async function KodiPage() {
       usage={usage}
       plannedTomorrow={tomorrow?.outfit_id ?? null}
       pieces={count ?? 0}
+      ask={typeof q === 'string' ? q.trim().slice(0, 600) : ''}
     />
   );
 }

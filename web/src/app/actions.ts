@@ -649,3 +649,273 @@ export async function deleteOutfit(formData: FormData): Promise<void> {
   await supabase.from('outfits').delete().eq('id', id);
   revalidatePath('/tenues');
 }
+
+/* ------------------------------------------------------------------
+   Accueil et calendrier : porter une tenue, l'écarter, prévoir un jour,
+   faire préparer plusieurs jours par Kodi, noter un rendez-vous.
+   ------------------------------------------------------------------ */
+
+export type ActionResult<T extends object = object> = { error: string; code?: string | null } | ({ ok: true } & T);
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const uuids = (list: unknown, max: number): string[] =>
+  [...new Set((Array.isArray(list) ? list : []).map(String).filter((x) => UUID.test(x)))].slice(0, max);
+
+/**
+ * Crée une tenue à partir de pièces. L'emplacement de chacune se déduit de
+ * sa catégorie, relue en base : le navigateur ne choisit que les pièces, et
+ * seulement parmi celles que la RLS lui laisse voir.
+ */
+async function insertOutfit(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  spaceId: string,
+  ids: string[],
+  name: string | null,
+  source: 'user' | 'kode',
+): Promise<{ error: string } | { id: string }> {
+  const { data: garments, error: readError } = await supabase.from('garments').select('id, category_id').in('id', ids);
+  if (readError) return { error: 'Les pièces n’ont pas pu être lues. Réessaie dans un instant.' };
+  if (!garments || garments.length !== ids.length) return { error: 'Une des pièces n’est plus dans ton dressing.' };
+  const byId = new Map(garments.map((g) => [g.id, g.category_id as string]));
+
+  const { data: outfit, error } = await supabase.from('outfits').insert({ space_id: spaceId, name, source }).select('id').single();
+  if (error || !outfit) return { error: 'La tenue n’a pas pu être créée. Réessaie dans un instant.' };
+
+  const items = await supabase.from('outfit_items').insert(
+    ids.map((id, position) => ({ outfit_id: outfit.id, garment_id: id, slot: slotFor(byId.get(id)!), position })),
+  );
+  if (items.error) {
+    await supabase.from('outfits').delete().eq('id', outfit.id);
+    return { error: 'Les pièces de la tenue n’ont pas pu être rangées. Réessaie dans un instant.' };
+  }
+  return { id: outfit.id };
+}
+
+/** Le message d'une fonction serveur qui répond une erreur, écrit pour être lu (quota, dressing trop petit…). */
+async function functionMessage(error: unknown, fallback: string): Promise<{ error: string; code: string | null }> {
+  const body = error instanceof FunctionsHttpError ? await (error.context as Response).json().catch(() => null) : null;
+  return { error: body?.error ?? fallback, code: body?.code ?? null };
+}
+
+/**
+ * « Je la porte » depuis l'accueil : un port par pièce pour aujourd'hui. La
+ * tenue montrée a pu être ajustée (une pièce prise à sa voisine) : seules les
+ * pièces comptent. Une pièce déjà notée aujourd'hui ne compte qu'une fois.
+ * Si c'est la tenue déjà prévue pour aujourd'hui, la journée est marquée portée.
+ */
+export async function wearPieces(input: { garmentIds: string[]; outfitId?: string | null }): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const ids = uuids(input?.garmentIds, 16);
+  if (!ids.length) return { error: 'Cette tenue est vide.' };
+
+  const supabase = await createClient();
+  const day = parisDay(0);
+  const wears = await supabase
+    .from('wears')
+    .upsert(ids.map((garment_id) => ({ garment_id, worn_on: day })), { onConflict: 'garment_id,worn_on', ignoreDuplicates: true });
+  if (wears.error) return { error: 'Le port n’a pas pu être noté. Réessaie dans un instant.' };
+
+  const outfitId = input?.outfitId && UUID.test(input.outfitId) ? input.outfitId : null;
+  if (outfitId) {
+    const plan = await supabase.from('planned_days').upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: true });
+    if (plan.error) return { error: 'Le calendrier n’a pas pu être mis à jour.' };
+  }
+
+  revalidatePath('/accueil');
+  revalidatePath('/dressing');
+  return { ok: true };
+}
+
+const RAISONS = ['style', 'couleurs', 'confort', 'meteo', 'journee', 'piece', 'sans'] as const;
+
+/**
+ * « Pas pour moi » : la tenue écartée et sa raison, facultative. Elle ne
+ * revient plus ; une pièce visée passe en dernier deux semaines ; Kodi lit
+ * ces lignes (trois derniers mois) avec ses prochaines tenues. Effacées
+ * après six mois par `menage`.
+ */
+export async function skipOutfit(input: { garmentIds: string[]; reason: string; targetIds?: string[] }): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const ids = uuids(input?.garmentIds, 12);
+  if (!ids.length) return { error: 'Cette tenue est vide.' };
+  const reason = (RAISONS as readonly string[]).includes(input?.reason) ? input.reason : 'sans';
+  const targets = reason === 'piece' ? uuids(input?.targetIds, 12).filter((t) => ids.includes(t)) : [];
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('outfit_feedback')
+    .insert({ space_id: viewer.spaceId, garment_ids: ids, reason, target_ids: targets });
+  if (error) return { error: 'Ta réponse n’a pas pu être gardée. Réessaie dans un instant.' };
+
+  revalidatePath('/accueil');
+  return { ok: true };
+}
+
+/**
+ * Prévoit une tenue pour un jour : une tenue déjà enregistrée, ou une
+ * nouvelle faite de ces pièces. Un jour, une tenue : la précédente est
+ * remplacée. Un jour passé ou déjà porté ne se réécrit pas.
+ */
+export async function planDay(input: { day: string; outfitId?: string | null; garmentIds?: string[]; name?: string }): Promise<ActionResult<{ outfitId: string }>> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const day = String(input?.day ?? '');
+  if (!DAY.test(day) || day < parisDay(0) || day > parisDay(400)) return { error: 'Ce jour ne peut pas recevoir de tenue.' };
+
+  const supabase = await createClient();
+  const { data: current } = await supabase.from('planned_days').select('worn').eq('space_id', viewer.spaceId).eq('day', day).maybeSingle();
+  if (current?.worn) return { error: 'Cette journée est déjà portée.' };
+
+  let outfitId = input?.outfitId && UUID.test(input.outfitId) ? input.outfitId : null;
+  if (outfitId) {
+    const { data: found } = await supabase.from('outfits').select('id').eq('id', outfitId).maybeSingle();
+    if (!found) return { error: 'Cette tenue est introuvable.' };
+  } else {
+    const ids = uuids(input?.garmentIds, 16);
+    if (ids.length < 2) return { error: 'Une tenue, c’est au moins deux pièces.' };
+    const name = String(input?.name ?? '').trim().slice(0, 80) || null;
+    const made = await insertOutfit(supabase, viewer.spaceId, ids, name, 'user');
+    if ('error' in made) return made;
+    outfitId = made.id;
+  }
+
+  const { error } = await supabase.from('planned_days').upsert({ space_id: viewer.spaceId, day, outfit_id: outfitId, worn: false });
+  if (error) return { error: 'Le calendrier n’a pas pu être mis à jour. Réessaie dans un instant.' };
+
+  revalidatePath('/accueil');
+  revalidatePath('/calendrier');
+  return { ok: true, outfitId };
+}
+
+/** Retire la tenue d'un jour à venir (pas une journée déjà portée). */
+export async function unplanDay(day: string): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  if (!DAY.test(day)) return { error: 'Ce jour est inconnu.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('planned_days').delete().eq('space_id', viewer.spaceId).eq('day', day).eq('worn', false);
+  if (error) return { error: 'Le calendrier n’a pas pu être mis à jour. Réessaie dans un instant.' };
+
+  revalidatePath('/accueil');
+  revalidatePath('/calendrier');
+  return { ok: true };
+}
+
+/**
+ * Kodi prépare plusieurs jours d'un coup (fonction `kode`, action
+ * `planifier`) : une tenue par jour, avec les rendez-vous, la météo et les
+ * jours voisins. Compte pour une question. Un jour déjà porté n'est jamais
+ * réécrit.
+ */
+export async function planWithKodi(input: { days: string[]; note?: string }): Promise<ActionResult<{ planned: number }>> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const today = parisDay(0);
+  const days = [...new Set((Array.isArray(input?.days) ? input.days : []).map(String).filter((d) => DAY.test(d) && d >= today && d <= parisDay(31)))]
+    .sort()
+    .slice(0, 31);
+  if (!days.length) return { error: 'Choisis au moins un jour.' };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.functions.invoke<{ jours: { date: string; titre: string; pourquoi: string; pieces: string[] }[] }>('kode', {
+    body: { action: 'planifier', jours: days, voyage: null, consigne: String(input?.note ?? '').trim().slice(0, 400) },
+  });
+  if (error || !data?.jours) return functionMessage(error, 'Kodi n’a pas pu préparer ces jours. Réessaie dans un instant.');
+
+  const { data: wornRows } = await supabase.from('planned_days').select('day').eq('space_id', viewer.spaceId).eq('worn', true).in('day', days);
+  const worn = new Set((wornRows ?? []).map((r) => String(r.day).slice(0, 10)));
+
+  let planned = 0;
+  for (const j of data.jours) {
+    const ids = uuids(j.pieces, 16);
+    if (ids.length < 2 || !days.includes(j.date) || worn.has(j.date)) continue;
+    const made = await insertOutfit(supabase, viewer.spaceId, ids, String(j.titre || 'Par Kodi').slice(0, 80), 'kode');
+    if ('error' in made) continue;
+    const up = await supabase.from('planned_days').upsert({ space_id: viewer.spaceId, day: j.date, outfit_id: made.id, worn: false });
+    if (!up.error) planned++;
+  }
+
+  revalidatePath('/accueil');
+  revalidatePath('/calendrier');
+  if (!planned) return { error: 'Kodi n’a pas pu habiller ces jours avec ton dressing.' };
+  return { ok: true, planned };
+}
+
+/** Le moment de la journée d'après l'heure (colonne `slot`). */
+const momentOf = (time: string | null) => {
+  if (!time) return null;
+  const h = Number(time.slice(0, 2));
+  return h < 12 ? 'Matin' : h < 18 ? 'Après-midi' : 'Soir';
+};
+
+const STAKES = ['Tranquille', 'Important', 'Décisif'] as const;
+const clean = (v: unknown, max: number) => {
+  const s = String(v ?? '').trim().slice(0, max);
+  return s || null;
+};
+
+export type EventInput = {
+  id?: string;
+  day: string;
+  title: string;
+  time?: string | null;
+  kind?: string | null;
+  dressCode?: string | null;
+  stake?: string | null;
+  place?: string | null;
+  note?: string | null;
+};
+
+/** Note un rendez-vous, ou met à jour celui dont on donne l'identifiant. Tout part chez Kodi pour habiller ce jour-là. */
+export async function saveEvent(input: EventInput): Promise<ActionResult<{ id: string }>> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const day = String(input?.day ?? '');
+  const title = clean(input?.title, 120);
+  if (!DAY.test(day)) return { error: 'Choisis un jour.' };
+  if (!title) return { error: 'Donne un nom à ce rendez-vous.' };
+  const time = /^\d{2}:\d{2}$/.test(String(input?.time ?? '')) ? String(input.time) : null;
+  const stake = (STAKES as readonly string[]).includes(String(input?.stake)) ? String(input.stake) : null;
+
+  const row = {
+    space_id: viewer.spaceId,
+    day,
+    title,
+    starts_at: time,
+    slot: momentOf(time),
+    kind: clean(input?.kind, 60),
+    dress_code: clean(input?.dressCode, 40),
+    stake,
+    place: clean(input?.place, 120),
+    note: clean(input?.note, 400),
+  };
+
+  const supabase = await createClient();
+  const id = input?.id && UUID.test(input.id) ? input.id : null;
+  const res = id
+    ? await supabase.from('events').update(row).eq('id', id).select('id').single()
+    : await supabase.from('events').insert(row).select('id').single();
+  if (res.error || !res.data) return { error: 'Le rendez-vous n’a pas pu être gardé. Réessaie dans un instant.' };
+
+  revalidatePath('/calendrier');
+  revalidatePath('/accueil');
+  return { ok: true, id: res.data.id as string };
+}
+
+export async function deleteEvent(id: string): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  if (!UUID.test(String(id))) return { error: 'Ce rendez-vous est inconnu.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('events').delete().eq('id', id);
+  if (error) return { error: 'Le rendez-vous n’a pas pu être retiré. Réessaie dans un instant.' };
+
+  revalidatePath('/calendrier');
+  revalidatePath('/accueil');
+  return { ok: true };
+}

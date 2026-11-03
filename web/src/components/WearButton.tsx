@@ -31,36 +31,7 @@ export function WearButton({
 
   if (worn || just) {
     // Tant que la page n'est pas relue, le compteur avance tout seul.
-    const total = worn ? ports : ports + count;
-    return (
-      <div className={`worn-line${just ? ' play' : ''}`} role="status">
-        <span className="worn-check" aria-hidden="true">
-          {just
-            ? Array.from({ length: 12 }, (_, i) => {
-                const a = (i / 12) * Math.PI * 2 + (i % 2) * 0.3;
-                const d = 34 + (i % 3) * 14;
-                return (
-                  <i
-                    key={i}
-                    className="spark"
-                    style={{ '--dx': `${Math.cos(a) * d}px`, '--dy': `${Math.sin(a) * d - 18}px`, background: colours[i % Math.max(1, colours.length)] ?? 'var(--hi)' } as CSSProperties}
-                  />
-                );
-              })
-            : null}
-          <svg width="44" height="44" viewBox="0 0 44 44">
-            <circle cx="22" cy="22" r="21" />
-            <path d="M14 22.5l5.5 5.5L30.5 17" />
-          </svg>
-        </span>
-        <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <strong style={{ fontSize: 14.5, fontWeight: 500 }}>Portée aujourd&apos;hui</strong>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-            <b className="worn-tally" style={{ color: 'var(--ink)', fontWeight: 500 }}>{total}</b> port{total > 1 ? 's' : ''} pour ces pièces
-          </span>
-        </span>
-      </div>
-    );
+    return <WornLine total={worn ? ports : ports + count} just={just} colours={colours} />;
   }
 
   return (
@@ -82,6 +53,43 @@ export function WearButton({
         {pending ? <><span className="spinner" aria-hidden="true" />C’est noté</> : 'Je la porte'}
       </button>
       {error ? <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)' }}>{error}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * La ligne « Portée aujourd'hui » : la coche se dessine, de petites pastilles
+ * aux couleurs de la tenue s'envolent (si `just`, au geste) et le compteur de
+ * ports monte. Partagée par la fiche de la tenue et la tenue du jour de l'accueil.
+ */
+export function WornLine({ total, just, colours }: { total: number; just: boolean; colours: string[] }) {
+  return (
+    <div className={`worn-line${just ? ' play' : ''}`} role="status">
+      <span className="worn-check" aria-hidden="true">
+        {just
+          ? Array.from({ length: 12 }, (_, i) => {
+              const a = (i / 12) * Math.PI * 2 + (i % 2) * 0.3;
+              const d = 34 + (i % 3) * 14;
+              return (
+                <i
+                  key={i}
+                  className="spark"
+                  style={{ '--dx': `${Math.cos(a) * d}px`, '--dy': `${Math.sin(a) * d - 18}px`, background: colours[i % Math.max(1, colours.length)] ?? 'var(--hi)' } as CSSProperties}
+                />
+              );
+            })
+          : null}
+        <svg width="44" height="44" viewBox="0 0 44 44">
+          <circle cx="22" cy="22" r="21" />
+          <path d="M14 22.5l5.5 5.5L30.5 17" />
+        </svg>
+      </span>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <strong style={{ fontSize: 14.5, fontWeight: 500 }}>Portée aujourd&apos;hui</strong>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+          <b className="worn-tally" style={{ color: 'var(--ink)', fontWeight: 500 }}>{total}</b> port{total > 1 ? 's' : ''} pour ces pièces
+        </span>
+      </span>
     </div>
   );
 }

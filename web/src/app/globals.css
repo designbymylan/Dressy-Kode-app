@@ -1783,3 +1783,279 @@ details[open] > .dk-row .dk-ico[data-anim='nudge'] { transform: rotate(90deg); }
   .pr__swap { animation: none; }
   .pr-seg__thumb, .pr-tray__thumb, .pr-seg__opt, .pr-tray__opt { transition: none; }
 }
+
+/* ============================================================
+   Accueil (03/11) : l'accueil de l'app mobile, sur le web. Le salut, la
+   tenue du jour de la tête aux pieds, la semaine avec sa météo, la bulle de
+   Kodi, les arches, la page de magazine. Mêmes formes, mêmes tailles et
+   mêmes jetons que mobile/src/screens/Home.tsx (palette du 21/10, verre,
+   arrondis). Aucune couleur en dur : tout vient des variables du thème.
+   ============================================================ */
+
+.screen.home { gap: 28px; }
+
+/* Étiquette de carte : un point, puis deux ou trois mots en capitales espacées. */
+.home-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.home-tag::before { content: ''; flex: none; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+/* Petit chiffre ou mot de rangée (jour, température) : Inter, 12 px, chiffres de même largeur. */
+.home-kicker { font-family: var(--font-mono); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.home-kicker[data-today='true'] { color: var(--ink); }
+/* Lien de section (« Tout voir », « Calendrier ») : texte discret, cible de 44 px. */
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-left: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.home-link::after { content: '\2192'; margin-left: 6px; }
+.credit { font-size: 11px; line-height: 1.4; color: var(--muted); padding: 0 4px; }
+
+/* Le salut. */
+.home-hello { display: flex; flex-direction: column; gap: 8px; padding: 8px 4px 0; margin-bottom: -12px; }
+.home-hero { font-size: 30px; line-height: 34px; letter-spacing: -0.3px; }
+.home-hero b { font-weight: 600; }
+.home-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.home-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  font-size: 12px;
+  font-weight: 500;
+}
+/* Une puce qui se touche garde une cible de 44 px, sans grossir. */
+a.home-chip::after { content: ''; position: absolute; inset: -6px 0; }
+
+/* Petit bouton rond (« Une autre tenue »). */
+.icon-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-strong);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 260ms var(--ease-spring);
+}
+.icon-btn:active { transform: scale(0.94); }
+
+/* La tenue du jour. */
+.home-today { padding: 14px; gap: 12px; }
+.home-today__head { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.home-today__head .home-tag { flex: 1; }
+.home-today__head .btn-sm { min-height: 44px; }
+
+.dress-stage { background: var(--stage); border-radius: 22px; padding: 12px 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.dress-row {
+  position: relative;
+  height: var(--h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sheet-rise 380ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 80ms);
+}
+.dress-main { position: relative; height: 100%; display: flex; align-items: center; gap: 8px; }
+.dress-art { width: var(--art); height: 100%; display: flex; align-items: center; justify-content: center; }
+.dress-art img, .dress-near img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12)); }
+.dress-art svg, .dress-near svg { max-width: 100%; max-height: 100%; }
+/* Les voisines : pâles, coupées par le bord ; les toucher les prend. */
+.dress-near {
+  position: absolute;
+  top: 0;
+  width: var(--side);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  opacity: 0.38;
+  cursor: pointer;
+  transition: opacity 200ms var(--ease);
+}
+.dress-near--l { left: calc(var(--side) * -0.38); }
+.dress-near--r { right: calc(var(--side) * -0.38); }
+.dress-near:hover, .dress-near:focus-visible { opacity: 0.62; }
+/* Le cadenas garde la pièce pour la prochaine tenue. */
+.dress-lock { position: absolute; top: 0; left: calc(100% - 6px); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; }
+.dress-lock__dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--glass-strong); border: 1px solid var(--glass-edge); transition: background-color 200ms var(--ease), color 200ms var(--ease); }
+.dress-lock__dot[data-on='true'] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+
+.home-today__words { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
+.home-today__words h3 { font-weight: 400; font-size: 20px; line-height: 25px; letter-spacing: -0.1px; }
+.home-today__words p {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.home-today__foot { display: flex; align-items: center; justify-content: space-between; margin: 0 4px; border-top: 1px solid var(--rule); }
+.home-label-btn {
+  min-height: 44px;
+  padding: 0 16px 0 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* « Pas pour moi » : le choix de la pièce visée. */
+.notforme-piece { width: 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; }
+.notforme-piece__art { position: relative; width: 76px; height: 76px; border-radius: 18px; background: var(--stage); border: 1px solid var(--glass-edge); display: grid; place-items: center; }
+.notforme-piece__art img, .notforme-piece__art svg { max-width: 70%; max-height: 70%; object-fit: contain; }
+.notforme-piece[aria-pressed='true'] .notforme-piece__art { border: 1.5px solid var(--ink); }
+.notforme-piece__name { max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.notforme-piece[aria-pressed='true'] .notforme-piece__name { color: var(--ink); }
+
+/* Ta semaine. */
+.home-week { display: flex; flex-direction: column; gap: 14px; }
+.home-week__head { display: flex; align-items: flex-end; justify-content: space-between; padding: 0 4px; }
+.home-big { font-size: 28px; line-height: 32px; letter-spacing: -0.3px; }
+.home-weekbar { display: flex; align-items: flex-end; gap: 6px; min-height: 44px; padding: 0 4px; }
+.home-weekbar__day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.home-weekbar__bar { align-self: stretch; height: 6px; border-radius: 3px; background: var(--rule); }
+.home-weekbar__bar[data-on='true'] { background: var(--ink); }
+.home-weekbar__count { padding-left: 8px; color: var(--ink); }
+.home-days { padding-block: 4px 10px; scroll-snap-type: x proximity; }
+.home-day {
+  flex: none;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 28px;
+  scroll-snap-align: start;
+}
+.home-day--next { border: 1.5px solid var(--ink); }
+.home-day--empty { border: 1.5px dashed var(--faint); }
+.day-top { display: flex; align-items: center; justify-content: space-between; }
+.day-weather { display: inline-flex; align-items: center; gap: 3px; color: var(--ink); }
+.day-weather .home-kicker { color: var(--ink); }
+.day-num { display: block; font-size: 32px; line-height: 36px; }
+.day-plan { height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.day-plan__plus { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--stage); }
+.day-plan strong { font-size: 14px; font-weight: 600; }
+.day-foot { display: block; height: 16px; min-width: 0; }
+.dot-line { display: flex; align-items: center; gap: 6px; min-width: 0; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--ink); }
+.dot-line i { flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--ink); }
+.dot-line span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flat-lay { position: relative; flex: none; }
+.flat-piece { position: absolute; display: block; }
+.flat-piece img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.12)); }
+.home-trip { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 4px; }
+.home-trip strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+
+/* Demande à Kodi : la bulle beurre, son coin bas presque droit. */
+.home-kodi {
+  --butter-field: rgba(255, 255, 255, 0.72);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-bottom-left-radius: 8px;
+}
+.home-kodi h2 { font-weight: 600; font-size: 20px; line-height: 24px; letter-spacing: -0.1px; color: var(--butter-ink); }
+.home-kodi__form { display: flex; align-items: center; height: 50px; padding: 0 5px 0 18px; border-radius: 25px; background: var(--butter-field); }
+.home-kodi__form:focus-within { outline: 2px solid var(--butter-ink); outline-offset: 2px; }
+.home-kodi__form input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: transparent; font-size: 15px; color: var(--butter-ink); }
+.home-kodi__form input::placeholder { color: var(--butter-ink); opacity: 0.72; }
+.home-kodi__form button { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--butter-ink); color: var(--butter); cursor: pointer; }
+.home-kodi__asks { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-kodi__ask { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 22px; background: var(--butter-field); color: var(--butter-ink); font-size: 14px; font-weight: 500; }
+
+/* À redécouvrir : chaque pièce dans une arche, le nombre de jours en grand. */
+.home-sleeping { padding: 16px; gap: 14px; }
+.home-sleeping__head { display: flex; align-items: center; justify-content: space-between; min-height: 28px; }
+.home-arches { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.arch { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.arch__art {
+  width: 100%;
+  height: 138px;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--stage);
+  border-radius: 56px 56px 22px 22px;
+}
+.arch__art img, .arch__art svg { max-width: 78%; max-height: 100%; object-fit: contain; }
+.arch__days { display: flex; align-items: baseline; gap: 4px; }
+.arch__days .stat { font-size: 30px; line-height: 32px; }
+
+/* Tendance : une page de magazine, le nom en grand, des ronds qui se chevauchent. */
+.home-trend { display: flex; flex-direction: column; gap: 12px; padding: 0 4px; }
+.home-trend__name { font-size: 34px; line-height: 38px; letter-spacing: -0.3px; }
+.home-trend__line { font-size: 15px; line-height: 21px; color: var(--muted); }
+.home-trend__circles { --R: min(120px, calc((min(100vw, 430px) - 80px) / 2.56)); position: relative; height: calc(var(--R) + 4px); }
+.trend-circle {
+  position: absolute;
+  top: 0;
+  left: calc(var(--k) * var(--R) * 0.78);
+  width: var(--R);
+  height: var(--R);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 4px solid var(--bg);
+  background: var(--stage);
+}
+.trend-circle img, .trend-circle svg { max-width: 62%; max-height: 62%; object-fit: contain; }
+.trend-compose {
+  position: absolute;
+  top: calc(var(--R) / 2 - 28px);
+  left: calc((var(--n) - 1) * var(--R) * 0.78 + var(--R) - 20px);
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--blue-glass);
+  color: var(--butter-ink);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: var(--blue-shadow);
+}
+
+/* Une section sans rien à montrer reste à sa place, en une ligne. */
+.home-quiet { padding: 14px; gap: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dress-row { animation: none; }
+}
+.notforme-piece__check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); }

@@ -27,12 +27,15 @@ export function KodeChat({
   usage: initialUsage,
   plannedTomorrow,
   pieces,
+  ask = '',
 }: {
   name: string | null;
   initial: KodeMessage[];
   usage: KodeUsage;
   plannedTomorrow: string | null;
   pieces: number;
+  /** Une question venue de l'accueil (« Demande à Kodi ») : elle part dès l'ouverture, une seule fois. */
+  ask?: string;
 }) {
   const [messages, setMessages] = useState(initial);
   // Les réponses déjà là à l'ouverture se relisent ; seules les nouvelles tenues s'assemblent.
@@ -89,6 +92,18 @@ export function KodeChat({
     }
     setBusy(false);
   }
+
+  // La question de l'accueil part toute seule ; si Kodi ne peut pas répondre (quota, dressing trop petit), elle attend dans le champ.
+  const sentAsk = useRef(false);
+  useEffect(() => {
+    if (!ask || sentAsk.current) return;
+    sentAsk.current = true;
+    window.history.replaceState(null, '', '/kodi');
+    if (closed) setText(ask);
+    else void send(ask);
+    // Une seule fois, à l'ouverture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function submit(e: FormEvent) {
     e.preventDefault();

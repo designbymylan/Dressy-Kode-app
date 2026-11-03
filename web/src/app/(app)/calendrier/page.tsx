@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer } from '@/lib/space';
 import { parisDay } from '@/lib/dates';
-import { Screen, Title, Card, Icon, ICON } from '@/components/ui';
+import { Screen, Title, Card, Icon, ICON, SectionTitle } from '@/components/ui';
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const JOURS_LONGS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -148,7 +148,7 @@ export default async function Calendrier({ searchParams }: { searchParams: Promi
       </section>
 
       <section className="rise" style={{ '--i': 2, display: 'flex', flexDirection: 'column', gap: 12 } as CSSProperties}>
-        <h2 className="section-title">Le <em className="accent">mois</em></h2>
+        <SectionTitle>Le <em className="accent">mois</em></SectionTitle>
         {busy.length === 0 ? (
           <Card center i={3}>
             <p className="small muted">

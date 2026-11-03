@@ -11,8 +11,8 @@ import { CATEGORIES } from '@/lib/wardrobe';
  */
 
 /** Cadre commun : largeur mobile, place pour la barre d'onglets, entrée en fondu. */
-export function Screen({ children, bare }: { children: ReactNode; bare?: boolean }) {
-  return <main className={bare ? 'screen' : 'screen page'}>{children}</main>;
+export function Screen({ children, bare, className }: { children: ReactNode; bare?: boolean; className?: string }) {
+  return <main className={`${bare ? 'screen' : 'screen page'}${className ? ` ${className}` : ''}`}>{children}</main>;
 }
 
 /**
@@ -61,6 +61,21 @@ export function Card({
     >
       {children}
     </section>
+  );
+}
+
+/**
+ * Titre de section : le titre à gauche, un lien ou une indication discrète
+ * à droite. Le titre tient dans un seul élément : `.section-title` est un
+ * flex qui écarte ses enfants, et des mots posés en vrac (« Ta » puis
+ * `<em>semaine</em>`) se retrouvaient chacun à un bout de la ligne.
+ */
+export function SectionTitle({ children, action, style }: { children: ReactNode; action?: ReactNode; style?: CSSProperties }) {
+  return (
+    <h2 className="section-title" style={style}>
+      <span>{children}</span>
+      {action}
+    </h2>
   );
 }
 
