@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { Piece } from '@/lib/garments';
 import { reportGarment, requestCleanImage, togglePieceWear } from '@/app/actions';
 import { isCreator, isFree, type Generation } from '@/lib/generations';
+import { COLOURS } from '@/lib/onboarding';
 import { PieceArt, pieceKindLabel } from '@/components/PieceArt';
 import { Icon, ICON } from '@/components/ui';
 
@@ -17,6 +18,8 @@ export type WearStat = { wears: number; last: string | null };
 
 /** Une pièce arrivée depuis moins de ce temps tombe sur son portant à sa première apparition. */
 const FRESH_MS = 20 * 60 * 1000;
+/** « Nouveau » : une pièce ajoutée depuis moins de deux semaines. */
+const NEW_MS = 14 * 24 * 3600 * 1000;
 const SEEN_KEY = 'dk-portant-vues';
 
 /** Ce qui va avec une pièce : une règle simple et lisible (même esprit que l'app mobile). */
@@ -68,7 +71,21 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('
  *   la fiche de la pièce, et s'y replie à la fermeture. L'œil ne perd
  *   jamais la pièce.
  */
-export function DressingRails({ rails, stats, generation = null }: { rails: RailView[]; stats: Record<string, WearStat>; generation?: Generation | null }) {
+export function DressingRails({
+  rails,
+  stats,
+  generation = null,
+  layout = 'portants',
+  now = '',
+}: {
+  rails: RailView[];
+  stats: Record<string, WearStat>;
+  generation?: Generation | null;
+  /** « portants » : un portant par catégorie ; « grille » : toutes les pièces en vignettes, les plus récentes d'abord. */
+  layout?: 'portants' | 'grille';
+  /** L'instant du serveur : « Nouveau » se décide dessus, pour que le serveur et le navigateur disent la même chose. */
+  now?: string;
+}) {
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<Piece | null>(null);
   const origin = useRef<HTMLElement | null>(null);
@@ -88,6 +105,65 @@ export function DressingRails({ rails, stats, generation = null }: { rails: Rail
 
   const all = rails.flatMap((r) => r.pieces);
   const goes = (p: Piece) => all.filter((q) => q.id !== p.id && (GOES[p.category_id] ?? []).includes(q.category_id)).length;
+
+  // La grille : toutes les pièces choisies, les plus récentes d'abord, avec leur étiquette (Nouveau, Jamais portée) et leurs ports.
+  const grid = [...all].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+  const isNew = (p: Piece) => !!now && Date.parse(now) - Date.parse(p.created_at) < NEW_MS;
+  const sub = (p: Piece) => {
+    const n = stats[p.id]?.wears ?? 0;
+    if (n) return `Portée ${n} fois`;
+    const colour = p.colors[0] ? COLOURS.find((c) => c.id === p.colors[0])?.label : null;
+    return colour ?? pieceKindLabel(p);
+  };
+
+  const sheet = open ? (
+    <PieceSheet
+      piece={open}
+      stat={stats[open.id]}
+      goes={goes(open)}
+      generation={generation}
+      origin={origin}
+      onClosed={() => {
+        const back = origin.current?.closest('button');
+        setOpen(null);
+        back?.focus();
+      }}
+    />
+  ) : null;
+
+  if (layout === 'grille') {
+    return (
+      <>
+        <div className="dress-grid">
+          {grid.map((p, i) => {
+            const tag = isNew(p) ? 'Nouveau' : stats[p.id]?.wears ? null : 'Jamais portée';
+            return (
+              <button
+                key={p.id}
+                type="button"
+                className={`piece piece-button ${fresh.has(p.id) ? 'hang-in' : 'pop'}`}
+                style={{ '--i': Math.min(i, 12) } as CSSProperties}
+                aria-label={`${p.name}, ouvrir sa fiche`}
+                aria-haspopup="dialog"
+                onClick={(e) => {
+                  origin.current = e.currentTarget.querySelector('.piece-frame');
+                  setOpen(p);
+                }}
+              >
+                <div className="piece-frame dress-grid__frame">
+                  <PieceArt piece={p} size={64} />
+                  {tag ? <span className="dk-tag dk-tag--butter dress-grid__tag">{tag}</span> : null}
+                </div>
+                <span className="piece-name dress-grid__name">{p.name}</span>
+                <span className="piece-kind">{sub(p)}</span>
+              </button>
+            );
+          })}
+        </div>
+        {sheet}
+      </>
+    );
+  }
 
   return (
     <>
@@ -115,7 +191,7 @@ export function DressingRails({ rails, stats, generation = null }: { rails: Rail
                 <div className="piece-frame" style={{ aspectRatio: 'auto', height: 124, padding: 10 }}>
                   <PieceArt piece={p} size={46} />
                   {stats[p.id]?.wears ? null : (
-                    <span className="dk-tag dk-tag--butter" style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 9.5, padding: '2px 7px' }}>
+                    <span className="dk-tag dk-tag--butter" style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 11, padding: '2px 7px' }}>
                       Jamais portée
                     </span>
                   )}
@@ -127,20 +203,7 @@ export function DressingRails({ rails, stats, generation = null }: { rails: Rail
         </section>
       ))}
 
-      {open ? (
-        <PieceSheet
-          piece={open}
-          stat={stats[open.id]}
-          goes={goes(open)}
-          generation={generation}
-          origin={origin}
-          onClosed={() => {
-            const back = origin.current?.closest('button');
-            setOpen(null);
-            back?.focus();
-          }}
-        />
-      ) : null}
+      {sheet}
     </>
   );
 }

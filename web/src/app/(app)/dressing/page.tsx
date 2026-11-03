@@ -11,14 +11,18 @@ import { parisDay } from '@/lib/dates';
 import { usageLine, usageOf, WINDOW_DAYS } from '@/lib/usage';
 import { JobList } from '@/components/JobList';
 import { DressingRails, type WearStat } from '@/components/DressingRails';
+import { DressingBar } from '@/components/DressingBar';
 import { Screen, Title, Card, Cut, Icon, ICON, ProgressBar } from '@/components/ui';
+
+/** Les noms des onglets : courts, comme sur l'app mobile. */
+const TAB_LABEL: Record<string, string> = { vestes: 'Manteaux' };
 
 export default async function Dressing({
   searchParams,
 }: {
-  searchParams: Promise<{ demande?: string }>;
+  searchParams: Promise<{ demande?: string; cat?: string; vue?: string }>;
 }) {
-  const { demande } = await searchParams;
+  const { demande, cat, vue } = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect('/connexion');
   const supabase = await createClient();
@@ -55,6 +59,13 @@ export default async function Dressing({
   // Un portant par catégorie, bijoux et accessoires compris.
   const rails = CATEGORIES.map((c) => ({ id: c.id, label: c.label, icon: c.icon, pieces: items.filter((g) => g.category_id === c.id) }));
   const sent = Number(demande) || 0;
+
+  // La grille d'abord, comme sur l'app mobile ; les portants un toucher plus loin. Onglets : une catégorie, ou tout.
+  const layout = vue === 'portants' ? 'portants' : 'grille';
+  const filled = rails.filter((r) => r.pieces.length > 0);
+  const current = filled.some((r) => r.id === cat) ? (cat as string) : 'tout';
+  const shown = filled.filter((r) => current === 'tout' || r.id === current);
+  const shownCount = shown.reduce((n, r) => n + r.pieces.length, 0);
 
   // La barre de progression : la part du dressing portée ces 90 derniers jours.
   const usage = usageOf(items, Object.fromEntries(Object.entries(stats).map(([id, st]) => [id, st.last])), CATEGORIES, parisDay(-WINDOW_DAYS));
@@ -134,7 +145,16 @@ export default async function Dressing({
         </Card>
       ) : (
         <>
-          <DressingRails rails={rails.filter((r) => r.pieces.length > 0)} stats={stats} generation={generation} />
+          <div className="rise" style={{ '--i': 2, display: 'flex', flexDirection: 'column', gap: 12 } as CSSProperties}>
+            <DressingBar
+              tabs={filled.map((r) => ({ id: r.id, label: TAB_LABEL[r.id] ?? r.label }))}
+              current={current}
+              layout={layout}
+              count={shownCount}
+            />
+          </div>
+
+          <DressingRails rails={shown} stats={stats} generation={generation} layout={layout} now={new Date().toISOString()} />
 
           <div className="rise" style={{ '--i': 2 + rails.length, display: 'grid', gap: 10 } as CSSProperties}>
             <Link href="/dressing/ajouter" className="btn btn-primary btn-block">

@@ -450,6 +450,39 @@ Remplace les prix, les limites et l'annuel du 21/10, web et mobile.
   secrets (`COST_*`). Tests : `npm run test:quotas` (SQL, base jetable),
   `test:agent`, `test:billing`.
 
+**Accueil, calendrier et dressing du web alignés sur le mobile (03/11), demandé
+par l'utilisateur.** Ses captures montraient le site, dont l'accueil se
+réduisait à une carte et le calendrier à une grille de points, alors que
+l'aperçu de l'app mobile (le zip « Dresskode, l'app ») avait l'accueil
+complet : le web n'avait jamais eu ces écrans. Il les reprend, avec les mêmes
+formes et les mêmes jetons :
+
+- **Accueil** (`components/HomeView.tsx`, données `lib/accueil.ts`) : salut et
+  puces météo, tenue du jour de la tête aux pieds (voisines, cadenas, « Une
+  autre », « Je la porte », « Pas pour moi »), Ta semaine avec météo et tenues
+  prévues, Demande à Kodi (le champ part dans `/kodi?q=`), À redécouvrir,
+  Tendance. Données du jour par la fonction `donnees` (2,5 s au plus : la
+  page s'affiche sans elles). Le moteur de tenues est `lib/outfits.ts`, le
+  même esprit que `mobile/src/state/outfits.ts`.
+- **Calendrier** (`components/CalendarView.tsx`, `lib/agenda.ts`) : la semaine
+  avec sa météo (l'Agenda), le mois en grand (le Planning), et sous chacun le
+  jour ouvert : rendez-vous détaillés (`DayEvents`) et tenue qu'on prévoit,
+  change ou retire (`DayOutfit`). « Choisir des jours pour Kodi » et
+  « Compléter avec Kodi » passent par l'action `planWithKodi` (action
+  `planifier` de la fonction `kode`). L'état est dans l'adresse (`?jour=`,
+  `?vue=mois`, `?mois=`) ; `/tenues/nouvelle?jour=` prévoit la tenue composée.
+- **Dressing** : onglets de catégories et grille de vignettes (Nouveau,
+  Jamais portée, ports) par défaut, les portants à un toucher (`?vue=portants`).
+- Les titres de section posés en vrac (« Ta » puis `<em>semaine</em>`) étaient
+  écartés mot à mot : `SectionTitle` (`ui.tsx`) range le titre dans un seul
+  élément.
+- **Planches sans compte** pour contrôler ces écrans : `/apercu/accueil`,
+  `/apercu/calendrier`, `/apercu/dressing`, nourries de `app/apercu/fixtures.ts`
+  (fermées sauf `DRESSY_APERCU=1`).
+- Pas encore sur le web : création de voyage, Personnaliser l'accueil, les
+  sections optionnelles (Le plus porté, Nouveautés, Prêts, Ton mois),
+  recherche et filtres du dressing, fiche d'une pièce depuis l'accueil.
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 

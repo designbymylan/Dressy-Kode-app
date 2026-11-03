@@ -22,7 +22,7 @@ export const PIECES: HomePiece[] = [
   piece('h3', 'Chemise ciel', 'hauts', 'chemise', '#C9DAEA', 5, 120, 260),
   piece('b1', 'Jean gris', 'bas', 'jean', '#8C8C90', 40, 2, 900, 'jean-gris'),
   piece('b2', 'Pantalon noir', 'bas', 'pantalon', '#2B2B2E', 19, 4, 650, 'pantalon-noir'),
-  piece('b3', 'Jogging gris', 'bas', 'pantalon', '#A7A29A', 7, 22, 300, 'jogging-gris'),
+  piece('b3', 'Jogging gris', 'bas', 'pantalon', '#A7A29A', 7, 22, 6, 'jogging-gris'),
   piece('r3', 'Robe vert sapin', 'robes', 'robe', '#2F4A3C', 0, null, 90),
   piece('c1', 'Sabots', 'chaussures', 'mocassins', '#7E4F2C', 20, 12, 600, 'sabots'),
   piece('c5', 'Escarpins noirs', 'chaussures', 'escarpins', '#26231F', 5, 210, 650),

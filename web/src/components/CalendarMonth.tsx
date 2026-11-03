@@ -133,7 +133,7 @@ export function CalendarMonth({
               return choosing ? (
                 <button key={c.iso} type="button" {...common} aria-pressed={on} disabled={past} onClick={() => toggle(c.iso)}>{inner}</button>
               ) : (
-                <Link key={c.iso} href={href(month, c.iso)} {...common} aria-current={c.iso === day ? 'date' : undefined} scroll={false}>{inner}</Link>
+                <Link key={c.iso} href={href(month, c.iso)} {...common} aria-current={c.iso === day ? 'date' : undefined} scroll={false} prefetch={false}>{inner}</Link>
               );
             })}
           </div>
