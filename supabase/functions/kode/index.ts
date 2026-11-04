@@ -30,6 +30,7 @@ import {
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
 import { conditionsDuJour, interdites, meteoTexte, type Conditions } from './meteo.ts';
 import { vectoriser, versPgvector, LOT_MAX } from '../_shared/embeddings.ts';
+import { anthropicBase } from '../_shared/fournisseurs.ts';
 import { cachePostgres } from '../_shared/donnees/cache.ts';
 import { contexteDuJour, type Contexte } from '../_shared/donnees/contexte.ts';
 import { contexteTexte } from '../_shared/donnees/texte.ts';
@@ -260,7 +261,7 @@ async function askClaude(system: string, context: string, turns: Turn[], schema:
     throw new KodeError('Kodi n’est pas encore disponible. Réessaie un peu plus tard.', 503);
   }
 
-  const client = new Anthropic({ apiKey, timeout: opts.timeout, maxRetries: opts.retries });
+  const client = new Anthropic({ apiKey, baseURL: anthropicBase(), timeout: opts.timeout, maxRetries: opts.retries });
   try {
     return await client.beta.messages.create({
       model: MODEL,

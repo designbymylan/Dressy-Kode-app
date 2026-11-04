@@ -684,6 +684,16 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   finit dans l'app installée. C'est la RLS qui protège les données.
 - Côté serveur, authentifie avec `supabase.auth.getUser()` et non
   `getSession()` : seul `getUser()` revalide le jeton.
+- **Intermédiaire d'accès aux modèles d'IA (04/11)** : les secrets facultatifs
+  `ANTHROPIC_BASE_URL` et `GEMINI_BASE_URL` (`_shared/fournisseurs.ts`)
+  remplacent les adresses de Claude et de Gemini sans toucher au code ;
+  absents, rien ne change. Un intermédiaire reçoit les photos et les
+  questions : inscris-le d'abord au registre RGPD et à la politique. Ses
+  modèles de découpe se règlent par `GEMINI_SEGMENT_MODEL` et
+  `GEMINI_SEGMENT_MODEL_STRONG` ; les vecteurs de Kodi (`embeddings.ts`)
+  appellent toujours Google, avec `GEMINI_API_KEY` (sans vraie clé Google,
+  Kodi répond sans souvenirs). Contrôle gratuit :
+  `GET /functions/v1/dressy-agent?verifier`.
 - Schéma : `supabase/migrations/`. Toute modification passe par une nouvelle
   migration, dont le nom de fichier reprend la version appliquée au projet.
 - Edge Functions : `kode`, `billing`, `donnees` et `compte` avec

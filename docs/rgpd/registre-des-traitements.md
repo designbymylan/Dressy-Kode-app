@@ -26,6 +26,7 @@ jamais dans l'app ni dans le code ; jeton revalidé côté serveur par
 | Supabase | Base de données, authentification, fichiers, fonctions serveur | Union européenne (Irlande) |
 | Anthropic | IA : repérage des pièces sur les photos, réponses et tenues de Kode, recherche du modèle d'une pièce | États-Unis |
 | Google (API Gemini) | IA : dessin des pièces ; vectorisation des souvenirs de goût (textes courts, avec l'accord « gouts ») | États-Unis |
+| Intermédiaire d'accès aux modèles d'IA (facultatif, **éteint** tant que `ANTHROPIC_BASE_URL` et `GEMINI_BASE_URL` ne sont pas réglés) | Relais des appels à Claude et à Gemini : il verrait les mêmes données que les deux lignes ci-dessus (photos, dressing, questions) | **À confirmer avant l'activation** : entité, lieu de traitement, contrat de sous-traitance, transferts hors Union européenne ; politique de confidentialité (`mobile/src/data/legal.ts`) à mettre à jour |
 | Stripe | Paiement, factures | États-Unis et Union européenne |
 | Expo (EAS Update) | Distribution des mises à jour de l'app, sans donnée de compte | États-Unis |
 

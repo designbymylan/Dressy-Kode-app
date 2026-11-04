@@ -90,6 +90,10 @@ Supabase > Edge Functions > Secrets, jamais dans le code. Réglages facultatifs 
 `CLAUDE_MODEL` (contrôle, `claude-sonnet-5`), `CLAUDE_PROMPT_EFFORT` et
 `CLAUDE_JUDGE_EFFORT` (`medium` et `low`), `GEMINI_IMAGE_MODEL`. Vérification
 gratuite de la configuration : `GET /functions/v1/dressy-agent?verifier`.
+Pour passer par un intermédiaire plutôt que par les fournisseurs eux-mêmes
+(à inscrire d'abord au registre RGPD), deux secrets facultatifs :
+`ANTHROPIC_BASE_URL` et `GEMINI_BASE_URL` (l'adresse de base, sans `/v1`),
+voir `supabase/functions/_shared/fournisseurs.ts`.
 
 ## Kodi, le styliste
 

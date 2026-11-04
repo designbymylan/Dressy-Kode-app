@@ -24,6 +24,7 @@ import {
 } from './prompts.ts';
 import { parseSegments, type Segment } from './segment.ts';
 import { sniffMime } from './codec.ts';
+import { anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
 export type Usage = Record<string, unknown> | null;
@@ -111,7 +112,7 @@ function httpError(who: string, status: number, text: string): AgentError {
 export async function generate(prompt: string, sources: Img[], opts: { search?: boolean; model?: string; size?: '1K' | '2K' } = {}): Promise<Img & { usage: Usage; searched: boolean }> {
   const key = secret('GEMINI_API_KEY');
   const model = opts.model ?? MODELS.gemini;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const url = geminiUrl(model);
 
   // Consigne d'abord, puis les photos de référence : Nano Banana redessine la
   // pièce à partir de la vraie, au lieu de l'imaginer d'après le texte.
@@ -194,7 +195,7 @@ let client: Anthropic | null = null;
 function anthropic(): Anthropic {
   // Une seule reprise automatique : au-delà, c'est la file de l'agent qui
   // retente, sans bloquer le passage.
-  client ??= new Anthropic({ apiKey: secret('ANTHROPIC_API_KEY'), timeout: 100_000, maxRetries: 1 });
+  client ??= new Anthropic({ apiKey: secret('ANTHROPIC_API_KEY'), baseURL: anthropicBase(), timeout: 100_000, maxRetries: 1 });
   return client;
 }
 
@@ -282,7 +283,7 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
 export async function segment(photo: Img, target: Target, opts: { strong: boolean }): Promise<{ segments: Segment[]; usage: Usage; model: string }> {
   const key = secret('GEMINI_API_KEY');
   const model = opts.strong ? MODELS.segmentStrong : MODELS.segment;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const url = geminiUrl(model);
 
   const hint = !opts.strong && target.box
     ? ` It is roughly inside the box [y0, x0, y1, x1] = [${[target.box[1], target.box[0], target.box[1] + target.box[3], target.box[0] + target.box[2]].map((v) => Math.round(v * 1000)).join(', ')}] (0-1000), but that box is only approximate.`
@@ -381,40 +382,54 @@ export async function checkSetup() {
   const timeout = () => AbortSignal.timeout(15_000);
   const headers = (k: string) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' });
 
-  const claudeModels = async (k: string) => {
-    const b = await (await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: headers(k), signal: timeout() })).json();
+  const claude = anthropicBase();
+  const gemini = geminiBase();
+
+  // Chez le fournisseur lui-même, on lit la fiche du modèle. Un intermédiaire
+  // n'offre en général que la liste de ses modèles (GET /v1/models) : on y
+  // cherche le modèle. Dans les deux cas, aucune génération.
+  const listeDe = (base: string) => async (k: string): Promise<string[]> => {
+    const b = await (await fetch(`${base}/v1/models?limit=1000`, { headers: headers(k), signal: timeout() })).json();
     return (b.data ?? []).map((m: { id: string }) => m.id).sort();
   };
-  const claudeProbe = (model: string) => probe(
-    'ANTHROPIC_API_KEY', model,
-    (k) => fetch(`https://api.anthropic.com/v1/models/${model}`, { headers: headers(k), signal: timeout() }),
-    claudeModels,
-  );
-
-  const geminiList = async (k: string) => {
-    const b = await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
-    return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
+  const ficheParListe = (base: string, model: string) => async (k: string): Promise<Response> => {
+    const res = await fetch(`${base}/v1/models?limit=1000`, { headers: headers(k), signal: timeout() });
+    if (!res.ok) return res;
+    const ids = ((await res.json()).data ?? []).map((m: { id: string }) => m.id);
+    return new Response('{}', { status: ids.includes(model) ? 200 : 404 });
   };
 
+  const claudeProbe = (model: string) => probe(
+    'ANTHROPIC_API_KEY', model,
+    anthropicViaIntermediaire()
+      ? ficheParListe(claude, model)
+      : (k) => fetch(`${claude}/v1/models/${model}`, { headers: headers(k), signal: timeout() }),
+    listeDe(claude),
+  );
+
+  const geminiList = geminiViaIntermediaire()
+    ? listeDe(gemini)
+    : async (k: string) => {
+      const b = await (await fetch(`${gemini}/v1beta/models?pageSize=1000`, { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
+      return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
+    };
+  const geminiProbe = (model: string) => probe(
+    'GEMINI_API_KEY', model,
+    geminiViaIntermediaire()
+      ? ficheParListe(gemini, model)
+      : (k) => fetch(`${gemini}/v1beta/models/${model}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
+    geminiList,
+  );
+
   const [decoupe, decoupeFort, dessin, repérage] = await Promise.all([
-    probe(
-      'GEMINI_API_KEY', MODELS.segment,
-      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.segment}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      geminiList,
-    ),
-    probe(
-      'GEMINI_API_KEY', MODELS.segmentStrong,
-      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.segmentStrong}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      geminiList,
-    ),
-    probe(
-      'GEMINI_API_KEY', MODELS.gemini,
-      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      geminiList,
-    ),
+    geminiProbe(MODELS.segment),
+    geminiProbe(MODELS.segmentStrong),
+    geminiProbe(MODELS.gemini),
     claudeProbe(MODELS.survey),
   ]);
 
   const pret = [decoupe, decoupeFort, dessin, repérage].every((p) => p.cle === 'valide' && p.modele_trouve === true);
-  return { pret, decoupe, decoupeFort, dessin, reperage: repérage };
+  // Seul le fait de passer par un intermédiaire se dit : jamais son adresse
+  // (cette route est ouverte).
+  return { pret, intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() }, decoupe, decoupeFort, dessin, reperage: repérage };
 }
