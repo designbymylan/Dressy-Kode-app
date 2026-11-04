@@ -686,13 +686,15 @@ techniques ou visuels (Tailwind, Lucide, Recharts, palettes) sans demander.
   `getSession()` : seul `getUser()` revalide le jeton.
 - **Intermédiaire d'accès aux modèles d'IA (04/11)** : les secrets facultatifs
   `ANTHROPIC_BASE_URL` et `GEMINI_BASE_URL` (`_shared/fournisseurs.ts`)
-  remplacent les adresses de Claude et de Gemini sans toucher au code ;
-  absents, rien ne change. Un intermédiaire reçoit les photos et les
-  questions : inscris-le d'abord au registre RGPD et à la politique. Ses
-  modèles de découpe se règlent par `GEMINI_SEGMENT_MODEL` et
-  `GEMINI_SEGMENT_MODEL_STRONG` ; les vecteurs de Kodi (`embeddings.ts`)
-  appellent toujours Google, avec `GEMINI_API_KEY` (sans vraie clé Google,
-  Kodi répond sans souvenirs). Contrôle gratuit :
+  remplacent les adresses de Claude et du dessin Gemini sans toucher au
+  code ; absents, rien ne change. Un intermédiaire reçoit les photos et les
+  questions : inscris-le d'abord au registre RGPD et à la politique.
+  Essais du 04/11 sur teamorouter : le dessin est fiable, la découpe et les
+  vecteurs ne le sont pas (modèles 2.5 absents, masques qui expirent). La
+  **décision du 04/11** : dessin par l'intermédiaire, découpe et vecteurs de
+  Kodi chez Google avec `GOOGLE_API_KEY` (clé directe, **facturation
+  activée** : le palier gratuit réutilise les données). Sans elle, ils
+  suivent la clé et l'adresse du dessin. Contrôle gratuit :
   `GET /functions/v1/dressy-agent?verifier`.
 - Schéma : `supabase/migrations/`. Toute modification passe par une nouvelle
   migration, dont le nom de fichier reprend la version appliquée au projet.

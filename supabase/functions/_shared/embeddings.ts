@@ -3,17 +3,17 @@
  * et chaque question sont transformés en une liste de 768 nombres, pour
  * retrouver les souvenirs proches d'une question (table `kodi_faits`).
  *
- * Fournisseur : l'API Gemini, déjà utilisée pour le dessin des pièces, avec
- * la même clé (`GEMINI_API_KEY`). Seuls des textes courts partent, jamais
- * l'image, le nom ni l'e-mail de la personne.
+ * Fournisseur : l'API Gemini de Google, avec `GOOGLE_API_KEY` si elle existe,
+ * sinon la clé du dessin (`GEMINI_API_KEY`, voir `accesGoogle`). Seuls des
+ * textes courts partent, jamais l'image, le nom ni l'e-mail de la personne.
  *
  * À 768 dimensions, l'API ne normalise pas les vecteurs : on le fait ici,
  * sinon la distance cosinus de la base n'a pas de sens.
  */
+import { accesGoogle, geminiUrl } from './fournisseurs.ts';
 
 export const DIMENSIONS = 768;
 const MODELE = 'gemini-embedding-001';
-const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODELE}:batchEmbedContents`;
 /** Au-delà, un lot coûte trop cher en un seul appel. */
 export const LOT_MAX = 50;
 
@@ -37,12 +37,12 @@ export async function vectoriser(
   tache: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY',
   opts: { timeout?: number } = {},
 ): Promise<number[][] | null> {
-  const cle = Deno.env.get('GEMINI_API_KEY');
+  const { cle, base } = accesGoogle();
   if (!cle || !textes.length) return null;
   if (textes.length > LOT_MAX) throw new Error(`vectoriser : ${textes.length} textes, ${LOT_MAX} au plus par appel`);
 
   try {
-    const res = await fetch(URL, {
+    const res = await fetch(geminiUrl(MODELE, 'batchEmbedContents', base), {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': cle },
       body: JSON.stringify({

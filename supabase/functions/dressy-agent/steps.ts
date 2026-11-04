@@ -24,7 +24,7 @@ import {
 } from './prompts.ts';
 import { parseSegments, type Segment } from './segment.ts';
 import { sniffMime } from './codec.ts';
-import { anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire } from '../_shared/fournisseurs.ts';
+import { accesGoogle, anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
 export type Usage = Record<string, unknown> | null;
@@ -72,9 +72,11 @@ export const EFFORT = {
 };
 
 export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
+/** Les clés obligatoires, plus `GOOGLE_API_KEY` (facultative : découpe et vecteurs chez Google directement). */
+type SecretName = (typeof KEYS)[number] | 'GOOGLE_API_KEY';
 
 /** La clé telle que collée, sans les espaces ni guillemets qu'un copier-coller ajoute souvent. */
-function readKey(name: (typeof KEYS)[number]): string | undefined {
+function readKey(name: SecretName): string | undefined {
   const raw = Deno.env.get(name);
   if (!raw) return undefined;
   return raw.trim().replace(/^["']+|["']+$/g, '').trim() || undefined;
@@ -90,7 +92,7 @@ function secret(name: (typeof KEYS)[number]): string {
  * À quoi ressemble une clé, sans en montrer un seul caractère : sert à repérer
  * une clé collée sous le mauvais nom (une clé Google dans ANTHROPIC_API_KEY…).
  */
-function keyShape(name: (typeof KEYS)[number]) {
+function keyShape(name: SecretName) {
   const raw = Deno.env.get(name) ?? '';
   const k = readKey(name) ?? '';
   const famille = /^sk-ant-/.test(k) ? 'Anthropic' : /^sk-/.test(k) ? 'OpenAI' : /^AIza/.test(k) ? 'Google' : 'inconnue';
@@ -281,9 +283,12 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
  * reprise après un « rendu incorrect ».
  */
 export async function segment(photo: Img, target: Target, opts: { strong: boolean }): Promise<{ segments: Segment[]; usage: Usage; model: string }> {
-  const key = secret('GEMINI_API_KEY');
+  // Chez Google directement quand `GOOGLE_API_KEY` existe, sinon comme le dessin.
+  const acces = accesGoogle();
+  if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
+  const key = acces.cle;
   const model = opts.strong ? MODELS.segmentStrong : MODELS.segment;
-  const url = geminiUrl(model);
+  const url = geminiUrl(model, 'generateContent', acces.base);
 
   const hint = !opts.strong && target.box
     ? ` It is roughly inside the box [y0, x0, y1, x1] = [${[target.box[1], target.box[0], target.box[1] + target.box[3], target.box[0] + target.box[2]].map((v) => Math.round(v * 1000)).join(', ')}] (0-1000), but that box is only approximate.`
@@ -351,7 +356,7 @@ type Probe = {
  * corps des réponses (certains fournisseurs y recopient la clé masquée).
  */
 async function probe(
-  name: (typeof KEYS)[number],
+  name: SecretName,
   model: string,
   lookup: (key: string) => Promise<Response>,
   list: (key: string) => Promise<string[]>,
@@ -407,29 +412,37 @@ export async function checkSetup() {
     listeDe(claude),
   );
 
-  const geminiList = geminiViaIntermediaire()
-    ? listeDe(gemini)
-    : async (k: string) => {
-      const b = await (await fetch(`${gemini}/v1beta/models?pageSize=1000`, { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
-      return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
-    };
-  const geminiProbe = (model: string) => probe(
-    'GEMINI_API_KEY', model,
-    geminiViaIntermediaire()
-      ? ficheParListe(gemini, model)
-      : (k) => fetch(`${gemini}/v1beta/models/${model}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-    geminiList,
-  );
+  const geminiProbe = (model: string, nomCle: SecretName, base: string) => {
+    const chezGoogle = base === GEMINI_OFFICIEL;
+    return probe(
+      nomCle, model,
+      chezGoogle
+        ? (k) => fetch(`${base}/v1beta/models/${model}`, { headers: { 'x-goog-api-key': k }, signal: timeout() })
+        : ficheParListe(base, model),
+      chezGoogle
+        ? async (k: string) => {
+          const b = await (await fetch(`${base}/v1beta/models?pageSize=1000`, { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
+          return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
+        }
+        : listeDe(base),
+    );
+  };
 
+  // La découpe a parfois sa propre clé, chez Google (GOOGLE_API_KEY) ; le dessin garde la sienne.
+  const dec = accesGoogle();
   const [decoupe, decoupeFort, dessin, repérage] = await Promise.all([
-    geminiProbe(MODELS.segment),
-    geminiProbe(MODELS.segmentStrong),
-    geminiProbe(MODELS.gemini),
+    geminiProbe(MODELS.segment, dec.nomCle, dec.base),
+    geminiProbe(MODELS.segmentStrong, dec.nomCle, dec.base),
+    geminiProbe(MODELS.gemini, 'GEMINI_API_KEY', gemini),
     claudeProbe(MODELS.survey),
   ]);
 
   const pret = [decoupe, decoupeFort, dessin, repérage].every((p) => p.cle === 'valide' && p.modele_trouve === true);
   // Seul le fait de passer par un intermédiaire se dit : jamais son adresse
   // (cette route est ouverte).
-  return { pret, intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() }, decoupe, decoupeFort, dessin, reperage: repérage };
+  return {
+    pret,
+    intermediaire: { claude: anthropicViaIntermediaire(), dessin: geminiViaIntermediaire(), decoupe: dec.base !== GEMINI_OFFICIEL },
+    decoupe, decoupeFort, dessin, reperage: repérage,
+  };
 }
