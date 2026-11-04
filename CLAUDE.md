@@ -291,6 +291,12 @@ fabrication (recherche), lieu et mois d'achat, prix, état, occasions. Code :
 Stockage : colonne `garments.fiche` (migration `fiche_piece`), jamais envoyée
 à Kode ; marque, taille, coupe, matière, saison et prix gardent leurs colonnes.
 
+**Aperçu web du mobile (04/11), demandé par l'utilisateur** : l'app tourne dans
+un iPhone 17 (402 × 874 pt, île dynamique, zone de sécurité 62 / 34) posé à côté
+d'un panneau de test (thème, compte de démonstration, nouvel espace) dès 880 px
+de large, panneau au-dessus du téléphone en dessous (`mobile/src/web/PhoneFrame.tsx`).
+Aperçu seulement : rien n'existe sur le téléphone.
+
 **RGPD (09/10)**, demandé par l'utilisateur (détail et reste à faire :
 `docs/rgpd/README.md`) :
 
