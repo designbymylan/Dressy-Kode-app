@@ -364,7 +364,7 @@ function reducer(s: State, a: Action): State {
       return { ...s, pieces: s.undo, undo: null, wornToday: null, journal, toast: null };
     }
     case 'nextOutfit':
-      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0], evite(s.ecarts)).length), wornToday: null };
+      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0], evite(s.ecarts, s.coeurs)).length), wornToday: null };
     case 'ecart':
       // La tenue écartée sort de la liste : le même rang montre déjà la suivante.
       return { ...s, ecarts: garder([a.ecart, ...s.ecarts]), wornToday: null };
@@ -381,7 +381,7 @@ function reducer(s: State, a: Action): State {
       // La base a donné son identifiant à une pièce ajoutée : on le reporte partout où elle apparaît.
       const swap = (id: string) => (id === a.from ? a.to : id);
       const planned = Object.fromEntries(Object.entries(s.planned).map(([d, o]) => [d, { ...o, pieces: o.pieces.map(swap) }]));
-      return { ...s, pieces: s.pieces.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)), planned, fresh: s.fresh.map(swap), undo: s.undo?.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)) ?? null };
+      return { ...s, pieces: s.pieces.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)), planned, coeurs: s.coeurs.map(swap), fresh: s.fresh.map(swap), undo: s.undo?.map((p) => (p.id === a.from ? { ...p, id: a.to } : p)) ?? null };
     }
     case 'updatePiece':
       return { ...s, pieces: s.pieces.map((p) => (p.id === a.piece.id ? a.piece : p)), toast: { id: ++toastId, text: 'Étiquette enregistrée' } };
@@ -755,18 +755,29 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         const session = live();
         if (session) sync(remote.saveEcart(session, ecart));
         // L'état n'est relu qu'au prochain rendu : la liste d'après se calcule ici.
-        const left = todayOutfits(before.pieces, meteoDe(before).jours[0], evite(garder([ecart, ...before.ecarts])));
+        const left = todayOutfits(before.pieces, meteoDe(before).jours[0], evite(garder([ecart, ...before.ecarts]), before.coeurs));
         const gone = new Set([cleTenue(pieces), ...(proposee ? [cleTenue(proposee)] : [])]);
         const more = left.some((o) => !gone.has(cleTenue(o.pieces)));
         dispatch({ t: 'toast', text: more ? 'Noté. Kodi ne te la proposera plus.' : 'Noté. Ajoute une pièce ou deux : Kodi aura plus de choix.' });
         return more;
       },
-      /** Un cœur sur une pièce : posé ou retiré, gardé dans « Mes choix ». */
+      /**
+       * Un cœur sur une pièce : posé ou retiré, gardé dans « Mes choix » et
+       * dans les favoris du dressing. Le cœur change aussitôt ; si la base
+       * refuse, il revient comme avant (et un message le dit).
+       */
       coeur: (id: string) => {
         const aime = !getState().coeurs.includes(id);
         dispatch({ t: 'coeur', id, aime });
         const session = live();
-        if (session) sync(remote.setCoeur(session, id, aime));
+        if (session) {
+          sync(
+            remote.setCoeur(session, id, aime).catch((e: unknown) => {
+              dispatch({ t: 'coeur', id, aime: !aime });
+              throw e;
+            }),
+          );
+        }
       },
       /** L'accord « Kodi apprend de mes choix ». Retiré, les souvenirs partent aussitôt. */
       accorderGouts: (on: boolean) => {
@@ -782,7 +793,17 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       addPiece: (piece: Piece) => {
         dispatch({ t: 'addPiece', piece });
         const session = live();
-        if (session) sync(remote.addPieces(session, [piece]).then(([id]) => id && dispatch({ t: 'swapId', from: piece.id, to: id })));
+        if (session) {
+          sync(
+            remote.addPieces(session, [piece]).then(async ([id]) => {
+              if (!id) return;
+              // Une pièce aimée avant d'avoir son identifiant : son cœur part avec elle.
+              const aimee = getState().coeurs.includes(piece.id);
+              dispatch({ t: 'swapId', from: piece.id, to: id });
+              if (aimee) await remote.setCoeur(session, id, true);
+            }),
+          );
+        }
       },
       /** L'étiquette corrigée à la main : enregistrée aussitôt, sur le compte s'il y en a un. */
       updatePiece: (piece: Piece) => {
@@ -1196,7 +1217,7 @@ export const useMeteo = () => {
 export const useTodayOutfits = () => {
   const { s } = useStore();
   const today = useMeteo().jours[0];
-  return useMemo(() => todayOutfits(s.pieces, today, evite(s.ecarts)), [s.pieces, today, s.ecarts]);
+  return useMemo(() => todayOutfits(s.pieces, today, evite(s.ecarts, s.coeurs)), [s.pieces, today, s.ecarts, s.coeurs]);
 };
 
 export { precision } from './profile';

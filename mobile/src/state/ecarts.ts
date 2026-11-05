@@ -36,17 +36,22 @@ const RETRAIT_JOURS = 14;
 /** Une tenue se reconnaît à ses pièces, dans n'importe quel ordre. */
 export const cleTenue = (ids: string[]) => [...ids].sort().join(',');
 
-/** Ce que les tenues proposées doivent éviter : des combinaisons, et des pièces mises en retrait. */
-export type Evite = { tenues: Set<string>; retrait: Set<string> };
+/**
+ * Ce que les tenues proposées doivent éviter : des combinaisons, et des pièces
+ * mises en retrait. `aimees` (05/11) : les pièces au cœur, que les tenues
+ * préfèrent très légèrement, sans jamais passer devant une pièce écartée.
+ */
+export type Evite = { tenues: Set<string>; retrait: Set<string>; aimees: Set<string> };
 
-export function evite(ecarts: Ecart[]): Evite {
+export function evite(ecarts: Ecart[], coeurs: string[] = []): Evite {
   return {
+    aimees: new Set(coeurs),
     tenues: new Set(ecarts.flatMap((e) => [cleTenue(e.pieces), ...(e.proposee ? [cleTenue(e.proposee)] : [])])),
     retrait: new Set(ecarts.filter((e) => e.raison === 'piece' && -offsetOf(e.date) <= RETRAIT_JOURS).flatMap((e) => e.cibles)),
   };
 }
 
-export const RIEN: Evite = { tenues: new Set(), retrait: new Set() };
+export const RIEN: Evite = { tenues: new Set(), retrait: new Set(), aimees: new Set() };
 
 /** Les écarts gardés : les plus récents d'abord, cent au plus (les mêmes que la base garde six mois). */
 export const garder = (ecarts: Ecart[]) => ecarts.slice(0, 100);

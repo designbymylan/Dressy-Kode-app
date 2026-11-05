@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { UsagePanel } from '../ui/usage';
+import { FavorisView } from '../ui/favoris';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -31,7 +32,7 @@ const NO_FILTERS: Filters = { color: null, season: null, usage: null, sort: 'rec
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 export function Dressing() {
-  const { s } = useStore();
+  const { s, a } = useStore();
   const nav = useNavigation<Nav>();
   const route = useRoute<Route<'Dressing'>>();
   const insets = useSafeAreaInsets();
@@ -41,6 +42,8 @@ export function Dressing() {
   const { width } = useScreen();
   const [view, setView] = useState<'portants' | 'grille'>('grille');
   const [category, setCategory] = useState<CategoryId | null>(null);
+  // La vue « Favoris » (05/11) : les pièces au cœur, toutes catégories confondues.
+  const [favs, setFavs] = useState(false);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [draft, setDraft] = useState<Filters>(NO_FILTERS);
   const [sheet, setSheet] = useState(false);
@@ -52,6 +55,8 @@ export function Dressing() {
     if (!p) return;
     if (p.view) setView(p.view);
     if (p.category !== undefined) setCategory(p.category);
+    if (p.favoris !== undefined) setFavs(p.favoris);
+    else if (p.category !== undefined) setFavs(false);
   }, [route.params]);
 
   const limit = pieceLimit(s);
@@ -59,7 +64,7 @@ export function Dressing() {
   const active = (filters.color ? 1 : 0) + (filters.season ? 1 : 0) + (filters.usage ? 1 : 0);
 
   const apply = (f: Filters, cat: CategoryId | null, q: string) => {
-    let list = s.pieces.filter((p) => (!cat || p.category === cat) && (!f.color || familyOf(p.color) === f.color) && (!f.season || p.season === f.season));
+    let list = s.pieces.filter((p) => (!favs || s.coeurs.includes(p.id)) && (!cat || p.category === cat) && (!f.color || familyOf(p.color) === f.color) && (!f.season || p.season === f.season));
     if (f.usage === 'jamais') list = list.filter((p) => p.wears === 0);
     if (f.usage === 'oubliees') list = list.filter((p) => p.lastWorn === null || p.lastWorn > 90);
     if (q.trim()) {
@@ -71,8 +76,8 @@ export function Dressing() {
     if (f.sort === 'recentes') list = [...list].sort((a, b) => a.addedDaysAgo - b.addedDaysAgo);
     return list;
   };
-  const list = useMemo(() => apply(filters, category, query), [s.pieces, filters, category, query]);
-  const draftCount = useMemo(() => apply(draft, category, query).length, [s.pieces, draft, category, query]);
+  const list = useMemo(() => apply(filters, category, query), [s.pieces, s.coeurs, favs, filters, category, query]);
+  const draftCount = useMemo(() => apply(draft, category, query).length, [s.pieces, s.coeurs, favs, draft, category, query]);
   // Les familles présentes dans le dressing, avec leur nombre de pièces.
   const colors = useMemo(
     () => COLOR_FAMILIES.map((f) => ({ ...f, count: s.pieces.filter((p) => familyOf(p.color) === f.name).length })).filter((f) => f.count > 0),
@@ -86,6 +91,7 @@ export function Dressing() {
   const reset = () => {
     setFilters(NO_FILTERS);
     setCategory(null);
+    setFavs(false);
     setQuery('');
   };
 
@@ -134,22 +140,24 @@ export function Dressing() {
         </Animated.View>
       )}
       {/* La garde-robe exploitée, dans sa section découpée pleine largeur (21/10, comme le web). */}
-      {!searching && s.pieces.length > 0 && (
+      {!searching && !favs && s.pieces.length > 0 && (
         <View style={{ marginHorizontal: -space.gutter, marginTop: -26, marginBottom: 4 }}>
           <UsagePanel pieces={s.pieces} />
         </View>
       )}
-      <Circles value={category} onChange={setCategory} />
+      <Circles value={category} onChange={(v) => { setFavs(false); setCategory(v); }} favoris={favs} onFavoris={() => { setCategory(null); setFavs(true); }} />
       {/* Le nombre de pièces à gauche ; la vue (grille, portants) et les filtres à droite. */}
       <View className="flex-row items-center" style={{ gap: 4, marginTop: -6 }}>
         <T v="kicker" tone="ink2" style={{ flex: 1 }}>
           {`${list.length} pièce${list.length > 1 ? 's' : ''}`}
         </T>
         {(
-          [
-            ['grille', 'grid', 'Grille'],
-            ['portants', 'rails', 'Portants'],
-          ] as const
+          favs
+            ? []
+            : ([
+                ['grille', 'grid', 'Grille'],
+                ['portants', 'rails', 'Portants'],
+              ] as const)
         ).map(([v, icon, label]) => (
           <Tap key={v} testID={`seg-${v}`} onPress={() => setView(v)} feedback="select" accessibilityRole="tab" accessibilityState={{ selected: view === v }} accessibilityLabel={label} scaleTo={0.95} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', opacity: view === v ? 1 : 0.45 }}>
             <Icon name={icon} size={19} color={c.ink} />
@@ -237,6 +245,37 @@ export function Dressing() {
     </Sheet>
   );
 
+  if (favs) {
+    const dense = s.density === 'dense';
+    const cols = dense ? 3 : 2;
+    const gap = dense ? 10 : 14;
+    const tileW = (width - space.gutter * 2 - gap * (cols - 1)) / cols;
+    const aimees = s.pieces.filter((p) => s.coeurs.includes(p.id)).length;
+    return (
+      <View className="bg-paper" style={{ flex: 1 }} testID="screen-dressing-favoris">
+        <Ambient />
+        <ScrollEdge y={edge} />
+        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}>
+          {header}
+          <FavorisView
+            pieces={list}
+            total={aimees}
+            tileW={tileW}
+            gap={gap}
+            dense={dense}
+            onExit={() => setFavs(false)}
+            onReset={() => {
+              setFilters(NO_FILTERS);
+              setQuery('');
+            }}
+          />
+        </Animated.ScrollView>
+        {capsule}
+        {filterSheet}
+      </View>
+    );
+  }
+
   if (view === 'grille') {
     const cols = s.density === 'dense' ? 3 : 2;
     const gap = s.density === 'dense' ? 10 : 14;
@@ -270,7 +309,7 @@ export function Dressing() {
             />
             )
           }
-          renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} onPress={(from) => nav.navigate('Piece', { id: item.id, from })} />}
+          renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} liked={s.coeurs.includes(item.id)} onLike={() => a.coeur(item.id)} onPress={(from) => nav.navigate('Piece', { id: item.id, from })} />}
         />
         {capsule}
         {filterSheet}
@@ -337,21 +376,22 @@ function EmptyWardrobe() {
  * capitales espacées, la catégorie active soulignée. Une catégorie vide
  * reste visible, en gris : on sait ce qui manque.
  */
-function Circles({ value, onChange }: { value: CategoryId | null; onChange: (v: CategoryId | null) => void }) {
+function Circles({ value, onChange, favoris, onFavoris }: { value: CategoryId | null; onChange: (v: CategoryId | null) => void; favoris: boolean; onFavoris: () => void }) {
   const { s } = useStore();
   const { c } = useTheme();
   const items: { id: CategoryId | null; label: string; count: number }[] = [
     { id: null, label: 'Tout', count: s.pieces.length },
     ...CATEGORIES.map((cat) => ({ id: cat.id, label: cat.short, count: s.pieces.filter((p) => p.category === cat.id).length })),
   ];
+  const aimees = s.pieces.filter((p) => s.coeurs.includes(p.id)).length;
   return (
     <View style={{ borderBottomWidth: 1, borderColor: c.rule, marginHorizontal: -space.gutter }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 18 }} accessibilityRole="tablist">
         {items.map((it) => {
-          const on = value === it.id;
+          const on = !favoris && value === it.id;
           return (
+            <Fragment key={it.id ?? 'all'}>
             <Tap
-              key={it.id ?? 'all'}
               testID={`cat-${it.id ?? 'all'}`}
               onPress={() => onChange(on && it.id ? null : it.id)}
               feedback="select"
@@ -366,6 +406,31 @@ function Circles({ value, onChange }: { value: CategoryId | null; onChange: (v: 
               </T>
               <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 1.5, backgroundColor: on ? c.ink : 'transparent' }} />
             </Tap>
+            {/* L'entrée « Favoris » (05/11) : juste après « Tout », avec son cœur et son compte. */}
+            {it.id === null && (
+              <Tap
+                testID="cat-favoris"
+                onPress={onFavoris}
+                feedback="select"
+                scaleTo={1}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: favoris }}
+                accessibilityLabel={`Favoris, ${aimees} pièce${aimees > 1 ? 's' : ''}`}
+                style={{ height: 42, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              >
+                <Icon name="heart" size={14} color={favoris ? c['blue-ink'] : c.ink2} line={!favoris} strokeWidth={2} />
+                <T v="label" tone={favoris ? 'ink' : 'ink2'}>
+                  Favoris
+                </T>
+                {aimees > 0 && (
+                  <T v="small" tone="ink2">
+                    {aimees}
+                  </T>
+                )}
+                <View style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 1.5, backgroundColor: favoris ? c.ink : 'transparent' }} />
+              </Tap>
+            )}
+            </Fragment>
           );
         })}
       </ScrollView>

@@ -31,8 +31,10 @@ export function missingForOutfit(pieces: Piece[]): string | null {
 
 export function suggestOutfits(pieces: Piece[], w: Weather | null = WEATHER[0], av: Evite = RIEN): Outfit[] {
   // Les moins portées d'abord : Kodi fait tourner le dressing. Une pièce écartée seule (« Pas pour moi ») passe en dernier.
+  // Un cœur compte pour un mois de repos en plus : un petit coup de pouce, pas une règle.
+  const rest = (p: Piece) => (p.lastWorn ?? 999) + (av.aimees.has(p.id) ? 30 : 0);
   const by = (c: Piece['category']) =>
-    pieces.filter((p) => p.category === c).sort((a, b) => Number(av.retrait.has(a.id)) - Number(av.retrait.has(b.id)) || (b.lastWorn ?? 999) - (a.lastWorn ?? 999));
+    pieces.filter((p) => p.category === c).sort((a, b) => Number(av.retrait.has(a.id)) - Number(av.retrait.has(b.id)) || rest(b) - rest(a));
   // Un cardigan se porte par-dessus : il compte comme une couche, pas comme le haut.
   const layers = [...by('manteaux'), ...by('hauts').filter((p) => p.kind === 'cardigan')];
   const tops = by('hauts').filter((p) => p.kind !== 'cardigan' || by('hauts').length === 1);

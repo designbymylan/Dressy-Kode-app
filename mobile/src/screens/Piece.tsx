@@ -15,6 +15,7 @@ import { Button } from '../ui/Button';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Bars, Card, DotChip, EmptyState, Row, Tag } from '../ui/bits';
 import { Garment, hangOf } from '../ui/Garment';
+import { HeartButton } from '../ui/Heart';
 import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
@@ -121,6 +122,7 @@ export function PieceScreen() {
   const goes = matches(piece, s.pieces).sort((x, z) => z.wears - x.wears).slice(0, 6);
   const { labels, values } = history(piece);
   const wornToday = piece.lastWorn === 0;
+  const liked = s.coeurs.includes(piece.id);
   // Seule une pièce découpée d'une photo du compte peut être reprise, deux fois au plus.
   const reportable = s.account === 'connecte' && !!piece.image && (piece.reports ?? 0) < 2;
   // « Image propre » : une génération. Connecté, seule une pièce venue d'une photo ; la démonstration le simule.
@@ -158,7 +160,10 @@ export function PieceScreen() {
                     {usage}
                   </T>
                 </View>
-                <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={48} onPress={() => nav.navigate('Compose', { with: piece.id })} />
+                <View className="flex-row items-center" style={{ gap: 8 }}>
+                  <HeartButton testID="piece-coeur" liked={liked} onToggle={() => a.coeur(piece.id)} name={piece.name} size={48} />
+                  <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={48} onPress={() => nav.navigate('Compose', { with: piece.id })} />
+                </View>
               </View>
             </Glass>
           </View>
@@ -185,15 +190,6 @@ export function PieceScreen() {
           </View>
         </View>
 
-        <Button
-          testID="piece-coeur"
-          label={s.coeurs.includes(piece.id) ? 'Dans mes choix' : 'Ajouter à mes choix'}
-          icon="heart"
-          variant={s.coeurs.includes(piece.id) ? 'primary' : 'secondary'}
-          size="m"
-          grow
-          onPress={() => a.coeur(piece.id)}
-        />
         <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
 
         {dormant && (

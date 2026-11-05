@@ -59,9 +59,16 @@ export function MesChoix() {
           </T>
         </Card>
 
-        <T v="label" tone="ink2" style={{ paddingHorizontal: 6, paddingTop: 6 }} accessibilityRole="header">
-          Pièces aimées
-        </T>
+        <View className="flex-row items-center justify-between" style={{ paddingHorizontal: 6, paddingTop: 6 }}>
+          <T v="label" tone="ink2" accessibilityRole="header">
+            Pièces aimées
+          </T>
+          {aimees.length > 0 && (
+            <T testID="mes-choix-favoris" v="label" tone="ink2" onPress={() => nav.navigate('Tabs', { screen: 'Dressing', params: { favoris: true } })} accessibilityRole="link" suppressHighlighting style={{ paddingVertical: 10, paddingLeft: 12 }}>
+              Voir dans le dressing
+            </T>
+          )}
+        </View>
         {aimees.length ? (
           <Group testID="mes-choix-pieces">
             {aimees.map((p) => (
@@ -69,7 +76,7 @@ export function MesChoix() {
             ))}
           </Group>
         ) : (
-          <EmptyState title="Pas encore de cœur" body="Touche « Ajouter à mes choix » sur une pièce de ton dressing : elle se retrouve ici." />
+          <EmptyState title="Pas encore de cœur" body="Touche le cœur d’une pièce pour la retrouver ici." />
         )}
 
         {accord && (

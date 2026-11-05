@@ -7,6 +7,7 @@ import { agree, isNew, newLabel, wornLabel } from '../data/wardrobe';
 import { LightScope, useTheme } from '../theme/ThemeProvider';
 import { Garment } from './Garment';
 import { glassSurface } from './Glass';
+import { HeartButton } from './Heart';
 import { Icon, type IconName } from './Icon';
 import { T } from './T';
 import { Tap } from './Tap';
@@ -121,13 +122,14 @@ export function measureOrigin(view: View | null, then: (from?: Origin) => void) 
  * portée, puis son nom en capitales espacées et ses ports en gris, comme
  * une fiche produit de grande enseigne.
  */
-export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean }) {
+export function PieceTile({ piece, width, onPress, dense, liked, onLike }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean; liked?: boolean; onLike?: () => void }) {
   const { scheme, c } = useTheme();
   const art = width * (dense ? 0.62 : 0.56);
   const frame = useRef<View>(null);
   const tag = piece.wears === 0 ? (isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : `Jamais porté${agree(piece)}`) : null;
   return (
-    <Tap testID={`tile-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}`} accessibilityHint="Ouvre la fiche" style={{ width }} scaleTo={0.97}>
+    <View style={{ width }}>
+    <Tap testID={`tile-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}${liked ? ', dans tes favoris' : ''}`} accessibilityHint="Ouvre la fiche" style={{ width }} scaleTo={0.97}>
       <View ref={frame} className="items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.12), borderRadius: dense ? 18 : 22, backgroundColor: c.stage }}>
         <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} dark={scheme === 'dark'} label={piece.name} />
         {tag && !dense && (
@@ -147,6 +149,9 @@ export function PieceTile({ piece, width, onPress, dense }: { piece: Piece; widt
         </View>
       )}
     </Tap>
+    {/* Le cœur est posé à côté de la vignette, pas dedans : deux zones tactiles, deux libellés. */}
+    {onLike && <HeartButton testID={`heart-${piece.id}`} liked={!!liked} onToggle={onLike} name={piece.name} size={dense ? 30 : 34} outerStyle={{ position: 'absolute', top: dense ? 6 : 8, right: dense ? 6 : 8 }} />}
+    </View>
   );
 }
 

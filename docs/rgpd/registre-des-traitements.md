@@ -218,8 +218,11 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 
 ## 11. Mes choix et mémoire de Kodi
 
-- **Finalité** : garder ce qu'on aime (cœurs), et apprendre de ses choix
-  pour que Kodi propose des tenues plus justes à chacun.
+- **Finalité** : garder ce qu'on aime (cœurs, montrés aussi dans la vue
+  « Favoris » du dressing depuis le 05/11, sans nouvelle donnée), et
+  apprendre de ses choix pour que Kodi propose des tenues plus justes à
+  chacun. Les tenues du jour préfèrent très légèrement les pièces au cœur,
+  calculées sur le téléphone.
 - **Base** : les cœurs, exécution du contrat (favoris). La mémoire de Kodi,
   consentement : accord « gouts » (« Kodi apprend de mes choix »), donné
   ou retiré à tout moment dans Réglages › Mes choix, daté et versionné
