@@ -101,7 +101,13 @@ const b64 = (u: Uint8Array) => Buffer.from(u).toString('base64');
 /** Traduit un code HTTP d'un fournisseur en message lisible, le détail partant aux journaux. */
 function httpError(who: string, status: number, text: string): AgentError {
   const detail = `${who} ${status} : ${text.replace(/\s+/g, ' ').slice(0, 300)}`;
-  if (status === 401 || status === 403) return new AgentError(SAY.notReady, detail);
+  if (status === 401 || status === 403) {
+    // Clé refusée : le journal dit laquelle et à quoi elle ressemble (jamais un
+    // caractère de la clé), pour la corriger dans les secrets sans deviner.
+    const name = /^Claude/.test(who) ? 'ANTHROPIC_API_KEY' : 'GEMINI_API_KEY';
+    const forme = keyShape(name);
+    return new AgentError(SAY.notReady, `${detail} | CLE REFUSEE : secret ${name} (famille ${forme.famille}, ${forme.longueur} caractères${forme.nettoyee ? ', espaces ou guillemets retirés' : ''}), à remplacer dans Supabase > Edge Functions > Secrets`);
+  }
   if (status === 429 || status === 529 || /credit|quota|billing/i.test(text)) return new AgentError(SAY.busy, detail);
   return new AgentError(SAY.failed, detail);
 }
