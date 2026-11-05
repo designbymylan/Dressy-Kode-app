@@ -25,7 +25,6 @@ import { Tap } from '../ui/Tap';
 import { Button } from '../ui/Button';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
 import { Card, DotChip, Tag, WeatherIcon } from '../ui/bits';
-import { Credit } from '../ui/Credit';
 import { Garment } from '../ui/Garment';
 import { FlatLay, headToToe } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
@@ -313,7 +312,6 @@ function TripView({ trip }: { trip: Trip }) {
               );
             })}
           </Animated.ScrollView>
-          {live ? <Credit blocs={[infos?.prevision, infos?.saison]} /> : null}
         </Card>
 
         {/* Une tenue par jour : la proposition de Kodi, à changer à volonté. */}

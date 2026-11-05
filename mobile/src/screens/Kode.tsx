@@ -8,7 +8,6 @@ import { kodeStarters, type KodeMessage } from '../state/kode';
 import { LIMITS, eventsOn, questionsLeft, useMeteo, useStore } from '../state/store';
 import { isoOf } from '../state/planning';
 import { dateLongue, jourIso, periode } from '../state/contexte';
-import { Credit } from '../ui/Credit';
 import { canCompose } from '../state/outfits';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
@@ -129,7 +128,6 @@ export function Kode() {
                   <DotChip key={k.label} label={k.label} />
                 ))}
               </View>
-              {meteo.reelle && <Credit blocs={[s.contexte?.meteo, prochain?.bloc]} />}
             </View>
             {/* Transparence (09/10, règlement européen sur l'IA, art. 50) : on sait qu'on parle à une IA. */}
             <T v="small" tone="ink2" style={{ paddingHorizontal: 4 }} testID="kode-ai">

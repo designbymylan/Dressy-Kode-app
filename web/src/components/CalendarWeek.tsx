@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import type { Agenda } from '@/lib/agenda';
-import { credit, ferieDu, hhmm, periode, pontDu, vacancesDu } from '@/lib/contexte';
+import { ferieDu, hhmm, periode, pontDu, vacancesDu } from '@/lib/contexte';
 import { LETTRES, MOIS, addDays, cap, longLabel, offsetOf, weekday } from '@/lib/planning';
 import { DotChip } from '@/components/DotChip';
 import { Icon } from '@/components/icons';
@@ -29,7 +29,6 @@ export function DaySummary({ a }: { a: Agenda }) {
     soleil && `Soleil de ${hhmm(soleil.lever)} à ${hhmm(soleil.coucher)}`,
   ].filter((x): x is string => !!x);
   const chips = [prevision, ...notes].filter((x): x is string => !!x);
-  const line = credit([ctx?.meteo, ferie || pont ? ctx?.feries : null, vacances ? ctx?.vacances : null, fete ? ctx?.fete : null, soleil ? ctx?.soleil : null]);
   const trip = a.trips.find((t) => t.starts_on <= a.day && a.day <= t.ends_on);
 
   return (
@@ -47,7 +46,6 @@ export function DaySummary({ a }: { a: Agenda }) {
           {chips.map((c) => <DotChip key={c}>{c}</DotChip>)}
         </div>
       ) : null}
-      {line ? <p className="credit" style={{ padding: 0 }}>{line}</p> : null}
     </div>
   );
 }

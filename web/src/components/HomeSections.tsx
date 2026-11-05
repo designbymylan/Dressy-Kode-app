@@ -77,7 +77,7 @@ export function Sleeping({ list, i }: { list: HomePiece[]; i: number }) {
  * qui se chevauchent. Seulement ce qui monte ET que le dressing a déjà :
  * pas besoin d'acheter.
  */
-export function Trend({ trend, owned, credit, i }: { trend: Tendance | null; owned: HomePiece[]; credit: string | null; i: number }) {
+export function Trend({ trend, owned, i }: { trend: Tendance | null; owned: HomePiece[]; i: number }) {
   if (!trend || !owned.length) return <Quiet title="Tendance" text="Aucune tendance de la semaine dans ton dressing." i={i} />;
   const circles = owned.slice(0, 3);
   const n = owned.length;
@@ -97,7 +97,6 @@ export function Trend({ trend, owned, credit, i }: { trend: Tendance | null; own
           <Icon name="sparkle" size={22} />
         </Link>
       </div>
-      {credit ? <p className="credit">{credit}</p> : null}
     </section>
   );
 }

@@ -33,6 +33,26 @@ import type { Nav } from '../navigation/types';
 
 const MODE = { montrer: 'Partage avec', preter: 'Prêt à', donner: 'Don proposé à' } as const;
 
+/**
+ * Les sources des données du jour et leurs licences (05/11) : elles ne
+ * s'affichent plus sous la météo, la licence CC BY 4.0 de MET Norway et des
+ * autres demande seulement une attribution visible dans l'app, ici.
+ */
+const SOURCES: { quoi: string; qui: string; licence?: string }[] = [
+  { quoi: 'Météo et soleil', qui: 'MET Norway', licence: 'CC BY 4.0' },
+  { quoi: 'Météo de repli, lieux et voyages', qui: 'Open-Meteo.com, GeoNames', licence: 'CC BY 4.0' },
+  { quoi: 'Air et pollens', qui: 'Open-Meteo.com, Copernicus CAMS', licence: 'CC BY 4.0' },
+  { quoi: 'Fête du jour', qui: 'nameday.abalin.net' },
+  { quoi: 'Jours fériés', qui: 'caldays.com', licence: 'CC BY 4.0' },
+  { quoi: 'Jours fériés en France', qui: 'calendrier.api.gouv.fr', licence: 'Licence Ouverte Etalab' },
+  { quoi: 'Jours fériés (repli)', qui: 'Nager.Date' },
+  { quoi: 'Vacances scolaires', qui: 'ministère de l’Éducation nationale (data.education.gouv.fr), OpenHolidays API' },
+  { quoi: 'Lever et coucher du soleil (repli)', qui: 'sunrise-sunset.org' },
+  { quoi: 'Lieux', qui: 'IGN Géoplateforme, © les contributeurs d’OpenStreetMap', licence: 'ODbL pour OpenStreetMap' },
+  { quoi: 'Photos des lieux', qui: 'Wikimedia Commons, via Wikipédia' },
+  { quoi: 'Tendances', qui: 'consultations de Wikipédia' },
+];
+
 export function Settings() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -43,6 +63,7 @@ export function Settings() {
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [sharesOpen, setSharesOpen] = useState(false);
   const [account, setAccount] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const p = s.profile;
   const plan = PLANS.find((x) => x.id === s.plan)!;
   const loans = s.shares.filter((x) => x.mode === 'preter');
@@ -132,6 +153,7 @@ export function Settings() {
 
         <Label text="Aide" />
         <Group>
+          <Row testID="settings-sources" icon="layers" title="Sources des données" detail="Météo, fêtes, jours fériés, licences" onPress={() => setSourcesOpen(true)} />
           <Row testID="me-states" icon="eye" title="Aperçu du design" onPress={() => nav.navigate('States')} last={s.account === 'connecte'} />
           {s.account !== 'connecte' && <Row testID="replay-welcome" icon="refresh" title="Revoir la bienvenue" detail="Remet l’aperçu à zéro" onPress={a.restart} last />}
         </Group>
@@ -150,7 +172,22 @@ export function Settings() {
       <Sheet visible={notifsOpen} onClose={() => setNotifsOpen(false)} title="Notifications" testID="notifs-sheet">
         <NotifChoices value={s.notifs} testID="me-notif" onDone={() => setNotifsOpen(false)} />
       </Sheet>
-      <Sheet visible={sharesOpen} onClose={() => setSharesOpen(false)} title="Prêts et partages" testID="shares-sheet">
+      <Sheet visible={sourcesOpen} onClose={() => setSourcesOpen(false)} title="Sources des données" testID="sources-sheet">
+        <View style={{ gap: 14, paddingBottom: 8 }}>
+          <T v="caption" tone="ink2">
+            Kodi s’appuie sur ces services ouverts pour la météo, les fêtes et les jours fériés. Chaque donnée est reprise telle que la source la donne, avec ses conditions.
+          </T>
+          {SOURCES.map((x) => (
+            <View key={x.quoi} style={{ gap: 2 }} accessibilityRole="text">
+              <T v="bodyStrong">{x.quoi}</T>
+              <T v="caption" tone="ink2">
+                {x.licence ? `${x.qui} · ${x.licence}` : x.qui}
+              </T>
+            </View>
+          ))}
+        </View>
+      </Sheet>
+      <Sheet visible={sharesOpen}onClose={() => setSharesOpen(false)} title="Prêts et partages" testID="shares-sheet">
         {s.shares.length === 0 ? (
           <EmptyState
             title="Rien en cours"

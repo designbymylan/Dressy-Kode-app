@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { EDITEUR, POLITIQUE, POLITIQUE_VERSION } from '@/lib/politique';
+import { SOURCES } from '@/lib/sources';
 
 export const metadata: Metadata = { title: 'Politique de confidentialité · Dresskode' };
 
@@ -57,7 +58,17 @@ export default function Confidentialite() {
         </Card>
       ))}
 
-      <Card i={8} style={{ gap: 6 }}>
+      <Card i={8} style={{ gap: 10 }}>
+        <h2 className="eyebrow" style={{ color: 'var(--ink)' }}>Sources des données</h2>
+        {SOURCES.map((x, j) => (
+          <div key={x.quoi} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop: j ? 10 : 0, borderTop: j ? '1px solid var(--rule)' : 'none' }}>
+            <p style={{ fontWeight: 600 }}>{x.quoi}</p>
+            <p className="small muted">{x.licence ? `${x.qui} · ${x.licence}` : x.qui}</p>
+          </div>
+        ))}
+      </Card>
+
+      <Card i={9} style={{ gap: 6 }}>
         <h2 className="eyebrow" style={{ color: 'var(--ink)' }}>Éditeur et contact</h2>
         <p>{editeur}</p>
         <p className={EDITEUR.contact ? undefined : 'muted'}>{EDITEUR.contact ?? 'L’adresse de contact sera indiquée ici avant la sortie de l’app.'}</p>

@@ -116,14 +116,12 @@ export function HomeWeek({
   trip,
   todayReady,
   canFill,
-  credit,
 }: {
   week: WeekDay[];
   trip: HomeTrip | null;
   /** Aujourd'hui compte comme prêt quand une tenue est proposée ou portée. */
   todayReady: boolean;
   canFill: boolean;
-  credit: string | null;
 }) {
   const ready = (d: WeekDay) => (d.offset === 0 ? todayReady : !!d.outfit);
   const count = week.filter(ready).length;
@@ -162,7 +160,6 @@ export function HomeWeek({
       ) : null}
 
       {empty.length > 0 && canFill ? <FillWeek days={empty} /> : null}
-      {credit ? <p className="credit">{credit}</p> : null}
     </section>
   );
 }

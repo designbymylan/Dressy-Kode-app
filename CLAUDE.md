@@ -24,8 +24,12 @@ Deux applications, un seul projet Supabase :
   `supabase/functions/_shared/donnees/` (une source par fichier, cache
   partagé `data_cache`, chaîne de repli ; voir son `README.md`). L'app les
   reçoit par la fonction `donnees`, Kode les lit avec la question. Aucune API
-  externe n'est appelée depuis l'app, et toute donnée affichée porte sa
-  source et son heure de mise à jour (`mobile/src/ui/Credit.tsx`).
+  externe n'est appelée depuis l'app. **Décision du 05/11** : la ligne de
+  crédits grise (`ui/Credit.tsx`, supprimé) ne s'affiche plus sous la météo ;
+  l'attribution complète des sources et de leurs licences (CC BY 4.0 de MET
+  Norway, etc.) vit à un seul endroit, « Sources des données » dans Réglages
+  (`screens/Settings.tsx`) et en bas de `/confidentialite` sur le web
+  (`lib/sources.ts`), à tenir à jour avec les `mention` des sources.
 
 Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur :
 

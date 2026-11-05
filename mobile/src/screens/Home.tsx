@@ -8,7 +8,6 @@ import { MODULE_LABELS, eventsOn, precision, sleeping, usageRate, useMeteo, useS
 import { isoOf, spanLabel } from '../state/planning';
 import { usePlanifier } from '../state/usePlanifier';
 import { ferieDu, tendancesChezToi } from '../state/contexte';
-import { Credit } from '../ui/Credit';
 import { canCompose, missingForOutfit } from '../state/outfits';
 import { FirstRail } from '../ui/onboarding';
 import { useTheme } from '../theme/ThemeProvider';
@@ -116,9 +115,6 @@ export function Home() {
         {s.modules
           .filter((m) => m.on && outfits.length > 0)
           .map((m) => (m.id === 'tenue' ? outfits.length ? <TodayCard key="tenue" W={W} /> : null : <Module key={m.id} id={m.id} W={W} />))}
-
-        {/* La météo de l'en-tête est créditée dans « Ta semaine » ; section masquée, elle l'est ici. */}
-        {meteo.reelle && !semaineVisible && <Credit blocs={[s.contexte?.meteo]} />}
       </Animated.ScrollView>
     </View>
   );
@@ -546,7 +542,6 @@ function Week() {
         </Tap>
       )}
       {empty.length > 0 && canCompose(s.pieces) && <Button testID="week-fill" label="Compléter avec Kodi" variant="secondary" icon="kode" loading={busy} onPress={fill} />}
-      {meteo.reelle && <Credit blocs={[s.contexte?.meteo, s.contexte?.feries]} />}
     </View>
   );
 }
@@ -688,7 +683,6 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
             </Tap>
           </View>
         </View>
-        {meteo.reelle && <Credit blocs={[s.contexte?.tendances]} />}
       </View>
     );
   }

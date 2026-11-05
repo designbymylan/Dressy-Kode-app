@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Home } from '@/lib/accueil';
 import { parisDateLabel } from '@/lib/dates';
-import { credit, tendancesChezToi } from '@/lib/contexte';
+import { tendancesChezToi } from '@/lib/contexte';
 import { canCompose, missingForOutfit, sleeping } from '@/lib/outfits';
 import { HomeToday } from '@/components/HomeToday';
 import { HomeWeek } from '@/components/HomeWeek';
@@ -101,7 +101,6 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
             trip={trip}
             todayReady={ready || worn}
             canFill
-            credit={credit([contexte?.meteo, contexte?.feries])}
           />
 
           <HomeKodi asks={asks} i={3} />
@@ -109,7 +108,6 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
           <Trend
             trend={trend?.t ?? null}
             owned={trend?.pieces ?? []}
-            credit={credit([contexte?.tendances])}
             i={5}
           />
         </>

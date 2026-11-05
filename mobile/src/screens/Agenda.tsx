@@ -8,7 +8,6 @@ import { dayName, isoOf, offsetOf, timeLabel, type RdvEvent } from '../state/pla
 import { canCompose } from '../state/outfits';
 import { eventsOn, useMeteo, useStore, useTodayOutfits } from '../state/store';
 import { ferieDu, periode, pontDu, vacancesDu } from '../state/contexte';
-import { Credit } from '../ui/Credit';
 import { useTheme } from '../theme/ThemeProvider';
 import { space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
@@ -175,7 +174,6 @@ export function Agenda() {
                 ))}
               </View>
             )}
-            {meteo.reelle && <Credit blocs={[s.contexte?.meteo, ferie || pont ? s.contexte?.feries : null, vacances ? s.contexte?.vacances : null, fete ? s.contexte?.fete : null, soleil ? s.contexte?.soleil : null, airNote ? s.contexte?.air : null]} />}
           </Animated.View>
         </Card>
 
