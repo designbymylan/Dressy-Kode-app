@@ -501,7 +501,16 @@ conversation) :
 - **Port du jour** : gardé d'un lancement à l'autre (journal), une pièce
   comptée une fois par jour, comme la table `wears`.
 - **Boutique mobile** : les packs de places seulement (brief v6) ; les cinq
-  services à l'unité, jamais construits, ne sont plus en vente.
+  services à l'unité, jamais construits, ne sont plus en vente. **Validé par
+  l'utilisateur le 07/11.**
+- **Paiement sur iPhone (décision du 07/11)** : on garde Stripe dans le
+  navigateur pour l'instant ; le passage au paiement Apple (In-App Purchase
+  ou autorisation européenne) se fera au moment de la demande de licence
+  Apple, pas avant.
+- **En attente de l'utilisateur (07/11)** : remplacer `GEMINI_API_KEY` (une
+  clé OpenAI y est collée) et `ANTHROPIC_API_KEY` (refusée), ajouter
+  `APP_URL` ; donner l'identité de l'éditeur (`EDITEUR`, `legal.ts`) pour
+  la politique et les conditions.
 - **Web** : le middleware vit dans `web/src/middleware.ts` (à la racine de
   `web/`, il était ignoré) ; `/confidentialite` est publique ; la connexion
   ramène à la page demandée (`?suite=`).
