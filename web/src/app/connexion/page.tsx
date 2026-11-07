@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AuthForm, OAuthButtons } from '@/components/AuthForm';
 import { AuthShell } from '@/components/AuthShell';
+import { enabledProviders } from '@/lib/auth';
 
 const NOTES: Record<string, string> = {
   expire: 'Ce lien a expiré ou a déjà servi. Connecte-toi, ou demande un nouveau lien.',
@@ -9,9 +10,9 @@ const NOTES: Record<string, string> = {
 export default async function Connexion({
   searchParams,
 }: {
-  searchParams: Promise<{ lien?: string; suite?: string }>;
+  searchParams: Promise<{ lien?: string; suite?: string; compte?: string }>;
 }) {
-  const { lien, suite } = await searchParams;
+  const { lien, suite, compte } = await searchParams;
 
   return (
     <AuthShell
@@ -20,8 +21,8 @@ export default async function Connexion({
       footer={<>Nouveau ici ? <Link href="/inscription">Créer un compte</Link></>}
     >
       {lien && NOTES[lien] ? <p className="note pop" role="status">{NOTES[lien]}</p> : null}
-      <OAuthButtons />
-      <div className="auth-or" aria-hidden="true">ou</div>
+      {compte === 'supprime' ? <p className="note pop" role="status">Ton compte et tes données sont effacés.</p> : null}
+      <OAuthButtons providers={await enabledProviders()} />
       <AuthForm mode="signin" suite={suite} />
     </AuthShell>
   );

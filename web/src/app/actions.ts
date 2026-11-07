@@ -148,6 +148,44 @@ export async function signOut() {
   redirect('/connexion');
 }
 
+/**
+ * Tes données (07/11), comme Réglages › Tes données sur le mobile : la
+ * fonction `compte` prépare l'export (JSON, lien signé de deux jours) ou
+ * supprime le compte et tout ce qu'il contient (l'abonnement s'arrête).
+ * Avant, le site n'offrait aucun moyen d'exercer ces droits.
+ */
+async function compte(body: Record<string, string>): Promise<{ error: string } | Record<string, unknown>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.functions.invoke('compte', { body });
+  if (error) {
+    const detail = error instanceof FunctionsHttpError ? await (error.context as Response).json().catch(() => null) : null;
+    return { error: detail?.error ?? 'Ça n’a pas abouti. Réessaie dans un instant.' };
+  }
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+export async function exportMyData(_prev: FormResult, _formData: FormData): Promise<FormResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const res = await compte({ action: 'exporter' });
+  if ('error' in res) return { error: String(res.error) };
+  if (typeof res.url !== 'string') return { error: 'L’export n’a pas pu être préparé. Réessaie dans un instant.' };
+  redirect(res.url);
+}
+
+export async function deleteMyAccount(_prev: FormResult, formData: FormData): Promise<FormResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  if (String(formData.get('confirmation') ?? '').trim().toUpperCase() !== 'SUPPRIMER') {
+    return { error: 'Écris SUPPRIMER pour confirmer.' };
+  }
+  const res = await compte({ action: 'supprimer', confirmation: 'SUPPRIMER' });
+  if ('error' in res) return { error: String(res.error) };
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/connexion?compte=supprime');
+}
+
 const YEAR = 365 * 24 * 3600;
 
 export async function setTheme(theme: Theme) {

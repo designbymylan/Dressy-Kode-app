@@ -67,5 +67,15 @@ check('le client ne lit jamais la dotation gratuite',
 check('generation_quota et generation_log fermées au client',
   /revoke all on public\.generation_quota from anon, authenticated/.test(sql) && /revoke all on public\.generation_log from anon, authenticated/.test(sql), true);
 
+// Les conditions générales (07/11) annoncent les mêmes prix et limites que les offres.
+const conditions = read('../../../mobile/src/data/legal.ts');
+const cg = conditions.slice(conditions.indexOf('export const CONDITIONS'));
+check('conditions : prix des abonnements',
+  web.PLANS.every((p) => cg.includes(`${p.name} à ${web.euros(p.cents.mois)}`)), true);
+check('conditions : prix des packs de places',
+  web.PLACE_PACKS.every((p) => cg.includes(`+${p.places} places à ${web.euros(p.cents)}`)), true);
+check('conditions : 15 / 50 / 100 pièces et 4 générations offertes',
+  ['15 pièces', '50 pièces', '100 pièces', '4 générations offertes'].every((x) => cg.includes(x)), true);
+
 console.log(fails ? `\n${fails} échec(s)` : '\ntout est bon');
 if (fails) process.exit(1);

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { signOut } from '@/app/actions';
 import { ShortcutSwitch, ThemeChoice } from '@/components/ThemeChoice';
 import { PortalButton } from '@/components/PortalButton';
+import { AccountData } from '@/components/AccountData';
 import { Pricing } from '@/components/Pricing';
 import { Icon, type IconName } from '@/components/icons';
 import { loadSubscription, subscriptionLine } from '@/lib/billing';
@@ -223,6 +224,8 @@ export default async function Moi({
             </Row>
           ) : null}
           <Row icon="lock" tint="dk-bubble-ico--plain" label="Vie privée" href="/confidentialite" />
+          <Row icon="info" tint="dk-bubble-ico--plain" label="Conditions générales" href="/conditions" />
+          <AccountData />
           <form action={signOut}>
             <button type="submit" className="dk-row" style={{ color: 'var(--danger)' }}>
               <span className="dk-bubble-ico dk-bubble-ico--plain" style={{ color: 'var(--danger)' }}><Icon name="logout" size={19} /></span>

@@ -3,7 +3,8 @@
  * connecter / Créer mon compte » ouverte depuis l'accueil ou depuis Moi.
  */
 import { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { Linking, TextInput, View } from 'react-native';
+import { CONDITIONS_URL } from '../data/legal';
 import { useNavigation } from '@react-navigation/native';
 import type { Nav } from '../navigation/types';
 import { useStore } from '../state/store';
@@ -34,7 +35,11 @@ export function SignupTerms({ adult, onAdult, onPolicy }: { adult: boolean; onAd
         </T>
       </Tap>
       <T v="small" tone="ink2">
-        Tes données servent seulement à t’habiller, comme l’explique notre{' '}
+        En créant ton compte, tu acceptes les{' '}
+        <T v="small" style={{ ...F.s600, textDecorationLine: 'underline' }} onPress={() => Linking.openURL(CONDITIONS_URL)} accessibilityRole="link" testID="signup-conditions">
+          conditions générales
+        </T>
+        . Tes données servent seulement à t’habiller, comme l’explique notre{' '}
         <T v="small" style={{ ...F.s600, textDecorationLine: 'underline' }} onPress={onPolicy} accessibilityRole="link" testID="signup-policy">
           politique de confidentialité
         </T>

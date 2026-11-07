@@ -96,6 +96,7 @@ export function Pricing({ current }: { current: PlanId | null; trial?: boolean }
       )}
 
       <nav className="pr__links" aria-label="Informations">
+        <Link href="/conditions">Conditions générales</Link>
         <Link href="/confidentialite">Confidentialité</Link>
       </nav>
 

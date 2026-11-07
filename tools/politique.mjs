@@ -1,9 +1,11 @@
 /**
- * La politique de confidentialité, une seule source : mobile/src/data/legal.ts.
- * Ce script en tire les deux copies, pour qu'elles ne s'écartent jamais :
+ * La politique de confidentialité et les conditions générales (07/11), une
+ * seule source : mobile/src/data/legal.ts. Ce script en tire les copies, pour
+ * qu'elles ne s'écartent jamais :
  *
  *   docs/rgpd/politique-de-confidentialite.md   (à lire, à joindre)
- *   web/src/lib/politique.ts                    (la page /confidentialite du site)
+ *   docs/rgpd/conditions-generales.md           (à lire, à faire relire)
+ *   web/src/lib/politique.ts                    (les pages /confidentialite et /conditions)
  *
  *   node tools/politique.mjs           écrit les deux copies
  *   node tools/politique.mjs --check   vérifie qu'elles sont à jour (code 1 sinon)
@@ -18,10 +20,39 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 process.removeAllListeners('warning');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Une URL file:// et non un chemin : sous Windows, import() refuse « C:\… ».
-const { EDITEUR, POLITIQUE, POLITIQUE_VERSION } = await import(pathToFileURL(path.join(root, 'mobile/src/data/legal.ts')).href);
+const { EDITEUR, POLITIQUE, POLITIQUE_VERSION, CONDITIONS, CONDITIONS_VERSION, HEBERGEURS } = await import(pathToFileURL(path.join(root, 'mobile/src/data/legal.ts')).href);
 
 const editeur = [EDITEUR.nom, EDITEUR.forme, EDITEUR.adresse, EDITEUR.siren && `SIREN ${EDITEUR.siren}`].filter(Boolean).join(' · ');
 const contact = EDITEUR.contact ?? 'L’adresse de contact sera indiquée ici avant la sortie de l’app.';
+
+const section = (s) => [
+  `## ${s.titre}`,
+  '',
+  ...(s.texte ?? []).flatMap((p) => [p, '']),
+  ...(s.liste ?? []).map((x) => `- **${x.titre}.** ${x.texte}`),
+  ...(s.liste?.length ? [''] : []),
+];
+
+const mentions = [
+  '## Mentions légales',
+  '',
+  editeur,
+  '',
+  ...(EDITEUR.directeur ? [`Directeur de la publication : ${EDITEUR.directeur}.`, ''] : []),
+  ...HEBERGEURS.flatMap((h) => [h, '']),
+  ...(EDITEUR.mediateur ? [`Médiateur de la consommation : ${EDITEUR.mediateur}.`, ''] : ['Le médiateur de la consommation sera indiqué ici avant la sortie de l’app.', '']),
+  contact,
+  '',
+];
+
+const cg = [
+  '# Conditions générales de Dresskode',
+  '',
+  `_${CONDITIONS_VERSION}. Texte tiré de \`mobile/src/data/legal.ts\` par \`tools/politique.mjs\` : ne pas modifier ici. Rédigé pendant l'audit du 07/11 : à faire relire par un professionnel du droit avant la sortie._`,
+  '',
+  ...CONDITIONS.flatMap(section),
+  ...mentions,
+].join('\n');
 
 const md = [
   '# Politique de confidentialité de Dresskode',
@@ -54,14 +85,21 @@ const ts = [
   '',
   `export const POLITIQUE_VERSION = ${JSON.stringify(POLITIQUE_VERSION)};`,
   '',
-  `export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null } = ${JSON.stringify(EDITEUR, null, 2)};`,
+  `export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null; directeur: string | null; mediateur: string | null } = ${JSON.stringify(EDITEUR, null, 2)};`,
   '',
   `export const POLITIQUE: Section[] = ${JSON.stringify(POLITIQUE, null, 2)};`,
+  '',
+  `export const CONDITIONS_VERSION = ${JSON.stringify(CONDITIONS_VERSION)};`,
+  '',
+  `export const HEBERGEURS: string[] = ${JSON.stringify(HEBERGEURS, null, 2)};`,
+  '',
+  `export const CONDITIONS: Section[] = ${JSON.stringify(CONDITIONS, null, 2)};`,
   '',
 ].join('\n');
 
 const copies = [
   ['docs/rgpd/politique-de-confidentialite.md', md],
+  ['docs/rgpd/conditions-generales.md', cg],
   ['web/src/lib/politique.ts', ts],
 ];
 

@@ -5,7 +5,8 @@
  * l'offre gratuite, se retrouve par un lien discret en bas de page.
  */
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
+import { CONDITIONS_URL } from '../data/legal';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -196,8 +197,13 @@ export function Offers() {
               <T v="bodyStrong">{picked.cents.mois === 0 ? '0 €' : `${price(picked.cents.mois)} TTC`}</T>
             </View>
             <T v="small" tone="ink2">
-              {picked.cents.mois === 0 ? 'Tes pièces au-delà de 15 restent visibles, mais tu ne pourras plus en ajouter.' : s.account === 'connecte' ? 'Paiement sécurisé, dans ton navigateur. Résiliable à tout moment.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
+              {picked.cents.mois === 0 ? 'Tes pièces au-delà de 15 restent visibles, mais tu ne pourras plus en ajouter.' : s.account === 'connecte' ? 'Paiement sécurisé, dans ton navigateur. Résiliable à tout moment, 14 jours pour te rétracter.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
             </T>
+            {picked.cents.mois > 0 && (
+              <T testID="offers-conditions" v="small" tone="ink2" onPress={() => Linking.openURL(CONDITIONS_URL)} accessibilityRole="link" suppressHighlighting style={{ textDecorationLine: 'underline', paddingVertical: 6 }}>
+                Conditions générales
+              </T>
+            )}
           </View>
         )}
       </Sheet>

@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import { SignupForms } from '@/components/AuthForm';
 import { AuthShell } from '@/components/AuthShell';
+import { enabledProviders } from '@/lib/auth';
 
-export default function Inscription() {
+export default async function Inscription() {
+  const providers = await enabledProviders();
   return (
     <AuthShell
       title={<>Crée ton <em className="accent">espace</em></>}
       lead="Un compte, et Kodi commence à t’habiller avec ce que tu as déjà."
       footer={<>Déjà un compte ? <Link href="/connexion">Me connecter</Link></>}
     >
-      <SignupForms />
+      <SignupForms providers={providers} />
       <p className="small muted center">Ton espace est privé : personne d’autre ne voit ta garde-robe.</p>
     </AuthShell>
   );

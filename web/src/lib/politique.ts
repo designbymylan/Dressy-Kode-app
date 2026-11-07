@@ -6,14 +6,16 @@
 
 export type Section = { titre: string; texte?: string[]; liste?: { titre: string; texte: string }[] };
 
-export const POLITIQUE_VERSION = "Version 1.0 du 9 octobre 2026";
+export const POLITIQUE_VERSION = "Version 1.1 du 7 novembre 2026";
 
-export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null } = {
+export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null; directeur: string | null; mediateur: string | null } = {
   "nom": "Dresskode",
   "forme": null,
   "adresse": null,
   "siren": null,
-  "contact": null
+  "contact": null,
+  "directeur": null,
+  "mediateur": null
 };
 
 export const POLITIQUE: Section[] = [
@@ -30,7 +32,7 @@ export const POLITIQUE: Section[] = [
       },
       {
         "titre": "Tout reprendre",
-        "texte": "Tu peux tout télécharger ou tout effacer depuis Réglages › Tes données."
+        "texte": "Tu peux tout télécharger ou tout effacer depuis Réglages › Tes données dans l’app, ou Profil › Paramètres sur le site."
       },
       {
         "titre": "En Europe",
@@ -159,7 +161,7 @@ export const POLITIQUE: Section[] = [
     "titre": "Tes droits",
     "texte": [
       "Tu peux accéder à tes données, les corriger, les effacer, les emporter (portabilité), en limiter l’usage, t’opposer à un traitement fondé sur notre intérêt légitime, retirer ton accord à tout moment, et laisser des directives sur ce qu’elles deviennent après ton décès.",
-      "Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Pour le reste, écris-nous : nous répondons sous un mois.",
+      "Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Sur le site : Profil › Paramètres pour tout télécharger ou supprimer ton compte. Pour le reste, écris-nous : nous répondons sous un mois.",
       "Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL (cnil.fr, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07)."
     ]
   },
@@ -185,6 +187,132 @@ export const POLITIQUE: Section[] = [
     "titre": "Si ce texte change",
     "texte": [
       "Pour tout changement important, nous te prévenons dans l’app avant qu’il s’applique."
+    ]
+  }
+];
+
+export const CONDITIONS_VERSION = "Version 1.0 du 7 novembre 2026";
+
+export const HEBERGEURS: string[] = [
+  "Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis.",
+  "Données : Supabase, sur des serveurs situés dans l’Union européenne (Irlande)."
+];
+
+export const CONDITIONS: Section[] = [
+  {
+    "titre": "En bref",
+    "liste": [
+      {
+        "titre": "Gratuit pour commencer",
+        "texte": "Découverte : 15 pièces, 4 générations offertes, 5 questions à Kodi par mois, sans carte bancaire."
+      },
+      {
+        "titre": "Au mois, sans engagement",
+        "texte": "Fashion à 8,99 € et Sapologue à 18,99 € par mois, TTC. Tu résilies quand tu veux : l’offre court jusqu’à la fin du mois payé."
+      },
+      {
+        "titre": "Des places en plus",
+        "texte": "+10 places à 1,99 €, +30 places à 4,99 €, en paiement unique. Elles restent tant que ton compte existe."
+      },
+      {
+        "titre": "Kodi conseille",
+        "texte": "Kodi est une intelligence artificielle : ses tenues sont des idées, il peut se tromper. C’est toi qui décides de ce que tu portes."
+      }
+    ]
+  },
+  {
+    "titre": "À quoi servent ces conditions",
+    "texte": [
+      "Elles encadrent l’usage de Dresskode, l’app iPhone et le site, édités par l’éditeur indiqué en bas de page. Créer un compte, ou utiliser l’app sans compte, vaut acceptation de ces conditions et de la politique de confidentialité.",
+      "Dresskode s’adresse aux particuliers, pour un usage personnel."
+    ]
+  },
+  {
+    "titre": "Ton compte",
+    "texte": [
+      "Dresskode est ouverte à partir de 15 ans. Un compte correspond à une personne ; garde ton mot de passe pour toi. Tu es responsable de ce qui se fait depuis ton compte.",
+      "Sans compte, tout reste sur ton téléphone : le supprimer efface tout."
+    ]
+  },
+  {
+    "titre": "Ce que fait Dresskode",
+    "texte": [
+      "Ranger ton dressing (Kodi repère les pièces sur tes photos, les détoure ou les dessine), te proposer une tenue chaque jour avec la météo et ton agenda, préparer tes rendez-vous et tes voyages, et te montrer ce que tu portes et ce qui dort.",
+      "Nous faisons de notre mieux pour que le service soit disponible et juste, sans pouvoir garantir qu’il le soit à chaque instant : une maintenance, une panne d’un prestataire ou d’une source de données (météo, calendrier) peut l’interrompre ou le dégrader."
+    ]
+  },
+  {
+    "titre": "Kodi et l’intelligence artificielle",
+    "texte": [
+      "Les tenues, les conseils et les dessins de pièces sont produits automatiquement. Ce sont des propositions : un dessin peut différer de ta pièce, une tenue peut ne pas te convenir. « Rendu incorrect » permet de faire reprendre une pièce, et « Pas pour moi » d’écarter une tenue.",
+      "Kodi ne donne aucun avis médical, et ses conseils ne remplacent pas celui d’un professionnel."
+    ]
+  },
+  {
+    "titre": "Tes photos et tes contenus",
+    "texte": [
+      "Tes photos restent à toi. Tu nous autorises seulement à les traiter pour te rendre le service (repérer, détourer, dessiner tes pièces), le temps nécessaire, comme le décrit la politique de confidentialité.",
+      "N’envoie que des photos que tu as le droit d’utiliser, de préférence sans visage, et jamais de contenu illicite ou portant atteinte aux droits d’une autre personne."
+    ]
+  },
+  {
+    "titre": "Les offres et les prix",
+    "texte": [
+      "Les prix sont en euros, toutes taxes comprises, et affichés avant chaque paiement. Découverte est gratuite et sans limite de durée ; ses 4 générations sont offertes une fois, sans renouvellement.",
+      "Fashion (50 pièces, 50 générations par mois, 30 questions à Kodi par mois) et Sapologue (100 pièces, 100 générations par mois, Kodi sans limite) se paient chaque mois. Les générations et les questions repartent à zéro chaque mois ; celles qui ne sont pas utilisées ne se reportent pas.",
+      "Une génération est un nouveau dessin d’une pièce (« Image propre », seconde reprise d’un rendu incorrect). Elle n’est comptée que si le dessin aboutit.",
+      "Les packs de places s’ajoutent à la limite de ton offre et restent tant que ton compte existe. Ce sont des places, jamais des générations."
+    ]
+  },
+  {
+    "titre": "Le paiement",
+    "texte": [
+      "Le paiement se fait par carte bancaire, chez notre prestataire de paiement (Stripe), qui seul voit ta carte. Un abonnement est prélevé le jour de la souscription, puis chaque mois à la même date, jusqu’à sa résiliation.",
+      "Si un prélèvement échoue, nous te prévenons ; sans régularisation, ton compte repasse en Découverte. Tes pièces au-delà de la limite restent visibles, mais tu ne peux plus en ajouter."
+    ]
+  },
+  {
+    "titre": "Résilier",
+    "texte": [
+      "Tu résilies à tout moment, en quelques gestes, depuis « Gérer mon abonnement » (Profil sur le site). La résiliation prend effet à la fin du mois déjà payé : tu gardes ton offre jusque-là, rien n’est plus prélevé ensuite, et le mois commencé n’est pas remboursé au prorata."
+    ]
+  },
+  {
+    "titre": "Ton droit de rétractation",
+    "texte": [
+      "Pour un abonnement, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans motif (code de la consommation, art. L221-18). En t’abonnant, tu demandes que l’offre commence tout de suite : si tu te rétractes, seule la part correspondant au temps déjà écoulé reste due (art. L221-25), et le reste t’est remboursé dans les 14 jours.",
+      "Pour un pack de places, fourni dès le paiement, tu demandes son ajout immédiat et reconnais perdre ton droit de rétractation une fois les places ajoutées (art. L221-28, 13°).",
+      "Pour te rétracter, écris à l’adresse de contact indiquée en bas de page, par exemple : « Je me rétracte de mon abonnement à Dresskode souscrit le [date], avec l’adresse [e-mail du compte]. »"
+    ]
+  },
+  {
+    "titre": "Responsabilité",
+    "texte": [
+      "Dresskode t’aide à choisir, sans décider pour toi : nous ne répondons pas des choix vestimentaires faits à partir de ses propositions, ni des écarts d’une prévision météo fournie par des sources tierces. Notre responsabilité reste engagée dans les cas prévus par la loi, notamment pour les dommages directs causés par une faute de notre part."
+    ]
+  },
+  {
+    "titre": "Suspension",
+    "texte": [
+      "En cas de manquement grave à ces conditions (contenu illicite, contournement des limites, usage abusif du service), nous pouvons suspendre le compte, en te prévenant d’abord sauf urgence."
+    ]
+  },
+  {
+    "titre": "Tes données",
+    "texte": [
+      "Ce que nous gardons, pourquoi et combien de temps : tout est dans la politique de confidentialité. Tu peux tout télécharger ou supprimer ton compte à tout moment."
+    ]
+  },
+  {
+    "titre": "Si ces conditions changent",
+    "texte": [
+      "Nous te prévenons avant qu’un changement important s’applique. Si tu ne l’acceptes pas, tu peux résilier sans frais avant son entrée en vigueur."
+    ]
+  },
+  {
+    "titre": "Litiges",
+    "texte": [
+      "Ces conditions sont soumises au droit français. En cas de désaccord, écris-nous d’abord : nous cherchons une solution amiable. Tu peux ensuite saisir gratuitement le médiateur de la consommation indiqué en bas de page, puis le tribunal compétent."
     ]
   }
 ];

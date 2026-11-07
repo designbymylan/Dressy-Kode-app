@@ -119,6 +119,8 @@ async function handle(token: string, input: Record<string, unknown>): Promise<{ 
       line_items: [{ price: prices[0].id, quantity: 1 }],
       metadata: { space_id: space.id, pack, places: String(PLACE_PACKS[pack].places) },
       locale: 'fr',
+      // Code de la consommation, art. L221-28 13° : la demande de fourniture immédiate, dite au moment de payer (07/11).
+      custom_text: { submit: { message: `En payant, tu demandes l’ajout immédiat de tes places et renonces à ton droit de rétractation une fois qu’elles sont ajoutées. Conditions : ${appUrl()}/conditions` } },
       success_url: `${appUrl()}/moi?places=merci`,
       cancel_url: `${appUrl()}/moi`,
     });
@@ -157,6 +159,8 @@ async function handle(token: string, input: Record<string, unknown>): Promise<{ 
     },
     allow_promotion_codes: true,
     locale: 'fr',
+    // Code de la consommation, art. L221-18 et L221-25 : rétractation de 14 jours, début immédiat demandé (07/11).
+    custom_text: { submit: { message: `En t’abonnant, tu demandes que ton offre commence tout de suite. Tu peux te rétracter sous 14 jours : seul le temps déjà écoulé reste dû. Résiliable à tout moment, effet à la fin du mois payé. Conditions : ${appUrl()}/conditions` } },
     success_url: `${appUrl()}/moi?abonnement=merci`,
     cancel_url: `${appUrl()}/offres`,
   });

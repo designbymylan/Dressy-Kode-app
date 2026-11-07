@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // /apercu (planche du design) ne répond que si DRESSY_APERCU=1 : la page renvoie 404 sinon.
-// /confidentialite se lit sans compte : avant l'inscription (RGPD) et par les stores, qui en demandent l'adresse.
-const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/mot-de-passe', '/apercu', '/confidentialite'];
+// /confidentialite et /conditions se lisent sans compte : avant l'inscription (RGPD, code de la consommation) et par les stores.
+const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/mot-de-passe', '/apercu', '/confidentialite', '/conditions'];
 
 /**
  * Rafraîchit la session à chaque navigation et garde les routes privées.

@@ -5,7 +5,8 @@
  * et dans Personnaliser y est rangé ; Personnaliser ne garde que l'accueil.
  */
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
+import { CONDITIONS_URL } from '../data/legal';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -148,7 +149,8 @@ export function Settings() {
         <Group>
           <Row testID="settings-donnees" icon="lock" title="Tes données" detail="Ce que nous gardons, tes accords, tes droits" onPress={() => nav.navigate('TesDonnees')} />
           <Row testID="settings-choix" icon="heart" title="Mes choix" detail="Tes cœurs, et ce que Kodi retient de toi" onPress={() => nav.navigate('MesChoix')} />
-          <Row testID="settings-politique" icon="eye" title="Politique de confidentialité" onPress={() => nav.navigate('Confidentialite')} last />
+          <Row testID="settings-politique" icon="eye" title="Politique de confidentialité" onPress={() => nav.navigate('Confidentialite')} />
+          <Row testID="settings-conditions" icon="tag" title="Conditions générales" detail="Offres, résiliation, rétractation" onPress={() => Linking.openURL(CONDITIONS_URL)} last />
         </Group>
 
         <Label text="Aide" />

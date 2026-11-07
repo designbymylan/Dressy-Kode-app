@@ -1,12 +1,12 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.0 du 9 octobre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.1 du 7 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
 - **Une seule raison.** Tes données servent à t’habiller avec ce que tu as. Rien n’est vendu, rien ne sert à de la publicité, aucun traceur publicitaire.
 - **Ton corps, avec ton accord.** Ta taille, ta silhouette et tes mesures ne sont demandées qu’avec ton accord explicite, retirable à tout moment. Ton poids n’est plus demandé.
-- **Tout reprendre.** Tu peux tout télécharger ou tout effacer depuis Réglages › Tes données.
+- **Tout reprendre.** Tu peux tout télécharger ou tout effacer depuis Réglages › Tes données dans l’app, ou Profil › Paramètres sur le site.
 - **En Europe.** Ton compte et ton dressing sont hébergés dans l’Union européenne, en Irlande.
 
 ## Qui est responsable
@@ -74,7 +74,7 @@ En cas de fuite qui pourrait te toucher, nous prévenons la CNIL sous 72 heures 
 
 Tu peux accéder à tes données, les corriger, les effacer, les emporter (portabilité), en limiter l’usage, t’opposer à un traitement fondé sur notre intérêt légitime, retirer ton accord à tout moment, et laisser des directives sur ce qu’elles deviennent après ton décès.
 
-Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Pour le reste, écris-nous : nous répondons sous un mois.
+Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Sur le site : Profil › Paramètres pour tout télécharger ou supprimer ton compte. Pour le reste, écris-nous : nous répondons sous un mois.
 
 Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL (cnil.fr, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07).
 

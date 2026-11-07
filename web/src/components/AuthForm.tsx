@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { signIn, signUp, signInWithProvider, type FormResult } from '@/app/actions';
 import { SubmitButton } from '@/components/SubmitButton';
+import type { Provider } from '@/lib/auth';
 
 /** Logo officiel de Google, exigé tel quel par ses règles de marque. */
 function GoogleLogo() {
@@ -26,27 +27,41 @@ function AppleLogo() {
   );
 }
 
-/** « Continuer avec Google / Apple » : un même formulaire, deux boutons. */
-export function OAuthButtons({ disabled }: { disabled?: boolean } = {}) {
+/**
+ * « Continuer avec Google / Apple » : un même formulaire, un bouton par
+ * fournisseur activé dans Supabase (lu par la page, `enabledProviders`).
+ * Aucun activé : rien ne s'affiche, ni boutons ni « ou » (07/11) ; avant,
+ * les deux boutons répondaient « arrive bientôt », comme ceux retirés du
+ * mobile le 25/10.
+ */
+export function OAuthButtons({ disabled, providers }: { disabled?: boolean; providers: Record<Provider, boolean> }) {
   const [state, action] = useActionState<FormResult, FormData>(signInWithProvider, undefined);
+  if (!providers.google && !providers.apple) return null;
   return (
-    <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {state?.error ? <p role="status" className="note small pop">{state.error}</p> : null}
-      <SubmitButton
-        name="provider" value="google"
-        className="btn btn-glass btn-block btn-oauth"
-        disabled={disabled}
-        label={<><GoogleLogo />Continuer avec Google</>}
-        pending="Ouverture de Google"
-      />
-      <SubmitButton
-        name="provider" value="apple"
-        className="btn btn-glass btn-block btn-oauth"
-        disabled={disabled}
-        label={<><AppleLogo />Continuer avec Apple</>}
-        pending="Ouverture d’Apple"
-      />
-    </form>
+    <>
+      <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {state?.error ? <p role="status" className="note small pop">{state.error}</p> : null}
+        {providers.google ? (
+          <SubmitButton
+            name="provider" value="google"
+            className="btn btn-glass btn-block btn-oauth"
+            disabled={disabled}
+            label={<><GoogleLogo />Continuer avec Google</>}
+            pending="Ouverture de Google"
+          />
+        ) : null}
+        {providers.apple ? (
+          <SubmitButton
+            name="provider" value="apple"
+            className="btn btn-glass btn-block btn-oauth"
+            disabled={disabled}
+            label={<><AppleLogo />Continuer avec Apple</>}
+            pending="Ouverture d’Apple"
+          />
+        ) : null}
+      </form>
+      <div className="auth-or" aria-hidden="true">ou</div>
+    </>
   );
 }
 
@@ -127,7 +142,7 @@ export function AuthForm({ mode, adult, suite }: { mode: 'signin' | 'signup'; ad
  * ouvre les trois façons de créer un compte ; le serveur la revérifie pour
  * l'e-mail.
  */
-export function SignupForms() {
+export function SignupForms({ providers }: { providers: Record<Provider, boolean> }) {
   const [adult, setAdult] = useState(false);
   return (
     <>
@@ -137,15 +152,18 @@ export function SignupForms() {
           <span>J’ai 15 ans ou plus</span>
         </label>
         <p className="small muted">
-          Tes données servent seulement à t’habiller, comme l’explique notre{' '}
+          En créant ton compte, tu acceptes les{' '}
+          <Link href="/conditions" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+            conditions générales
+          </Link>
+          . Tes données servent seulement à t’habiller, comme l’explique notre{' '}
           <Link href="/confidentialite" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
             politique de confidentialité
           </Link>
           .
         </p>
       </div>
-      <OAuthButtons disabled={!adult} />
-      <div className="auth-or" aria-hidden="true">ou</div>
+      <OAuthButtons disabled={!adult} providers={providers} />
       <AuthForm mode="signup" adult={adult} />
     </>
   );
