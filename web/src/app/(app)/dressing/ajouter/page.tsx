@@ -20,7 +20,7 @@ export default async function Ajouter() {
       </Card>
 
       <Card i={2}>
-        <h2 className="section-title" style={{ justifyContent: 'center' }}>Je la saisis</h2>
+        <h2 id="a-la-main" className="section-title" style={{ justifyContent: 'center', scrollMarginTop: 80 }}>Je la saisis</h2>
         <ManualForm />
       </Card>
 

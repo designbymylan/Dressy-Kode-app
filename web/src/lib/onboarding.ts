@@ -319,6 +319,26 @@ export const COLOURS: { id: string; label: string; hex: string }[] = [
   { id: 'argente', label: 'Argenté', hex: '#BFC3C9' },
 ];
 
+/**
+ * La couleur lue dans le nom d'une pièce (« Pull marine », « Jupe noire »),
+ * quand la personne n'en a pas choisi (07/11) : sinon la pièce s'affichait en
+ * silhouette blanche dans le dressing et les tenues. Les mots précis d'abord
+ * (« bleu marine » avant « bleu », « vert olive » avant « vert »).
+ */
+const MOTS_COULEUR: [RegExp, string][] = [
+  [/\bmarine\b/, 'marine'], [/\b(ciel|azur)\b/, 'ciel'], [/\b(olive|kaki)\b/, 'olive'], [/\banthracite\b/, 'anthracite'],
+  [/\b(bordeaux|prune)\b/, 'bordeaux'], [/\bmoutarde\b/, 'moutarde'], [/\b(camel|cognac|caramel)\b/, 'camel'],
+  [/\b(creme|ecrue?|ivoire)\b/, 'creme'], [/\b(beige|sable|nude)\b/, 'beige'], [/\b(marron|chocolat|brune?|taupe)\b/, 'marron'],
+  [/\b(noire?s?)\b/, 'noir'], [/\b(grise?s?)\b/, 'gris'], [/\b(blanc|blanche)s?\b/, 'blanc'], [/\brouges?\b/, 'rouge'],
+  [/\b(orange|terracotta|rouille)\b/, 'orange'], [/\bjaunes?\b/, 'jaune'], [/\b(verte?s?|sapin|emeraude)\b/, 'vert'],
+  [/\b(bleue?s?|indigo)\b/, 'bleu'], [/\b(violette?|lilas|mauve)\b/, 'violet'], [/\b(roses?|fuchsia)\b/, 'rose'],
+  [/\b(doree?|or)\b/, 'dore'], [/\b(argentee?|argent)\b/, 'argente'],
+];
+export function couleurDuNom(nom: string): string | null {
+  const t = nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return MOTS_COULEUR.find(([re]) => re.test(t))?.[1] ?? null;
+}
+
 export const AVOID: Option[] = [
   { id: 'couleurs_vives', label: 'Les couleurs vives', icon: ICONS.contraste },
   { id: 'trop_formel', label: 'Trop habillé', icon: ICONS.mallette },

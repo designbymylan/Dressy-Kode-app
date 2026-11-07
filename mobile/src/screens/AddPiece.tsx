@@ -25,6 +25,7 @@ import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { AccountSheet } from '../ui/account';
+import { LabelEditor } from '../ui/LabelEditor';
 import { KodeThinking } from '../ui/KodeThinking';
 import { PhotoScan, RawCrop, RevealCutout, frameOf, usePreloaded } from '../ui/scan';
 import type { Nav } from '../navigation/types';
@@ -36,6 +37,9 @@ type Picked = Shot;
 type Sent = { picked: Picked; path: string | null; error?: string };
 
 const STEPS = ['Détourage de la pièce', 'Type de pièce', 'Couleur dominante', 'Matière probable', 'Illustration pour tes portants'];
+
+/** La pièce vierge de « Ou la saisir sans photo » : la personne lui donne un nom, une catégorie, une couleur. */
+const BLANK: Piece = { id: 'nouvelle', name: '', kind: 'tshirt', category: 'hauts', color: '', swatch: '#CFCFCF', material: '', season: 'toute l’année', wears: 0, lastWorn: null, addedDaysAgo: 0 };
 
 export function AddPiece() {
   const { s, a } = useStore();
@@ -54,6 +58,7 @@ export function AddPiece() {
   // Le compte de démonstration seul garde la galerie d'exemples ; un espace sans compte n'a aucune pièce fictive.
   const demo = s.account === 'demo';
   const [account, setAccount] = useState(false);
+  const [manual, setManual] = useState(false);
   const waiting = s.pendingPhotos.length;
   const [hint, setHint] = useState('');
   // Précisions sur UN vêtement (marque, taille, coupe, matière) : envoyées avec la photo.
@@ -190,6 +195,18 @@ export function AddPiece() {
       <StackHeader title="Ajouter une pièce" close />
       {/* Sans compte : les photos choisies attendent ; une fois le compte créé, elles partent chez Kodi. */}
       <AccountSheet visible={account} onClose={() => setAccount(false)} onDone={() => { setAccount(false); setTimeout(() => nav.goBack(), 320); }} initial={s.pendingEmail ? 'login' : 'signup'} />
+      <LabelEditor
+        piece={BLANK}
+        visible={manual}
+        title="Nouvelle pièce"
+        onClose={() => setManual(false)}
+        onSave={(p) => {
+          setManual(false);
+          a.addPiece({ ...p, id: `n${Date.now()}`, wears: 0, lastWorn: null, addedDaysAgo: 0 });
+          a.toast(`C’est rangé : ${p.name.charAt(0).toLowerCase() + p.name.slice(1)}`);
+          setTimeout(() => nav.goBack(), 320);
+        }}
+      />
       <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
         {phase === 'source' && (
           <Animated.View entering={FadeIn.duration(200)} style={{ gap: 18 }}>
@@ -259,6 +276,12 @@ export function AddPiece() {
                     );
                   })}
                 </View>
+                {/* Sans photo (07/11) : la pièce se range quand même, avec ou sans compte, même si Kodi ne peut pas dessiner. */}
+                {!demo && (
+                  <T testID="add-manual" v="label" tone="ink2" onPress={() => setManual(true)} accessibilityRole="button" suppressHighlighting style={{ alignSelf: 'center', paddingVertical: 12, textDecorationLine: 'underline' }}>
+                    Ou la saisir sans photo
+                  </T>
+                )}
                 {!demo && (
                   <View className="flex-row" style={{ gap: 8, paddingHorizontal: 4 }} testID="add-privacy">
                     <Icon name="lock" size={15} color={c.ink2} />

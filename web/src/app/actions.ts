@@ -13,7 +13,7 @@ import { loadSavedOutfits } from '@/lib/agenda';
 import { isPeriod, isPlacePack, isPlan } from '@/lib/plans';
 import {
   GENDERS, GOALS, STYLES, ITEMS, JEWELRY, METALS, ACCESSORIES, COLOURS, AVOID, OCCASIONS,
-  MORNING_TIME, TIME_INTENT, ASSISTANCE, NO_JEWELRY, type Answers,
+  MORNING_TIME, TIME_INTENT, ASSISTANCE, NO_JEWELRY, couleurDuNom, type Answers,
 } from '@/lib/onboarding';
 import { categoryMeta, isKnownKind, slotFor } from '@/lib/wardrobe';
 
@@ -285,7 +285,9 @@ export async function addGarment(_prev: FormResult, formData: FormData): Promise
   if (!name) return { error: 'Donne un nom à la pièce.' };
   if (!categoryMeta(categoryId)) return { error: 'Choisis une catégorie.' };
   const kind = kindRaw && isKnownKind(categoryId, kindRaw) ? kindRaw : null;
-  const colors = COLOURS.some((c) => c.id === colour) ? [colour] : [];
+  // Sans couleur choisie : celle du nom, et un jean est bleu.
+  const lue = couleurDuNom(name) ?? (kind === 'jean' ? 'bleu' : null);
+  const colors = COLOURS.some((c) => c.id === colour) ? [colour] : lue ? [lue] : [];
 
   const price = priceRaw ? Math.round(Number(priceRaw) * 100) : null;
   if (price !== null && (!Number.isFinite(price) || price < 0)) {
@@ -472,6 +474,12 @@ export async function askKode(question: string): Promise<KodeResult> {
     const body = error instanceof FunctionsHttpError
       ? await (error.context as Response).json().catch(() => null)
       : null;
+    // Service en panne (5xx : clé refusée, surcharge) : Kodi répond quand même, en version simple (07/11).
+    const status = error instanceof FunctionsHttpError ? (error.context as Response).status : 0;
+    if (status >= 500) {
+      const local = await kodiDeSecours(supabase, viewer, q).catch(() => null);
+      if (local) return local;
+    }
     return {
       error: body?.error ?? "Kodi n'a pas pu répondre. Réessaie dans un instant.",
       code: body?.code ?? null,
@@ -483,6 +491,37 @@ export async function askKode(question: string): Promise<KodeResult> {
     loadUsage(supabase, viewer.spaceId),
   ]);
   return { messages, usage };
+}
+
+/**
+ * La réponse de secours de Kodi : la tenue du jour composée par le moteur du
+ * site (lib/outfits.ts : ton dressing, la météo, les tenues écartées), dite
+ * simplement. Elle n'est pas enregistrée et ne compte pas dans le quota.
+ */
+async function kodiDeSecours(supabase: Awaited<ReturnType<typeof createClient>>, viewer: NonNullable<Awaited<ReturnType<typeof getViewer>>>, q: string): Promise<KodeResult | null> {
+  const { loadHome } = await import('@/lib/accueil');
+  const home = await loadHome(supabase, viewer);
+  const o = home.outfits[0];
+  if (!o) return null;
+  const byId = new Map(home.pieces.map((p) => [p.id, p]));
+  const pieces = o.pieces.flatMap((id) => {
+    const p = byId.get(id);
+    return p ? [{ id: p.id, name: p.name, slot: slotFor(p.category_id), category: p.category_id, colour: p.colour, url: p.url }] : [];
+  });
+  const w = home.weather;
+  const stamp = Date.now();
+  return {
+    messages: [
+      { id: `local-q-${stamp}`, author: 'user', body: q, outfit: null },
+      {
+        id: `local-${stamp}`,
+        author: 'kode',
+        body: `Je te réponds en version simple pour l’instant, avec ton dressing${w ? ` et la météo (${w.t}°, ${w.label})` : ''}. Repose-moi ta question un peu plus tard pour une réponse plus fine.`,
+        outfit: { id: `local-${o.id}`, title: o.title, why: o.why, pieces },
+      },
+    ],
+    usage: await loadUsage(supabase, viewer.spaceId),
+  };
 }
 
 /** « Nouvelle conversation » : la précédente est archivée, pas effacée. */

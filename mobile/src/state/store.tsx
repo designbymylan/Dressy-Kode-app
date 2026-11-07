@@ -890,7 +890,17 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
           // Kodi répond depuis la fonction `kode` ; sans réponse, la question ne compte pas.
           remote
             .askKode(text)
-            .then(({ reply: { id, ...reply }, counted }) => dispatch({ t: 'answer', message: { id: id ?? `k${Date.now()}`, from: 'kode', ...reply }, refund: !counted }))
+            .then(({ reply: { id, ...reply }, counted, panne }) => {
+              // Service en panne (07/11) : Kodi répond quand même, en version simple, avec le moteur de tenues du téléphone.
+              if (panne) {
+                const now = getState();
+                const local = kodeReply(text, now.pieces, now.profile, meteoDe(now).jours);
+                if (local.outfit?.pieces.length) {
+                  return dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...local, text: `Je te réponds en version simple pour l’instant. ${local.text}` }, refund: true });
+                }
+              }
+              dispatch({ t: 'answer', message: { id: id ?? `k${Date.now()}`, from: 'kode', ...reply }, refund: !counted });
+            })
             .catch(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', text: NETWORK }, refund: true }));
           return true;
         }

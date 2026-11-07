@@ -84,5 +84,12 @@ const doux = { t: 19, kind: 'soleil' as const, label: 'ensoleillé' };
   ok(performance.now() - t0 < 50, '60 hauts et 60 bas en moins de 50 ms', `${Math.round(performance.now() - t0)} ms`);
 }
 
+// 9. Une pièce ajoutée à la main sans couleur prend celle de son nom (sinon, silhouette blanche dans les tenues).
+{
+  const { couleurDuNom } = await import('./onboarding.ts');
+  const cas: [string, string | null][] = [['Pull marine', 'marine'], ['Jupe noire', 'noir'], ['T-shirt écru', 'creme'], ['Pantalon bleu marine', 'marine'], ['Veste kaki', 'olive'], ['Pull', null]];
+  for (const [nom, attendu] of cas) ok(couleurDuNom(nom) === attendu, `couleur lue dans « ${nom} »`, String(couleurDuNom(nom)));
+}
+
 console.log(echecs ? `\n${echecs} échec(s)` : '\nTOUT PASSE');
 if (echecs) process.exit(1);

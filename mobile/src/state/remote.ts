@@ -796,26 +796,27 @@ export async function saveNotifs(session: Session, choix: NotifChoice) {
 /* ---- Kodi et paiement : les Edge Functions ---- */
 
 /** Le message d'erreur qu'une fonction renvoie (elles écrivent pour la personne), ou un message par défaut. */
-async function functionError(error: unknown, fallback: string): Promise<{ message: string; code: string | null }> {
+async function functionError(error: unknown, fallback: string): Promise<{ message: string; code: string | null; panne: boolean }> {
   if (error instanceof FunctionsHttpError) {
     const body = await error.context.json().catch(() => null);
-    return { message: body?.error ?? fallback, code: body?.code ?? null };
+    // 5xx : le service est en panne (clé refusée, surcharge…), pas un refus fait pour être lu (quota, dressing).
+    return { message: body?.error ?? fallback, code: body?.code ?? null, panne: (error.context.status ?? 0) >= 500 };
   }
-  return { message: 'Pas de connexion. Réessaie quand tu as du réseau.', code: null };
+  return { message: 'Pas de connexion. Réessaie quand tu as du réseau.', code: null, panne: false };
 }
 
 /**
  * Pose la question à la fonction `kode`, puis relit la réponse enregistrée.
  * `counted` : la question compte dans le quota (faux si Kodi n'a pas pu répondre).
  */
-export async function askKode(question: string): Promise<{ reply: Omit<KodeMessage, 'id' | 'from'> & { id?: string }; counted: boolean }> {
+export async function askKode(question: string): Promise<{ reply: Omit<KodeMessage, 'id' | 'from'> & { id?: string }; counted: boolean; panne?: boolean }> {
   const sb = db();
   const { data, error } = await sb.functions.invoke<{ question_id: string; reply_id: string }>('kode', { body: { question } });
   if (error || !data) {
-    const { message, code } = await functionError(error, 'Kodi n’a pas pu répondre. Réessaie dans un instant.');
+    const { message, code, panne } = await functionError(error, 'Kodi n’a pas pu répondre. Réessaie dans un instant.');
     const link: KodeLink | undefined =
       code === 'wardrobe' ? { label: 'Ajouter une pièce', route: 'AddPiece' } : code === 'quota' ? { label: 'Voir les offres', route: 'Offers' } : undefined;
-    return { reply: { text: message, link }, counted: false };
+    return { reply: { text: message, link }, counted: false, panne };
   }
   const row = await sb.from('kode_messages').select('id, author, body, meta, outfits(name, outfit_items(garment_id))').eq('id', data.reply_id).single();
   if (row.error) return { reply: { text: 'Kodi a répondu, mais la réponse n’a pas pu être relue. Rouvre la conversation dans un instant.' }, counted: true };

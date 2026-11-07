@@ -518,6 +518,11 @@ conversation) :
 - **Tes données sur le site** (Profil › Paramètres) : télécharger, supprimer
   le compte ; la suppression efface aussi la fiche Stripe d'une personne qui
   n'a jamais payé.
+- **Si l'IA tombe, l'app reste utile** : sur une panne (5xx) de `kode`, Kodi
+  répond « en version simple » avec le moteur de tenues (web et mobile) ;
+  une photo qui échoue propose de ranger la pièce à la main ; le mobile a
+  « Ou la saisir sans photo » (l'éditeur d'étiquette) ; sur le site, une
+  pièce sans couleur choisie prend celle de son nom (`couleurDuNom`).
 - **État de Kodi** : `dressy-agent?verifier` dit si les clés d'IA sont
   acceptées ; le compte créateur voit une alerte dans Profil quand ce n'est
   pas le cas. `APP_URL` retombe sur l'adresse de production (elle valait

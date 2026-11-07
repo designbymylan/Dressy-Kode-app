@@ -38,7 +38,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
  * nom, de couleur ou de matière, ou pour noter le prix. Rien n'est perdu
  * tant que « Enregistrer » n'est pas touché.
  */
-export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece; visible: boolean; onClose: () => void; onSave: (p: Piece) => void }) {
+export function LabelEditor({ piece, visible, onClose, onSave, title = 'Modifier l’étiquette' }: { piece: Piece; visible: boolean; onClose: () => void; onSave: (p: Piece) => void; title?: string }) {
   const { c } = useTheme();
   const [name, setName] = useState(piece.name);
   const [category, setCategory] = useState<CategoryId>(piece.category);
@@ -97,7 +97,7 @@ export function LabelEditor({ piece, visible, onClose, onSave }: { piece: Piece;
       visible={visible}
       onClose={onClose}
       kicker="L’étiquette"
-      title="Modifier l’étiquette"
+      title={title}
       testID="label-editor"
       footer={<Button testID="label-save" label="Enregistrer" disabled={!ok} onPress={save} />}
     >

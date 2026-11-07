@@ -206,6 +206,8 @@ export function KodeChat({
               {m.outfit ? (
                 <OutfitCard outfit={m.outfit} assemble={!known.has(m.id)}>
                   <div style={{ display: 'flex', gap: 8 }}>
+                    {/* Une tenue de secours (« local-… ») n'est pas enregistrée : elle se compose, elle ne se prévoit pas d'ici. */}
+                    {m.outfit.id.startsWith('local-') ? null : (
                     <button
                       type="button"
                       onClick={() => plan(m.outfit!.id)}
@@ -216,6 +218,7 @@ export function KodeChat({
                     >
                       {planned === m.outfit.id ? <><Icon name="check" size={16} />Prévue pour demain</> : 'Prévoir pour demain'}
                     </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => adjust(m.outfit!.title)}

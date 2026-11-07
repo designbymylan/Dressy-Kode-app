@@ -167,6 +167,8 @@ export function JobList({ initial }: { initial: JobView[] }) {
                 <li key={j.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{j.error ?? 'Kodi n’a pas pu lire cette photo.'}</span>
                   <JobActions jobId={j.id} canRetry={j.retries < 2} />
+                  {/* La pièce ne reste jamais à la porte : on peut toujours la ranger à la main (07/11). */}
+                  <a href="/dressing/ajouter#a-la-main" className="small" style={{ color: 'var(--ink)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Ou la ranger à la main</a>
                 </li>
               ))}
               {pieceJobs.map((j, i) => {
@@ -195,6 +197,7 @@ export function JobList({ initial }: { initial: JobView[] }) {
                             {j.error ?? 'Kodi n’a pas pu finir cette pièce.'}
                           </span>
                           <JobActions jobId={j.id} canRetry={j.retries < 2} />
+                          <a href="/dressing/ajouter#a-la-main" className="small" style={{ color: 'var(--ink)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Ou la ranger à la main</a>
                         </>
                       ) : done ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13.5, color: 'var(--ok)', fontWeight: 500 }}>
