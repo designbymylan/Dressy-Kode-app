@@ -75,7 +75,7 @@ export function Kode() {
 
   const tomorrow = eventsOn(s.events, isoOf(1))[0];
   const p = s.profile;
-  const starters = kodeStarters(p, s.pieces);
+  const starters = kodeStarters(p, s.pieces, s.events);
   const ready = canCompose(s.pieces);
   const meteo = useMeteo();
   const w = meteo.jours[0];

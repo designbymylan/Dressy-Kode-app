@@ -35,10 +35,24 @@ function matches(p: PieceT, all: PieceT[]) {
   return all.filter((q) => q.id !== p.id && complement[p.category].includes(q.category));
 }
 
-/** Ports des six derniers mois, dérivés des compteurs (données de démonstration). */
-function history(p: PieceT) {
+/**
+ * Ports des six derniers mois, mois par mois. Un vrai dressing les lit dans
+ * son journal (« Je la porte », table `wears`) : aucun chiffre inventé. Seul
+ * le compte de démonstration, sans journal, les dérive de ses compteurs.
+ */
+function history(p: PieceT, journal: Record<string, string[]>, demo: boolean) {
   const now = dayDate(0);
   const labels = Array.from({ length: 6 }, (_, i) => MONTHS_SHORT[(now.getMonth() - 5 + i + 12) % 12].replace('.', ''));
+  if (!demo) {
+    const values = labels.map(() => 0);
+    for (const [iso, ids] of Object.entries(journal)) {
+      if (!ids.includes(p.id)) continue;
+      const [y, m] = iso.split('-').map(Number);
+      const back = (now.getFullYear() - y) * 12 + now.getMonth() - (m - 1);
+      if (back >= 0 && back < 6) values[5 - back] += 1;
+    }
+    return { labels, values };
+  }
   const seed = p.id.split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
   const per = p.wears / 12;
   const values = labels.map((_, i) => {
@@ -120,7 +134,7 @@ export function PieceScreen() {
   const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
   const dormant = !isNew(piece) && (piece.lastWorn === null || piece.lastWorn > 60);
   const goes = matches(piece, s.pieces).sort((x, z) => z.wears - x.wears).slice(0, 6);
-  const { labels, values } = history(piece);
+  const { labels, values } = history(piece, s.journal, s.account === 'demo');
   const wornToday = piece.lastWorn === 0;
   const liked = s.coeurs.includes(piece.id);
   // Seule une pièce découpée d'une photo du compte peut être reprise, deux fois au plus.

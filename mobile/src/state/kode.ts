@@ -4,7 +4,8 @@
  * supabase/functions/kode qui répond ; le format (texte + tenue + raison)
  * est le même, pour que l'interface ne change pas au branchement.
  */
-import { EVENTS, WEATHER, type Piece } from '../data/wardrobe';
+import { EVENTS, WEATHER, lcFirst, type Piece } from '../data/wardrobe';
+import { isoOf, type RdvEvent } from './planning';
 import { canCompose, missingForOutfit, suggestOutfits } from './outfits';
 import type { Profile } from './profile';
 
@@ -22,9 +23,12 @@ const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 const has = (s: string, words: string[]) => words.some((w) => s.includes(w));
 
 /** Les questions prêtes à poser, tirées de l'agenda, du quotidien et du dressing. */
-export function kodeStarters(profile: Profile, pieces: Piece[]): string[] {
+export function kodeStarters(profile: Profile, pieces: Piece[], events: RdvEvent[] = []): string[] {
   const list: string[] = [];
-  if (profile.agenda && EVENTS.some((e) => e.id === 'e2')) list.push('Pour le dîner chez Léa');
+  // Le prochain rendez-vous noté dans la semaine (le sien, jamais celui de la démo).
+  const today = isoOf(0), inAWeek = isoOf(7);
+  const next = events.filter((e) => e.date >= today && e.date <= inAWeek).sort((a, b) => a.date.localeCompare(b.date))[0];
+  if (next) list.push(`Pour ${lcFirst(next.title)}`);
   list.push('Une tenue pour demain');
   if (profile.occasions.includes('Bureau') || profile.occasions.includes('Télétravail')) list.push('Une tenue de bureau');
   if (profile.occasions.includes('Événements')) list.push('Pour un mariage cet automne');

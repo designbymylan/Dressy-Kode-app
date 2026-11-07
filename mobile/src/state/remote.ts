@@ -580,9 +580,12 @@ async function loadEcarts(spaceId: string): Promise<Ecart[]> {
   return ((r.data ?? []) as EcartRow[]).map((e) => ({ id: e.id, date: e.created_at.slice(0, 10), pieces: e.garment_ids, raison: e.reason, cibles: e.target_ids ?? [] }));
 }
 
-/** Les ports des cinq dernières semaines, regroupés par jour (la RLS ne rend que ceux de l'espace). */
+/**
+ * Les ports des six derniers mois, regroupés par jour (la RLS ne rend que ceux de l'espace) :
+ * le bilan lit la semaine, la fiche d'une pièce ses six mois (07/11 ; cinq semaines avant).
+ */
 async function loadJournal(): Promise<Record<Iso, string[]>> {
-  const r = await db().from('wears').select('garment_id, worn_on').gte('worn_on', isoDay(-35));
+  const r = await db().from('wears').select('garment_id, worn_on').gte('worn_on', isoDay(-183));
   if (r.error) {
     console.warn('[supabase] journal :', r.error.message);
     return {};

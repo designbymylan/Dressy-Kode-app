@@ -26,7 +26,7 @@ import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap, haptic } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
-import { Chip, Stepper, Toggle } from '../ui/controls';
+import { Chip, Stepper } from '../ui/controls';
 import { Card, Ring } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Masthead } from '../ui/layout';
@@ -778,11 +778,11 @@ function Ville({ draft, set, next }: Ctx) {
         <Icon name="calendar" size={24} color={c.ink} />
         <View style={{ flex: 1, gap: 2 }}>
           <T v="bodyStrong">Relier mon agenda</T>
+          {/* La liaison n'existe pas encore (07/11) : on le dit, comme pour Google et Apple à l'accueil, plutôt qu'un interrupteur qui ne relie rien. */}
           <T v="caption" tone="ink2">
-            Kodi prépare les jours chargés : réunion, dîner, mariage. Tu choisis les agendas, et tu arrêtes quand tu veux.
+            Bientôt disponible. En attendant, note tes rendez-vous dans le calendrier : Kodi les lit pour préparer les jours chargés.
           </T>
         </View>
-        <Toggle testID="onb-agenda" value={draft.agenda} onChange={(agenda) => set({ agenda })} label="Relier mon agenda" />
       </Card>
     </Frame>
   );
