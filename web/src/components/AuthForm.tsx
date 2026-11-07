@@ -87,7 +87,7 @@ export function PasswordInput({ isNew, id = 'password' }: { isNew?: boolean; id?
  * Connexion ou création de compte par e-mail. Pas de prénom ici : il se
  * donne dans le questionnaire, juste après.
  */
-export function AuthForm({ mode, adult }: { mode: 'signin' | 'signup'; adult?: boolean }) {
+export function AuthForm({ mode, adult, suite }: { mode: 'signin' | 'signup'; adult?: boolean; suite?: string }) {
   const isSignUp = mode === 'signup';
   const [state, action] = useActionState<FormResult, FormData>(isSignUp ? signUp : signIn, undefined);
 
@@ -95,6 +95,7 @@ export function AuthForm({ mode, adult }: { mode: 'signin' | 'signup'; adult?: b
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {state?.error ? <p role="alert" className="note note-error pop">{state.error}</p> : null}
       {isSignUp ? <input type="hidden" name="adult" value={adult ? '1' : ''} /> : null}
+      {!isSignUp && suite ? <input type="hidden" name="suite" value={suite} /> : null}
 
       <label className="field">
         <span>E-mail</span>

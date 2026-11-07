@@ -2,7 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // /apercu (planche du design) ne répond que si DRESSY_APERCU=1 : la page renvoie 404 sinon.
-const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/mot-de-passe', '/apercu'];
+// /confidentialite se lit sans compte : avant l'inscription (RGPD) et par les stores, qui en demandent l'adresse.
+const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/mot-de-passe', '/apercu', '/confidentialite'];
 
 /**
  * Rafraîchit la session à chaque navigation et garde les routes privées.
@@ -37,7 +38,9 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/connexion';
-    url.searchParams.set('suite', pathname);
+    url.search = '';
+    // La page demandée (et sa requête) : la connexion y ramène.
+    if (pathname !== '/' && pathname !== '/accueil') url.searchParams.set('suite', pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

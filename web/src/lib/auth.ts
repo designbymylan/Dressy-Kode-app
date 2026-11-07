@@ -19,7 +19,8 @@ export async function siteOrigin(): Promise<string> {
 
 /** Retour après un lien ou une connexion externe : jamais vers un autre site. */
 export function safeNext(next: string | null | undefined, fallback = '/demarrage'): string {
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : fallback;
+  // Un chemin du site seulement : ni « //hôte » ni « /\hôte », que les navigateurs lisent comme une autre adresse.
+  return next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\') ? next : fallback;
 }
 
 /**

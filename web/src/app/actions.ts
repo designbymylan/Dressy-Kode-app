@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getViewer, type Theme } from '@/lib/space';
-import { enabledProviders, siteOrigin, type Provider } from '@/lib/auth';
+import { enabledProviders, safeNext, siteOrigin, type Provider } from '@/lib/auth';
 import { parisDay } from '@/lib/dates';
 import { loadMessages, loadUsage, type KodeMessage, type KodeUsage, type OutfitView } from '@/lib/kode';
 import { loadSavedOutfits } from '@/lib/agenda';
@@ -75,8 +75,8 @@ export async function signIn(_prev: FormResult, formData: FormData): Promise<For
   if (error) return { error: readable(error.code, 'Connexion impossible.') };
 
   // Un compte dont le questionnaire n'est pas fait y est renvoyé par le
-  // layout de l'application.
-  redirect('/accueil');
+  // layout de l'application. Sinon, la page qui avait demandé la connexion.
+  redirect(safeNext(String(formData.get('suite') ?? ''), '/accueil'));
 }
 
 const PROVIDER_NAME: Record<Provider, string> = { google: 'Google', apple: 'Apple' };

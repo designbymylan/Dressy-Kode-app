@@ -9,9 +9,9 @@ const NOTES: Record<string, string> = {
 export default async function Connexion({
   searchParams,
 }: {
-  searchParams: Promise<{ lien?: string }>;
+  searchParams: Promise<{ lien?: string; suite?: string }>;
 }) {
-  const { lien } = await searchParams;
+  const { lien, suite } = await searchParams;
 
   return (
     <AuthShell
@@ -22,7 +22,7 @@ export default async function Connexion({
       {lien && NOTES[lien] ? <p className="note pop" role="status">{NOTES[lien]}</p> : null}
       <OAuthButtons />
       <div className="auth-or" aria-hidden="true">ou</div>
-      <AuthForm mode="signin" />
+      <AuthForm mode="signin" suite={suite} />
     </AuthShell>
   );
 }
