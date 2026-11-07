@@ -774,16 +774,6 @@ function Ville({ draft, set, next }: Ctx) {
           </Card>
         </Animated.View>
       )}
-      <Card className="flex-row items-center" style={{ gap: 14 }}>
-        <Icon name="calendar" size={24} color={c.ink} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <T v="bodyStrong">Relier mon agenda</T>
-          {/* La liaison n'existe pas encore (07/11) : on le dit, comme pour Google et Apple à l'accueil, plutôt qu'un interrupteur qui ne relie rien. */}
-          <T v="caption" tone="ink2">
-            Bientôt disponible. En attendant, note tes rendez-vous dans le calendrier : Kodi les lit pour préparer les jours chargés.
-          </T>
-        </View>
-      </Card>
     </Frame>
   );
 }

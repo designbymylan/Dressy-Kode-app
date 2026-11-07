@@ -894,7 +894,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
             .catch(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', text: NETWORK }, refund: true }));
           return true;
         }
-        const reply = kodeReply(text, s.pieces, s.profile);
+        const reply = kodeReply(text, s.pieces, s.profile, meteoDe(s).jours);
         // Le temps de « réfléchir » : assez pour lire l'état, jamais assez pour agacer.
         setTimeout(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...reply } }), 1100);
         return true;
@@ -1225,8 +1225,15 @@ export { newId };
  * connecté, la simulée en démonstration et sans compte. `jours[i]` est le
  * jour à `i` jours d'aujourd'hui, null quand il n'y a pas de prévision.
  */
+/**
+ * La météo des tenues : la vraie pour un compte connecté (fonction `donnees`),
+ * la simulée pour la seule démonstration. Sans compte, elle n'est pas connue
+ * (la fonction demande un compte) : rien ne s'affiche plutôt qu'une météo
+ * inventée, et les tenues se composent sans elle.
+ */
 export function meteoDe(s: Pick<State, 'account' | 'contexte'>): { jours: (Weather | null)[]; now: { t: number; kind: Weather['kind']; mot?: string } | null; reelle: boolean } {
-  if (s.account !== 'connecte') return { jours: WEATHER, now: { t: WEATHER[0].t, kind: WEATHER[0].kind }, reelle: false };
+  if (s.account === 'demo') return { jours: WEATHER, now: { t: WEATHER[0].t, kind: WEATHER[0].kind }, reelle: false };
+  if (s.account !== 'connecte') return { jours: semaine(null), now: null, reelle: false };
   return { jours: semaine(s.contexte), now: maintenant(s.contexte), reelle: true };
 }
 

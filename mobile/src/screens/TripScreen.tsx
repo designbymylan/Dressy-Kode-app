@@ -132,8 +132,8 @@ function TripNew() {
         activities,
         image: infos?.photo?.valeur ? { url: infos.photo.valeur.url, credit: infos.photo.valeur.credit, page: infos.photo.valeur.page ?? undefined } : null,
       };
-      // En démonstration, la météo simulée de l'app, jour après jour.
-      const meteo = live ? meteoDe(infos) : Object.fromEntries(daysFrom(start, fin).map((d, i) => [d, WEATHER[i % WEATHER.length]]));
+      // En démonstration, la météo simulée de l'app, jour après jour ; sans compte, elle n'est pas connue.
+      const meteo = live ? meteoDe(infos) : s.account === 'demo' ? Object.fromEntries(daysFrom(start, fin).map((d, i) => [d, WEATHER[i % WEATHER.length]])) : {};
       const outfits = await planifier(daysFrom(start, fin), { trip, meteo, consigne: activities.length ? `Activités prévues : ${activities.join(', ')}.` : '' });
       a.saveTrip(trip, outfits);
       a.toast(`Voyage à ${lieu.nom} prêt`);
@@ -241,7 +241,7 @@ function TripView({ trip }: { trip: Trip }) {
 
   const W = width - space.gutter * 2;
   const days = daysFrom(trip.start, trip.end);
-  const meteo: Record<Iso, Weather | null> = live ? meteoDe(infos) : Object.fromEntries(days.map((d, i) => [d, WEATHER[i % WEATHER.length]]));
+  const meteo: Record<Iso, Weather | null> = live ? meteoDe(infos) : s.account === 'demo' ? Object.fromEntries(days.map((d, i) => [d, WEATHER[i % WEATHER.length]])) : {};
   const byId = new Map(s.pieces.map((p) => [p.id, p]));
   const piecesOf = (ids: string[]) => ids.map((id) => byId.get(id)).filter(Boolean) as Piece[];
   const valise = [...new Set(days.flatMap((d) => s.planned[d]?.pieces ?? []))].map((id) => byId.get(id)).filter(Boolean) as Piece[];

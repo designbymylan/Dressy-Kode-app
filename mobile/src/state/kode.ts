@@ -4,7 +4,7 @@
  * supabase/functions/kode qui répond ; le format (texte + tenue + raison)
  * est le même, pour que l'interface ne change pas au branchement.
  */
-import { EVENTS, WEATHER, lcFirst, type Piece } from '../data/wardrobe';
+import { EVENTS, WEATHER, lcFirst, type Piece, type Weather } from '../data/wardrobe';
 import { isoOf, type RdvEvent } from './planning';
 import { canCompose, missingForOutfit, suggestOutfits } from './outfits';
 import type { Profile } from './profile';
@@ -44,7 +44,8 @@ type Reply = Omit<KodeMessage, 'id' | 'from'>;
  * possible, Kodi le dit et propose d'ajouter ce qui manque ; si la réponse
  * écrite pour la démo cite des pièces absentes, il compose avec les siennes.
  */
-export function kodeReply(question: string, pieces: Piece[], profile: Profile): Reply {
+/** `jours` : la météo connue (aujourd'hui, demain…) ; sans compte, elle ne l'est pas et Kodi n'en parle pas. */
+export function kodeReply(question: string, pieces: Piece[], profile: Profile, jours: (Weather | null)[] = WEATHER): Reply {
   const first = profile.name ? `${profile.name}, ` : '';
   if (!canCompose(pieces)) {
     const missing = missingForOutfit(pieces);
@@ -61,8 +62,9 @@ export function kodeReply(question: string, pieces: Piece[], profile: Profile): 
   }
   const reply = curated(question, pieces);
   if (reply.outfit && reply.outfit.pieces.length >= 3) return reply;
-  const mine = suggestOutfits(pieces)[0];
-  const w = WEATHER[0];
+  const w = jours[0] ?? null;
+  const w1 = jours[1] ?? null;
+  const mine = suggestOutfits(pieces, w)[0];
   const q = norm(question);
   const topic = has(q, ['diner', 'soir', 'soiree', 'lea', 'apero'])
     ? 'Pour ce soir, avec tes pièces à toi'
@@ -71,8 +73,8 @@ export function kodeReply(question: string, pieces: Piece[], profile: Profile): 
       : has(q, ['mariage', 'ceremonie'])
         ? 'Pour un mariage, il te faudra sans doute une pièce habillée. En attendant, avec ce que tu as'
         : has(q, ['demain'])
-          ? `Pour demain (${WEATHER[1].t}°, ${WEATHER[1].label}), avec tes pièces à toi`
-          : `Avec tes pièces à toi, pour ${w.t}° et des ${w.label}${profile.city ? ` à ${profile.city}` : ''}`;
+          ? `Pour demain${w1 ? ` (${w1.t}°, ${w1.label})` : ''}, avec tes pièces à toi`
+          : `Avec tes pièces à toi${w ? `, pour ${w.t}°, ${w.label}${profile.city ? ` à ${profile.city}` : ''}` : ''}`;
   return {
     text: `${topic} :`,
     outfit: mine ? { title: 'Composée avec ton dressing', pieces: mine.pieces, why: mine.why } : undefined,
