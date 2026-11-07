@@ -505,6 +505,23 @@ conversation) :
 - **Web** : le middleware vit dans `web/src/middleware.ts` (à la racine de
   `web/`, il était ignoré) ; `/confidentialite` est publique ; la connexion
   ramène à la page demandée (`?suite=`).
+- **Questionnaire du site** : au premier passage, identité (prénom, rayon)
+  et style, puis on entre, comme le mobile ; le reste dans Profil › Ajuster.
+  **Ville** dans Profil › Paramètres (`settings.city`, sans elle pas de
+  météo) ; Google et Apple ne s'affichent que s'ils sont activés dans
+  Supabase.
+- **Conditions générales** (CGU, CGV, mentions légales) dans
+  `mobile/src/data/legal.ts` (`CONDITIONS`, `HEBERGEURS`, champs `EDITEUR`
+  à remplir), copiées par `node tools/politique.mjs`, page publique
+  `/conditions` ; mention de rétractation sur la page de paiement Stripe.
+  À faire relire par un juriste.
+- **Tes données sur le site** (Profil › Paramètres) : télécharger, supprimer
+  le compte ; la suppression efface aussi la fiche Stripe d'une personne qui
+  n'a jamais payé.
+- **État de Kodi** : `dressy-agent?verifier` dit si les clés d'IA sont
+  acceptées ; le compte créateur voit une alerte dans Profil quand ce n'est
+  pas le cas. `APP_URL` retombe sur l'adresse de production (elle valait
+  localhost).
 
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.

@@ -14,6 +14,8 @@ import { loadSubscription, subscriptionLine } from '@/lib/billing';
 import { parisDay } from '@/lib/dates';
 import { planName } from '@/lib/plans';
 import { Screen } from '@/components/ui';
+import { isCreator, loadGeneration } from '@/lib/generations';
+import { etatDesServices } from '@/lib/services';
 import { labelsFor, colourHex } from '@/lib/onboarding';
 
 const DRESSING_VIEW: Record<string, string> = { portants: 'Par portants', grille: 'En grille' };
@@ -74,6 +76,9 @@ export default async function Moi({
     supabase.from('profiles').select('created_at').eq('id', viewer.userId).maybeSingle(),
     getThemeShortcut(),
   ]);
+  // Le compte créateur voit si Kodi tourne vraiment (clés d'IA acceptées) : une panne ne passe plus inaperçue.
+  const generation = await loadGeneration(supabase, viewer.spaceId);
+  const services = generation && isCreator(generation) ? await etatDesServices() : null;
 
   const total = pieces ?? 0;
   const since = parisDay(-90);
@@ -107,6 +112,14 @@ export default async function Moi({
 
   return (
     <Screen>
+      {services && !services.pret ? (
+        <section role="alert" className="note note-error pop" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <strong>Kodi est à l’arrêt pour tout le monde</strong>
+          <span className="small">
+            {services.problemes.length ? `${services.problemes.join(' ; ')}.` : 'Le diagnostic de l’agent n’est pas au vert.'} Remplace la clé dans Supabase › Edge Functions › Secrets : rien d’autre à faire. Seul ton compte voit ce message.
+          </span>
+        </section>
+      ) : null}
       <header className="rise" style={{ display: 'flex', gap: 18, alignItems: 'flex-start', paddingTop: 6 }}>
         <div style={{ position: 'relative', flex: 'none' }}>
           <span
