@@ -25,7 +25,7 @@ import { PLANS, PLACE_PACKS, lookupKey, placesLookupKey } from '../web/src/lib/p
 const API = process.env.STRIPE_API_BASE ?? 'https://api.stripe.com';
 const API_VERSION = '2026-08-26.dahlia'; // la même que les Edge Functions
 const KEY = process.env.STRIPE_SECRET_KEY?.trim();
-const APP_URL = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+const APP_URL = (process.env.APP_URL ?? 'https://dresskode-app.vercel.app').replace(/\/+$/, '');
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? 'https://pxjlbtevrexlckhxskdn.supabase.co').replace(/\/+$/, '');
 const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/stripe-webhook`;
 const EVENTS = [
@@ -91,7 +91,7 @@ async function product(plan) {
   const id = `dressy_${plan.id}`;
   try {
     const existing = await api('GET', `/products/${id}`);
-    const name = `Dressy ${plan.name}`;
+    const name = `Dresskode ${plan.name}`;
     // Le nom se lit sur la page de paiement : il suit celui de l'offre.
     if (!existing.active || existing.name !== name || existing.description !== plan.note) {
       await api('POST', `/products/${id}`, { active: true, name, description: plan.note });
@@ -105,7 +105,7 @@ async function product(plan) {
   }
   await api('POST', '/products', {
     id,
-    name: `Dressy ${plan.name}`,
+    name: `Dresskode ${plan.name}`,
     description: plan.note,
     metadata: { plan: plan.id },
   });
@@ -115,7 +115,7 @@ async function product(plan) {
 
 async function placeProduct(pack) {
   const id = `dressy_places_${pack.id}`;
-  const name = `Dressy ${pack.name} de garde-robe`;
+  const name = `Dresskode ${pack.name} de garde-robe`;
   try {
     const existing = await api('GET', `/products/${id}`);
     if (!existing.active || existing.name !== name) await api('POST', `/products/${id}`, { active: true, name });
@@ -191,7 +191,7 @@ async function prices(products) {
 
 async function portal(products, priceIds) {
   const settings = {
-    business_profile: { headline: 'Dressy : ton abonnement' },
+    business_profile: { headline: 'Dresskode : ton abonnement' },
     default_return_url: APP_URL.startsWith('https://') ? `${APP_URL}/moi` : undefined,
     features: {
       customer_update: { enabled: true, allowed_updates: ['email'] },

@@ -16,7 +16,13 @@ const STEPS = [
   'couleurs', 'eviter', 'occasions', 'rythme', 'aide',
 ] as const;
 type Step = (typeof STEPS)[number];
-const TOTAL = STEPS.length;
+/**
+ * Le premier passage (07/11), comme le questionnaire court du mobile (09/10) :
+ * qui tu es et quel rayon, ton style, et l'on entre. Le reste (objectifs,
+ * pièces, bijoux, couleurs, rythme…) s'affine ensuite depuis Profil ›
+ * « Ajuster mes réponses », qui rouvre le questionnaire entier.
+ */
+const FIRST: readonly Step[] = ['identite', 'style'];
 /** Fins de chapitre (toi et ton style, ton dressing, tes couleurs, ton rythme) : un nœud s'y forme une fois franchies. */
 const KNOTS = [3, 6, 8, 11];
 
@@ -393,6 +399,8 @@ function summary(a: Answers): { step: Step; label: string; value: ReactNode | nu
 
 export function Onboarding({ initial, adjusting = false }: { initial: Answers; adjusting?: boolean }) {
   // En ajustement depuis le compte, on ouvre directement sur le résumé.
+  const flow: readonly Step[] = adjusting ? STEPS : FIRST;
+  const TOTAL = flow.length;
   const [step, setStep] = useState(adjusting ? TOTAL : 0);
   const [dir, setDir] = useState<1 | -1>(1);
   const [editing, setEditing] = useState(false);
@@ -401,7 +409,9 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
   const [error, setError] = useState<string | null>(null);
 
   const done = step >= TOTAL;
-  const key: Step = STEPS[Math.min(step, TOTAL - 1)];
+  const key: Step = flow[Math.min(step, TOTAL - 1)];
+  // Premier passage : la dernière question ouvre directement l'app, sans résumé de questions non posées.
+  const last = !adjusting && step === TOTAL - 1;
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [step]);
 
@@ -411,7 +421,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
   };
   const next = () => goTo(editing ? TOTAL : step + 1);
   const back = () => goTo(editing || done ? (done ? TOTAL - 1 : TOTAL) : step - 1);
-  const edit = (s: Step) => { setEditing(true); goTo(STEPS.indexOf(s)); };
+  const edit = (s: Step) => { setEditing(true); goTo(flow.indexOf(s)); };
   useEffect(() => { if (done) setEditing(false); }, [done]);
 
   const toggle = (field: 'goals' | 'styles' | 'favourite_items' | 'colours' | 'avoid' | 'occasions', options: Option[] = []) => (id: string) =>
@@ -438,7 +448,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
     ? 'Kodi prépare ton espace'
     : done
       ? (adjusting ? 'Enregistrer' : 'Entrer dans mon dressing')
-      : editing ? 'Revenir au résumé' : step === TOTAL - 1 ? 'Voir le résumé' : 'Continuer';
+      : editing ? 'Revenir au résumé' : last ? 'Entrer dans mon dressing' : step === TOTAL - 1 ? 'Voir le résumé' : 'Continuer';
 
   return (
     <main
@@ -460,7 +470,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
           >
             <span className="thread-line thread-todo" />
             <span className="thread-line thread-done" style={{ width: `${((step + 1) / TOTAL) * 100}%` }} />
-            {KNOTS.map((end) => (
+            {(adjusting ? KNOTS : []).map((end) => (
               <span
                 key={end}
                 className="thread-knot"
@@ -667,7 +677,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
             type="button"
             disabled={(!done && !canAdvance) || pending}
             aria-busy={pending || undefined}
-            onClick={() => (done ? submit() : next())}
+            onClick={() => (done || last ? submit() : next())}
             className="btn btn-primary"
             style={{ flex: 1 }}
           >
@@ -676,7 +686,7 @@ export function Onboarding({ initial, adjusting = false }: { initial: Answers; a
           </button>
         </div>
         {!done && !editing && step > 0 ? (
-          <button type="button" onClick={next} className="btn btn-ghost" style={{ minHeight: 40, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          <button type="button" onClick={last ? submit : next} disabled={pending} className="btn btn-ghost" style={{ minHeight: 40, textDecoration: 'underline', textUnderlineOffset: 3 }}>
             Passer
           </button>
         ) : null}

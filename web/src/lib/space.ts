@@ -13,6 +13,8 @@ export type Settings = {
   density: 'confortable' | 'compacte';
   reduced_motion: boolean;
   high_contrast: boolean;
+  /** La ville de la météo (fonction donnees) ; null tant qu'elle n'est pas donnée. */
+  city: string | null;
 };
 
 export type Viewer = {

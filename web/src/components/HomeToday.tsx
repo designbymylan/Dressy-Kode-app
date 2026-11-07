@@ -45,6 +45,8 @@ export function PieceImage({ p, size }: { p: Pick<HomePiece, 'url' | 'category_i
 
 export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outfits: Outfit[]; worn: boolean }) {
   const [pending, start] = useTransition();
+  // « Pas pour moi » a sa propre attente (07/11) : partagée, elle affichait « C’est noté » sur « Je la porte » pendant un écart.
+  const [skipping, startSkip] = useTransition();
   const [index, setIndex] = useState(0);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
@@ -141,7 +143,7 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
   }
 
   function skip(reason: Raison | 'sans', targets: string[]) {
-    start(async () => {
+    startSkip(async () => {
       setError(null);
       const res = await skipOutfit({ garmentIds: shown.map((p) => p.id), reason, targetIds: targets });
       if ('error' in res) return setError(res.error);
@@ -235,7 +237,7 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
         </div>
       ) : null}
 
-      {sheet ? <NotForMe pieces={shown} busy={pending} onClose={() => setSheet(false)} onConfirm={skip} /> : null}
+      {sheet ? <NotForMe pieces={shown} busy={skipping} onClose={() => setSheet(false)} onConfirm={skip} /> : null}
     </section>
   );
 }

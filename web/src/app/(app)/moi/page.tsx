@@ -7,6 +7,7 @@ import { signOut } from '@/app/actions';
 import { ShortcutSwitch, ThemeChoice } from '@/components/ThemeChoice';
 import { PortalButton } from '@/components/PortalButton';
 import { AccountData } from '@/components/AccountData';
+import { CityForm } from '@/components/CityForm';
 import { Pricing } from '@/components/Pricing';
 import { Icon, type IconName } from '@/components/icons';
 import { loadSubscription, subscriptionLine } from '@/lib/billing';
@@ -211,6 +212,7 @@ export default async function Moi({
           <Row icon="moon" tint="" label="Raccourci clair / sombre">
             <ShortcutSwitch on={shortcut} />
           </Row>
+          <CityForm current={viewer.settings.city ?? null} />
           <Row icon="home" tint="dk-bubble-ico--choco" label="Mon espace">
             <span className="dk-row__value">{viewer.spaceName}</span>
           </Row>

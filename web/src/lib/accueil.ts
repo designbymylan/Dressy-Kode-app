@@ -44,6 +44,8 @@ export type Home = {
   weather: Weather | null;
   now: ReturnType<typeof maintenant>;
   city: string | null;
+  /** Une ville est donnée dans les réglages (même si la météo n'a pas encore répondu). */
+  hasCity: boolean;
   eventsToday: number;
   /** Ce que la personne a dit vivre : « travail », « sorties »… (questionnaire). */
   occasions: string[];
@@ -168,6 +170,7 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
     weather,
     now: maintenant(contexte),
     city: contexte?.ville.valeur?.nom ?? null,
+    hasCity: Boolean(viewer.settings.city),
     eventsToday: eventList.filter((e) => e.day === today).length,
     occasions: ((style.data as { occasions: string[] | null } | null)?.occasions) ?? [],
     week,

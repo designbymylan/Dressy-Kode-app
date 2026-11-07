@@ -31,6 +31,18 @@ const AUTH_ERRORS: Record<string, string> = {
   over_request_rate_limit: 'Trop de tentatives. Réessaie dans quelques minutes.',
 };
 
+/**
+ * Un message d'erreur de la base montrable tel quel : seuls ceux que nos
+ * fonctions lèvent exprès (code P0001, écrits en français pour la personne).
+ * Le reste (réseau, droits, contrainte) part dans les journaux et laisse la
+ * place à une phrase claire.
+ */
+function lisible(error: { code?: string; message: string }, fallback: string): string {
+  if (error.code === 'P0001' && error.message) return error.message;
+  console.error('[base]', error.code ?? '', error.message);
+  return fallback;
+}
+
 function readable(code: string | undefined, fallback: string) {
   return (code && AUTH_ERRORS[code]) ?? fallback;
 }
@@ -184,6 +196,24 @@ export async function deleteMyAccount(_prev: FormResult, formData: FormData): Pr
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect('/connexion?compte=supprime');
+}
+
+/**
+ * La ville de la météo (07/11) : le site n'avait aucun moyen de la donner,
+ * et un compte créé sur le web n'avait donc jamais de météo, ni pour ses
+ * tenues ni pour son calendrier. Même champ que le mobile (settings.city).
+ */
+export async function saveCity(_prev: FormResult | { saved: true }, formData: FormData): Promise<FormResult | { saved: true }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.' };
+  const city = String(formData.get('city') ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  const supabase = await createClient();
+  const { error } = await supabase.from('settings').update({ city: city || null }).eq('space_id', viewer.spaceId);
+  if (error) return { error: lisible(error, 'Ta ville n’a pas pu être enregistrée. Réessaie.') };
+  // Seules les pages qui montrent la météo : relire tout le site (et le profil en cours) faisait attendre le bouton.
+  revalidatePath('/accueil');
+  revalidatePath('/calendrier');
+  return { saved: true };
 }
 
 const YEAR = 365 * 24 * 3600;
@@ -362,7 +392,7 @@ export async function requestAiGarments(input: { paths: string[]; hint: string; 
 export async function reportGarment(garmentId: string): Promise<FormResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc('report_garment', { target: garmentId });
-  if (error) return { error: error.message };
+  if (error) return { error: lisible(error, 'La reprise n’a pas pu partir. Réessaie dans un instant.') };
   revalidatePath('/dressing');
   return undefined;
 }
@@ -377,7 +407,7 @@ export async function requestCleanImage(garmentId: string): Promise<FormResult> 
   if (error) {
     return error.hint === 'quota'
       ? { error: 'Tu as utilisé tes générations.', code: 'quota' }
-      : { error: error.message || "Kodi n'a pas pu démarrer. Réessaie dans un instant." };
+      : { error: lisible(error, "Kodi n'a pas pu démarrer. Réessaie dans un instant.") };
   }
   revalidatePath('/dressing');
   return undefined;
@@ -386,7 +416,7 @@ export async function requestCleanImage(garmentId: string): Promise<FormResult> 
 export async function retryAiJob(jobId: string): Promise<FormResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc('retry_ai_job', { target: jobId });
-  if (error) return { error: error.message };
+  if (error) return { error: lisible(error, 'La relance n’a pas pu partir. Réessaie dans un instant.') };
   revalidatePath('/dressing');
   return undefined;
 }
@@ -402,7 +432,7 @@ export async function dismissAiJob(jobId: string): Promise<FormResult> {
   if (job.status !== 'failed') return { error: 'Cette pièce est encore en cours.' };
 
   const { error } = await supabase.from('ai_jobs').delete().eq('id', jobId);
-  if (error) return { error: error.message };
+  if (error) return { error: lisible(error, 'Cette demande n’a pas pu être retirée. Réessaie.') };
   if (job.source_paths?.length) {
     const { count } = await supabase
       .from('ai_jobs')
@@ -620,7 +650,10 @@ export async function saveStyleProfile(answers: Answers): Promise<FormResult> {
     })
     .eq('space_id', viewer.spaceId);
 
-  if (profile.error) return { error: profile.error.message };
+  if (profile.error) {
+    console.error('[questionnaire] style_profile :', profile.error.message);
+    return { error: 'Tes réponses n’ont pas pu être enregistrées. Réessaie dans un instant.' };
+  }
 
   // onboarded_at est ce qui ouvre l'application : il se pose en dernier,
   // pour qu'un échec plus haut laisse la personne reprendre le parcours.
@@ -629,7 +662,10 @@ export async function saveStyleProfile(answers: Answers): Promise<FormResult> {
     .update({ display_name: name || viewer.displayName, onboarded_at: new Date().toISOString() })
     .eq('id', viewer.userId);
 
-  if (done.error) return { error: done.error.message };
+  if (done.error) {
+    console.error('[questionnaire] profiles :', done.error.message);
+    return { error: 'Tes réponses n’ont pas pu être enregistrées. Réessaie dans un instant.' };
+  }
 
   revalidatePath('/', 'layout');
   redirect('/accueil');
@@ -655,7 +691,7 @@ export async function createOutfit(input: { garmentIds: string[]; name?: string 
     .from('garments')
     .select('id, category_id')
     .in('id', ids);
-  if (readError) return { error: readError.message };
+  if (readError) return { error: lisible(readError, 'La tenue n’a pas pu être enregistrée. Réessaie.') };
   if (!garments || garments.length !== ids.length) return { error: 'Une des pièces n’est plus dans ton dressing.' };
 
   const byId = new Map(garments.map((g) => [g.id, g.category_id as string]));
@@ -674,7 +710,7 @@ export async function createOutfit(input: { garmentIds: string[]; name?: string 
   );
   if (itemsError) {
     await supabase.from('outfits').delete().eq('id', outfit.id);
-    return { error: itemsError.message };
+    return { error: lisible(itemsError, 'La tenue n’a pas pu être enregistrée. Réessaie.') };
   }
 
   revalidatePath('/tenues');

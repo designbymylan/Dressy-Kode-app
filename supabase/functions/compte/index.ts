@@ -139,10 +139,35 @@ async function arreterAbonnements(sid: string) {
   }
 }
 
+/**
+ * La fiche client Stripe d'une personne qui n'a jamais rien payé (07/11) :
+ * rien ne justifie d'y garder son e-mail. Avec une facture ou un paiement,
+ * elle reste chez Stripe (pièces comptables, dix ans). Jamais bloquant : la
+ * suppression du compte continue quoi qu'il arrive ici.
+ */
+async function oublierClientSansPaiement(sid: string) {
+  const key = secret('STRIPE_SECRET_KEY');
+  const { data: c } = await admin.from('billing_customers').select('stripe_customer_id').eq('space_id', sid).maybeSingle();
+  if (!key || !c?.stripe_customer_id) return;
+  try {
+    const stripe = new Stripe(key, { apiVersion: '2026-08-26.dahlia', httpClient: Stripe.createFetchHttpClient() });
+    const [factures, paiements] = await Promise.all([
+      stripe.invoices.list({ customer: c.stripe_customer_id, limit: 1 }),
+      stripe.paymentIntents.list({ customer: c.stripe_customer_id, limit: 1 }),
+    ]);
+    if (factures.data.length || paiements.data.length) return;
+    await stripe.customers.del(c.stripe_customer_id);
+    console.log('[compte] client Stripe sans paiement effacé');
+  } catch (e) {
+    console.warn('[compte] client Stripe gardé :', e instanceof Error ? e.message : e);
+  }
+}
+
 async function supprimer(token: string, input: Record<string, unknown>) {
   if (input.confirmation !== 'SUPPRIMER') throw new CompteError('Confirme la suppression pour continuer.');
   const { user, space } = await openSession(token);
   await arreterAbonnements(space.id);
+  await oublierClientSansPaiement(space.id);
 
   // Les fichiers d'abord : une fois le compte parti, plus rien ne les relierait à l'espace.
   const { data: files, error } = await admin.rpc('space_files', { target: space.id });

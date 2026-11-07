@@ -23,7 +23,7 @@ const lcFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
  * reviennent dès la première tenue.
  */
 export function HomeView({ home, name }: { home: Home; name: string | null }) {
-  const { pieces, outfits, worn, now, city, eventsToday, week, trip, contexte } = home;
+  const { pieces, outfits, worn, now, city, hasCity, eventsToday, week, trip, contexte } = home;
   const n = pieces.length;
   const ready = outfits.length > 0;
   const missing = missingForOutfit(pieces);
@@ -54,13 +54,20 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
             <>ton dressing<br />t’attend.</>
           )}
         </h1>
-        {meteoTxt || eventsToday > 0 ? (
+        {meteoTxt || eventsToday > 0 || !hasCity ? (
           <div className="home-chips">
             {meteoTxt && now ? (
               <span className="home-chip">
                 <WeatherIcon kind={now.kind} size={15} />
                 {meteoTxt}
               </span>
+            ) : null}
+            {/* Sans ville, pas de météo : les tenues ne savent pas s'il faut une veste. Un geste pour la donner. */}
+            {!meteoTxt && !hasCity ? (
+              <Link href="/moi#ville" className="home-chip">
+                <Icon name="cloud" size={15} />
+                Ajoute ta ville pour la météo
+              </Link>
             ) : null}
             {eventsToday > 0 ? (
               <Link href="/calendrier" className="home-chip" aria-label={`${eventsToday} rendez-vous aujourd’hui`}>

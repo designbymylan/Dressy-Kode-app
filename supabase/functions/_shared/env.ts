@@ -20,7 +20,12 @@ export function secret(name: string): string | undefined {
   return Deno.env.get(name)?.trim().replace(/^["']+|["']+$/g, '').trim() || undefined;
 }
 
-/** L'adresse publique de l'application, pour les retours depuis Stripe. */
+/**
+ * L'adresse publique de l'application, pour les retours depuis Stripe. Sans
+ * le secret APP_URL, celle de la production (07/11) : la valeur de repli
+ * était localhost, et une cliente aurait été renvoyée vers son propre
+ * ordinateur après avoir payé.
+ */
 export function appUrl(): string {
-  return (secret('APP_URL') ?? 'http://localhost:3000').replace(/\/+$/, '');
+  return (secret('APP_URL') ?? 'https://dresskode-app.vercel.app').replace(/\/+$/, '');
 }
