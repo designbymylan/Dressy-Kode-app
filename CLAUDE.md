@@ -487,6 +487,25 @@ formes et les mêmes jetons :
   sections optionnelles (Le plus porté, Nouveautés, Prêts, Ton mois),
   recherche et filtres du dressing, fiche d'une pièce depuis l'accueil.
 
+**Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
+conversation) :
+
+- **Tenues du jour** (`mobile/src/state/outfits.ts`, `web/src/lib/outfits.ts`,
+  même moteur) : toutes les combinaisons haut et bas et chaque robe sont
+  pesées (repos de la pièce, saison face à la température, cœur, retrait) ;
+  trois tenues qui partagent le moins de pièces possible ; la raison nomme
+  la pièce qui dormait. `npm run test:tenues` (web) les essaie.
+- **Aucun chiffre ni donnée inventés hors démonstration** : sans compte, la
+  météo n'est pas connue et ne s'affiche pas ; la courbe des ports d'une
+  pièce lit le journal (six mois) ; Kodi ne cite que les vrais rendez-vous.
+- **Port du jour** : gardé d'un lancement à l'autre (journal), une pièce
+  comptée une fois par jour, comme la table `wears`.
+- **Boutique mobile** : les packs de places seulement (brief v6) ; les cinq
+  services à l'unité, jamais construits, ne sont plus en vente.
+- **Web** : le middleware vit dans `web/src/middleware.ts` (à la racine de
+  `web/`, il était ignoré) ; `/confidentialite` est publique ; la connexion
+  ramène à la page demandée (`?suite=`).
+
 Git : chaque étape terminée et vérifiée est commitée et poussée sur GitHub
 aussitôt, sans attendre la fin de la demande.
 

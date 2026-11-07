@@ -1,7 +1,7 @@
 Application mobile Dresskode : Expo SDK 57 (React Native 0.86), iOS d'abord.
 Disposition : « version cartes » du 05/10 (voir `../CLAUDE.md`), sur la base B « Éditorial »
 (`../design/refonte/02-design-system.md`).
-Apparence : couleurs de la « galerie » et typographie v1, sur les arrondis et
+Apparence : couleurs de la « galerie » et typographie v2 (Inter Tight et Inter), sur les arrondis et
 le verre (règles visuelles dans `../CLAUDE.md`).
 
 ## Choix du projet (à respecter)
@@ -42,7 +42,9 @@ le verre (règles visuelles dans `../CLAUDE.md`).
   sur le téléphone pour le hors-ligne) et les relit au lancement, au
   changement de ville et au retour dans l'app après une heure. `useMeteo()`
   donne la vraie météo à un compte connecté, la simulée en démonstration.
-  Chaque donnée affichée porte sa source et son heure (`ui/Credit.tsx`).
+  Les sources et leurs licences sont réunies dans Réglages › Sources des données
+  (décision du 05/11 ; `ui/Credit.tsx` n'existe plus). Sans compte, la météo
+  n'est pas connue : rien ne s'affiche (07/11), seule la démonstration simule.
 - **Mouvement** : les moments forts (scan, détourage, cintre qui tombe, tenue qui
   s'assemble, « Je la porte », vignette qui s'ouvre, nom de l'onglet actif, fil du
   questionnaire, anneau de Kode par étape) sont tous
