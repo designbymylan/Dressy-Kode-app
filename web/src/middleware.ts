@@ -7,6 +7,8 @@ const PUBLIC_PATHS = ['/bienvenue', '/connexion', '/inscription', '/auth', '/mot
 
 /**
  * Rafraîchit la session à chaque navigation et garde les routes privées.
+ * Il vit dans src/ (07/11) : à la racine de web/, à côté d'un dossier src/,
+ * Next.js l'ignorait, et il n'a jamais tourné avant cette date.
  * Sans ce passage, un jeton expiré ne serait renouvelé qu'au prochain appel
  * client et les Server Components verraient une session morte.
  */
