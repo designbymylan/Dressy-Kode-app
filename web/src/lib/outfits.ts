@@ -28,6 +28,8 @@ export type HomePiece = {
   /** Jours depuis le dernier port ; null : jamais portée. */
   lastWorn: number | null;
   addedDaysAgo: number;
+  /** Saison notée sur la pièce (« hiver », « ete »…) ; inconnue : toute l'année. */
+  season?: string | null;
 };
 
 /** Une tenue proposée : un titre, sa raison, ses pièces (identifiants). */
@@ -85,7 +87,7 @@ export function missingForOutfit(pieces: Pick<HomePiece, 'category_id'>[]): stri
 export const cleTenue = (ids: string[]) => [...ids].sort().join(',');
 
 /** Ce que les tenues proposées doivent éviter : des combinaisons, et des pièces mises en retrait. */
-export type Evite = { tenues: Set<string>; retrait: Set<string> };
+export type Evite = { tenues: Set<string>; retrait: Set<string>; aimees?: Set<string> };
 export const RIEN: Evite = { tenues: new Set(), retrait: new Set() };
 
 /** Combien de temps une pièce écartée seule passe en dernier. */
@@ -104,55 +106,116 @@ export function evite(rows: { garment_ids: string[]; reason: string; target_ids:
 }
 
 const LEADS: [string, string][] = [
-  ['Ta première tenue, ', 'déjà prête.'],
-  ['Même base, autre ', 'humeur.'],
+  ['Ta tenue, ', 'déjà prête.'],
+  ['Une autre ', 'allure.'],
   ['Plus simple, encore ', 'plus juste.'],
 ];
+/** Le tout premier jour (rien encore porté) : le moment où l'app tient sa promesse. */
+const FIRST: [string, string] = ['Ta première tenue, ', 'déjà prête.'];
+
+/** La saison d'une pièce, qu'elle vienne de la base (« toute_annee ») ou de l'app (« toute l’année »). */
+type Saison = 'hiver' | 'ete' | 'mi' | 'tout';
+export function saisonDe(s: string | null | undefined): Saison {
+  const x = plain(s ?? '');
+  if (x.startsWith('hiver')) return 'hiver';
+  if (x.startsWith('ete')) return 'ete';
+  if (x.startsWith('mi')) return 'mi';
+  return 'tout';
+}
+
+/** L'accord d'une pièce avec la température du jour : 0 va bien, négatif à éviter (un gros pull à 25°, une robe d'été à 8°). */
+export function accordMeteo(s: Saison, t: number | null): number {
+  if (t === null) return 0;
+  if (s === 'hiver') return t >= 22 ? -100 : t >= 18 ? -35 : 0;
+  if (s === 'ete') return t <= 11 ? -100 : t <= 16 ? -35 : 0;
+  if (s === 'mi') return t >= 28 || t <= 3 ? -35 : 0;
+  return 0;
+}
+
+/** Au-delà de deux mois au repos, une pièce « dort » : c'est elle que Kodi ressort. */
+const DORT = 60;
+/** Une pièce déjà retenue dans une tenue du jour pèse moins pour la suivante : trois tenues, trois allures. */
+const DEJA_PRISE = 40;
 
 /**
- * Jusqu'à trois tenues, composées des propres pièces de la personne. Les
- * moins portées d'abord : Kodi fait tourner le dressing. Une pièce écartée
- * seule (« Pas pour moi ») passe en dernier. Au-dessous de 17°, une veste
- * s'ajoute si le dressing en a une.
+ * Jusqu'à trois tenues, composées des propres pièces de la personne.
+ * Toutes les combinaisons haut et bas, et chaque robe, sont pesées : les
+ * pièces au repos depuis longtemps d'abord (Kodi fait tourner le dressing),
+ * celles qui vont avec la météo du jour, un coup de cœur un peu plus ; une
+ * pièce écartée seule (« Pas pour moi ») passe en dernier. Les trois tenues
+ * retenues partagent le moins de pièces possible. Au-dessous de 17° (21° s'il
+ * pleut), une veste s'ajoute si le dressing en a une.
  */
 export function suggestOutfits(pieces: HomePiece[], w: Weather | null, av: Evite = RIEN): Outfit[] {
-  const rest = (a: HomePiece, b: HomePiece) =>
-    Number(av.retrait.has(a.id)) - Number(av.retrait.has(b.id)) || (b.lastWorn ?? 999) - (a.lastWorn ?? 999);
-  const by = (c: string) => pieces.filter((p) => p.category_id === c).sort(rest);
+  const t = w ? w.t : null;
+  const poids = (p: HomePiece) =>
+    (av.retrait.has(p.id) ? -500 : 0) + Math.min(p.lastWorn ?? DORT, DORT) + (av.aimees?.has(p.id) ? 30 : 0) + accordMeteo(saisonDe(p.season), t);
+  const by = (c: string) => pieces.filter((p) => p.category_id === c).sort((a, b) => poids(b) - poids(a));
   const coats = by('vestes'), tops = by('hauts'), bottoms = by('bas'), dresses = by('robes'), shoes = by('chaussures');
   // Un sac d'abord ; sans sac, un accessoire qui ne se porte pas sur la tête.
   const bags = by('sacs');
   const accs = bags.length ? bags : by('accessoires').filter((p) => rowOf(p) === 'main');
 
+  type Base = { pieces: HomePiece[]; score: number };
+  const bases: Base[] = [
+    ...tops.flatMap((top) => bottoms.map((bottom) => ({ pieces: [top, bottom], score: (poids(top) + poids(bottom)) / 2 }))),
+    ...dresses.map((d) => ({ pieces: [d], score: poids(d) })),
+  ];
+  const used = new Set<string>();
+  const libre = (p: HomePiece) => poids(p) - (used.has(p.id) ? DEJA_PRISE : 0);
+  const meilleure = (list: HomePiece[]) => (list.length ? list.reduce((a, b) => (libre(b) > libre(a) ? b : a)) : undefined);
+  const pluie = w?.kind === 'pluie' || w?.kind === 'averses';
+  const froid = t !== null && (t < 17 || (pluie && t < 21));
+  const firstDay = pieces.every((p) => p.wears === 0);
+
   const out: Outfit[] = [];
-  const seen = new Set<string>();
-  // On cherche plus loin quand certaines ont été écartées.
-  for (let i = 0; i < 12 && out.length < 3; i++) {
-    const useDress = dresses.length > 0 && (i % 2 === 1 || !tops.length || !bottoms.length);
-    const base = useDress ? [dresses[i % dresses.length]] : tops.length && bottoms.length ? [tops[i % tops.length], bottoms[i % bottoms.length]] : [];
-    if (!base.length) break;
-    const list = [...base];
-    const coat = w && w.t < 17 && coats.length ? coats[i % coats.length] : undefined;
-    if (coat) list.unshift(coat);
-    if (shoes.length) list.push(shoes[i % shoes.length]);
-    if (accs.length) list.push(accs[i % accs.length]);
-    const key = cleTenue(list.map((p) => p.id));
-    if (seen.has(key) || av.tenues.has(key)) continue;
-    seen.add(key);
-    const baseLine = useDress ? `${cap(lcFirst(base[0].name))} en pièce centrale.` : `${cap(lcFirst(base[0].name))} avec ${lcFirst(base[1].name)}.`;
-    const weatherLine = !w
-      ? ''
-      : coat
-        ? ` ${coat.name} par-dessus : ${w.t}°, ${w.label}.`
-        : w.t < 15
-          ? ` Il fera ${w.t}° : une veste irait bien par-dessus, dès que tu en ajoutes une.`
-          : ` ${w.t}°, ${w.label} : c’est la bonne épaisseur.`;
-    out.push({
-      id: `g${i}`,
-      title: `${LEADS[out.length][0]}${LEADS[out.length][1]}`,
-      pieces: list.map((p) => p.id),
-      why: `${baseLine}${weatherLine}`,
-    });
+  const leads = new Set<string>();
+  const tried = new Set<Base>();
+  while (out.length < 3) {
+    let base: Base | undefined;
+    let best = -Infinity;
+    for (const b of bases) {
+      if (tried.has(b)) continue;
+      const s = b.score - DEJA_PRISE * b.pieces.filter((p) => used.has(p.id)).length;
+      if (s > best) [base, best] = [b, s];
+    }
+    if (!base) break;
+    tried.add(base);
+    const coat = froid ? meilleure(coats) : undefined;
+    const shoe = meilleure(shoes);
+    const acc = meilleure(accs);
+    const list = [...(coat ? [coat] : []), ...base.pieces, ...(shoe ? [shoe] : []), ...(acc ? [acc] : [])];
+    if (av.tenues.has(cleTenue(list.map((p) => p.id)))) continue;
+    for (const p of list) used.add(p.id);
+
+    // La raison : ce que la tenue réunit, puis la pièce qui dormait ou la météo.
+    const [a, b] = base.pieces;
+    const sur = coat ? ` et ${lcFirst(coat.name)} par-dessus` : '';
+    const line1 = b ? `${cap(a.name)} avec ${lcFirst(b.name)}${sur}.` : `${cap(a.name)} en pièce centrale${coat ? `, ${lcFirst(coat.name)} par-dessus` : ''}.`;
+    const star = [...base.pieces, ...(coat ? [coat] : []), ...(shoe ? [shoe] : [])]
+      .filter((p) => (p.lastWorn === null ? p.addedDaysAgo >= 30 : p.lastWorn > DORT))
+      .sort((x, y) => (y.lastWorn ?? y.addedDaysAgo) - (x.lastWorn ?? x.addedDaysAgo))[0];
+    // La pièce qui ouvre la phrase n'est pas renommée.
+    const qui = star === a ? '' : `${cap(star?.name ?? '')} : `;
+    const line2 = star
+      ? star.lastWorn === null
+        ? ` ${qui}${qui ? 'p' : 'P'}remière sortie en ${star.addedDaysAgo} jours.`
+        : ` ${qui}${qui ? 'a' : 'A'}u repos depuis ${star.lastWorn} jours.`
+      : !w
+        ? ''
+        : coat
+          ? ` ${w.t}°, ${w.label}.`
+          : w.t < 15
+            ? ` Il fera ${w.t}° : une veste irait bien, dès que tu en ajoutes une.`
+            : ` ${w.t}°, ${w.label} : c’est la bonne épaisseur.`;
+    const wanted: [string, string] | null = star
+      ? star.lastWorn === null ? ['Son tour ', 'est venu.'] : ['Ressortie du ', 'placard.']
+      : coat && pluie ? ['Pluie prévue, allure ', 'nette.'] : null;
+    const lead =
+      (wanted && !leads.has(wanted.join('')) && wanted) ||
+      (out.length === 0 && firstDay ? FIRST : LEADS.find((l) => !leads.has(l.join(''))) ?? LEADS[0]);
+    leads.add(lead.join(''));
+    out.push({ id: `g-${cleTenue(list.map((p) => p.id))}`, title: `${lead[0]}${lead[1]}`, pieces: list.map((p) => p.id), why: `${line1}${line2}` });
   }
   return out;
 }

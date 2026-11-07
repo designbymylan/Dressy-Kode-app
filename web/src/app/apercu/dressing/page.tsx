@@ -26,7 +26,7 @@ export default async function ApercuDressing({ searchParams }: { searchParams: P
 
   const items: Piece[] = PIECES.map((p) => ({
     id: p.id, name: p.name, category_id: p.category_id, kind: p.kind, colors: [COLOUR[p.id]], url: p.url,
-    created_at: new Date(now - p.addedDaysAgo * 86_400_000).toISOString(), brand: null, size: null, fit: null, material: null, reports: 0,
+    created_at: new Date(now - p.addedDaysAgo * 86_400_000).toISOString(), brand: null, size: null, fit: null, material: null, season: null, reports: 0,
   }));
   const stats: Record<string, WearStat> = Object.fromEntries(PIECES.map((p) => [p.id, { wears: p.wears, last: null }]));
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -130,6 +130,8 @@ function TodayCard({ W }: { W: number }) {
   const outfit = outfits[s.outfitIndex % outfits.length];
   const pieces = outfit.pieces.map((id) => byId.get(id)).filter(Boolean) as Piece[];
   const worn = !!s.wornToday;
+  // Portée avant ce lancement : la coche est déjà là, sans refaire l'envol.
+  const wornAtMount = useRef(worn).current;
   const inner = W - 28;
   // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
@@ -191,7 +193,7 @@ function TodayCard({ W }: { W: number }) {
           {outfit.why}
         </T>
       </Animated.View>
-      {worn && <WornToday pieces={shown} />}
+      {worn && <WornToday pieces={shown} animate={!wornAtMount} />}
       {/* « Pas pour moi » (09/10) : la raison part chez Kodi, la tenue ne revient plus. */}
       {!worn && (
         <View className="flex-row items-center justify-between" style={{ borderTopWidth: 1, borderColor: c.rule, marginHorizontal: 4 }}>
@@ -262,9 +264,9 @@ function BilanCard() {
  * de la tenue s'envolent, et le compteur de ports monte pendant que le coût
  * par port baisse. Porter ce qu'on a, c'est tout le propos de l'app.
  */
-function WornToday({ pieces }: { pieces: Piece[] }) {
+function WornToday({ pieces, animate = true }: { pieces: Piece[]; animate?: boolean }) {
   const { c } = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = useReducedMotion() || !animate;
   // Ce bloc n'apparaît qu'au geste (le port du jour n'est pas gardé d'un lancement à l'autre) : il joue une fois.
   const k = useSharedValue(reduced ? 1 : 0);
   const bump = useSharedValue(1);

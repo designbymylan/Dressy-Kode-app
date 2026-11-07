@@ -15,6 +15,8 @@ export type Piece = {
   size: string | null;
   fit: string | null;
   material: string | null;
+  /** Saison notée (« hiver », « ete », « mi_saison », « toute_annee ») : les tenues du jour suivent la météo. */
+  season: string | null;
   /** Fois où la personne a signalé un rendu incorrect (deux au plus). */
   reports: number;
 };
@@ -34,7 +36,7 @@ export async function signAll(supabase: Supabase, bucket: string, paths: string[
 export async function loadPieces(supabase: Supabase): Promise<Piece[]> {
   const { data } = await supabase
     .from('garments')
-    .select('id, name, category_id, kind, colors, image_path, thumb_path, created_at, brand, size, fit, material, reports')
+    .select('id, name, category_id, kind, colors, image_path, thumb_path, created_at, brand, size, fit, material, season, reports')
     .eq('status', 'active')
     .order('created_at', { ascending: false });
 
@@ -57,6 +59,7 @@ export async function loadPieces(supabase: Supabase): Promise<Piece[]> {
     size: g.size ?? null,
     fit: g.fit ?? null,
     material: g.material ?? null,
+    season: g.season ?? null,
     reports: g.reports ?? 0,
   }));
 }

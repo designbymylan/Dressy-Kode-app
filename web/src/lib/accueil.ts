@@ -110,6 +110,7 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
       wears: st?.wear_count ?? 0,
       lastWorn: st?.last_worn_on ? Math.max(0, todayN - dayNumber(st.last_worn_on)) : null,
       addedDaysAgo: Math.max(0, todayN - dayNumber(g.created_at.slice(0, 10))),
+      season: g.season,
     };
   });
   const known = new Set(pieces.map((p) => p.id));

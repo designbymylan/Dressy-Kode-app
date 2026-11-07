@@ -17,7 +17,7 @@ import { todayOutfits } from './outfits';
 import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
 import type { Account, NotifChoice, PlanId, Period, Photo, Planned, Session } from './remote';
-import { isoOf, newId, type Iso, type RdvEvent, type Trip } from './planning';
+import { isoOf, newId, offsetOf, type Iso, type RdvEvent, type Trip } from './planning';
 import { isActive, type JobRow } from './jobs';
 import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './contexte';
 import { cleTenue, evite, garder, type Ecart, type Raison } from './ecarts';
@@ -151,6 +151,8 @@ type State = {
   shares: Share[];
   toast: Toast | null;
   undo: Piece[] | null;
+  /** Les pièces déjà notées aujourd'hui avant le dernier port : l'annulation y revient. */
+  undoJour: string[];
   /** Les photos confiées à Kodi pendant cette session, et leurs pièces. */
   jobs: JobRow[];
   /**
@@ -201,6 +203,7 @@ const initial: State = {
   shares: [],
   toast: null,
   undo: null,
+  undoJour: [],
   jobs: [],
   pendingPhotos: [],
   fresh: [],
@@ -288,6 +291,8 @@ function reducer(s: State, a: Action): State {
         ...(a.patch.profile ? { profile: { ...EMPTY_PROFILE, ...(a.patch.account === 'demo' ? { lastName: DEMO_PROFILE.lastName, username: DEMO_PROFILE.username } : {}), ...a.patch.profile } } : {}),
         ...(a.patch.modules ? { modules: normalizeModules(a.patch.modules) } : {}),
         ...(a.patch.planned ? { planned: normalizePlanned(a.patch.planned) } : {}),
+        // La tenue portée ce matin le reste après un relancement : pas de second « Je la porte » qui compterait deux ports.
+        wornToday: (a.patch.journal ?? s.journal)[isoOf(0)] ?? null,
         booting: false,
       };
     case 'account': {
@@ -311,6 +316,7 @@ function reducer(s: State, a: Action): State {
         souvenirs: acc.souvenirs,
         gouts: acc.gouts,
         journal: acc.journal,
+        wornToday: acc.journal[isoOf(0)] ?? null,
         messages: acc.messages,
         kodeUsed: acc.kodeUsed,
         extraPlaces: acc.extraPlaces,
@@ -346,22 +352,30 @@ function reducer(s: State, a: Action): State {
     case 'restart':
       return { ...fresh };
     case 'wear': {
-      const ids = new Set(a.ids);
+      // Comme la base (un port par pièce et par jour) : une pièce déjà notée aujourd'hui ne compte pas deux fois,
+      // et la tenue du matin reste au journal quand on note une pièce de plus depuis sa fiche.
+      const today = isoOf(0);
+      const before = s.journal[today] ?? [];
+      const fresh = a.ids.filter((id) => !before.includes(id));
+      const ids = new Set(fresh);
+      const day = [...before, ...fresh];
       return {
         ...s,
         undo: s.pieces,
-        wornToday: a.ids,
-        journal: { ...s.journal, [isoOf(0)]: a.ids },
+        undoJour: before,
+        wornToday: day,
+        journal: { ...s.journal, [today]: day },
         pieces: s.pieces.map((p) => (ids.has(p.id) ? { ...p, wears: p.wears + 1, lastWorn: 0 } : p)),
         toast: { id: ++toastId, text: a.toast, undo: true },
       };
     }
     case 'undo': {
       if (!s.undo) return s;
-      // Un port annulé quitte aussi le journal du jour.
+      // Un port annulé quitte aussi le journal du jour ; ce qui était noté avant reste.
       const journal = { ...s.journal };
-      if (s.wornToday) delete journal[isoOf(0)];
-      return { ...s, pieces: s.undo, undo: null, wornToday: null, journal, toast: null };
+      if (s.undoJour.length) journal[isoOf(0)] = s.undoJour;
+      else delete journal[isoOf(0)];
+      return { ...s, pieces: s.undo, undo: null, undoJour: [], wornToday: s.undoJour.length ? s.undoJour : null, journal, toast: null };
     }
     case 'nextOutfit':
       return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0], evite(s.ecarts, s.coeurs)).length), wornToday: null };
@@ -496,8 +510,14 @@ const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pie
 async function readSaved(): Promise<Partial<State> | null> {
   try {
     const raw = await AsyncStorage.getItem(SAVED);
-    const v = raw ? (JSON.parse(raw) as Partial<State>) : null;
-    return v && Array.isArray(v.pieces) && v.profile ? v : null;
+    const v = raw ? (JSON.parse(raw) as Partial<State> & { savedOn?: Iso }) : null;
+    if (!v || !Array.isArray(v.pieces) || !v.profile) return null;
+    // Les jours passent aussi quand l'app dort : « dernier port » et « ajoutée il y a » vieillissent d'autant,
+    // sinon, sans compte, la rotation des tenues et les pièces qui dorment se figeraient au jour de la sauvegarde.
+    const days = v.savedOn ? Math.max(0, -offsetOf(v.savedOn)) : 0;
+    const { savedOn: _, ...state } = v;
+    if (!days) return state;
+    return { ...state, pieces: v.pieces.map((p) => ({ ...p, lastWorn: p.lastWorn === null ? null : p.lastWorn + days, addedDaysAgo: p.addedDaysAgo + days })) };
   } catch {
     return null;
   }
@@ -731,8 +751,10 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         return { ok: true };
       },
       wear: (ids: string[], toast = 'Notée dans ton journal') => {
+        // L'annulation ne retire que ce port-ci, pas une pièce déjà notée plus tôt dans la journée.
+        const before = new Set(getState().journal[isoOf(0)] ?? []);
         dispatch({ t: 'wear', ids, toast });
-        lastUndo.current = { kind: 'wear', ids };
+        lastUndo.current = { kind: 'wear', ids: ids.filter((id) => !before.has(id)) };
         if (live()) sync(remote.wear(ids));
       },
       undo: () => {
@@ -1076,7 +1098,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (s.booting || s.account === 'demo') return;
     const t = setTimeout(() => {
-      const kept = Object.fromEntries(KEPT.map((k) => [k, s[k]]));
+      const kept = { ...Object.fromEntries(KEPT.map((k) => [k, s[k]])), savedOn: isoOf(0) };
       AsyncStorage.setItem(SAVED, JSON.stringify(kept)).catch(() => undefined);
     }, 400);
     return () => clearTimeout(t);
