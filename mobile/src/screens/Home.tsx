@@ -3,7 +3,7 @@ import { ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { WEATHER_WORD, DAYS, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, lcFirst, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
+import { WEATHER_WORD, DAYS, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
 import { MODULE_LABELS, eventsOn, precision, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
 import { isoOf, spanLabel } from '../state/planning';
 import { usePlanifier } from '../state/usePlanifier';
@@ -39,7 +39,7 @@ const longDate = () => {
 /**
  * L'accueil (06/10) : chaque section a sa forme, dans l'ordre choisi dans
  * Personnaliser, la tenue du jour comprise. Rangées de la tête aux pieds,
- * cartes de la semaine, bulle de Kodi, arches, page de magazine,
+ * cartes de la semaine, arches, page de magazine,
  * classement, mosaïque, tickets, bloc plein (canevas
  * https://claude.ai/artifact/D6Y93CiR4UXrrp6djzxXcc). Couleurs, polices,
  * verre et arrondis restent ceux de la charte.
@@ -578,38 +578,6 @@ function Module({ id, W }: { id: HomeModule; W: number }) {
   const allPieces = () => nav.navigate('Tabs', { screen: 'Dressing', params: { view: 'grille' } });
 
   if (id === 'semaine') return <Week />;
-
-  // Kodi : une bulle de message beurre, son coin bas presque droit, et Kodi qui salue (21/10).
-  if (id === 'kode') {
-    const tomorrow = eventsOn(s.events, isoOf(1))[0];
-    const asks = [
-      tomorrow ? `${capital(lcFirst(tomorrow.title))}, demain` : 'Une tenue pour demain',
-      s.profile.occasions.includes('Bureau') ? 'Tenue de bureau' : 'Une tenue pour ce soir',
-      s.pieces.length >= 8 ? 'Ce que je ne porte jamais' : 'Ce qui va avec mon jean',
-    ];
-    const ink = c['butter-ink'];
-    return (
-      <Card className="bg-butter" style={{ padding: 18, gap: 14, borderBottomLeftRadius: 8 }} testID="home-kode">
-        <T v="cardTitle" accessibilityRole="header" style={{ color: ink, ...F.s600 }}>
-          {title}
-        </T>
-        <Tap testID="home-ask-kode" onPress={() => nav.navigate('Tabs', { screen: 'Kode' })} scaleTo={0.99} accessibilityLabel="Poser une question à Kodi" style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c['butter-field'], height: 50, borderRadius: 25, paddingHorizontal: 18 }}>
-          <T v="body" style={{ color: ink }}>
-            Une tenue pour…
-          </T>
-        </Tap>
-        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-          {asks.map((q) => (
-            <Tap key={q} onPress={() => nav.navigate('Tabs', { screen: 'Kode', params: { ask: q, nonce: Date.now() } })} accessibilityLabel={`Demander à Kodi : ${q}`} style={{ height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: c['butter-field'], justifyContent: 'center' }}>
-              <T v="caption" style={{ color: ink, ...F.s500, fontSize: 14 }}>
-                {q}
-              </T>
-            </Tap>
-          ))}
-        </View>
-      </Card>
-    );
-  }
 
   // À redécouvrir : chaque pièce dans une arche, le nombre de jours en grand.
   if (id === 'oubliees') {

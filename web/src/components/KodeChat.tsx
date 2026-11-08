@@ -34,7 +34,7 @@ export function KodeChat({
   usage: KodeUsage;
   plannedTomorrow: string | null;
   pieces: number;
-  /** Une question venue de l'accueil (« Demande à Kodi ») : elle part dès l'ouverture, une seule fois. */
+  /** Une question passée dans l'adresse (`/kodi?q=`) : elle part dès l'ouverture, une seule fois. */
   ask?: string;
 }) {
   const [messages, setMessages] = useState(initial);

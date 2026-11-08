@@ -104,8 +104,6 @@ function ModuleGlyph({ id, dim }: { id: HomeModule; dim: boolean }) {
           <View style={{ width: 8, height: 18, borderRadius: 3, borderWidth: 1.5, borderStyle: 'dashed', borderColor: ink }} />
         </View>,
       );
-    case 'kode':
-      return box(<View style={{ width: 24, height: 17, borderTopLeftRadius: 8, borderTopRightRadius: 8, borderBottomRightRadius: 8, borderBottomLeftRadius: 2, backgroundColor: c.butter, borderWidth: 1.5, borderColor: ink }} />);
     case 'oubliees':
       return box(<View style={{ width: 16, height: 22, borderTopLeftRadius: 8, borderTopRightRadius: 8, borderBottomLeftRadius: 3, borderBottomRightRadius: 3, borderWidth: 1.5, borderColor: ink }} />);
     case 'tendance':

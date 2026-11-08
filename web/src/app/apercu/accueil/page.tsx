@@ -47,7 +47,6 @@ export default async function ApercuAccueil({ searchParams }: { searchParams: Pr
     city: 'Paris',
     hasCity: true,
     eventsToday: 1,
-    occasions: ['travail'],
     week,
     trip: null,
     contexte,

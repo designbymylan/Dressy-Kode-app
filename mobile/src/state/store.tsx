@@ -24,7 +24,7 @@ import { cleTenue, evite, garder, type Ecart, type Raison } from './ecarts';
 
 export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
-export type HomeModule = 'tenue' | 'semaine' | 'kode' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
+export type HomeModule = 'tenue' | 'semaine' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
 export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
 
@@ -56,7 +56,6 @@ const DEMO_GENERATIONS = 4;
 export const MODULE_LABELS: Record<HomeModule, { title: string; note: string }> = {
   tenue: { title: 'Tenue du jour', note: 'Ta tenue, de la tête aux pieds' },
   semaine: { title: 'Ta semaine', note: 'Tes tenues prévues, jour par jour, avec la météo' },
-  kode: { title: 'Demande à Kodi', note: 'Des questions prêtes, selon ta journée' },
   oubliees: { title: 'À redécouvrir', note: 'Les pièces qui dorment' },
   tendance: { title: 'Tendance', note: 'Ce qui se porte, déjà dans ton dressing' },
   porte: { title: 'Le plus porté', note: 'Tes pièces fétiches' },
@@ -71,7 +70,6 @@ type ModuleState = { id: HomeModule; on: boolean };
 export const DEFAULT_MODULES: ModuleState[] = [
   { id: 'tenue', on: true },
   { id: 'semaine', on: true },
-  { id: 'kode', on: true },
   { id: 'oubliees', on: true },
   { id: 'tendance', on: true },
   { id: 'porte', on: false },

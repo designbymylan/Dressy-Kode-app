@@ -22,30 +22,6 @@ function Quiet({ title, text, i }: { title: string; text: string; i: number }) {
   );
 }
 
-/**
- * Demande à Kodi : une bulle beurre, son coin bas presque droit. Le champ
- * emmène la question directement à Kodi, qui y répond dans la conversation ;
- * chaque suggestion est une question toute prête.
- */
-export function HomeKodi({ asks, i }: { asks: string[]; i: number }) {
-  return (
-    <section className="home-kodi band rise" style={{ '--i': i } as CSSProperties} aria-labelledby="home-kodi-title">
-      <h2 id="home-kodi-title">Demande à Kodi</h2>
-      <form action="/kodi" method="get" className="home-kodi__form" role="search" aria-label="Poser une question à Kodi">
-        <input name="q" type="text" maxLength={600} placeholder="Une tenue pour…" autoComplete="off" enterKeyHint="send" aria-label="Ta question pour Kodi" />
-        <button type="submit" aria-label="Envoyer à Kodi"><Icon name="arrowUp" size={18} /></button>
-      </form>
-      <div className="home-kodi__asks">
-        {asks.map((q) => (
-          <Link key={q} href={`/kodi?q=${encodeURIComponent(q)}`} className="home-kodi__ask" aria-label={`Demander à Kodi : ${q}`}>
-            {q}
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 /** À redécouvrir : chaque pièce dans une arche, le nombre de jours en grand. */
 export function Sleeping({ list, i }: { list: HomePiece[]; i: number }) {
   if (!list.length) return <Quiet title="À redécouvrir" text="Rien ne dort : tout ton dressing tourne." i={i} />;

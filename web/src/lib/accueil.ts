@@ -48,7 +48,6 @@ export type Home = {
   hasCity: boolean;
   eventsToday: number;
   /** Ce que la personne a dit vivre : « travail », « sorties »… (questionnaire). */
-  occasions: string[];
   /** Aujourd'hui puis les six jours suivants (index 0 : aujourd'hui). */
   week: WeekDay[];
   trip: HomeTrip | null;
@@ -62,7 +61,7 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
   const today = parisDay(0);
   const since = new Date(Date.now() - 92 * DAY_MS).toISOString();
 
-  const [garments, stats, planned, events, trips, feedback, style, contexte] = await Promise.all([
+  const [garments, stats, planned, events, trips, feedback, contexte] = await Promise.all([
     loadPieces(supabase),
     supabase.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', viewer.spaceId),
     supabase
@@ -92,7 +91,6 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
       .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(20),
-    supabase.from('style_profile').select('occasions').eq('space_id', viewer.spaceId).maybeSingle(),
     loadContexte(supabase),
   ]);
 
@@ -172,7 +170,6 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
     city: contexte?.ville.valeur?.nom ?? null,
     hasCity: Boolean(viewer.settings.city),
     eventsToday: eventList.filter((e) => e.day === today).length,
-    occasions: ((style.data as { occasions: string[] | null } | null)?.occasions) ?? [],
     week,
     trip: ((trips.data ?? []) as HomeTrip[])[0] ?? null,
     contexte,

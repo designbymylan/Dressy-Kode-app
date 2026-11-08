@@ -1980,24 +1980,6 @@ a.home-chip::after { content: ''; position: absolute; inset: -6px 0; }
 .home-trip { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 4px; }
 .home-trip strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 
-/* Demande à Kodi : la bulle beurre, son coin bas presque droit. */
-.home-kodi {
-  --butter-field: rgba(255, 255, 255, 0.72);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border-bottom-left-radius: 8px;
-}
-.home-kodi h2 { font-weight: 600; font-size: 20px; line-height: 24px; letter-spacing: -0.1px; color: var(--butter-ink); }
-.home-kodi__form { display: flex; align-items: center; height: 50px; padding: 0 3px 0 18px; border-radius: 25px; background: var(--butter-field); }
-.home-kodi__form:focus-within { outline: 2px solid var(--butter-ink); outline-offset: 2px; }
-.home-kodi__form input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: transparent; font-size: 15px; color: var(--butter-ink); }
-.home-kodi__form input::placeholder { color: var(--butter-ink); opacity: 0.72; }
-.home-kodi__form button { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--butter-ink); color: var(--butter); cursor: pointer; }
-.home-kodi__asks { display: flex; flex-wrap: wrap; gap: 8px; }
-.home-kodi__ask { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 22px; background: var(--butter-field); color: var(--butter-ink); font-size: 14px; font-weight: 500; }
-
 /* À redécouvrir : chaque pièce dans une arche, le nombre de jours en grand. */
 .home-sleeping { padding: 16px; gap: 14px; }
 .home-sleeping__head { display: flex; align-items: center; justify-content: space-between; min-height: 28px; }

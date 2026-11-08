@@ -147,8 +147,7 @@ diffèrent ; couleurs, typographie, verre et arrondis ne changent pas.
   la tenue du jour est une section comme les autres, qu'on monte, descend
   ou masque dans Personnaliser. « Ta semaine » réunit météo et tenues
   prévues, en grand (titre Cormorant, barre de 7 jours, une carte par
-  jour, pointillés pour « Prévoir », « Compléter avec Kode ») ; Kode est une
-  bulle rose poudré ; À redécouvrir, des arches ; Tendance, une page de
+  jour, pointillés pour « Prévoir », « Compléter avec Kode ») ; À redécouvrir, des arches ; Tendance, une page de
   magazine aux ronds chevauchés ; Le plus porté, un classement à barres ;
   Nouveautés, une mosaïque ; Prêts en cours, des tickets à talon ; Ton
   mois, un bloc plein. Couleurs, polices, verre et arrondis ne changent
@@ -473,8 +472,7 @@ formes et les mêmes jetons :
 - **Accueil** (`components/HomeView.tsx`, données `lib/accueil.ts`) : salut et
   puces météo, tenue du jour de la tête aux pieds (voisines, cadenas, « Une
   autre », « Je la porte », « Pas pour moi »), Ta semaine avec météo et tenues
-  prévues, Demande à Kodi (le champ part dans `/kodi?q=`), À redécouvrir,
-  Tendance. Données du jour par la fonction `donnees` (2,5 s au plus : la
+  prévues, À redécouvrir, Tendance. Données du jour par la fonction `donnees` (2,5 s au plus : la
   page s'affiche sans elles). Le moteur de tenues est `lib/outfits.ts`, le
   même esprit que `mobile/src/state/outfits.ts`.
 - **Calendrier** (`components/CalendarView.tsx`, `lib/agenda.ts`) : la semaine
@@ -495,6 +493,17 @@ formes et les mêmes jetons :
 - Pas encore sur le web : création de voyage, Personnaliser l'accueil, les
   sections optionnelles (Le plus porté, Nouveautés, Prêts, Ton mois),
   recherche et filtres du dressing, fiche d'une pièce depuis l'accueil.
+
+**Accueil sans « Demande à Kodi » (08/11), décidé avec l'utilisateur** : la
+carte (champ « Une tenue pour… » et trois questions toutes prêtes) est
+retirée, mobile et web. Elle doublait ce qui existe ailleurs : Kodi est au
+centre de la barre d'onglets et son écran propose déjà les mêmes questions
+(`kodeStarters`) ; « Une autre », « Prévoir » et « Compléter avec Kodi » sont
+sur la tenue du jour et Ta semaine ; « Ce que je ne porte jamais » est
+« À redécouvrir ». Sur le mobile, le champ n'était qu'un bouton déguisé en
+champ. La section disparaît de Personnaliser ; `normalizeModules` écarte
+l'ancien identifiant `kode` des réglages déjà enregistrés. L'adresse
+`/kodi?q=` (web) reste. À ne pas remettre sans une raison mesurée.
 
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
