@@ -4,12 +4,13 @@
  * (supabase/functions/_shared/billing.test.ts).
  *
  * Les identifiants et la forme des clés suivent web/src/lib/plans.ts.
- * Deux offres, au mois : `capsule` porte Fashion, `atelier` Sapologue.
- * Couture et l'annuel ne sont plus vendus (aucun abonné ne les avait).
+ * Deux offres, au mois ou à l'année (-30 %, 08/11) : `capsule` porte
+ * Fashion, `atelier` Sapologue. Couture n'est plus vendue (aucun abonné ne
+ * l'avait).
  */
 
 export const PLAN_IDS = ['capsule', 'atelier'] as const;
-export const PERIODS = ['mois'] as const; // l'annuel n'est plus vendu (brief v6, 31/10)
+export const PERIODS = ['mois', 'an'] as const; // l'annuel est revenu le 08/11 (il avait été retiré au brief v6, 31/10)
 
 export type PlanId = (typeof PLAN_IDS)[number];
 export type Period = (typeof PERIODS)[number];

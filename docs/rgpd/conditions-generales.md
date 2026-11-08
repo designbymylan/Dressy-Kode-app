@@ -1,11 +1,11 @@
 # Conditions générales de Dresskode
 
-_Version 1.1 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici. Rédigé pendant l'audit du 07/11 : à faire relire par un professionnel du droit avant la sortie._
+_Version 1.2 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici. Rédigé pendant l'audit du 07/11 : à faire relire par un professionnel du droit avant la sortie._
 
 ## En bref
 
 - **Gratuit pour commencer.** Découverte : 15 pièces, 4 générations offertes, 5 questions à Kodi par mois, sans carte bancaire.
-- **Au mois, sans engagement.** Fashion à 8,99 € et Sapologue à 18,99 € par mois, TTC. Tu résilies quand tu veux : l’offre court jusqu’à la fin du mois payé.
+- **Au mois ou à l’année.** Fashion à 8,99 € et Sapologue à 18,99 € par mois, TTC. À l’année, 30 % moins cher : 75 € et 159 €. Tu résilies quand tu veux : l’offre court jusqu’à la fin de la période payée.
 - **Des places en plus.** +10 places à 1,99 €, +30 places à 4,99 €, en paiement unique. Elles restent tant que ton compte existe.
 - **Kodi conseille.** Kodi est une intelligence artificielle : ses tenues sont des idées, il peut se tromper. C’est toi qui décides de ce que tu portes.
 
@@ -75,9 +75,9 @@ Les prix sont en euros, toutes taxes comprises, et affichés avant chaque paieme
 
 Découverte est gratuite, sans carte bancaire et sans limite de durée : 15 pièces, 5 questions à Kodi par mois, et 4 générations offertes une seule fois, sans renouvellement.
 
-Fashion (8,99 € par mois) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois) : jusqu’à 100 pièces, 100 générations et Kodi sans limite. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.
+Fashion (8,99 € par mois ou 75 € par an) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois ou 159 € par an) : jusqu’à 100 pièces, 100 générations et Kodi sans limite. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.
 
-Les générations et les questions se renouvellent chaque mois ; celles qui ne sont pas utilisées ne se reportent pas.
+Les générations et les questions se renouvellent chaque mois, y compris avec un abonnement annuel ; celles qui ne sont pas utilisées ne se reportent pas.
 
 Une génération est un nouveau dessin d’une pièce (« Image propre », ou la seconde reprise d’un rendu incorrect). Elle n’est comptée que si le dessin aboutit.
 
@@ -91,7 +91,7 @@ Pour souscrire, choisis ton offre et valide le paiement sur la page sécurisée 
 
 Nous archivons les éléments de ta commande. Tu peux en demander une copie à l’adresse de contact. Les factures sont disponibles dans « Gérer mon abonnement ».
 
-Un abonnement est prélevé le jour de la souscription, puis chaque mois à la même date. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez Stripe.
+Un abonnement est prélevé le jour de la souscription, puis chaque mois (ou chaque année pour un abonnement annuel) à la même date. L’abonnement annuel est payé en une fois et se renouvelle chaque année tant que tu ne résilies pas ; tu peux résilier à tout moment, l’offre court alors jusqu’à la fin de l’année payée. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez Stripe.
 
 Si un prélèvement échoue, Stripe renouvelle la tentative. Sans régularisation, l’abonnement est arrêté et ton compte repasse en Découverte. Tes pièces au-delà de la limite restent visibles, mais tu ne peux plus en ajouter.
 
@@ -99,7 +99,7 @@ Si un prélèvement échoue, Stripe renouvelle la tentative. Sans régularisatio
 
 Tu peux résilier à tout moment, sans frais : dans l’app, Réglages › Mon abonnement, puis « Résilier mon abonnement » ; sur le site, Profil › Gérer mon abonnement. Dans les deux cas, tu arrives sur la page sécurisée de notre prestataire de paiement, où tu choisis « Résilier l’abonnement ». Cette page permet aussi de changer d’offre ou de carte, et de télécharger tes factures.
 
-La résiliation prend effet à la fin du mois déjà payé : tu gardes ton offre jusque-là, et rien n’est prélevé ensuite. Le mois commencé n’est pas remboursé au prorata, sauf si la loi t’ouvre un droit de rétractation (voir ci-dessous).
+La résiliation prend effet à la fin de la période déjà payée (le mois, ou l’année pour un abonnement annuel) : tu gardes ton offre jusque-là, et rien n’est prélevé ensuite. La période commencée n’est pas remboursée au prorata, sauf si la loi t’ouvre un droit de rétractation (voir ci-dessous).
 
 Un pack de places n’est pas remboursable une fois ses places ajoutées, sauf dans les cas prévus par la loi.
 

@@ -200,7 +200,7 @@ export const POLITIQUE: Section[] = [
   }
 ];
 
-export const CONDITIONS_VERSION = "Version 1.1 du 8 novembre 2026";
+export const CONDITIONS_VERSION = "Version 1.2 du 8 novembre 2026";
 
 export const HEBERGEURS: string[] = [
   "Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis.",
@@ -216,8 +216,8 @@ export const CONDITIONS: Section[] = [
         "texte": "Découverte : 15 pièces, 4 générations offertes, 5 questions à Kodi par mois, sans carte bancaire."
       },
       {
-        "titre": "Au mois, sans engagement",
-        "texte": "Fashion à 8,99 € et Sapologue à 18,99 € par mois, TTC. Tu résilies quand tu veux : l’offre court jusqu’à la fin du mois payé."
+        "titre": "Au mois ou à l’année",
+        "texte": "Fashion à 8,99 € et Sapologue à 18,99 € par mois, TTC. À l’année, 30 % moins cher : 75 € et 159 €. Tu résilies quand tu veux : l’offre court jusqu’à la fin de la période payée."
       },
       {
         "titre": "Des places en plus",
@@ -292,8 +292,8 @@ export const CONDITIONS: Section[] = [
     "texte": [
       "Les prix sont en euros, toutes taxes comprises, et affichés avant chaque paiement. Le régime de TVA de l’éditeur figure sur les factures.",
       "Découverte est gratuite, sans carte bancaire et sans limite de durée : 15 pièces, 5 questions à Kodi par mois, et 4 générations offertes une seule fois, sans renouvellement.",
-      "Fashion (8,99 € par mois) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois) : jusqu’à 100 pièces, 100 générations et Kodi sans limite. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.",
-      "Les générations et les questions se renouvellent chaque mois ; celles qui ne sont pas utilisées ne se reportent pas.",
+      "Fashion (8,99 € par mois ou 75 € par an) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois ou 159 € par an) : jusqu’à 100 pièces, 100 générations et Kodi sans limite. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.",
+      "Les générations et les questions se renouvellent chaque mois, y compris avec un abonnement annuel ; celles qui ne sont pas utilisées ne se reportent pas.",
       "Une génération est un nouveau dessin d’une pièce (« Image propre », ou la seconde reprise d’un rendu incorrect). Elle n’est comptée que si le dessin aboutit.",
       "Les packs de places (+10 places pour 1,99 €, +30 places pour 4,99 €) s’ajoutent à la limite de ton offre et restent tant que ton compte existe. Ce sont des places, jamais des générations. Le paiement est unique.",
       "Nous pouvons modifier nos offres et nos prix. Une hausse du prix d’un abonnement t’est annoncée au moins un mois avant son entrée en vigueur ; tu peux alors résilier sans frais avant qu’elle s’applique."
@@ -304,7 +304,7 @@ export const CONDITIONS: Section[] = [
     "texte": [
       "Pour souscrire, choisis ton offre et valide le paiement sur la page sécurisée de notre prestataire de paiement, Stripe. Ton accès est activé dès que le paiement est confirmé, et le contrat est alors conclu.",
       "Nous archivons les éléments de ta commande. Tu peux en demander une copie à l’adresse de contact. Les factures sont disponibles dans « Gérer mon abonnement ».",
-      "Un abonnement est prélevé le jour de la souscription, puis chaque mois à la même date. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez Stripe.",
+      "Un abonnement est prélevé le jour de la souscription, puis chaque mois (ou chaque année pour un abonnement annuel) à la même date. L’abonnement annuel est payé en une fois et se renouvelle chaque année tant que tu ne résilies pas ; tu peux résilier à tout moment, l’offre court alors jusqu’à la fin de l’année payée. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez Stripe.",
       "Si un prélèvement échoue, Stripe renouvelle la tentative. Sans régularisation, l’abonnement est arrêté et ton compte repasse en Découverte. Tes pièces au-delà de la limite restent visibles, mais tu ne peux plus en ajouter."
     ]
   },
@@ -312,7 +312,7 @@ export const CONDITIONS: Section[] = [
     "titre": "Résilier",
     "texte": [
       "Tu peux résilier à tout moment, sans frais : dans l’app, Réglages › Mon abonnement, puis « Résilier mon abonnement » ; sur le site, Profil › Gérer mon abonnement. Dans les deux cas, tu arrives sur la page sécurisée de notre prestataire de paiement, où tu choisis « Résilier l’abonnement ». Cette page permet aussi de changer d’offre ou de carte, et de télécharger tes factures.",
-      "La résiliation prend effet à la fin du mois déjà payé : tu gardes ton offre jusque-là, et rien n’est prélevé ensuite. Le mois commencé n’est pas remboursé au prorata, sauf si la loi t’ouvre un droit de rétractation (voir ci-dessous).",
+      "La résiliation prend effet à la fin de la période déjà payée (le mois, ou l’année pour un abonnement annuel) : tu gardes ton offre jusque-là, et rien n’est prélevé ensuite. La période commencée n’est pas remboursée au prorata, sauf si la loi t’ouvre un droit de rétractation (voir ci-dessous).",
       "Un pack de places n’est pas remboursable une fois ses places ajoutées, sauf dans les cas prévus par la loi."
     ]
   },

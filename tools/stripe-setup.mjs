@@ -8,11 +8,11 @@
  *      dressy_capsule et dressy_atelier) et les deux packs de places
  *      (dressy_places_petit, dressy_places_moyen) ; un nom changé dans
  *      plans.ts est repris ;
- *   2. leurs prix, retrouvés par lookup_key (dressy_<offre>_mois, et
+ *   2. leurs prix, retrouvés par lookup_key (dressy_<offre>_mois,
+ *      dressy_<offre>_an depuis le retour de l'annuel du 08/11, et
  *      dressy_places_<pack> en paiement unique) : un montant changé dans
  *      web/src/lib/plans.ts crée un nouveau prix, qui reprend la clé ; les
- *      abonnés en cours gardent l'ancien. Plus d'annuel depuis le 31/10 : les
- *      anciens prix annuels, s'ils existent, sont archivés ;
+ *      abonnés en cours gardent l'ancien ;
  *   3. le portail client (changer d'offre, résilier, factures, carte) ;
  *   4. le webhook vers l'Edge Function stripe-webhook, dont le secret
  *      n'est affiché qu'à sa création.
@@ -134,7 +134,7 @@ async function placeProduct(pack) {
 async function prices(products) {
   const keys = [
     ...PLANS.map((p) => lookupKey(p.id, 'mois')),
-    ...PLANS.map((p) => `dressy_${p.id}_an`), // anciens prix annuels, à archiver
+    ...PLANS.map((p) => lookupKey(p.id, 'an')),
     ...PLACE_PACKS.map((p) => placesLookupKey(p.id)),
   ];
   const query = keys.map((k) => `lookup_keys[]=${encodeURIComponent(k)}`).join('&');
@@ -142,15 +142,11 @@ async function prices(products) {
   const byKey = new Map(existing.map((p) => [p.lookup_key, p]));
   const ids = new Map();
 
-  for (const old of existing.filter((p) => p.lookup_key.endsWith('_an'))) {
-    await api('POST', `/prices/${old.id}`, { active: false });
-    console.log(`  prix ${old.lookup_key} : archivé (plus d'annuel)`);
-  }
-
+  // `recurring` : 'month', 'year', ou rien pour un paiement unique.
   const ensure = async ({ key, cents, product, recurring, nickname, metadata }) => {
     const current = byKey.get(key);
     const same = current && current.unit_amount === cents && current.currency === 'eur'
-      && (recurring ? current.recurring?.interval === 'month' : !current.recurring);
+      && (recurring ? current.recurring?.interval === recurring : !current.recurring);
     if (same) {
       console.log(`  prix ${key} : ${euro(cents)}, déjà là`);
       ids.set(key, current.id);
@@ -160,7 +156,7 @@ async function prices(products) {
       product,
       currency: 'eur',
       unit_amount: cents,
-      recurring: recurring ? { interval: 'month' } : undefined,
+      recurring: recurring ? { interval: recurring } : undefined,
       tax_behavior: 'inclusive', // prix affichés TTC
       lookup_key: key,
       transfer_lookup_key: current ? true : undefined,
@@ -174,13 +170,17 @@ async function prices(products) {
 
   for (const plan of PLANS) {
     await ensure({
-      key: lookupKey(plan.id, 'mois'), cents: plan.cents.mois, product: products.get(plan.id), recurring: true,
+      key: lookupKey(plan.id, 'mois'), cents: plan.cents.mois, product: products.get(plan.id), recurring: 'month',
       nickname: `${plan.name} mensuel`, metadata: { plan: plan.id, period: 'mois' },
+    });
+    await ensure({
+      key: lookupKey(plan.id, 'an'), cents: plan.cents.an, product: products.get(plan.id), recurring: 'year',
+      nickname: `${plan.name} annuel`, metadata: { plan: plan.id, period: 'an' },
     });
   }
   for (const pack of PLACE_PACKS) {
     await ensure({
-      key: placesLookupKey(pack.id), cents: pack.cents, product: products.get(`places_${pack.id}`), recurring: false,
+      key: placesLookupKey(pack.id), cents: pack.cents, product: products.get(`places_${pack.id}`), recurring: undefined,
       nickname: pack.name, metadata: { pack: pack.id, places: pack.places },
     });
   }
@@ -208,7 +208,7 @@ async function portal(products, priceIds) {
         proration_behavior: 'create_prorations',
         products: PLANS.map((p) => ({
           product: products.get(p.id),
-          prices: [priceIds.get(lookupKey(p.id, 'mois'))],
+          prices: [priceIds.get(lookupKey(p.id, 'mois')), priceIds.get(lookupKey(p.id, 'an'))],
         })),
       },
     },

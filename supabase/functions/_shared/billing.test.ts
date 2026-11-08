@@ -60,7 +60,8 @@ check('le prix Dressy est retrouvé parmi plusieurs articles', subscriptionRow(s
   ] },
 }), SPACE)?.plan, 'atelier');
 check('Couture n’est plus vendue', parseLookupKey('dressy_couture_mois'), null);
-check('l’annuel n’est plus vendu', parseLookupKey('dressy_atelier_an'), null);
+check('l’annuel est vendu (08/11)', parseLookupKey('dressy_atelier_an'), { plan: 'atelier', period: 'an' });
+check('un abonnement annuel est enregistré en « an »', subscriptionRow(sub({}, 'dressy_capsule_an'), SPACE)?.period, 'an');
 
 check('espace pris dans l’abonnement', spaceOf(sub(), null), SPACE);
 check('espace retrouvé par le client', spaceOf(sub({ metadata: {} }), SPACE), SPACE);
@@ -75,7 +76,10 @@ check('prix du brief v6 (Fashion 8,99 €, Sapologue 18,99 €, au mois)', web.P
   ['Fashion', '8,99 €'],
   ['Sapologue', '18,99 €'],
 ]);
-check('aucun annuel affiché', web.PLANS.every((p) => !('an' in p.cents)), true);
+check('prix annuels : 75 € et 159 €', web.PLANS.map((p) => [p.name, p.cents.an]), [['Fashion', 7500], ['Sapologue', 15900]]);
+check('remise annuelle affichée : 30 % (jamais arrondie au-dessus du vrai)', web.PLANS.map((p) => web.annualOff(p)), [30, 30]);
+check('l’annuel est au moins 30 % sous douze mois', web.PLANS.every((p) => p.cents.an <= p.cents.mois * 12 * 0.7), true);
+check('prix de l’année ramené au mois', web.PLANS.map((p) => web.perMonth(p.cents.an)), [625, 1325]);
 check('packs de places : mêmes montants affichés et vendus',
   web.PLACE_PACKS.map((p) => [p.id, p.places, p.cents]),
   Object.entries(PLACE_PACKS).map(([id, p]) => [id, p.places, p.cents]));

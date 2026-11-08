@@ -160,7 +160,7 @@ export function Me() {
               {plan.name}
             </T>
             <T v="caption" tone="on-panel" style={{ opacity: 0.8 }}>
-              {plan.cents.mois === 0 ? 'Gratuit, sans carte' : `${price(plan.cents.mois)} par mois`}
+              {plan.cents.mois === 0 ? 'Gratuit, sans carte' : s.period === 'an' ? `${price(plan.cents.an)} par an` : `${price(plan.cents.mois)} par mois`}
             </T>
           </View>
           <View className="flex-row" style={{ gap: 14 }}>
