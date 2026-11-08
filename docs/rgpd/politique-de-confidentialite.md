@@ -1,6 +1,6 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.1 du 7 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.2 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
@@ -11,9 +11,9 @@ _Version 1.1 du 7 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `
 
 ## Qui est responsable
 
-Le responsable du traitement est l’éditeur de Dresskode, dont l’identité figure en bas de cette page.
+Le responsable du traitement est Mylan Francois, entrepreneur individuel, qui édite Dresskode. Ses coordonnées figurent en bas de cette page.
 
-Pour toute question sur tes données, ou pour exercer tes droits, écris à l’adresse de contact indiquée en bas de page.
+Nous n’avons pas de délégué à la protection des données. Pour toute question sur tes données ou pour exercer tes droits, écris à l’adresse de contact indiquée en bas de page.
 
 ## Ce que nous gardons, et pourquoi
 
@@ -28,6 +28,12 @@ Pour toute question sur tes données, ou pour exercer tes droits, écris à l’
 - **Les rappels.** Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning. Rien ne part de nos serveurs. Base : ton accord, que tu changes dans Réglages.
 - **La sécurité.** Des journaux techniques (erreurs, connexions) gardés quelques jours chez notre hébergeur. Pour faire fonctionner et protéger le service. Base : notre intérêt légitime.
 
+## Ce que tu n’es pas obligé de donner
+
+Pour créer un compte, il faut une adresse e-mail et un mot de passe. Sans compte, rien ne quitte ton téléphone.
+
+Tout le reste est facultatif : prénom, ville, silhouette, mesures, âge, photo de profil. Sans ta ville, Dresskode ne peut pas te donner la météo ; sans ta silhouette, les coupes qu’il te propose sont moins précises. Le service fonctionne quand même.
+
 ## Kodi est une intelligence artificielle
 
 Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
@@ -36,15 +42,15 @@ Pour dessiner tes pièces, les photos que tu confies sont analysées et redessin
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
-Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent.
+Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent. Kodi ne prend aucune décision automatisée qui produise un effet juridique ou comparable à ton égard (art. 22 du RGPD) : ce que Kodi te propose ne vaut que si tu le valides.
 
 Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous.
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : hébergement et base de données (Union européenne, Irlande), intelligence artificielle (États-Unis), paiement, et distribution des mises à jour de l’app (sans aucune donnée de ton compte).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : hébergement et base de données (Union européenne, Irlande), hébergement du site (Vercel), intelligence artificielle, paiement, et distribution des mises à jour de l’app (sans aucune donnée de ton compte).
 
-Les données du jour (météo, jours fériés, vacances) sont demandées par nos serveurs à des services publics et ouverts, avec le nom de ta ville seulement, sans rien qui te désigne.
+Les données du jour (météo, jours fériés, vacances) sont demandées par nos serveurs à des services publics et ouverts, avec le nom de la ville de ton compte, ou celui d’un voyage, seulement, sans rien qui te désigne.
 
 Si tu as accepté que Kodi apprenne de tes choix, les souvenirs qu’il retient sont transformés en vecteurs de sens par un service d’intelligence artificielle (Google), pour être retrouvés selon ta question. Seul le texte court d’un souvenir part, jamais ton nom ni ton e-mail.
 
@@ -52,11 +58,13 @@ La liste nominative de nos prestataires t’est envoyée sur simple demande. Per
 
 ## Hors de l’Union européenne
 
-Les prestataires d’intelligence artificielle et de paiement peuvent traiter des données aux États-Unis. Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.
+Des prestataires traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement (Stripe), l’hébergement du site (Vercel, qui ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).
+
+Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.
 
 ## Combien de temps
 
-- **Ton compte et ton dressing.** Tant que ton compte existe. Supprimé, tout est effacé aussitôt (les copies de sauvegarde disparaissent d’elles-mêmes sous quelques jours).
+- **Ton compte et ton dressing.** Tant que ton compte existe. Supprimé, tout est effacé de nos bases aussitôt ; les copies de sauvegarde disparaissent au plus tard 30 jours après.
 - **Les photos confiées à Kodi.** 30 jours après l’envoi.
 - **Les conversations avec Kodi.** 12 mois, 2 mois une fois archivées.
 - **Les tenues écartées.** 6 mois.
@@ -68,13 +76,13 @@ Les prestataires d’intelligence artificielle et de paiement peuvent traiter de
 
 Échanges chiffrés, données chiffrées sur nos serveurs, chaque dressing cloisonné : seule sa propriétaire peut le lire. Tes photos ne sont jamais publiques ; elles s’affichent par des liens qui expirent. Aucune clé secrète n’est dans l’app.
 
-En cas de fuite qui pourrait te toucher, nous prévenons la CNIL sous 72 heures et toi sans tarder.
+En cas de violation de données susceptible de te toucher, nous prévenons la CNIL sous 72 heures et toi sans tarder.
 
 ## Tes droits
 
 Tu peux accéder à tes données, les corriger, les effacer, les emporter (portabilité), en limiter l’usage, t’opposer à un traitement fondé sur notre intérêt légitime, retirer ton accord à tout moment, et laisser des directives sur ce qu’elles deviennent après ton décès.
 
-Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Sur le site : Profil › Paramètres pour tout télécharger ou supprimer ton compte. Pour le reste, écris-nous : nous répondons sous un mois.
+Dans l’app : Réglages › Tes données pour tout télécharger, retirer ton accord, effacer ta silhouette ou supprimer ton compte ; Moi › ton profil pour corriger. Sur le site : Profil › Paramètres pour tout télécharger ou supprimer ton compte. Pour le reste, écris-nous : nous répondons dans un délai d’un mois.
 
 Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL (cnil.fr, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07).
 
@@ -88,7 +96,9 @@ Sans compte, tout reste sur ton téléphone : rien n’est envoyé à nos serveu
 
 ## Cookies et traceurs
 
-L’app n’utilise aucun traceur publicitaire ni de mesure d’audience. Le site n’utilise que les cookies nécessaires à ta connexion, qui ne demandent pas d’accord.
+L’app iPhone n’utilise aucun traceur publicitaire ni de mesure d’audience.
+
+Le site n’utilise que des cookies strictement nécessaires : ta connexion, et ton choix de thème clair ou sombre. Ils ne demandent pas d’accord. Il n’y a ni cookie publicitaire, ni mesure d’audience.
 
 ## Si ce texte change
 
@@ -96,6 +106,6 @@ Pour tout changement important, nous te prévenons dans l’app avant qu’il s�
 
 ## Éditeur et contact
 
-Dresskode
+Mylan Francois · Entrepreneur individuel, SIRET 983 972 662 00016 · 69 bis avenue de Strasbourg, 77120 Coulommiers, France · SIREN 983 972 662
 
 L’adresse de contact sera indiquée ici avant la sortie de l’app.

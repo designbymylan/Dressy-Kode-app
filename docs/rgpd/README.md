@@ -1,7 +1,7 @@
 # RGPD : où en est Dresskode
 
 Dossier de conformité de l'app (mobile et web) et de son serveur Supabase.
-Mis en place le 09/10 ; ce dossier date du 10/10.
+Mis en place le 09/10 ; ce dossier date du 10/10, mis à jour le 08/11 (éditeur, conditions complètes, politique v1.2).
 
 | Fichier | Ce qu'il contient |
 | --- | --- |
@@ -56,11 +56,17 @@ case des 15 ans avec le lien vers la politique.
 
 Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
 
-1. **L'identité de l'éditeur et une adresse de contact.** Remplir `EDITEUR`
-   dans `mobile/src/data/legal.ts` (nom ou raison sociale, forme, adresse,
-   SIREN, e-mail de contact), puis `node tools/politique.mjs`. Tant que ce
-   n'est pas fait, l'app et le site disent que le contact arrive. Le site
-   aura aussi besoin de mentions légales (LCEN, art. 6 III).
+1. **Le contact et le médiateur.** L'identité de l'éditeur est faite (08/11,
+   d'après l'extrait INPI) : entrepreneur individuel, SIREN, SIRET, adresse,
+   directeur de la publication, mentions légales. Restent, dans `EDITEUR`
+   (`mobile/src/data/legal.ts`) :
+   - `contact` : l'e-mail **et** un numéro de téléphone (la LCEN, art. 6 III,
+     exige le téléphone pour une personne physique), au format « e-mail · téléphone » ;
+   - `mediateur` : le médiateur de la consommation auquel tu adhères (obligatoire
+     pour qui vend aux particuliers, code de la consommation, art. L612-1).
+
+   Puis `node tools/politique.mjs`. Tant qu'ils manquent, l'app et le site
+   le disent.
 2. **Les contrats de sous-traitance (art. 28)** à accepter dans chaque
    console : Supabase, Anthropic, Google (API Gemini), Stripe, Expo.
 3. **Vérifier chez chaque prestataire ce que la politique promet** :
@@ -78,8 +84,25 @@ Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
 5. **Fiches des magasins** : « Confidentialité de l'app » sur l'App Store et
    « Sécurité des données » sur Google Play, à remplir d'après le registre
    (données liées à la personne, aucun suivi publicitaire).
-6. **Relecture juridique** du registre, de l'analyse d'impact et de la
-   politique.
+6. **Relecture juridique** du registre, de l'analyse d'impact, des conditions
+   et de la politique.
+7. **Nom commercial.** L'INPI indique « Agence E-commerce Mylan Francois », et
+   l'app s'appelle Dresskode. Ajouter « Dresskode » comme nom commercial
+   (formalité modificative au guichet unique), ou le dire dans les mentions.
+8. **Apple, à trancher avant la soumission.** Abonnements et packs sont payés
+   par Stripe dans le navigateur, y compris depuis l'app iPhone. Les règles
+   d'Apple (guideline 3.1.1) exigent l'achat intégré, sauf autorisation
+   externe dans l'Union européenne (programme dédié, à demander). Risque de
+   refus à la revue.
+9. **Apple, le reste.** Liens vers les conditions et la politique dans la fiche
+   de l'app ; un moyen de résilier depuis l'iPhone (aujourd'hui, seul le site
+   le permet) ; « Se connecter avec Apple » dès qu'une autre connexion (Google)
+   est proposée sur iPhone.
+10. **Renonciation des packs.** La clause de rétractation est affichée sous le
+    bouton de paiement, pas dans une case à cocher. Une case à cocher est plus
+    solide (art. L221-28, acceptation expresse).
+11. **Régime de TVA** (franchise en base ou non) : à confirmer, il change la
+    mention sur les factures.
 
 ## Modifier la politique
 
