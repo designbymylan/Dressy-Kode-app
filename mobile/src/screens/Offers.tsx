@@ -22,6 +22,7 @@ import { Ambient } from '../ui/Ambient';
 import { ScrollEdge, useHeaderScroll } from '../ui/layout';
 import { CloseButton, SlideChoice } from '../ui/shop';
 import { Tag } from '../ui/bits';
+import { Accord } from '../ui/Accord';
 import { F } from '../theme/fonts';
 import type { Nav } from '../navigation/types';
 
@@ -50,6 +51,8 @@ export function Offers() {
   const { c, scheme } = useTheme();
   const [choice, setChoice] = useState<PlanId | null>(null);
   const [confirm, setConfirm] = useState(false);
+  // La case du début immédiat (08/11) : sans elle, pas de paiement d'un abonnement.
+  const [accept, setAccept] = useState(false);
   // Couture, qui n'est plus vendue, compte comme l'offre du dessus.
   const rank = (id: PlanId) => (id === 'couture' ? PLANS.length : PLANS.findIndex((p) => p.id === id));
   const flagged = PLANS.find((p) => p.flagged)!;
@@ -114,7 +117,7 @@ export function Offers() {
           , facturé chaque mois.
         </T>
         <T v="small" tone="ink2" style={{ textAlign: 'center', marginTop: -8 }}>
-          Sans engagement, tu arrêtes en un geste depuis Réglages. Prix TTC, paiement sécurisé.
+          Sans engagement : tu résilies depuis Réglages, Mon abonnement. Prix TTC, paiement sécurisé.
         </T>
 
         {mine ? (
@@ -163,6 +166,7 @@ export function Offers() {
         visible={confirm && !!picked}
         onClose={() => {
           setConfirm(false);
+          setAccept(false);
           if (choice === 'decouverte') setChoice(null);
         }}
         kicker={picked && rank(picked.id) > rank(s.plan) ? 'Passer à' : 'Revenir à'}
@@ -173,9 +177,11 @@ export function Offers() {
             testID="plan-pay"
             label={picked?.cents.mois === 0 ? 'Confirmer' : `S’abonner · ${picked ? price(picked.cents.mois) : ''}`}
             icon={picked?.cents.mois === 0 ? undefined : 'lock'}
+            disabled={!!picked && picked.cents.mois > 0 && !accept}
             onPress={() => {
               if (picked) a.setPlan(picked.id, 'mois');
               setConfirm(false);
+              setAccept(false);
               setChoice(null);
             }}
           />
@@ -200,9 +206,14 @@ export function Offers() {
               {picked.cents.mois === 0 ? 'Tes pièces au-delà de 15 restent visibles, mais tu ne pourras plus en ajouter.' : s.account === 'connecte' ? 'Paiement sécurisé, dans ton navigateur. Résiliable à tout moment, 14 jours pour te rétracter.' : 'Résiliable à tout moment. Aperçu : le paiement est simulé, rien n’est prélevé.'}
             </T>
             {picked.cents.mois > 0 && (
-              <T testID="offers-conditions" v="small" tone="ink2" onPress={() => Linking.openURL(CONDITIONS_URL)} accessibilityRole="link" suppressHighlighting style={{ textDecorationLine: 'underline', paddingVertical: 6 }}>
-                Conditions générales
-              </T>
+              <>
+                <Accord testID="plan-accept" checked={accept} onChange={setAccept}>
+                  Je demande que mon offre commence tout de suite. Si je me rétracte dans les 14 jours, je ne paie que le temps déjà écoulé.
+                </Accord>
+                <T testID="offers-conditions" v="small" tone="ink2" onPress={() => Linking.openURL(CONDITIONS_URL)} accessibilityRole="link" suppressHighlighting style={{ textDecorationLine: 'underline', paddingVertical: 6 }}>
+                  Conditions générales
+                </T>
+              </>
             )}
           </View>
         )}

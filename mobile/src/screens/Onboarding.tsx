@@ -917,9 +917,10 @@ function Compte({ draft, set, next }: Ctx) {
   const [error, setError] = useState<string | null>(null);
   const [login, setLogin] = useState(false);
   const [adult, setAdult] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const nav = useNavigation<Nav>();
-  const ready = validEmail(email) && (!online || password.length >= PASSWORD_MIN) && adult;
-  const legal = <SignupTerms adult={adult} onAdult={setAdult} onPolicy={() => nav.navigate('Confidentialite')} />;
+  const ready = validEmail(email) && (!online || password.length >= PASSWORD_MIN) && adult && accepted;
+  const legal = <SignupTerms adult={adult} onAdult={setAdult} accepted={accepted} onAccepted={setAccepted} onPolicy={() => nav.navigate('Confidentialite')} />;
 
   // Déjà connectée (compte ouvert depuis l'accueil) ou compte créé en attente de confirmation.
   if (s.session || s.pendingEmail) {

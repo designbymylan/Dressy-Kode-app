@@ -11,7 +11,7 @@ _Version 1.1 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `
 
 ## Qui vend, et à qui
 
-Dresskode, l’application iPhone et le site web, est édité par Mylan Francois, entrepreneur individuel. Ses coordonnées figurent en bas de cette page.
+Dresskode, l’application iPhone et le site web, appartient à l’Agence E-commerce Mylan Francois, nom commercial sous lequel exerce Mylan Francois, entrepreneur individuel. Ses coordonnées figurent en bas de cette page.
 
 Dresskode s’adresse aux particuliers, pour un usage personnel et non professionnel. Créer un compte, ou utiliser Dresskode, vaut acceptation de ces conditions et de la politique de confidentialité.
 
@@ -24,6 +24,18 @@ Dresskode est ouverte à partir de 15 ans. Si tu as moins de 15 ans, ne crée pa
 Un compte correspond à une personne. Garde ton mot de passe pour toi, et sois responsable de ce qui se fait depuis ton compte. Préviens-nous sans délai si tu constates un accès qui n’est pas le tien.
 
 Sans compte, tout reste sur ton téléphone : supprimer l’app, ou « Effacer ce téléphone », efface tout.
+
+## Les cases à cocher
+
+Dresskode te demande de cocher une case avant certaines étapes. Chacune compte.
+
+À l’inscription : que tu as 15 ans ou plus, et que tu as lu et accepté ces conditions et la politique de confidentialité. La version acceptée et l’heure sont gardées avec ton compte.
+
+Avant un abonnement : que tu demandes qu’il commence tout de suite. Tu peux toujours te rétracter dans les 14 jours, et tu ne paies alors que le temps déjà écoulé.
+
+Avant un pack de places : que tu demandes leur ajout immédiat, et que tu renonces à ton droit de rétractation une fois qu’elles sont ajoutées.
+
+Sans case cochée, rien ne se crée et rien ne se paie.
 
 ## Ce que fait Dresskode
 
@@ -85,7 +97,7 @@ Si un prélèvement échoue, Stripe renouvelle la tentative. Sans régularisatio
 
 ## Résilier
 
-Tu peux résilier à tout moment, sans frais, depuis « Gérer mon abonnement » sur le site (Profil). Tu y résilies, tu changes d’offre ou de carte, et tu télécharges tes factures.
+Tu peux résilier à tout moment, sans frais : dans l’app, Réglages › Mon abonnement, puis « Résilier mon abonnement » ; sur le site, Profil › Gérer mon abonnement. Dans les deux cas, tu arrives sur la page sécurisée de notre prestataire de paiement, où tu choisis « Résilier l’abonnement ». Cette page permet aussi de changer d’offre ou de carte, et de télécharger tes factures.
 
 La résiliation prend effet à la fin du mois déjà payé : tu gardes ton offre jusque-là, et rien n’est prélevé ensuite. Le mois commencé n’est pas remboursé au prorata, sauf si la loi t’ouvre un droit de rétractation (voir ci-dessous).
 
@@ -93,9 +105,9 @@ Un pack de places n’est pas remboursable une fois ses places ajoutées, sauf d
 
 ## Ton droit de rétractation
 
-Pour un abonnement, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans avoir à te justifier (code de la consommation, art. L221-18). En t’abonnant, tu demandes que l’offre commence tout de suite : si tu te rétractes, tu ne paies que le temps déjà écoulé (art. L221-25), et le reste t’est remboursé dans les 14 jours (art. L221-24).
+Pour un abonnement, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans avoir à te justifier (code de la consommation, art. L221-18). En cochant la case avant de payer, tu demandes que l’offre commence tout de suite : si tu te rétractes, tu ne paies que le temps déjà écoulé (art. L221-25), et le reste t’est remboursé dans les 14 jours (art. L221-24).
 
-Pour un pack de places, fourni dès le paiement, tu demandes son ajout immédiat et reconnais perdre ton droit de rétractation une fois les places ajoutées (art. L221-28, 13°).
+Pour un pack de places, fourni dès le paiement, tu demandes son ajout immédiat en cochant la case avant de payer, et tu reconnais perdre ton droit de rétractation une fois les places ajoutées (art. L221-28, 13°).
 
 Pour te rétracter, écris à l’adresse de contact de cette page, ou utilise le formulaire type ci-dessous.
 
@@ -165,7 +177,7 @@ Tu peux ensuite saisir gratuitement le médiateur de la consommation indiqué da
 
 ## Mentions légales
 
-Mylan Francois · Entrepreneur individuel, SIRET 983 972 662 00016 · 69 bis avenue de Strasbourg, 77120 Coulommiers, France · SIREN 983 972 662
+Agence E-commerce Mylan Francois · Mylan Francois, entrepreneur individuel, SIRET 983 972 662 00016 · 69 bis avenue de Strasbourg, 77120 Coulommiers, France · SIREN 983 972 662
 
 Directeur de la publication : Mylan Francois.
 

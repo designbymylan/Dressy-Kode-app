@@ -19,6 +19,10 @@ function PlacePack({ id, label }: { id: string; label: string }) {
   return (
     <form action={action} style={{ display: 'grid', gap: 6 }}>
       <input type="hidden" name="pack" value={id} />
+      <label className="signup-age">
+        <input type="checkbox" name="accept" value="1" required />
+        <span>Je demande l’ajout immédiat de mes places. Une fois ajoutées, je renonce à mon droit de rétractation.</span>
+      </label>
       <SubmitButton label={label} pending="Ouverture du paiement" className="btn btn-glass btn-sm" />
       {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
     </form>

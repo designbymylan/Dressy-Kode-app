@@ -11,6 +11,7 @@ import { parisDay } from '@/lib/dates';
 import { loadMessages, loadUsage, type KodeMessage, type KodeUsage, type OutfitView } from '@/lib/kode';
 import { loadSavedOutfits } from '@/lib/agenda';
 import { isPeriod, isPlacePack, isPlan } from '@/lib/plans';
+import { CONDITIONS_VERSION } from '@/lib/politique';
 import {
   GENDERS, GOALS, STYLES, ITEMS, JEWELRY, METALS, ACCESSORIES, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, NO_JEWELRY, couleurDuNom, type Answers,
@@ -58,6 +59,7 @@ export async function signUp(_prev: FormResult, formData: FormData): Promise<For
   const password = String(formData.get('password') ?? '');
 
   if (formData.get('adult') !== '1') return { error: 'Dresskode est ouverte à partir de 15 ans : coche la case pour continuer.' };
+  if (formData.get('terms') !== '1') return { error: 'Coche la case des conditions générales et de la politique de confidentialité pour continuer.' };
   if (!email || !password) return { error: 'Adresse e-mail et mot de passe sont nécessaires.' };
   if (password.length < 8) return { error: 'Mot de passe trop court : il en faut au moins 8.' };
 
@@ -65,7 +67,11 @@ export async function signUp(_prev: FormResult, formData: FormData): Promise<For
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/demarrage` },
+    options: {
+      emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/demarrage`,
+      // La version des conditions acceptée et l'heure, gardées avec le compte comme preuve (08/11).
+      data: { conditions: { version: CONDITIONS_VERSION, accepte_le: new Date().toISOString() } },
+    },
   });
 
   if (error) return { error: readable(error.code, "L'inscription n'a pas abouti. Réessaie.") };
@@ -613,6 +619,8 @@ export async function startCheckout(_prev: FormResult, formData: FormData): Prom
   const plan = formData.get('plan');
   const period = formData.get('period');
   if (!isPlan(plan) || !isPeriod(period)) return { error: 'Choisis une offre.' };
+  // Début immédiat de l'offre, rétractation de 14 jours réduite au temps écoulé (08/11).
+  if (formData.get('accept') !== '1') return { error: 'Coche la case pour confirmer le début immédiat de ton offre.' };
 
   const res = await billingPage({ action: 'checkout', plan, period });
   if ('error' in res) return res;
@@ -626,6 +634,8 @@ export async function buyPlaces(_prev: FormResult, formData: FormData): Promise<
 
   const pack = formData.get('pack');
   if (!isPlacePack(pack)) return { error: 'Choisis un pack.' };
+  // Des places ajoutées, la rétractation tombe : la case le dit avant le paiement (08/11).
+  if (formData.get('accept') !== '1') return { error: 'Coche la case pour confirmer l’ajout immédiat de tes places.' };
 
   const res = await billingPage({ action: 'places', pack });
   if ('error' in res) return res;

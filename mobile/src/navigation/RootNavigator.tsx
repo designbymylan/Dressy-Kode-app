@@ -28,6 +28,7 @@ import { Confidentialite } from '../screens/Confidentialite';
 import { ShareScreen } from '../screens/Share';
 import { Offers } from '../screens/Offers';
 import { Shop } from '../screens/Shop';
+import { Abonnement } from '../screens/Abonnement';
 import { Generations } from '../screens/Generations';
 import { States } from '../screens/States';
 import { createStack, cardOptions, fadeOptions, modalOptions } from './stack';
@@ -86,6 +87,7 @@ export function RootNavigator() {
           <Stack.Screen name="Affiner" component={Affiner} />
           <Stack.Screen name="Offers" component={Offers} />
           <Stack.Screen name="Shop" component={Shop} />
+          <Stack.Screen name="Abonnement" component={Abonnement} />
           <Stack.Screen name="Generations" component={Generations} />
           <Stack.Screen name="States" component={States} />
           <Stack.Group screenOptions={modalOptions}>

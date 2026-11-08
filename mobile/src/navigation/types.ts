@@ -42,6 +42,8 @@ export type RootParams = {
   Confidentialite: undefined;
   Share: { id: string };
   Offers: undefined;
+  /** Mon abonnement (08/11) : ce que tu paies, et le bouton qui résilie (portail Stripe). */
+  Abonnement: undefined;
   /** La fin des générations offertes (brief v6, 31/10) : l'abonnement d'abord, sans pack. */
   Generations: undefined;
   Shop: { pack?: string } | undefined;

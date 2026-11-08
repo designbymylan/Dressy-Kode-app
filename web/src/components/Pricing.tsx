@@ -69,7 +69,7 @@ export function Pricing({ current }: { current: PlanId | null; trial?: boolean }
         <strong key={plan.id} className="pr__swap">{euros(plan.cents.mois)} par mois</strong>, facturé chaque mois.
       </p>
       <p className="pr__fine">
-        Sans engagement, résiliable à tout moment depuis Mon compte. Prix TTC, paiement sécurisé par Stripe.
+        Sans engagement, résiliable à tout moment depuis Profil, « Gérer mon abonnement ». Prix TTC, paiement sécurisé par Stripe.
       </p>
 
       {error ? <ErrorNote>{error}</ErrorNote> : null}
@@ -84,9 +84,13 @@ export function Pricing({ current }: { current: PlanId | null; trial?: boolean }
           <SubmitButton label={`Passer à ${plan.name}`} pending="Ouverture" className="btn pr__cta btn-block" />
         </form>
       ) : (
-        <form action={checkoutAction}>
+        <form action={checkoutAction} style={{ display: 'grid', gap: 12 }}>
           <input type="hidden" name="plan" value={plan.id} />
           <input type="hidden" name="period" value="mois" />
+          <label className="signup-age">
+            <input type="checkbox" name="accept" value="1" required />
+            <span>Je demande que mon offre commence tout de suite. Si je me rétracte dans les 14 jours, je ne paie que le temps déjà écoulé.</span>
+          </label>
           <SubmitButton
             label={`Choisir ${plan.name}`}
             pending="Ouverture du paiement"

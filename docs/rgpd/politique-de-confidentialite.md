@@ -11,7 +11,7 @@ _Version 1.2 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `
 
 ## Qui est responsable
 
-Le responsable du traitement est Mylan Francois, entrepreneur individuel, qui édite Dresskode. Ses coordonnées figurent en bas de cette page.
+Le responsable du traitement est Mylan Francois, entrepreneur individuel, qui exerce sous le nom commercial Agence E-commerce Mylan Francois. Dresskode appartient à cette agence. Ses coordonnées figurent en bas de cette page.
 
 Nous n’avons pas de délégué à la protection des données. Pour toute question sur tes données ou pour exercer tes droits, écris à l’adresse de contact indiquée en bas de page.
 
@@ -36,9 +36,9 @@ Tout le reste est facultatif : prénom, ville, silhouette, mesures, âge, photo 
 
 ## Kodi est une intelligence artificielle
 
-Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
+Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
 
-Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle.
+Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis redessinées par Google (Gemini, États-Unis).
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
@@ -48,9 +48,9 @@ Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne no
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : hébergement et base de données (Union européenne, Irlande), hébergement du site (Vercel), intelligence artificielle, paiement, et distribution des mises à jour de l’app (sans aucune donnée de ton compte).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin des pièces et mémoire de Kodi, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).
 
-Les données du jour (météo, jours fériés, vacances) sont demandées par nos serveurs à des services publics et ouverts, avec le nom de la ville de ton compte, ou celui d’un voyage, seulement, sans rien qui te désigne.
+Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.
 
 Si tu as accepté que Kodi apprenne de tes choix, les souvenirs qu’il retient sont transformés en vecteurs de sens par un service d’intelligence artificielle (Google), pour être retrouvés selon ta question. Seul le texte court d’un souvenir part, jamais ton nom ni ton e-mail.
 
@@ -58,7 +58,7 @@ La liste nominative de nos prestataires t’est envoyée sur simple demande. Per
 
 ## Hors de l’Union européenne
 
-Des prestataires traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement (Stripe), l’hébergement du site (Vercel, qui ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).
+Anthropic, Google, Stripe, Vercel et Expo traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).
 
 Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.
 
@@ -106,6 +106,6 @@ Pour tout changement important, nous te prévenons dans l’app avant qu’il s�
 
 ## Éditeur et contact
 
-Mylan Francois · Entrepreneur individuel, SIRET 983 972 662 00016 · 69 bis avenue de Strasbourg, 77120 Coulommiers, France · SIREN 983 972 662
+Agence E-commerce Mylan Francois · Mylan Francois, entrepreneur individuel, SIRET 983 972 662 00016 · 69 bis avenue de Strasbourg, 77120 Coulommiers, France · SIREN 983 972 662
 
 L’adresse de contact sera indiquée ici avant la sortie de l’app.

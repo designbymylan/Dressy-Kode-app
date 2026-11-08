@@ -418,6 +418,15 @@ le travail de Kodi, rien de plus.
 
 **Compte créateur (01/11), demandé par l'utilisateur** : `designbymylan@gmail.com` est le seul administrateur (table `admins`, fermée au client). Son offre se nomme `createur` (`space_plan`) : pièces, Kodi et générations sans limite, aucun écran d'abonnement. Il sert à tous les essais. Migration `compte_createur`.
 
+**Décisions du 08/11, juridique et paiement, demandées par l'utilisateur :**
+
+- **Éditeur** : Mylan Francois, entrepreneur individuel, sous le nom commercial « Agence E-commerce Mylan Francois » (INPI). Dresskode appartient à cette agence ; c'est dit dans les conditions et la politique. Source : `mobile/src/data/legal.ts`.
+- **Textes légaux** : tutoiement. Les fournisseurs d'IA (Anthropic, Google) y sont nommés : c'est une exception à la règle « Aucun nom de fournisseur d'IA à l'écran », qui vaut pour l'interface.
+- **Cases à cocher** : inscription (15 ans, lecture et acceptation des conditions et de la politique), abonnement (début immédiat, rétractation réduite au temps écoulé), packs de places (renonciation à la rétractation une fois les places ajoutées). Obligatoires dans l'app et sur le site.
+- **Résilier** : Réglages › « Mon abonnement » (app) ouvre le portail Stripe, où l'on résilie ; le site a « Gérer mon abonnement ».
+- **Paiement** : Stripe dans le navigateur jusqu'à la licence Apple. Le paiement Apple se fera avant la soumission à l'App Store.
+- **Responsabilité** : entrepreneur individuel tant que l'app n'a pas de clients avérés ; la forme juridique se reverra alors.
+
 **Offres, places et générations (brief v6, 31/10), demandé par l'utilisateur.**
 Remplace les prix, les limites et l'annuel du 21/10, web et mobile.
 

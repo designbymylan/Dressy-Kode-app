@@ -93,7 +93,7 @@ export function Welcome() {
               <>
                 <EmailField testID="login-email" value={f.email} onChange={f.setEmail} />
                 <PasswordField testID="login-password" value={f.password} onChange={f.setPassword} onSubmit={f.submit} isNew={f.mode === 'signup'} />
-                {f.mode === 'signup' && <SignupTerms adult={f.adult} onAdult={f.setAdult} onPolicy={() => nav.navigate('Confidentialite')} />}
+                {f.mode === 'signup' && <SignupTerms adult={f.adult} onAdult={f.setAdult} accepted={f.accepted} onAccepted={f.setAccepted} onPolicy={() => nav.navigate('Confidentialite')} />}
                 <FormError text={f.error} />
                 <Button testID="login-send" label={f.mode === 'login' ? 'Me connecter' : 'Créer mon compte'} disabled={!f.ready} loading={f.busy} onPress={f.submit} />
                 <Button

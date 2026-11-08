@@ -8,6 +8,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { COLOR_CHOICES, COLOURS, type CategoryId, type Piece, type Season } from '../data/wardrobe';
+import { CONDITIONS_VERSION } from '../data/legal';
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
 import type { Bloc, Contexte, JourMeteo } from './contexte';
@@ -263,12 +264,19 @@ export async function signIn(email: string, password: string): Promise<Result> {
 /**
  * Crée le compte. Si le projet demande de confirmer l'e-mail (c'est le cas
  * aujourd'hui), aucune session n'est ouverte : `confirm` vaut true.
+ * N'est appelée qu'une fois la case des conditions cochée (08/11) : la
+ * version acceptée et l'heure sont gardées avec le compte, comme preuve.
  */
 export async function signUp(email: string, password: string, name: string): Promise<Result<{ confirm: boolean }>> {
   const { data, error } = await db().auth.signUp({
     email: email.trim().toLowerCase(),
     password,
-    options: { data: { display_name: name.trim() || undefined } },
+    options: {
+      data: {
+        display_name: name.trim() || undefined,
+        conditions: { version: CONDITIONS_VERSION, accepte_le: new Date().toISOString() },
+      },
+    },
   });
   if (error) return { ok: false, message: authMessage(error) };
   // E-mail déjà inscrit : par discrétion, Auth répond comme si de rien n'était, mais sans identité.
@@ -881,6 +889,16 @@ export async function billing(plan: PlanId, period: Period): Promise<Result<{ ur
   const body = plan === 'decouverte' ? { action: 'portal' } : { action: 'checkout', plan, period };
   const { data, error } = await db().functions.invoke<{ url: string }>('billing', { body });
   if (error || !data?.url) return { ok: false, ...(await functionError(error, 'Le paiement n’a pas pu s’ouvrir. Réessaie dans un instant.')) };
+  return { ok: true, url: data.url };
+}
+
+/**
+ * Le portail Stripe : résilier, changer d'offre ou de carte, télécharger les
+ * factures. Rend l'adresse à ouvrir (page sécurisée, dans le navigateur).
+ */
+export async function portail(): Promise<Result<{ url: string }>> {
+  const { data, error } = await db().functions.invoke<{ url: string }>('billing', { body: { action: 'portal' } });
+  if (error || !data?.url) return { ok: false, ...(await functionError(error, 'Le portail n’a pas pu s’ouvrir. Réessaie dans un instant.')) };
   return { ok: true, url: data.url };
 }
 

@@ -14,7 +14,8 @@
  */
 
 /**
- * L'éditeur. Les champs vides ne s'affichent pas.
+ * L'éditeur. Les champs vides ne s'affichent pas. Nom commercial : Agence
+ * E-commerce Mylan Francois (INPI) ; Dresskode appartient à cette agence.
  *  - contact : une adresse e-mail ET un numéro de téléphone (LCEN, art. 6 III,
  *    le téléphone est exigé pour une personne physique). Format : « e-mail · téléphone ».
  *  - mediateur : le médiateur de la consommation auquel tu adhères, avec son
@@ -22,8 +23,8 @@
  *    aux particuliers (code de la consommation, art. L612-1).
  */
 export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null; directeur: string | null; mediateur: string | null } = {
-  nom: 'Mylan Francois',
-  forme: 'Entrepreneur individuel, SIRET 983 972 662 00016',
+  nom: 'Agence E-commerce Mylan Francois',
+  forme: 'Mylan Francois, entrepreneur individuel, SIRET 983 972 662 00016',
   adresse: '69 bis avenue de Strasbourg, 77120 Coulommiers, France',
   siren: '983 972 662',
   contact: null,
@@ -65,7 +66,7 @@ export const POLITIQUE: Section[] = [
   {
     titre: 'Qui est responsable',
     texte: [
-      'Le responsable du traitement est Mylan Francois, entrepreneur individuel, qui édite Dresskode. Ses coordonnées figurent en bas de cette page.',
+      'Le responsable du traitement est Mylan Francois, entrepreneur individuel, qui exerce sous le nom commercial Agence E-commerce Mylan Francois. Dresskode appartient à cette agence. Ses coordonnées figurent en bas de cette page.',
       'Nous n’avons pas de délégué à la protection des données. Pour toute question sur tes données ou pour exercer tes droits, écris à l’adresse de contact indiquée en bas de page.',
     ],
   },
@@ -94,8 +95,8 @@ export const POLITIQUE: Section[] = [
   {
     titre: 'Kodi est une intelligence artificielle',
     texte: [
-      'Pour te répondre, Kodi envoie à un prestataire d’intelligence artificielle : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.',
-      'Pour dessiner tes pièces, les photos que tu confies sont analysées et redessinées par des prestataires d’intelligence artificielle.',
+      'Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.',
+      'Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis redessinées par Google (Gemini, États-Unis).',
       'Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.',
       'Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent. Kodi ne prend aucune décision automatisée qui produise un effet juridique ou comparable à ton égard (art. 22 du RGPD) : ce que Kodi te propose ne vaut que si tu le valides.',
       'Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous.',
@@ -104,8 +105,8 @@ export const POLITIQUE: Section[] = [
   {
     titre: 'Qui reçoit tes données',
     texte: [
-      'Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : hébergement et base de données (Union européenne, Irlande), hébergement du site (Vercel), intelligence artificielle, paiement, et distribution des mises à jour de l’app (sans aucune donnée de ton compte).',
-      'Les données du jour (météo, jours fériés, vacances) sont demandées par nos serveurs à des services publics et ouverts, avec le nom de la ville de ton compte, ou celui d’un voyage, seulement, sans rien qui te désigne.',
+      'Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin des pièces et mémoire de Kodi, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).',
+      'Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.',
       'Si tu as accepté que Kodi apprenne de tes choix, les souvenirs qu’il retient sont transformés en vecteurs de sens par un service d’intelligence artificielle (Google), pour être retrouvés selon ta question. Seul le texte court d’un souvenir part, jamais ton nom ni ton e-mail.',
       'La liste nominative de nos prestataires t’est envoyée sur simple demande. Personne d’autre : aucune vente, aucun partage publicitaire.',
     ],
@@ -113,7 +114,7 @@ export const POLITIQUE: Section[] = [
   {
     titre: 'Hors de l’Union européenne',
     texte: [
-      'Des prestataires traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement (Stripe), l’hébergement du site (Vercel, qui ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).',
+      'Anthropic, Google, Stripe, Vercel et Expo traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).',
       'Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.',
     ],
   },
@@ -192,7 +193,7 @@ export const CONDITIONS: Section[] = [
   {
     titre: 'Qui vend, et à qui',
     texte: [
-      'Dresskode, l’application iPhone et le site web, est édité par Mylan Francois, entrepreneur individuel. Ses coordonnées figurent en bas de cette page.',
+      'Dresskode, l’application iPhone et le site web, appartient à l’Agence E-commerce Mylan Francois, nom commercial sous lequel exerce Mylan Francois, entrepreneur individuel. Ses coordonnées figurent en bas de cette page.',
       'Dresskode s’adresse aux particuliers, pour un usage personnel et non professionnel. Créer un compte, ou utiliser Dresskode, vaut acceptation de ces conditions et de la politique de confidentialité.',
       'La langue du contrat est le français.',
     ],
@@ -203,6 +204,16 @@ export const CONDITIONS: Section[] = [
       'Dresskode est ouverte à partir de 15 ans. Si tu as moins de 15 ans, ne crée pas de compte.',
       'Un compte correspond à une personne. Garde ton mot de passe pour toi, et sois responsable de ce qui se fait depuis ton compte. Préviens-nous sans délai si tu constates un accès qui n’est pas le tien.',
       'Sans compte, tout reste sur ton téléphone : supprimer l’app, ou « Effacer ce téléphone », efface tout.',
+    ],
+  },
+  {
+    titre: 'Les cases à cocher',
+    texte: [
+      'Dresskode te demande de cocher une case avant certaines étapes. Chacune compte.',
+      'À l’inscription : que tu as 15 ans ou plus, et que tu as lu et accepté ces conditions et la politique de confidentialité. La version acceptée et l’heure sont gardées avec ton compte.',
+      'Avant un abonnement : que tu demandes qu’il commence tout de suite. Tu peux toujours te rétracter dans les 14 jours, et tu ne paies alors que le temps déjà écoulé.',
+      'Avant un pack de places : que tu demandes leur ajout immédiat, et que tu renonces à ton droit de rétractation une fois qu’elles sont ajoutées.',
+      'Sans case cochée, rien ne se crée et rien ne se paie.',
     ],
   },
   {
@@ -261,7 +272,7 @@ export const CONDITIONS: Section[] = [
   {
     titre: 'Résilier',
     texte: [
-      'Tu peux résilier à tout moment, sans frais, depuis « Gérer mon abonnement » sur le site (Profil). Tu y résilies, tu changes d’offre ou de carte, et tu télécharges tes factures.',
+      'Tu peux résilier à tout moment, sans frais : dans l’app, Réglages › Mon abonnement, puis « Résilier mon abonnement » ; sur le site, Profil › Gérer mon abonnement. Dans les deux cas, tu arrives sur la page sécurisée de notre prestataire de paiement, où tu choisis « Résilier l’abonnement ». Cette page permet aussi de changer d’offre ou de carte, et de télécharger tes factures.',
       'La résiliation prend effet à la fin du mois déjà payé : tu gardes ton offre jusque-là, et rien n’est prélevé ensuite. Le mois commencé n’est pas remboursé au prorata, sauf si la loi t’ouvre un droit de rétractation (voir ci-dessous).',
       'Un pack de places n’est pas remboursable une fois ses places ajoutées, sauf dans les cas prévus par la loi.',
     ],
@@ -269,8 +280,8 @@ export const CONDITIONS: Section[] = [
   {
     titre: 'Ton droit de rétractation',
     texte: [
-      'Pour un abonnement, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans avoir à te justifier (code de la consommation, art. L221-18). En t’abonnant, tu demandes que l’offre commence tout de suite : si tu te rétractes, tu ne paies que le temps déjà écoulé (art. L221-25), et le reste t’est remboursé dans les 14 jours (art. L221-24).',
-      'Pour un pack de places, fourni dès le paiement, tu demandes son ajout immédiat et reconnais perdre ton droit de rétractation une fois les places ajoutées (art. L221-28, 13°).',
+      'Pour un abonnement, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans avoir à te justifier (code de la consommation, art. L221-18). En cochant la case avant de payer, tu demandes que l’offre commence tout de suite : si tu te rétractes, tu ne paies que le temps déjà écoulé (art. L221-25), et le reste t’est remboursé dans les 14 jours (art. L221-24).',
+      'Pour un pack de places, fourni dès le paiement, tu demandes son ajout immédiat en cochant la case avant de payer, et tu reconnais perdre ton droit de rétractation une fois les places ajoutées (art. L221-28, 13°).',
       'Pour te rétracter, écris à l’adresse de contact de cette page, ou utilise le formulaire type ci-dessous.',
       'Formulaire type de rétractation (à renvoyer seulement si tu veux te rétracter) : À l’attention de Mylan Francois, à l’adresse de contact de cette page. Je te notifie par la présente ma rétractation du contrat portant sur [l’abonnement Fashion, l’abonnement Sapologue ou le pack de places], souscrit le [date de la souscription], compte [e-mail du compte]. Nom : [nom]. Date : [date].',
     ],

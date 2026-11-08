@@ -86,22 +86,26 @@ Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
    (données liées à la personne, aucun suivi publicitaire).
 6. **Relecture juridique** du registre, de l'analyse d'impact, des conditions
    et de la politique.
-7. **Nom commercial.** L'INPI indique « Agence E-commerce Mylan Francois », et
-   l'app s'appelle Dresskode. Ajouter « Dresskode » comme nom commercial
-   (formalité modificative au guichet unique), ou le dire dans les mentions.
-8. **Apple, à trancher avant la soumission.** Abonnements et packs sont payés
-   par Stripe dans le navigateur, y compris depuis l'app iPhone. Les règles
-   d'Apple (guideline 3.1.1) exigent l'achat intégré, sauf autorisation
-   externe dans l'Union européenne (programme dédié, à demander). Risque de
-   refus à la revue.
+7. **Nom commercial.** Fait (08/11) : les mentions disent que « Dresskode
+   appartient à l'Agence E-commerce Mylan Francois ». Pour protéger le nom
+   Dresskode lui-même, il faut un dépôt de marque à l'INPI, après avoir
+   vérifié qu'il est libre.
+8. **Apple, après la licence.** Décidé (08/11) : Stripe reste le paiement
+   jusqu'à la licence Apple. La soumission à l'App Store exigera ensuite le
+   paiement Apple, ou l'autorisation externe de l'Union européenne (guideline
+   3.1.1) : c'est un prérequis de la sortie iPhone, pas une option.
 9. **Apple, le reste.** Liens vers les conditions et la politique dans la fiche
-   de l'app ; un moyen de résilier depuis l'iPhone (aujourd'hui, seul le site
-   le permet) ; « Se connecter avec Apple » dès qu'une autre connexion (Google)
+   de l'app ; « Se connecter avec Apple » dès qu'une autre connexion (Google)
    est proposée sur iPhone.
-10. **Renonciation des packs.** La clause de rétractation est affichée sous le
-    bouton de paiement, pas dans une case à cocher. Une case à cocher est plus
-    solide (art. L221-28, acceptation expresse).
-11. **Régime de TVA** (franchise en base ou non) : à confirmer, il change la
+10. **Cases à cocher.** Faites (08/11) : inscription, abonnement et packs, dans
+    l'app et sur le site. Seule l'inscription garde la version acceptée (sur
+    le compte). Pour garder aussi la case d'un abonnement ou d'un pack avec la
+    commande, il faut ajouter le paramètre à la fonction `billing` et la
+    redéployer.
+11. **Domaine propre.** Quand le domaine est acheté : changer `CONDITIONS_URL`
+    (`legal.ts`), `APP_URL` (secret Supabase) et l'adresse dans la fiche App
+    Store.
+12. **Régime de TVA** (franchise en base ou non) : à confirmer, il change la
     mention sur les factures.
 
 ## Modifier la politique

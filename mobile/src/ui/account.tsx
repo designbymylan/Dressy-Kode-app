@@ -15,36 +15,44 @@ import { Button } from './Button';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { Tap } from './Tap';
+import { Accord } from './Accord';
 import { F } from '../theme/fonts';
 
 /**
- * À la création d'un compte (09/10) : avoir 15 ans ou plus, l'âge auquel la
- * loi française permet de consentir seul en ligne (loi Informatique et
- * Libertés, art. 45), et le lien vers la politique de confidentialité.
+ * À la création d'un compte : avoir 15 ans ou plus (loi Informatique et
+ * Libertés, art. 45), et avoir lu et accepté les conditions générales et la
+ * politique de confidentialité (case ajoutée le 08/11, la version acceptée
+ * est gardée avec le compte, voir remote.ts).
  */
-export function SignupTerms({ adult, onAdult, onPolicy }: { adult: boolean; onAdult: (v: boolean) => void; onPolicy: () => void }) {
-  const { c } = useTheme();
+export function SignupTerms({
+  adult,
+  onAdult,
+  accepted,
+  onAccepted,
+  onPolicy,
+}: {
+  adult: boolean;
+  onAdult: (v: boolean) => void;
+  accepted: boolean;
+  onAccepted: (v: boolean) => void;
+  onPolicy: () => void;
+}) {
   return (
-    <View style={{ gap: 6 }}>
-      <Tap testID="signup-age" onPress={() => onAdult(!adult)} feedback="select" scaleTo={1} accessibilityRole="checkbox" accessibilityState={{ checked: adult }} accessibilityLabel="J’ai 15 ans ou plus" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
-        <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: adult ? c.ink : c.control, backgroundColor: adult ? c['primary-bg'] : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-          {adult && <Icon name="check" size={15} color={c['primary-fg']} strokeWidth={2.4} flat />}
-        </View>
-        <T v="body" style={F.s500}>
-          J’ai 15 ans ou plus
-        </T>
-      </Tap>
-      <T v="small" tone="ink2">
-        En créant ton compte, tu acceptes les{' '}
+    <View style={{ gap: 10 }}>
+      <Accord testID="signup-age" checked={adult} onChange={onAdult}>
+        J’ai 15 ans ou plus
+      </Accord>
+      <Accord testID="signup-accept" checked={accepted} onChange={onAccepted}>
+        J’ai lu et j’accepte les conditions générales et la politique de confidentialité
+      </Accord>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, paddingLeft: 36 }}>
         <T v="small" style={{ ...F.s600, textDecorationLine: 'underline' }} onPress={() => Linking.openURL(CONDITIONS_URL)} accessibilityRole="link" testID="signup-conditions">
-          conditions générales
+          Conditions générales
         </T>
-        . Tes données servent seulement à t’habiller, comme l’explique notre{' '}
         <T v="small" style={{ ...F.s600, textDecorationLine: 'underline' }} onPress={onPolicy} accessibilityRole="link" testID="signup-policy">
-          politique de confidentialité
+          Politique de confidentialité
         </T>
-        .
-      </T>
+      </View>
     </View>
   );
 }
@@ -135,13 +143,14 @@ export function useAccountForm(initial: Mode, onDone: (next: AccountDone) => voi
   const { s, a } = useStore();
   const [mode, setMode] = useState<Mode>(initial);
   const [adult, setAdult] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const [email, setEmail] = useState(s.pendingEmail ?? '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
 
-  const ready = validEmail(email) && password.length >= (mode === 'signup' ? PASSWORD_MIN : 1) && (mode === 'login' || adult);
+  const ready = validEmail(email) && password.length >= (mode === 'signup' ? PASSWORD_MIN : 1) && (mode === 'login' || (adult && accepted));
 
   const submit = async () => {
     if (!ready || busy) return;
@@ -171,7 +180,7 @@ export function useAccountForm(initial: Mode, onDone: (next: AccountDone) => voi
     setError(null);
   };
 
-  return { mode, adult, setAdult, email, setEmail, password, setPassword, busy, error, sent, setSent, ready, submit, switchTo };
+  return { mode, adult, setAdult, accepted, setAccepted, email, setEmail, password, setPassword, busy, error, sent, setSent, ready, submit, switchTo };
 }
 
 /** Se connecter ou créer son compte, dans une feuille ouverte par un geste. */
@@ -187,7 +196,7 @@ export function AccountSheet({
   initial?: Mode;
 }) {
   const nav = useNavigation<Nav>();
-  const { mode, adult, setAdult, email, setEmail, password, setPassword, busy, error, sent, setSent, ready, submit, switchTo } = useAccountForm(initial, onDone);
+  const { mode, adult, setAdult, accepted, setAccepted, email, setEmail, password, setPassword, busy, error, sent, setSent, ready, submit, switchTo } = useAccountForm(initial, onDone);
 
   if (!online) {
     return (
@@ -237,7 +246,7 @@ export function AccountSheet({
         </T>
         <EmailField testID="login-email" value={email} onChange={setEmail} />
         <PasswordField testID="login-password" value={password} onChange={setPassword} onSubmit={submit} isNew={mode === 'signup'} />
-        {mode === 'signup' && <SignupTerms adult={adult} onAdult={setAdult} onPolicy={() => { onClose(); nav.navigate('Confidentialite'); }} />}
+        {mode === 'signup' && <SignupTerms adult={adult} onAdult={setAdult} accepted={accepted} onAccepted={setAccepted} onPolicy={() => { onClose(); nav.navigate('Confidentialite'); }} />}
         <FormError text={error} />
       </View>
     </Sheet>

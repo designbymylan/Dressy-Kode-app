@@ -102,7 +102,7 @@ export function PasswordInput({ isNew, id = 'password' }: { isNew?: boolean; id?
  * Connexion ou création de compte par e-mail. Pas de prénom ici : il se
  * donne dans le questionnaire, juste après.
  */
-export function AuthForm({ mode, adult, suite }: { mode: 'signin' | 'signup'; adult?: boolean; suite?: string }) {
+export function AuthForm({ mode, adult, terms, suite }: { mode: 'signin' | 'signup'; adult?: boolean; terms?: boolean; suite?: string }) {
   const isSignUp = mode === 'signup';
   const [state, action] = useActionState<FormResult, FormData>(isSignUp ? signUp : signIn, undefined);
 
@@ -110,6 +110,7 @@ export function AuthForm({ mode, adult, suite }: { mode: 'signin' | 'signup'; ad
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {state?.error ? <p role="alert" className="note note-error pop">{state.error}</p> : null}
       {isSignUp ? <input type="hidden" name="adult" value={adult ? '1' : ''} /> : null}
+      {isSignUp ? <input type="hidden" name="terms" value={terms ? '1' : ''} /> : null}
       {!isSignUp && suite ? <input type="hidden" name="suite" value={suite} /> : null}
 
       <label className="field">
@@ -126,7 +127,7 @@ export function AuthForm({ mode, adult, suite }: { mode: 'signin' | 'signup'; ad
       </div>
 
       <SubmitButton
-        disabled={isSignUp && !adult}
+        disabled={isSignUp && (!adult || !terms)}
         label={isSignUp ? 'Créer mon espace' : 'Me connecter'}
         pending={isSignUp ? 'Création de ton espace' : 'Connexion'}
         style={{ marginTop: 4 }}
@@ -144,27 +145,30 @@ export function AuthForm({ mode, adult, suite }: { mode: 'signin' | 'signup'; ad
  */
 export function SignupForms({ providers }: { providers: Record<Provider, boolean> }) {
   const [adult, setAdult] = useState(false);
+  const [terms, setTerms] = useState(false);
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <label className="signup-age">
           <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
           <span>J’ai 15 ans ou plus</span>
         </label>
-        <p className="small muted">
-          En créant ton compte, tu acceptes les{' '}
+        <label className="signup-age">
+          <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} />
+          <span>J’ai lu et j’accepte les conditions générales et la politique de confidentialité</span>
+        </label>
+        <p className="small muted" style={{ paddingLeft: 34 }}>
           <Link href="/conditions" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-            conditions générales
+            Conditions générales
           </Link>
-          . Tes données servent seulement à t’habiller, comme l’explique notre{' '}
+          {' · '}
           <Link href="/confidentialite" style={{ color: 'var(--ink)', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-            politique de confidentialité
+            Politique de confidentialité
           </Link>
-          .
         </p>
       </div>
-      <OAuthButtons disabled={!adult} providers={providers} />
-      <AuthForm mode="signup" adult={adult} />
+      <OAuthButtons disabled={!adult || !terms} providers={providers} />
+      <AuthForm mode="signup" adult={adult} terms={terms} />
     </>
   );
 }

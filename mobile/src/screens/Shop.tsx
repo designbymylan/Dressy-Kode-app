@@ -19,6 +19,7 @@ import { Button } from '../ui/Button';
 import { Ambient } from '../ui/Ambient';
 import { ScrollEdge, useHeaderScroll } from '../ui/layout';
 import { BottomFade, CloseButton, FeatureCard, Fold, Promise, RadioRow, Reassure, Scribble } from '../ui/shop';
+import { Accord } from '../ui/Accord';
 import { price } from './Offers';
 import type { Nav, Route } from '../navigation/types';
 
@@ -33,6 +34,8 @@ export function Shop() {
   const left = questionsLeft(s);
   const quota = LIMITS[s.plan].questions;
   const [pick, setPick] = useState<PlacePackId>('moyen');
+  // Des places ajoutées, le droit de rétractation tombe : la case le dit avant tout paiement (08/11).
+  const [accept, setAccept] = useState(false);
   const chosen = PLACE_PACKS.find((p) => p.id === pick) ?? PLACE_PACKS[0];
   // Le petit pack sert d'étalon : trois petits valent plus qu'un moyen, l'économie se lit au prix barré.
   const petit = PLACE_PACKS[0];
@@ -52,7 +55,7 @@ export function Shop() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-shop">
       <Ambient />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 50, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 120, gap: 12 }}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 50, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + (limit === null ? 120 : 230), gap: 12 }}>
         <Scribble variant={1} />
         <Promise title={`Plus de place,\ndès ${price(petit.cents)}`} lead="Des places en plus pour ton dressing" note="Un achat unique : les places s’ajoutent à ton offre et restent." />
 
@@ -111,8 +114,11 @@ export function Shop() {
       <CloseButton />
       <BottomFade />
       {limit !== null && (
-        <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16, gap: 6 }}>
-          <Button testID="shop-cta" label={`Ajouter ${chosen.places} places · ${price(chosen.cents)}`} icon="lock" onPress={() => a.buyPlaces(chosen.id)} />
+        <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16, gap: 10 }}>
+          <Accord testID="shop-accept" checked={accept} onChange={setAccept}>
+            Je demande l’ajout immédiat de mes places. Une fois ajoutées, je renonce à mon droit de rétractation.
+          </Accord>
+          <Button testID="shop-cta" label={`Ajouter ${chosen.places} places · ${price(chosen.cents)}`} icon="lock" disabled={!accept} onPress={() => a.buyPlaces(chosen.id)} />
           {s.account !== 'connecte' && (
             <T v="small" tone="ink2" style={{ textAlign: 'center' }}>
               Aperçu : le paiement est simulé, rien n’est prélevé.
