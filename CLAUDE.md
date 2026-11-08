@@ -427,10 +427,39 @@ le travail de Kodi, rien de plus.
 - **Paiement** : Stripe dans le navigateur jusqu'à la licence Apple. Le paiement Apple se fera avant la soumission à l'App Store.
 - **Responsabilité** : entrepreneur individuel tant que l'app n'a pas de clients avérés ; la forme juridique se reverra alors.
 
+**L'annuel revient, page Offres refaite (08/11), demandé par l'utilisateur** sur
+trois modèles envoyés (page d'abonnement à deux offres, feuille mois ou année,
+pastille « Annual plan, Save 57 % »). Il remplace « au mois seulement, plus
+d'annuel » du brief v6 et « plus aucune pastille de réduction » du 09/10, sur
+les offres du mobile comme du catalogue partagé :
+
+- **Prix** : Fashion **75 €** par an, Sapologue **159 €** par an (identifiants
+  de prix `dressy_<offre>_an`), soit au moins 30 % sous douze mois (30,4 % et
+  30,2 %). Remise affichée arrondie vers le bas (`annualOff`), prix de l'année
+  ramené au mois arrondi au-dessus (`perMonth`). Source : `web/src/lib/plans.ts`
+  (`cents: { mois, an }`), reprise dans `mobile/src/screens/Offers.tsx`.
+- **Les générations et les questions restent remises à zéro chaque mois**, même
+  pour un abonné à l'année (la base ne change pas). Découverte inchangée.
+- **Écran** (`screens/Offers.tsx`, `ui/shop.tsx`) : « Passe à » puis le nom de la
+  formule en grand ; sélecteur Fashion / Sapologue ; carte de prix juste dessous
+  (interrupteur « Abonnement annuel » avec l'étiquette beurre « −30 % », prix
+  par mois, prix du mois barré, total de l'année dit en toutes lettres) ; ce
+  qui est inclus ; bouton fixé en bas (`BottomFade`). Un seul dégradé, le bleu
+  de la palette (`PageGlow`), très léger en sombre. Qui n'est pas abonné arrive
+  sur l'annuel ; un abonné retrouve sa période et peut passer de l'une à l'autre
+  (le portail Stripe gère le prorata).
+- **Paiement** : `PERIODS = ['mois', 'an']` (`_shared/billing.ts`),
+  `tools/stripe-setup.mjs` crée les prix annuels (et les ajoute au portail).
+  **À relancer avec la clé Stripe** pour que « S'abonner » à l'année marche.
+- **Conditions générales** (version 1.2) : annuel, renouvellement annuel,
+  résiliation à la fin de la période payée.
+- Pas encore sur le web : `Pricing.tsx` reste au mois (la base et le paiement
+  acceptent déjà l'année).
+
 **Offres, places et générations (brief v6, 31/10), demandé par l'utilisateur.**
 Remplace les prix, les limites et l'annuel du 21/10, web et mobile.
 
-- **Deux abonnements, au mois seulement** : **Fashion 8,99 €** (`capsule`,
+- **Deux abonnements** (l'annuel est revenu le 08/11, voir plus bas) : **Fashion 8,99 €** (`capsule`,
   50 pièces, 50 générations par mois) et **Sapologue 18,99 €** (`atelier`,
   100 pièces, 100 générations par mois, Kodi sans limite). Plus d'annuel ni
   de mois offert. Découverte : 15 pièces, 4 générations offertes à vie, sans

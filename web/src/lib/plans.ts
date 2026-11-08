@@ -1,6 +1,6 @@
 /**
- * Les offres de Dresskode (brief v6, 31/10) : Fashion et Sapologue, au mois
- * seulement.
+ * Les offres de Dresskode (brief v6, 31/10) : Fashion et Sapologue, au mois,
+ * et à l'année avec 30 % de remise (retour de l'annuel, demandé le 08/11).
  *
  * C'est la seule source des montants : l'écran Offres et la partie Tarifs
  * du profil les affichent, et tools/stripe-setup.mjs les crée chez Stripe.
@@ -9,17 +9,23 @@
  *
  * Les identifiants restent ceux d'avant, parce qu'ils vivent en base et
  * chez Stripe (clés de prix dressy_<offre>_mois) : `capsule` porte Fashion,
- * `atelier` porte Sapologue. Couture n'est plus vendue, et l'annuel non plus.
+ * `atelier` porte Sapologue (clés de prix dressy_<offre>_mois et
+ * dressy_<offre>_an). Couture n'est plus vendue.
  *
  *   Découverte : 15 pièces, 4 générations offertes à vie
- *   Fashion    :  8,99 € par mois, 50 pièces, 50 générations par mois
- *   Sapologue  : 18,99 € par mois, 100 pièces, 100 générations par mois
+ *   Fashion    :  8,99 € par mois ou 75 € par an, 50 pièces, 50 générations par mois
+ *   Sapologue  : 18,99 € par mois ou 159 € par an, 100 pièces, 100 générations par mois
+ *
+ * L'annuel est un prix rond, au moins 30 % sous douze mois (Fashion 30,4 %,
+ * Sapologue 30,2 %) : la remise s'affiche arrondie vers le bas (`annualOff`),
+ * jamais au-dessus de la vérité. Les générations et les questions restent
+ * remises à zéro chaque mois, même pour un abonné à l'année.
  *
  * Module pur, sans alias d'import : le script Node le lit tel quel.
  */
 
 export type PlanId = 'capsule' | 'atelier';
-export type Period = 'mois';
+export type Period = 'mois' | 'an';
 
 export type Feature = { label: string; soon?: boolean };
 
@@ -37,7 +43,7 @@ export const PLANS: Plan[] = [
     id: 'capsule',
     name: 'Fashion',
     note: 'Ton dressing rangé, et enfin porté',
-    cents: { mois: 899 },
+    cents: { mois: 899, an: 7500 },
     features: [
       { label: "Jusqu'à 50 pièces" },
       { label: '50 générations par mois' },
@@ -49,7 +55,7 @@ export const PLANS: Plan[] = [
     id: 'atelier',
     name: 'Sapologue',
     note: 'Kodi devient ton styliste personnel',
-    cents: { mois: 1899 },
+    cents: { mois: 1899, an: 15900 },
     flagged: true,
     features: [
       { label: "Jusqu'à 100 pièces" },
@@ -98,7 +104,13 @@ export const FREE_PLAN = {
 export const lookupKey = (plan: PlanId, period: Period) => `dressy_${plan}_${period}`;
 
 export const isPlan = (v: unknown): v is PlanId => PLANS.some((p) => p.id === v);
-export const isPeriod = (v: unknown): v is Period => v === 'mois';
+export const isPeriod = (v: unknown): v is Period => v === 'mois' || v === 'an';
+
+/** La remise de l'année sur douze mois, en pour cent entier arrondi vers le bas : 899 / 7500 → 30. */
+export const annualOff = (p: { cents: Record<Period, number> }) => Math.floor((1 - p.cents.an / (p.cents.mois * 12)) * 100);
+
+/** Le prix de l'année ramené au mois, arrondi au centime supérieur : 7500 → 625. */
+export const perMonth = (cents: number) => Math.ceil(cents / 12);
 
 /** Le nom d'une offre, y compris celle qui n'est plus vendue. */
 const RETIRED: Record<string, string> = { couture: 'Couture' };

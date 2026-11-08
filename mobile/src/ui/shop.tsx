@@ -20,6 +20,7 @@ import { T } from './T';
 import { Tap } from './Tap';
 import { Icon, chromeStops, type IconName } from './Icon';
 import { Struck, Tag } from './bits';
+import { Toggle } from './controls';
 
 /** Le rond de fermeture, en haut à droite, comme sur le modèle. */
 export function CloseButton() {
@@ -255,6 +256,48 @@ export function SlideChoice<V extends string>({ value, onChange, label, options,
           </Tap>
         );
       })}
+    </View>
+  );
+}
+
+/**
+ * Le dégradé d'une seule couleur (08/11) derrière le haut de la page des
+ * offres : le bleu de la palette, qui s'efface vers le fond. Très léger en
+ * sombre, où il ne doit pas éclairer l'écran.
+ */
+export function PageGlow({ height = 380 }: { height?: number }) {
+  const { c, scheme } = useTheme();
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={c['blue-top']} stopOpacity={scheme === 'dark' ? 0.2 : 0.95} />
+            <Stop offset="0.6" stopColor={c['blue-top']} stopOpacity={scheme === 'dark' ? 0.07 : 0.4} />
+            <Stop offset="1" stopColor={c['blue-top']} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#glow)" />
+      </Svg>
+    </View>
+  );
+}
+
+/**
+ * Le choix mensuel ou annuel (08/11), d'après la pastille « Annual plan,
+ * Save 57 % » envoyée : le nom de la formule, la remise en étiquette beurre,
+ * l'interrupteur. Éteint, c'est le mois ; allumé, l'année.
+ */
+export function PeriodSwitch({ annual, onChange, off, testID }: { annual: boolean; onChange: (annual: boolean) => void; off: number; testID?: string }) {
+  return (
+    <View className="flex-row items-center" style={{ gap: 10, minHeight: 44 }}>
+      <View className="flex-row items-center" style={{ flex: 1, gap: 10 }}>
+        <T v="body" style={F.s600}>
+          Abonnement annuel
+        </T>
+        <Tag tone="butter" label={`−${off} %`} />
+      </View>
+      <Toggle testID={testID} value={annual} onChange={onChange} label={`Abonnement annuel, ${off} % de moins`} />
     </View>
   );
 }

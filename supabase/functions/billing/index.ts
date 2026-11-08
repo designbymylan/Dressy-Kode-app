@@ -1,7 +1,7 @@
 /**
  * Abonnements : ouvre le paiement Stripe ou le portail client.
  *
- *   POST { action: 'checkout', plan, period }  →  { url }   (abonnement, au mois)
+ *   POST { action: 'checkout', plan, period }  →  { url }   (abonnement, au mois ou à l'année)
  *   POST { action: 'places', pack }            →  { url }   (achat unique : +10 ou +30 places)
  *   POST { action: 'portal' }                  →  { url }
  *   GET                                        →  état de la configuration
@@ -160,7 +160,7 @@ async function handle(token: string, input: Record<string, unknown>): Promise<{ 
     allow_promotion_codes: true,
     locale: 'fr',
     // Code de la consommation, art. L221-18 et L221-25 : rétractation de 14 jours, début immédiat demandé (07/11).
-    custom_text: { submit: { message: `En t’abonnant, tu demandes que ton offre commence tout de suite. Tu peux te rétracter sous 14 jours : seul le temps déjà écoulé reste dû. Résiliable à tout moment, effet à la fin du mois payé. Conditions : ${appUrl()}/conditions` } },
+    custom_text: { submit: { message: `En t’abonnant, tu demandes que ton offre commence tout de suite. Tu peux te rétracter sous 14 jours : seul le temps déjà écoulé reste dû. Résiliable à tout moment, effet à la fin de la période payée. Conditions : ${appUrl()}/conditions` } },
     success_url: `${appUrl()}/moi?abonnement=merci`,
     cancel_url: `${appUrl()}/offres`,
   });

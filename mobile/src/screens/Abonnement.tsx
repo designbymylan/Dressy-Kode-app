@@ -63,14 +63,14 @@ export function Abonnement() {
             {offre?.name ?? 'Découverte'}
           </T>
           <T v="body" tone="ink2">
-            {offre && payant ? `${price(offre.cents.mois)} par mois, facturé chaque mois` : 'Gratuite, sans carte bancaire'}
+            {offre && payant ? (s.period === 'an' ? `${price(offre.cents.an)} par an, facturé chaque année` : `${price(offre.cents.mois)} par mois, facturé chaque mois`) : 'Gratuite, sans carte bancaire'}
           </T>
         </View>
 
         {payant ? (
           <View style={{ gap: 14 }}>
             <T v="body" tone="ink2">
-              Tu gardes ton offre jusqu’à la fin du mois déjà payé. Rien n’est prélevé ensuite. Le mois commencé n’est pas remboursé au prorata.
+              {s.period === 'an' ? 'Tu gardes ton offre jusqu’à la fin de l’année déjà payée. Rien n’est prélevé ensuite. L’année commencée n’est pas remboursée au prorata.' : 'Tu gardes ton offre jusqu’à la fin du mois déjà payé. Rien n’est prélevé ensuite. Le mois commencé n’est pas remboursé au prorata.'}
             </T>
             <Button testID="abonnement-resilier" variant="secondary" label="Résilier mon abonnement" disabled={!live} loading={busy} onPress={ouvrirPortail} />
             <T v="small" tone="ink2">
