@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import Link from 'next/link';
 import { skipOutfit, wearPieces } from '@/app/actions';
 import { Icon } from '@/components/icons';
@@ -35,6 +35,13 @@ const RAISONS = [
 ] as const;
 type Raison = (typeof RAISONS)[number]['id'];
 
+/** Ce qu'il faut glisser pour changer de pièce, et jusqu'où la rangée suit le doigt (comme sur l'app). */
+const SWIPE = 36;
+const FOLLOW = 44;
+/** L'indice du geste ne se dit qu'une fois : cette clé retient qu'il a servi. */
+const HINT_KEY = 'dk_indice_rangees';
+type Edge = 'l' | 'r';
+
 /** Une pièce : sa vignette détourée, ou la silhouette de sa catégorie teintée de sa couleur. */
 export function PieceImage({ p, size }: { p: Pick<HomePiece, 'url' | 'category_id' | 'colour'>; size: number }) {
   if (p.url) return <img src={p.url} alt="" draggable={false} loading="lazy" decoding="async" />;
@@ -43,7 +50,7 @@ export function PieceImage({ p, size }: { p: Pick<HomePiece, 'url' | 'category_i
   );
 }
 
-export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outfits: Outfit[]; worn: boolean }) {
+export function HomeToday({ pieces, outfits, worn, streak = 0 }: { pieces: HomePiece[]; outfits: Outfit[]; worn: boolean; streak?: number }) {
   const [pending, start] = useTransition();
   // « Pas pour moi » a sa propre attente (07/11) : partagée, elle affichait « C’est noté » sur « Je la porte » pendant un écart.
   const [skipping, startSkip] = useTransition();
@@ -55,6 +62,22 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
   const [frozen, setFrozen] = useState<{ outfit: Outfit; shown: HomePiece[] } | null>(null);
   const [sheet, setSheet] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Le côté d'où vient la dernière pièce prise dans chaque rangée : elle entre par là. */
+  const [from, setFrom] = useState<Partial<Record<RowId, Edge>>>({});
+  /** Les tours de la flèche d'« Une autre » : le geste se voit avant que la tenue change. */
+  const [turns, setTurns] = useState(0);
+  // L'indice du geste (10/11) : montré tant qu'aucune pièce n'a été changée, plus jamais ensuite.
+  const [hint, setHint] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(HINT_KEY)) setHint(true);
+    } catch {
+      /* stockage fermé : pas d'indice, rien de cassé */
+    }
+  }, []);
+  /** Le glissé en cours, et l'instant du dernier : un glissé ne doit pas compter comme un toucher. */
+  const drag = useRef<{ id: number; x: number; y: number; on: boolean; el: HTMLElement } | null>(null);
+  const swipedAt = useRef(0);
 
   // Les tenues proposées ont changé (une écartée, la météo qui change) : la carte repart de zéro.
   const sig = outfits.map((o) => cleTenue(o.pieces)).join('|');
@@ -116,8 +139,74 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
   const ports = shown.reduce((n, p) => n + p.wears, 0) + (frozen ? shown.length : 0);
   const colours = shown.map((p) => p.colour).filter((c): c is string => !!c);
 
+  /** Prendre une voisine : elle remplace la pièce de sa rangée, et l'indice a fait son travail. */
+  function take(r: RowId, p: HomePiece | undefined, edge: Edge) {
+    if (!p) return;
+    setFrom((f) => ({ ...f, [r]: edge }));
+    setSwapped((s) => ({ ...s, [r]: p.id }));
+    if (hint) {
+      setHint(false);
+      try {
+        localStorage.setItem(HINT_KEY, '1');
+      } catch {
+        /* rien */
+      }
+    }
+  }
+
+  /**
+   * Glisser une rangée (10/11, comme sur l'app) : elle suit le doigt, et au
+   * lâcher la voisine du côté opposé prend la place. Le geste ne compte que
+   * s'il est franchement horizontal : la page défile comme avant
+   * (`touch-action: pan-y`).
+   */
+  function swipeHandlers(r: RowId, alts: HomePiece[]) {
+    if (!alts.length) return {};
+    const end = (e: ReactPointerEvent<HTMLDivElement>, done: boolean) => {
+      const d = drag.current;
+      if (!d || d.id !== e.pointerId) return;
+      drag.current = null;
+      d.el.removeAttribute('data-drag');
+      d.el.style.removeProperty('--dx');
+      if (!done || !d.on) return;
+      const dx = e.clientX - d.x;
+      if (Math.abs(dx) < SWIPE) return;
+      swipedAt.current = Date.now();
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(8);
+      // Glisser vers la gauche amène la voisine de droite, et inversement.
+      if (dx < 0) take(r, alts[1] ?? alts[0], 'r');
+      else take(r, alts[0], 'l');
+    };
+    return {
+      onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, on: false, el: e.currentTarget };
+      },
+      onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
+        const d = drag.current;
+        if (!d || d.id !== e.pointerId) return;
+        const dx = e.clientX - d.x;
+        if (!d.on) {
+          if (Math.abs(dx) < 14 || Math.abs(dx) < Math.abs(e.clientY - d.y)) return;
+          d.on = true;
+          d.el.setAttribute('data-drag', '');
+        }
+        d.el.style.setProperty('--dx', `${Math.max(-FOLLOW, Math.min(FOLLOW, dx * 0.5))}px`);
+      },
+      onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => end(e, true),
+      onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => end(e, false),
+      onPointerLeave: (e: ReactPointerEvent<HTMLDivElement>) => end(e, e.pointerType === 'mouse'),
+    };
+  }
+  /** Le toucher d'une voisine, sauf s'il termine un glissé. */
+  const tap = (r: RowId, p: HomePiece, edge: Edge) => () => {
+    if (Date.now() - swipedAt.current > 350) take(r, p, edge);
+  };
+
   /** Une autre tenue : les rangées verrouillées gardent leur pièce, le reste change. */
   function another() {
+    setTurns((t) => t + 1);
+    setFrom({});
     const keep: Partial<Record<RowId, string>> = {};
     for (const r of pinned) {
       const p = shown.find((x) => rowOf(x) === r);
@@ -164,7 +253,7 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
           <>
             {visible.length > 1 ? (
               <button type="button" className="icon-btn" onClick={another} aria-label="Une autre tenue">
-                <Icon name="refresh" size={18} />
+                <span className="turn" style={{ transform: `rotate(${turns * 360}deg)` }}><Icon name="refresh" size={18} /></span>
               </button>
             ) : null}
             <button type="button" className="btn btn-primary btn-sm" onClick={wear} disabled={pending}>
@@ -173,6 +262,9 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
           </>
         ) : null}
       </div>
+
+      {/* La récompense juste sous le geste (10/11) : plus bas, il fallait défiler pour la voir. */}
+      {done ? <WornLine total={ports} just={!!frozen} colours={colours} streak={streak + 1} /> : null}
 
       <div className="dress-stage" key={outfit.id}>
         {rows.map(({ r, items }, i) => {
@@ -187,20 +279,21 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
               aria-label={ROW_NAME[r]}
               className="dress-row"
               style={{ '--h': `${ROW_H[r]}px`, '--art': `${art}px`, '--side': `${side}px`, '--i': i } as CSSProperties}
+              {...swipeHandlers(r, alts)}
             >
               {alts[0] ? (
-                <button type="button" className="dress-near dress-near--l" onClick={() => setSwapped((s) => ({ ...s, [r]: alts[0].id }))} aria-label={`${ROW_NAME[r]} : prendre ${alts[0].name}`}>
+                <button type="button" className="dress-near dress-near--l" onClick={tap(r, alts[0], 'l')} aria-label={`${ROW_NAME[r]} : prendre ${alts[0].name}`}>
                   <PieceImage p={alts[0]} size={side} />
                 </button>
               ) : null}
               {alts[1] ? (
-                <button type="button" className="dress-near dress-near--r" onClick={() => setSwapped((s) => ({ ...s, [r]: alts[1].id }))} aria-label={`${ROW_NAME[r]} : prendre ${alts[1].name}`}>
+                <button type="button" className="dress-near dress-near--r" onClick={tap(r, alts[1], 'r')} aria-label={`${ROW_NAME[r]} : prendre ${alts[1].name}`}>
                   <PieceImage p={alts[1]} size={side} />
                 </button>
               ) : null}
               <div className="dress-main">
                 {items.map((p) => (
-                  <span key={p.id} className="dress-art" role="img" aria-label={p.name}>
+                  <span key={p.id} className="dress-art" data-from={from[r]} role="img" aria-label={p.name}>
                     <PieceImage p={p} size={art} />
                   </span>
                 ))}
@@ -221,13 +314,16 @@ export function HomeToday({ pieces, outfits, worn }: { pieces: HomePiece[]; outf
         })}
       </div>
 
+      {hint && !done && rows.some(({ r }) => pieces.some((p) => rowOf(p) === r && !inOutfit.has(p.id))) ? (
+        <p className="dress-hint" data-testid="rows-hint"><span aria-hidden="true">←</span> Glisse une rangée pour changer une pièce <span aria-hidden="true">→</span></p>
+      ) : null}
+
       {/* La tenue s'assemble, puis son titre s'écrit. */}
       <div className="home-today__words">
         <h3>{outfit.title}</h3>
         {outfit.why ? <p>{outfit.why}</p> : null}
       </div>
 
-      {done ? <WornLine total={ports} just={!!frozen} colours={colours} /> : null}
       {error ? <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)' }}>{error}</p> : null}
 
       {!done ? (

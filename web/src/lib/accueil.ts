@@ -41,6 +41,8 @@ export type Home = {
   outfits: Outfit[];
   /** La tenue prévue pour aujourd'hui, déjà portée ? */
   worn: boolean;
+  /** Jours de suite, jusqu'à hier compris, où un port a été noté (la série, 10/11). */
+  streak: number;
   weather: Weather | null;
   now: ReturnType<typeof maintenant>;
   city: string | null;
@@ -61,7 +63,7 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
   const today = parisDay(0);
   const since = new Date(Date.now() - 92 * DAY_MS).toISOString();
 
-  const [garments, stats, planned, events, trips, feedback, contexte] = await Promise.all([
+  const [garments, stats, planned, events, trips, feedback, contexte, wornDays] = await Promise.all([
     loadPieces(supabase),
     supabase.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', viewer.spaceId),
     supabase
@@ -92,6 +94,8 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
       .order('created_at', { ascending: false })
       .limit(20),
     loadContexte(supabase),
+    // Les jours où un port a été noté, sur deux mois : de quoi compter la série.
+    supabase.from('wears').select('worn_on, garments!inner(space_id)').eq('garments.space_id', viewer.spaceId).gte('worn_on', parisDay(-62)).lt('worn_on', today),
   ]);
 
   const statOf = new Map(
@@ -161,10 +165,16 @@ export async function loadHome(supabase: Db, viewer: Viewer): Promise<Home> {
     })
     .slice(0, 3);
 
+  // La série : on remonte depuis hier tant que chaque jour a un port.
+  const days = new Set(((wornDays.data ?? []) as { worn_on: string }[]).map((w) => w.worn_on));
+  let streak = 0;
+  while (streak < 62 && days.has(parisDay(-1 - streak))) streak++;
+
   return {
     pieces,
     outfits,
     worn: Boolean(plan?.worn) && Boolean(planned0),
+    streak,
     weather,
     now: maintenant(contexte),
     city: contexte?.ville.valeur?.nom ?? null,

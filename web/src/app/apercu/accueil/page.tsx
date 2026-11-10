@@ -42,6 +42,7 @@ export default async function ApercuAccueil({ searchParams }: { searchParams: Pr
     pieces,
     outfits: suggestOutfits(pieces, weather),
     worn: false,
+    streak: 2,
     weather,
     now: { t: 14, kind: 'averses' },
     city: 'Paris',

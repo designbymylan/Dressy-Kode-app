@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Home } from '@/lib/accueil';
-import { parisDateLabel } from '@/lib/dates';
+import { parisDateLabel, parisHour } from '@/lib/dates';
 import { tendancesChezToi } from '@/lib/contexte';
 import { canCompose, missingForOutfit, sleeping } from '@/lib/outfits';
 import { HomeToday } from '@/components/HomeToday';
@@ -28,6 +28,9 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
 
   const meteoTxt = now ? `${now.t}°, ${now.mot ?? WORD[now.kind]}` : null;
   const dateLine = [parisDateLabel(), city].filter(Boolean).join(' · ');
+  // Le salut suit l'heure (10/11) : « Bonjour » à 22 h sonne faux.
+  const heure = parisHour();
+  const salut = heure >= 18 || heure < 5 ? 'Bonsoir' : 'Bonjour';
 
   const trend = tendancesChezToi(contexte, pieces)[0] ?? null;
 
@@ -37,7 +40,7 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
       <header className="home-hello rise" data-testid="home-hello">
         <p className="eyebrow">{dateLine}</p>
         <h1 className="home-hero">
-          Bonjour{name ? ` ${name}` : ''},<br />
+          {salut}{name ? ` ${name}` : ''},<br />
           {ready ? (
             <>ta tenue du jour<br />est <b>{worn ? 'portée' : 'prête'}</b>.</>
           ) : (
@@ -91,7 +94,7 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
         </Card>
       ) : (
         <>
-          <HomeToday pieces={pieces} outfits={outfits} worn={worn} />
+          <HomeToday pieces={pieces} outfits={outfits} worn={worn} streak={home.streak} />
 
           <HomeWeek
             week={week}

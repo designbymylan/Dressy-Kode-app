@@ -62,7 +62,7 @@ export function WearButton({
  * aux couleurs de la tenue s'envolent (si `just`, au geste) et le compteur de
  * ports monte. Partagée par la fiche de la tenue et la tenue du jour de l'accueil.
  */
-export function WornLine({ total, just, colours }: { total: number; just: boolean; colours: string[] }) {
+export function WornLine({ total, just, colours, streak = 0 }: { total: number; just: boolean; colours: string[]; streak?: number }) {
   return (
     <div className={`worn-line${just ? ' play' : ''}`} role="status">
       <span className="worn-check" aria-hidden="true">
@@ -85,7 +85,8 @@ export function WornLine({ total, just, colours }: { total: number; just: boolea
         </svg>
       </span>
       <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <strong style={{ fontSize: 14.5, fontWeight: 500 }}>Portée aujourd&apos;hui</strong>
+        {/* La série (10/11) : dite à partir de deux jours de suite, jamais quand elle s'arrête. */}
+        <strong style={{ fontSize: 14.5, fontWeight: 500 }} data-testid="worn-title">{streak >= 2 ? `${streak}e jour de suite` : 'Portée aujourd’hui'}</strong>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>
           <b className="worn-tally" style={{ color: 'var(--ink)', fontWeight: 500 }}>{total}</b> port{total > 1 ? 's' : ''} pour ces pièces
         </span>

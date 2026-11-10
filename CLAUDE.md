@@ -553,7 +553,15 @@ disposition ni aux couleurs.
 - **« Une autre »** : la flèche fait un tour (`IconButton spin`) ; le cadenas
   rebondit. **Salut** : « Bonsoir » de 18 h à 5 h. **Kodi** : envoi éteint
   sans texte (`IconButton disabled`), retour haptique léger à sa réponse.
-- Pas encore sur le web (`HomeView.tsx`) : le glissé, l'indice, la série.
+- **La récompense de « Je la porte » remonte** juste sous les boutons de
+  la carte (coche, série, ports), web et mobile : plus bas, la barre
+  d'onglets la cachait. Changement d'ordre des blocs validé par
+  l'utilisateur le 10/11.
+- **Le web est aligné le même jour** (`HomeToday.tsx`, `.dress-*` dans
+  `globals.css`) : glissé par événements de pointeur (`touch-action: pan-y`),
+  indice gardé dans `localStorage` (`dk_indice_rangees`), série lue dans
+  `wears` (`streak`, `lib/accueil.ts`) et dite par `WornLine`, flèche qui
+  tourne, cadenas qui rebondit, salut à l'heure de Paris (`parisHour`).
 
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :

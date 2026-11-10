@@ -13,6 +13,11 @@ export function parisDay(offset = 0): string {
 }
 
 /** « Samedi 26 septembre ». */
+/** L'heure qu'il est à Paris (0 à 23) : le salut de l'accueil la suit. */
+export function parisHour(): number {
+  return Number(new Intl.DateTimeFormat('en-GB', { timeZone: PARIS, hour: '2-digit', hour12: false }).format(new Date())) % 24;
+}
+
 export function parisDateLabel(): string {
   const label = new Intl.DateTimeFormat('fr-FR', { timeZone: PARIS, weekday: 'long', day: 'numeric', month: 'long' })
     .format(new Date());

@@ -1879,7 +1879,19 @@ a.home-chip::after { content: ''; position: absolute; inset: -6px 0; }
   animation: sheet-rise 380ms var(--ease) both;
   animation-delay: calc(var(--i, 0) * 90ms + 80ms);
 }
-.dress-main { position: relative; height: 100%; display: flex; align-items: center; gap: 8px; }
+/* Glisser une rangée change la pièce (10/11) : la page défile toujours à la verticale. */
+.dress-row { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.dress-main { position: relative; height: 100%; display: flex; align-items: center; gap: 8px; transform: translateX(var(--dx, 0px)); transition: transform 260ms var(--ease-spring); }
+.dress-row[data-drag] .dress-main { transition: none; }
+/* La pièce prise entre du côté d'où elle vient. */
+.dress-art[data-from='l'] { animation: dress-in-l 260ms var(--ease) both; }
+.dress-art[data-from='r'] { animation: dress-in-r 260ms var(--ease) both; }
+@keyframes dress-in-l { from { opacity: 0; transform: translateX(-25px); } }
+@keyframes dress-in-r { from { opacity: 0; transform: translateX(25px); } }
+/* L'indice du geste, montré une seule fois. */
+.dress-hint { margin: -4px 0 0; text-align: center; font-size: 12px; color: var(--muted); animation: fade-in 400ms 900ms var(--ease) both; }
+/* « Une autre » : la flèche fait un tour. */
+.icon-btn .turn { display: grid; transition: transform 480ms var(--ease); }
 .dress-art { width: var(--art); height: 100%; display: flex; align-items: center; justify-content: center; }
 .dress-art img, .dress-near img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12)); }
 .dress-art svg, .dress-near svg { max-width: 100%; max-height: 100%; }
@@ -1905,7 +1917,7 @@ a.home-chip::after { content: ''; position: absolute; inset: -6px 0; }
 /* Le cadenas garde la pièce pour la prochaine tenue. */
 .dress-lock { position: absolute; top: 0; left: calc(100% - 6px); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; }
 .dress-lock__dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--glass-strong); border: 1px solid var(--glass-edge); transition: background-color 200ms var(--ease), color 200ms var(--ease); }
-.dress-lock__dot[data-on='true'] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.dress-lock__dot[data-on='true'] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); animation: pop 360ms var(--ease-spring) both; }
 
 .home-today__words { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
 .home-today__words h3 { font-weight: 400; font-size: 20px; line-height: 25px; letter-spacing: -0.1px; }
@@ -2039,6 +2051,8 @@ a.home-chip::after { content: ''; position: absolute; inset: -6px 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .dress-row { animation: none; }
+  .dress-main, .icon-btn .turn { transition: none; }
+  .dress-art[data-from], .dress-lock__dot[data-on='true'], .dress-hint { animation: none; }
 }
 .notforme-piece__check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); }
 

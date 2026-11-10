@@ -182,6 +182,8 @@ function TodayCard({ W }: { W: number }) {
           </>
         )}
       </View>
+      {/* La récompense juste sous le geste (10/11) : plus bas, la barre d'onglets la cachait. */}
+      {worn && <WornToday pieces={shown} animate={!wornAtMount} />}
       {/* De la tête aux pieds : visage et cou, veste, haut, bas, chaussures, sac. */}
       <Animated.View key={outfit.id} entering={FadeIn.duration(320)} style={{ backgroundColor: c.stage, borderRadius: 22, paddingVertical: 12, overflow: 'hidden' }}>
         <DressRows
@@ -217,7 +219,6 @@ function TodayCard({ W }: { W: number }) {
           {outfit.why}
         </T>
       </Animated.View>
-      {worn && <WornToday pieces={shown} animate={!wornAtMount} />}
       {/* « Pas pour moi » (09/10) : la raison part chez Kodi, la tenue ne revient plus. */}
       {!worn && (
         <View className="flex-row items-center justify-between" style={{ borderTopWidth: 1, borderColor: c.rule, marginHorizontal: 4 }}>
