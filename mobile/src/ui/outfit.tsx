@@ -1,12 +1,13 @@
-import { memo, useEffect, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeInRight, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { motion } from '../theme/tokens';
 import type { Piece } from '../data/wardrobe';
 import { useTheme } from '../theme/ThemeProvider';
 import { Garment, type GarmentKind } from './Garment';
 import { T } from './T';
-import { Tap } from './Tap';
+import { Tap, haptic } from './Tap';
 import { Icon } from './Icon';
 
 type Slot = 'outer' | 'top' | 'bottom' | 'shoes' | 'acc';
@@ -205,72 +206,150 @@ type DressProps = {
  * le cadenas garde la pièce quand Kodi propose une autre tenue.
  */
 export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, onPiece }: DressProps) {
-  const { c, scheme } = useTheme();
   const rows = ROW_ORDER.map((r) => ({ r, items: pieces.filter((p) => rowOf(p) === r) })).filter((x) => x.items.length);
   const inOutfit = new Set(pieces.map((p) => p.id));
+  return (
+    <View style={{ gap: 6 }}>
+      {rows.map(({ r, items }, i) => (
+        <DressRow
+          key={r}
+          r={r}
+          i={i}
+          items={items}
+          alts={pool.filter((p) => rowOf(p) === r && !inOutfit.has(p.id)).sort(rest)}
+          width={width}
+          keep={pinned.has(r)}
+          onTogglePin={onTogglePin}
+          onSwap={onSwap}
+          onPiece={onPiece}
+        />
+      ))}
+    </View>
+  );
+}
+
+type RowProps = Pick<DressProps, 'width' | 'onTogglePin' | 'onSwap' | 'onPiece'> & { r: RowId; i: number; items: Piece[]; alts: Piece[]; keep: boolean };
+
+/** Ce qu'il faut glisser pour changer de pièce, et jusqu'où la rangée suit le doigt. */
+const SWIPE = 36;
+const FOLLOW = 44;
+
+/**
+ * Une rangée de la tenue. On change de pièce en touchant une voisine ou en
+ * glissant la rangée (10/11) : elle suit le doigt, et la nouvelle pièce
+ * arrive du côté d'où elle vient. Le lecteur d'écran garde les voisines
+ * comme boutons.
+ */
+function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece }: RowProps) {
+  const { c, scheme } = useTheme();
+  const reduced = useReducedMotion();
+  const h = ROW_H[r];
+  const w = Math.round(ROW_ART[r] * (items.length > 1 ? 0.78 : 1));
+  const side = Math.round(ROW_ART[r] * 0.86);
+  const groupW = items.length * w + (items.length - 1) * 8;
+  // Le côté d'où vient la dernière pièce prise : elle entre par là.
+  const [from, setFrom] = useState<'left' | 'right' | null>(null);
+  // Un glissé ne doit pas ouvrir la fiche de la pièce qu'il vient de poser.
+  const swipedAt = useRef(0);
+  const take = (edge: 'left' | 'right') => {
+    const p = edge === 'left' ? alts[0] : alts[1] ?? alts[0];
+    if (!p) return;
+    setFrom(edge);
+    onSwap(r, p);
+  };
+  const swiped = (edge: 'left' | 'right') => {
+    swipedAt.current = Date.now();
+    haptic('select');
+    take(edge);
+  };
+  const open = (p: Piece) => {
+    if (Date.now() - swipedAt.current > 350) onPiece(p);
+  };
+
+  const x = useSharedValue(0);
+  const can = alts.length > 0;
+  // Le geste ne prend la main que sur un mouvement franchement horizontal : la page défile comme avant.
+  const swipe = Gesture.Pan()
+    .enabled(can)
+    .activeOffsetX([-14, 14])
+    .failOffsetY([-12, 12])
+    .onChange((e) => {
+      if (!reduced) x.value = Math.max(-FOLLOW, Math.min(FOLLOW, e.translationX * 0.5));
+    })
+    .onEnd((e) => {
+      x.value = withSpring(0, motion.snappy);
+      // Glisser vers la gauche amène la voisine de droite, et inversement.
+      if (e.translationX <= -SWIPE) runOnJS(swiped)('right');
+      else if (e.translationX >= SWIPE) runOnJS(swiped)('left');
+    });
+  const follow = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+
+  // Le cadenas rebondit quand il se ferme ou s'ouvre, jamais au premier rendu.
+  const pop = useSharedValue(1);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (!reduced) pop.value = withSequence(withSpring(keep ? 1.3 : 0.86, motion.press), withSpring(1, motion.spring));
+  }, [keep]); // eslint-disable-line react-hooks/exhaustive-deps
+  const lock = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+
   /** Une pièce cadrée dans sa rangée : on n'en garde que la hauteur de la rangée, dessin au centre. */
-  const framed = (p: Piece, h: number, w: number) => {
-    const artH = w * 1.25;
+  const framed = (p: Piece, fw: number) => {
+    const artH = fw * 1.25;
     const at = p.image ? 0.5 : DRAWN_AT[p.kind] ?? 0.5;
     return (
-      <View style={{ width: w, height: h, overflow: 'hidden', alignItems: 'center' }}>
+      <View style={{ width: fw, height: h, overflow: 'hidden', alignItems: 'center' }}>
         <View style={{ marginTop: h / 2 - at * artH }}>
-          <Garment kind={p.kind} tint={p.tint} image={p.image} size={w} dark={scheme === 'dark'} label={p.name} />
+          <Garment kind={p.kind} tint={p.tint} image={p.image} size={fw} dark={scheme === 'dark'} label={p.name} />
         </View>
       </View>
     );
   };
+  const neighbour = (p: Piece | undefined, edge: 'left' | 'right') =>
+    p ? (
+      <View key={edge} style={{ position: 'absolute', top: 0, [edge]: -Math.round(side * 0.38), opacity: 0.38 }}>
+        <Tap testID={`row-${r}-${edge}`} onPress={() => take(edge)} scaleTo={0.95} accessibilityLabel={`${ROW_NAME[r]} : prendre ${p.name}`}>
+          {framed(p, side)}
+        </Tap>
+      </View>
+    ) : null;
+  const enter = from === 'left' ? FadeInLeft.duration(260) : from === 'right' ? FadeInRight.duration(260) : FadeIn.duration(260);
   return (
-    <View style={{ gap: 6 }}>
-      {rows.map(({ r, items }, i) => {
-        const h = ROW_H[r];
-        const w = Math.round(ROW_ART[r] * (items.length > 1 ? 0.78 : 1));
-        const side = Math.round(ROW_ART[r] * 0.86);
-        const alts = pool.filter((p) => rowOf(p) === r && !inOutfit.has(p.id)).sort(rest);
-        const keep = pinned.has(r);
-        const groupW = items.length * w + (items.length - 1) * 8;
-        const neighbour = (p: Piece | undefined, edge: 'left' | 'right') =>
-          p ? (
-            <View key={edge} style={{ position: 'absolute', top: 0, [edge]: -Math.round(side * 0.38), opacity: 0.38 }}>
-              <Tap testID={`row-${r}-${edge}`} onPress={() => onSwap(r, p)} scaleTo={0.95} accessibilityLabel={`${ROW_NAME[r]} : prendre ${p.name}`}>
-                {framed(p, h, side)}
+    <GestureDetector gesture={swipe} touchAction="pan-y">
+      <Animated.View entering={FadeInDown.delay(80 + i * 90).duration(380)} style={{ height: h, width, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={ROW_NAME[r]}>
+        {neighbour(alts[0], 'left')}
+        {neighbour(alts[1], 'right')}
+        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8 }, follow]}>
+          {items.map((p) => (
+            <Animated.View key={p.id} entering={enter}>
+              <Tap onPress={() => open(p)} scaleTo={0.96} accessibilityLabel={p.name} accessibilityHint="Ouvre la fiche de la pièce">
+                {framed(p, w)}
               </Tap>
-            </View>
-          ) : null;
-        return (
-          <Animated.View key={r} entering={FadeInDown.delay(80 + i * 90).duration(380)} style={{ height: h, width, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={ROW_NAME[r]}>
-            {neighbour(alts[0], 'left')}
-            {neighbour(alts[1], 'right')}
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              {items.map((p) => (
-                <Animated.View key={p.id} entering={FadeIn.duration(260)}>
-                  <Tap onPress={() => onPiece(p)} scaleTo={0.96} accessibilityLabel={p.name} accessibilityHint="Ouvre la fiche de la pièce">
-                    {framed(p, h, w)}
-                  </Tap>
-                </Animated.View>
-              ))}
-            </View>
-            {alts.length > 0 && (
-              <View style={{ position: 'absolute', top: 0, left: width / 2 + groupW / 2 - 6 }}>
-                <Tap
-                  testID={`row-${r}-pin`}
-                  onPress={() => onTogglePin(r)}
-                  feedback="select"
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: keep }}
-                  accessibilityLabel={keep ? `${ROW_NAME[r]} : ne plus garder` : `${ROW_NAME[r]} : garder pour la prochaine tenue`}
-                  style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }}>
-                    <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
-                  </View>
-                </Tap>
-              </View>
-            )}
-          </Animated.View>
-        );
-      })}
-    </View>
+            </Animated.View>
+          ))}
+        </Animated.View>
+        {can && (
+          <View style={{ position: 'absolute', top: 0, left: width / 2 + groupW / 2 - 6 }}>
+            <Tap
+              testID={`row-${r}-pin`}
+              onPress={() => onTogglePin(r)}
+              feedback="select"
+              accessibilityRole="switch"
+              accessibilityState={{ checked: keep }}
+              accessibilityLabel={keep ? `${ROW_NAME[r]} : ne plus garder` : `${ROW_NAME[r]} : garder pour la prochaine tenue`}
+              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Animated.View style={[{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }, lock]}>
+                <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
+              </Animated.View>
+            </Tap>
+          </View>
+        )}
+      </Animated.View>
+    </GestureDetector>
   );
 }
 

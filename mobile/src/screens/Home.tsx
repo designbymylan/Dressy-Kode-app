@@ -19,7 +19,8 @@ import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
 import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { Card, Tag, WeatherIcon } from '../ui/bits';
 import { NotForMeSheet } from '../ui/ecart';
-import { bilanDe, jourDeBilan } from '../state/bilan';
+import { bilanDe, jourDeBilan, motDuPort, serie } from '../state/bilan';
+import { useOnce } from '../state/once';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -30,6 +31,11 @@ import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
 
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
+/** Le salut suit l'heure (10/11) : « Bonjour » à 22 h sonne faux. */
+const salut = () => {
+  const h = new Date().getHours();
+  return h >= 18 || h < 5 ? 'Bonsoir' : 'Bonjour';
+};
 /** « jeudi 9 octobre » : la date du jour en toutes lettres. */
 const longDate = () => {
   const d = new Date();
@@ -80,7 +86,7 @@ export function Home() {
             {[capital(longDate()), city].filter(Boolean).join(' · ')}
           </T>
           <T v="hero" accessibilityRole="header">
-            {`Bonjour${s.profile.name ? ` ${s.profile.name}` : ''},\n`}
+            {`${salut()}${s.profile.name ? ` ${s.profile.name}` : ''},\n`}
             {!outfits.length ? 'ton dressing\nt’attend' : s.wornToday ? 'ta tenue du jour\nest ' : 'ta tenue du jour\nest '}
             {outfits.length ? (
               <T v="hero" style={F.accent}>
@@ -137,6 +143,8 @@ function TodayCard({ W }: { W: number }) {
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
   const [pinned, setPinned] = useState<Set<RowId>>(new Set());
   const [nope, setNope] = useState(false);
+  // L'indice du geste (10/11) : montré tant qu'aucune pièce n'a été changée, plus jamais ensuite.
+  const [hint, hintDone] = useOnce('rangees');
   const base = worn ? (s.wornToday!.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : pieces;
   const shown = (() => {
     const out = base.map((p) => {
@@ -147,6 +155,8 @@ function TodayCard({ W }: { W: number }) {
     for (const [r, id] of Object.entries(swapped)) if (id && !out.some((p) => rowOf(p) === r) && byId.get(id)) out.push(byId.get(id)!);
     return headToToe(out.filter((p, i, all) => all.findIndex((x) => x.id === p.id) === i));
   })();
+  // Une rangée a-t-elle une voisine à proposer ? Sans cela, l'indice mentirait.
+  const canSwap = s.pieces.some((p) => !shown.some((q) => q.id === p.id) && shown.some((q) => rowOf(q) === rowOf(p)));
   const another = () => {
     // Les rangées verrouillées passent à la tenue suivante ; le reste change.
     const keep: Partial<Record<RowId, string>> = {};
@@ -167,8 +177,8 @@ function TodayCard({ W }: { W: number }) {
         </View>
         {!worn && (
           <>
-            {outfits.length > 1 && <IconButton testID="another-outfit" icon="refresh" label="Une autre tenue" variant="quiet" size={40} onPress={another} />}
-            <Button testID="wear-today" label="Je la porte" size="s" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), 'Notée dans ton journal')} />
+            {outfits.length > 1 && <IconButton testID="another-outfit" icon="refresh" label="Une autre tenue" variant="quiet" size={40} spin onPress={another} />}
+            <Button testID="wear-today" label="Je la porte" size="s" feedback="success" onPress={() => a.wear(shown.map((p) => p.id), motDuPort(s.journal))} />
           </>
         )}
       </View>
@@ -180,9 +190,23 @@ function TodayCard({ W }: { W: number }) {
           width={inner}
           pinned={pinned}
           onTogglePin={(r) => setPinned((prev) => { const n = new Set(prev); if (n.has(r)) n.delete(r); else n.add(r); return n; })}
-          onSwap={(r, to) => setSwapped((prev) => ({ ...prev, [r]: to.id }))}
+          onSwap={(r, to) => {
+            setSwapped((prev) => ({ ...prev, [r]: to.id }));
+            if (hint) hintDone();
+          }}
           onPiece={(p) => nav.navigate('Piece', { id: p.id })}
         />
+        {hint && !worn && canSwap && (
+          <Animated.View testID="rows-hint" entering={FadeIn.delay(900).duration(400)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 8 }}>
+            <View style={{ transform: [{ scaleX: -1 }] }}>
+              <Icon name="arrow" size={13} color={c.ink2} />
+            </View>
+            <T v="small" tone="ink2">
+              Glisse une rangée pour changer une pièce
+            </T>
+            <Icon name="arrow" size={13} color={c.ink2} />
+          </Animated.View>
+        )}
       </Animated.View>
       {/* La tenue s'assemble sur la planche, puis son titre s'écrit. */}
       <Animated.View key={`t-${outfit.id}`} entering={FadeInDown.delay(assembleDelay(pieces.length)).duration(520)} style={{ gap: 4, paddingHorizontal: 4 }}>
@@ -266,6 +290,9 @@ function BilanCard() {
  */
 function WornToday({ pieces, animate = true }: { pieces: Piece[]; animate?: boolean }) {
   const { c } = useTheme();
+  const { s } = useStore();
+  // La série (10/11) : dite à partir de deux jours de suite, jamais quand elle s'arrête.
+  const jours = serie(s.journal);
   const reduced = useReducedMotion() || !animate;
   // Ce bloc n'apparaît qu'au geste (le port du jour n'est pas gardé d'un lancement à l'autre) : il joue une fois.
   const k = useSharedValue(reduced ? 1 : 0);
@@ -292,8 +319,15 @@ function WornToday({ pieces, animate = true }: { pieces: Piece[]; animate?: bool
         </Animated.View>
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <T v="body" tone="ink2">
-          Bonne journée. Kodi s’en souviendra pour tes prochaines tenues.
+        <T v="body" tone="ink2" testID="worn-note">
+          {jours >= 2 ? (
+            <T v="bodyStrong" testID="worn-streak">
+              {`${jours}e jour de suite. `}
+            </T>
+          ) : (
+            'Bonne journée. '
+          )}
+          Kodi s’en souviendra pour tes prochaines tenues.
         </T>
         <Animated.View style={[{ alignSelf: 'flex-start', transformOrigin: 'left' }, count]}>
           <T v="caption" tone="ink">

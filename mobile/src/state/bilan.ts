@@ -105,3 +105,21 @@ export const RETENU: Record<Exclude<Raison, 'sans'>, string> = {
   journee: 'des tenues mieux pensées pour tes journées',
   piece: 'moins souvent les pièces que tu as écartées',
 };
+
+/**
+ * La série (10/11) : le nombre de jours de suite, aujourd'hui compris, où une
+ * tenue a été notée au journal. Elle ne se montre qu'à partir de deux jours :
+ * on félicite une habitude, on ne compte jamais ce qui manque.
+ */
+export function serie(journal: Record<string, string[]>, depuis = 0): number {
+  let n = 0;
+  while (n < 366 && (journal[isoOf(-n - depuis)]?.length ?? 0) > 0) n++;
+  return n;
+}
+
+/** Le message du port du jour : la série y passe en tête, là où le regard est déjà. */
+export function motDuPort(journal: Record<string, string[]>): string {
+  // Aujourd'hui n'est pas encore noté : la série d'hier, plus ce jour-ci.
+  const n = serie(journal, 1) + 1;
+  return n >= 2 ? `${n}e jour de suite, c’est noté` : 'Notée dans ton journal';
+}

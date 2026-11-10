@@ -534,6 +534,27 @@ champ. La section disparaît de Personnaliser ; `normalizeModules` écarte
 l'ancien identifiant `kode` des réglages déjà enregistrés. L'adresse
 `/kodi?q=` (web) reste. À ne pas remettre sans une raison mesurée.
 
+**Détails d'usage du 10/11 (mobile), demandés par l'utilisateur** : des
+micro-interactions sur le moment clé, la tenue du matin, sans toucher à la
+disposition ni aux couleurs.
+
+- **Glisser une rangée** de la tenue du jour change la pièce (`DressRow`,
+  `ui/outfit.tsx`, `react-native-gesture-handler` déjà présent) : la rangée
+  suit le doigt, la nouvelle pièce entre du côté d'où elle vient. Le geste
+  ne s'active que sur un mouvement horizontal (la page défile comme avant) ;
+  toucher une voisine marche toujours, c'est aussi le chemin du lecteur
+  d'écran.
+- **Un indice, une seule fois** sous la tenue (« Glisse une rangée pour
+  changer une pièce »), effacé pour de bon au premier échange (`useOnce`,
+  `state/once.ts`). Tout nouvel indice de geste passe par là.
+- **La série** (`serie`, `motDuPort`, `state/bilan.ts`) : « 3e jour de
+  suite » dans le message de « Je la porte » et dans la carte, à partir de
+  deux jours. Jamais de zéro, jamais de série perdue affichée.
+- **« Une autre »** : la flèche fait un tour (`IconButton spin`) ; le cadenas
+  rebondit. **Salut** : « Bonsoir » de 18 h à 5 h. **Kodi** : envoi éteint
+  sans texte (`IconButton disabled`), retour haptique léger à sa réponse.
+- Pas encore sur le web (`HomeView.tsx`) : le glissé, l'indice, la série.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

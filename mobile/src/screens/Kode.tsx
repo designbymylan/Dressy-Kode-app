@@ -12,7 +12,7 @@ import { canCompose } from '../state/outfits';
 import { useTheme } from '../theme/ThemeProvider';
 import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
-import { Tap } from '../ui/Tap';
+import { Tap, haptic } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
 import { TabHeader, useHeaderScroll, useTabTop } from '../ui/layout';
 import { Card, DotChip, Tag } from '../ui/bits';
@@ -66,6 +66,13 @@ export function Kode() {
     const t = setTimeout(() => list.current?.scrollToEnd({ animated: true }), 60);
     return () => clearTimeout(t);
   }, [s.messages.length, s.kodeTyping]);
+
+  // La réponse arrive (10/11) : un retour léger dans la main, pour qui a posé les yeux ailleurs.
+  const wasTyping = useRef(s.kodeTyping);
+  useEffect(() => {
+    if (wasTyping.current && !s.kodeTyping) haptic('light');
+    wasTyping.current = s.kodeTyping;
+  }, [s.kodeTyping]);
 
   const send = (q: string) => {
     const v = q.trim();
@@ -167,7 +174,7 @@ export function Kode() {
             accessibilityLabel="Ta question à Kodi"
             style={{ flex: 1, color: c.ink, ...F.s400, fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
           />
-          <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} onPress={() => send(text)} />
+          <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} disabled={!text.trim() || s.kodeTyping || out} onPress={() => send(text)} />
         </View>
       </View>
     </KeyboardAvoidingView>

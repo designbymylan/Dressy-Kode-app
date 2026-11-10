@@ -1,10 +1,11 @@
 import { ActivityIndicator, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Tap, type Feedback } from './Tap';
 import { T } from './T';
 import { Icon, type IconName } from './Icon';
 import { BlueGlassFill, Glass } from './Glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { HIT } from '../theme/tokens';
+import { HIT, motion } from '../theme/tokens';
 import { F } from '../theme/fonts';
 
 type Variant = 'primary' | 'dark' | 'secondary' | 'quiet' | 'plain';
@@ -91,6 +92,10 @@ type IconButtonProps = {
   size?: number;
   testID?: string;
   badge?: boolean;
+  /** L'icône fait un tour à chaque appui (« Une autre ») : le geste se voit avant que le contenu change. */
+  spin?: boolean;
+  /** Éteint : rien à faire pour l'instant (un envoi sans texte). */
+  disabled?: boolean;
 };
 
 /**
@@ -99,12 +104,21 @@ type IconButtonProps = {
  * « outline » : rond de verre clair ; « quiet » : pastille grise ; « plain » :
  * l'icône seule. Le libellé reste pour les lecteurs d'écran.
  */
-export function IconButton({ icon, label, onPress, variant = 'outline', size = HIT, testID, badge }: IconButtonProps) {
+export function IconButton({ icon, label, onPress, variant = 'outline', size = HIT, testID, badge, spin, disabled }: IconButtonProps) {
   const { c } = useTheme();
+  const reduced = useReducedMotion();
+  const turn = useSharedValue(0);
+  const turning = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
+  const press = () => {
+    if (spin && !reduced) turn.value = withTiming(turn.value + 360, { duration: 480, easing: motion.easing });
+    onPress();
+  };
   const fg = variant === 'solid' ? c['primary-fg'] : c.ink;
   const body = (
     <View style={{ width: size, height: size }} className="items-center justify-center">
-      <Icon name={icon} size={Math.round(size * 0.44)} color={fg} strokeWidth={variant === 'solid' ? 2.1 : 1.8} />
+      <Animated.View style={turning}>
+        <Icon name={icon} size={Math.round(size * 0.44)} color={fg} strokeWidth={variant === 'solid' ? 2.1 : 1.8} />
+      </Animated.View>
       {badge && <View className="absolute bg-brass" style={{ top: size * 0.2, right: size * 0.2, width: 8, height: 8, borderRadius: 4 }} />}
     </View>
   );
@@ -118,7 +132,7 @@ export function IconButton({ icon, label, onPress, variant = 'outline', size = H
           : null;
   const slop = Math.max(0, (HIT - size) / 2);
   return (
-    <Tap testID={testID} onPress={onPress} accessibilityLabel={label} hitSlop={slop} style={[{ borderRadius: size / 2 }, surface]}>
+    <Tap testID={testID} onPress={disabled ? undefined : press} disabled={disabled} accessibilityLabel={label} accessibilityState={{ disabled: !!disabled }} hitSlop={slop} style={[{ borderRadius: size / 2, opacity: disabled ? 0.45 : 1 }, surface]}>
       {variant === 'solid' && <BlueGlassFill radius={size / 2} />}
       {variant === 'glass' ? <Glass radius={size / 2} shadow={false}>{body}</Glass> : body}
     </Tap>
