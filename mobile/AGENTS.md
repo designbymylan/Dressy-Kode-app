@@ -1,4 +1,4 @@
-Application mobile Dresskode : Expo SDK 57 (React Native 0.86), iOS d'abord.
+Application mobile Dresskode : Expo SDK 58 (React Native 0.88), iOS d'abord.
 Disposition : « version cartes » du 05/10 (voir `../CLAUDE.md`), sur la base B « Éditorial »
 (`../design/refonte/02-design-system.md`).
 Apparence : couleurs de la « galerie » et typographie v2 (Inter Tight et Inter), sur les arrondis et
@@ -26,6 +26,16 @@ le verre (règles visuelles dans `../CLAUDE.md`).
 - **Polices** : par rôle, depuis `src/theme/fonts.ts` (`...F.s500`), jamais
   un nom de fichier.
 - **Animations** : Reanimated 4 (pas Moti, qui dépend de framer-motion 6 et suit mal Reanimated 4).
+- **Refs typées par l'instance** (API TypeScript stricte de React Native, par défaut
+  depuis le SDK 58) : `useRef<ViewInstance>(null)`, `ScrollViewInstance`,
+  `TextInputInstance`, importés de `react-native`. Jamais `useRef<View>` ni
+  `useRef<ScrollView>`, jamais d'import depuis `react-native/Libraries/*`.
+- **Gestes et worklets** : `Gesture.Pan()` (Gesture Handler 3) et `runOnJS` sont
+  dépréciés mais fonctionnent. On les migre (`usePanGesture`, `scheduleOnRN` de
+  `react-native-worklets`) seulement avec un essai sur un vrai iPhone.
+- **`expo prebuild` réécrit les scripts `android` et `ios`** de `package.json`
+  (`expo run:*`). Le projet reste en génération native continue : ne le lancer que
+  dans une copie, ou rétablir `expo start --android` et `expo start --ios`.
 - **Données** : l'état vit dans `src/state/store.tsx` ; connecté, chaque action passe
   aussi par Supabase (`src/state/remote.ts`). Sans compte ou en démonstration (Alice,
   37 pièces), tout reste sur le téléphone. Le profil est dans `src/state/profile.ts`,
@@ -53,7 +63,7 @@ le verre (règles visuelles dans `../CLAUDE.md`).
 ## Commandes
 
 ```bash
-npx expo install <paquet>   # jamais npm install directement : versions compatibles SDK 57
+npx expo install <paquet>   # jamais npm install directement : versions compatibles SDK 58
 npx expo start              # Expo Go sur le téléphone (même Wi-Fi), ou « w » pour le web
 npx tsc --noEmit            # typage
 npx expo export --platform web

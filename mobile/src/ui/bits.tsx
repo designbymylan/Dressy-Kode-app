@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Image, View } from 'react-native';
+import { Image, View, type ViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import type { Piece, Weather } from '../data/wardrobe';
@@ -112,7 +112,7 @@ export function Avatar({ name, size = 44, on, uri }: { name: string; size?: numb
 export type Origin = { x: number; y: number; w: number; h: number };
 
 /** Où est une vignette à l'écran, pour que la fiche qu'elle ouvre naisse d'elle. */
-export function measureOrigin(view: View | null, then: (from?: Origin) => void) {
+export function measureOrigin(view: ViewInstance | null, then: (from?: Origin) => void) {
   if (!view) return then();
   view.measureInWindow((x, y, w, h) => then(w && h ? { x, y, w, h } : undefined));
 }
@@ -132,7 +132,7 @@ export function measureOrigin(view: View | null, then: (from?: Origin) => void) 
 export function PieceTile({ piece, width, onPress, dense, liked, onLike, arriving = null, hold = false, onLanded }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean; liked?: boolean; onLike?: () => void; arriving?: number | null; /** L'écran n'est pas devant : la pièce attend pour se poser sous les yeux. */ hold?: boolean; onLanded?: () => void }) {
   const { scheme, c } = useTheme();
   const art = width * (dense ? 0.62 : 0.56);
-  const frame = useRef<View>(null);
+  const frame = useRef<ViewInstance>(null);
   const reduced = useReducedMotion();
   const landing = arriving !== null;
   const k = useSharedValue(landing && !reduced ? 0 : 1);

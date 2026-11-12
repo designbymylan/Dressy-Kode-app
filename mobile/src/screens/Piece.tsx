@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View } from 'react-native';
+import { View, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -71,7 +71,7 @@ function history(p: PieceT, journal: Record<string, string[]>, demo: boolean) {
  */
 function useGrowFrom(from?: { x: number; y: number; w: number; h: number }) {
   const reduced = useReducedMotion();
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   const armed = useRef(Boolean(from) && !reduced);
   const k = useSharedValue(armed.current ? 0 : 1);
   // Cachée tant qu'elle n'est pas mesurée : pas d'éclair à sa place finale.

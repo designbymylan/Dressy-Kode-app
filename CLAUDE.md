@@ -9,7 +9,7 @@ en français : interface, textes, commentaires, documentation.
 
 Deux applications, un seul projet Supabase :
 
-- **`mobile/` : l'app iPhone (Expo SDK 57, React Native, NativeWind,
+- **`mobile/` : l'app iPhone (Expo SDK 58, React Native, NativeWind,
   Reanimated). C'est le produit principal.** 18 écrans en clair et en sombre,
   branchés sur Supabase quand `mobile/.env` existe (voir `.env.example`),
   en démonstration sans réseau sinon. Travailler sur l'app native est
@@ -636,6 +636,36 @@ pas d'e-mail tant qu'aucun service d'envoi n'est choisi. Premier avis :
 d'effet se pose au moins un mois après la publication. Planche :
 `/apercu/accueil?avis=1`.
 
+**Passage au SDK 58 (12/11), demandé par l'utilisateur** : `mobile/` quitte Expo
+SDK 57 pour le **SDK 58** (`expo` 58.0.25, React Native 0.88.1, React 19.3.0,
+Reanimated 4.7.1, Worklets 0.13.0, Gesture Handler 3.3.0, Screens 4.30,
+Safe Area Context 5.11, SVG 15.16, `react-native-web` 0.21.4), par
+`npx expo install expo@~58.0.25 --fix`. `expo-doctor` passe 20 contrôles sur 20 et
+`npx expo install --check` est vert.
+
+- **API TypeScript stricte de React Native** (par défaut au SDK 58) : une ref se
+  type par l'instance, jamais par le composant (`useRef<ViewInstance>`,
+  `ScrollViewInstance`, `TextInputInstance`). Cinq refs retypées
+  (`ui/bits.tsx`, `ui/onboarding.tsx`, `screens/Dressing.tsx`, `Piece.tsx`,
+  `Kode.tsx`) ; c'était la seule erreur de typage.
+- **Expo Go doit être en SDK 58.** La version d'exécution des mises à jour devient
+  `exposdk:58.0.0` (vérifié dans le projet iOS généré par `expo prebuild`) : le
+  lien fixe de `mobile/README.md` change, et il ne trouve rien tant que
+  `npm run apercu` n'a pas été relancé.
+- **Déprécié mais fonctionnel, à migrer plus tard** : `Gesture.Pan()` de Gesture
+  Handler 3 (`ui/outfit.tsx`, `ui/Sheet.tsx`, remplacé par `usePanGesture`) et
+  `runOnJS` (remplacé par `scheduleOnRN`). À faire avec un essai sur un vrai iPhone.
+- `expo-status-bar` a reçu son plugin de config dans `app.json` (ajouté par la
+  commande, sans réglage). `expo-notifications` affiche désormais les notifications
+  au premier plan par défaut : `state/notifications.ts` le réglait déjà.
+- **Vérifié** : typecheck, exports Metro web et iOS (Hermes) sans avertissement,
+  `expo prebuild` iOS, puis l'aperçu web rejoué dans un navigateur, identique à celui
+  du SDK 57 (16 contrôles sur 16, aucune erreur console, moins de 0,06 % de pixels
+  différents). **Reste à essayer sur un vrai iPhone, dans Expo Go SDK 58** : le glissé
+  des rangées, les feuilles, le verre, les notifications.
+- `npm audit` : 16 vulnérabilités signalées avant, 7 après, toutes dans l'outillage
+  de build (aucune dans le bundle). Ne pas lancer `npm audit fix --force`.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 
@@ -703,7 +733,7 @@ c'est ainsi que la version Dresskode est restée hors ligne jusqu'au 18/10.
 # App mobile
 cd mobile && npx tsc --noEmit                  # vérification des types
 cd mobile && npx expo start                    # Expo Go (--clear après un changement de .env)
-cd mobile && EXPO_OFFLINE=1 npx expo install <paquet>   # ajouter une dépendance compatible SDK 57
+cd mobile && EXPO_OFFLINE=1 npx expo install <paquet>   # ajouter une dépendance compatible SDK 58
 cd mobile && npm run apercu                    # EAS Update : publie dans Expo Go (EXPO_TOKEN requis, voir mobile/README.md)
 python3 design/refonte/contraste.py            # contraste AA de la palette mobile (doit tout passer)
 
