@@ -11,7 +11,7 @@ import { parisDay } from '@/lib/dates';
 import { loadMessages, loadUsage, type KodeMessage, type KodeUsage, type OutfitView } from '@/lib/kode';
 import { loadSavedOutfits } from '@/lib/agenda';
 import { isPeriod, isPlacePack, isPlan } from '@/lib/plans';
-import { CONDITIONS_VERSION } from '@/lib/politique';
+import { AVIS, CONDITIONS_VERSION } from '@/lib/politique';
 import {
   GENDERS, GOALS, STYLES, ITEMS, JEWELRY, METALS, ACCESSORIES, COLOURS, AVOID, OCCASIONS,
   MORNING_TIME, TIME_INTENT, ASSISTANCE, NO_JEWELRY, couleurDuNom, type Answers,
@@ -1069,4 +1069,23 @@ export async function listSavedOutfits(): Promise<ActionResult<{ outfits: Outfit
   if (!viewer) return { error: 'Session expirée.' };
   const supabase = await createClient();
   return { ok: true, outfits: await loadSavedOutfits(supabase, viewer) };
+}
+
+/**
+ * « Compris » sous un avis de changement (12/11) : la date de lecture rejoint
+ * le compte (`avis_lus`), preuve que la personne a été prévenue ; l'avis ne
+ * revient ni sur le site ni dans l'app. Le compte est relu d'abord, pour ne
+ * rien perdre d'un avis lu ailleurs.
+ */
+export async function marquerAvisLu(id: string): Promise<void> {
+  if (!AVIS.some((a) => a.id === id)) return;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const prev = (user.user_metadata ?? {}).avis_lus;
+  const lus: Record<string, string> = prev && typeof prev === 'object' ? { ...prev } : {};
+  if (lus[id]) return;
+  lus[id] = new Date().toISOString();
+  const { error } = await supabase.auth.updateUser({ data: { avis_lus: lus } });
+  if (error) console.error('avis :', error.message);
 }

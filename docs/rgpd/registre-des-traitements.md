@@ -44,6 +44,10 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   (Apple, Google si utilisés), prénom, nom, pseudo, nom affiché, photo de
   profil (facultatifs). La case « J'ai 15 ans ou plus » conditionne
   l'inscription ; elle n'est pas conservée.
+  Gardés comme preuve, dans les métadonnées du compte : la version des
+  conditions acceptée et son heure (`conditions`, 08/11), et la date de
+  lecture de chaque avis de changement (`avis_lus`, 12/11 : « Compris » sous
+  le bandeau de l'accueil, voir `AVIS` dans `mobile/src/data/legal.ts`).
 - **Tables et fichiers** : `auth.users`, `profiles`, `spaces`,
   `space_members` ; photo de profil dans le seau `uploads`
   (`<space_id>/avatar-…`).

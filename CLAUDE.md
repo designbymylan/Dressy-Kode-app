@@ -619,6 +619,23 @@ changent.
   inscrit l'espace sur demande écrite, il sort du calcul. « En bref » n'a pas
   bougé. À faire relire par le juriste avec le reste.
 
+**Prévenir d'un changement (12/11), demandé par l'utilisateur** : les
+conditions promettent « Nous te prévenons dans l'app avant qu'un changement
+important s'applique », et le RGPD le demande quand la politique change ce
+qu'on fait des données. Une seule source, `AVIS` (`mobile/src/data/legal.ts`,
+copiée sur le web par `node tools/politique.mjs`) : un avis par changement qui
+compte (identifiant jamais réutilisé, date de publication, date d'effet, titre,
+une ou deux phrases). Il s'affiche en **bandeau beurre en tête de l'accueil**
+(app `AvisCard`, `state/avis.ts` ; site `AvisBand.tsx`, `lib/avis.ts`) pour un
+compte créé avant sa publication, avec « Lire » et « Compris ». La lecture est
+gardée dans les métadonnées du compte (`avis_lus`, identifiant → date), preuve
+que la personne a été prévenue, et vaut pour tous ses appareils ; sans réseau,
+le téléphone la renvoie au lancement suivant. Pas de fenêtre qui s'ouvre seule,
+pas d'e-mail tant qu'aucun service d'envoi n'est choisi. Premier avis :
+`politique-1.3`. **Pour un changement important des conditions**, la date
+d'effet se pose au moins un mois après la publication. Planche :
+`/apercu/accueil?avis=1`.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

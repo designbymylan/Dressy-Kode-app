@@ -5,7 +5,7 @@
  * docs/rgpd/politique-de-confidentialite.md, docs/rgpd/conditions-generales.md
  * et la page /confidentialite du site en sont tirés par
  * `node tools/politique.mjs`, à relancer après toute modification (et une
- * nouvelle version si elle compte).
+ * nouvelle version si elle compte, avec son avis dans `AVIS`, plus bas).
  *
  * L'identité de l'éditeur est renseignée (08/11, d'après l'extrait INPI).
  * Restent à compléter avant la sortie : l'e-mail et le téléphone de contact,
@@ -39,6 +39,57 @@ export const HEBERGEURS = [
 ];
 
 export const POLITIQUE_VERSION = 'Version 1.3 du 12 novembre 2026';
+
+/**
+ * Prévenir d'un changement (12/11) : les conditions le promettent (« Nous te
+ * prévenons dans l'app avant qu'un changement important s'applique »), et le
+ * RGPD le demande quand la politique change ce que nous faisons des données.
+ *
+ * Un avis par changement qui compte, le plus récent en tête. Il s'affiche en
+ * bandeau beurre en tête de l'accueil (app et site) pour un compte créé avant
+ * `publie`, jusqu'à « Compris » ; la date de lecture est gardée avec le compte
+ * (`avis_lus`, métadonnées du compte), elle sert de preuve. Pas de fenêtre
+ * qui s'ouvre seule (règle « jamais de pop-up »), pas d'e-mail tant qu'aucun
+ * service d'envoi n'est choisi.
+ *
+ * Pour un changement important des conditions, `effet` se pose au moins un
+ * mois après `publie` (temps de résilier sans frais).
+ *  - id : jamais réutilisé (« politique-1.3 », « conditions-1.3 »).
+ *  - publie, effet : AAAA-MM-JJ.
+ *  - texte : une ou deux phrases, ce qui change pour la personne.
+ */
+export type Avis = { id: string; doc: 'politique' | 'conditions'; publie: string; effet: string; titre: string; texte: string };
+
+export const AVIS: Avis[] = [
+  {
+    id: 'politique-1.3',
+    doc: 'politique',
+    publie: '2026-11-12',
+    effet: '2026-11-12',
+    titre: 'Notre politique de confidentialité change',
+    texte: 'Nous comptons, en chiffres d’ensemble seulement, combien de personnes portent une tenue et reviennent. Rien de nouveau n’est collecté, et tu peux t’y opposer.',
+  },
+];
+
+/**
+ * L'avis à montrer : le plus récent, publié après l'inscription (`inscritLe`,
+ * horodatage du compte) et pas encore lu. Le même calcul sur le site
+ * (`web/src/lib/avis.ts`).
+ */
+export function avisAMontrer(inscritLe: string | null, lus: readonly string[]): Avis | null {
+  if (!inscritLe) return null;
+  const jour = inscritLe.slice(0, 10);
+  return AVIS.find((a) => jour < a.publie && !lus.includes(a.id)) ?? null;
+}
+
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+/** « À partir du 15 décembre » tant que le changement attend, « Depuis le 12 novembre » ensuite. `aujourdhui` : AAAA-MM-JJ. */
+export function avisQuand(a: Avis, aujourdhui: string): string {
+  const [, m, j] = a.effet.split('-').map(Number);
+  const date = `${j === 1 ? '1er' : j} ${MOIS[m - 1]}`;
+  return aujourdhui < a.effet ? `À partir du ${date}` : `Depuis le ${date}`;
+}
 
 /** Les durées de conservation, les mêmes que celles appliquées chaque nuit (fonction `menage`). */
 export const DUREES = {

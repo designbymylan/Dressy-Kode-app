@@ -5,6 +5,7 @@ import { suggestOutfits } from '@/lib/outfits';
 import { HomeView } from '@/components/HomeView';
 import { TabBar } from '@/components/TabBar';
 import { parisDay } from '@/lib/dates';
+import { AVIS } from '@/lib/politique';
 import { MOTS, PIECES, contexteFictif, outfit } from '../fixtures';
 
 /**
@@ -17,12 +18,13 @@ import { MOTS, PIECES, contexteFictif, outfit } from '../fixtures';
  *   ?etat=vide    espace sans aucune pièce
  *   ?etat=debut   quelques pièces, pas encore de tenue possible
  *   (sans)        le dressing d'Alice, accueil complet
+ *   &avis=1       avec l'avis de changement le plus récent en tête
  */
 export const dynamic = 'force-dynamic';
 
-export default async function ApercuAccueil({ searchParams }: { searchParams: Promise<{ etat?: string }> }) {
+export default async function ApercuAccueil({ searchParams }: { searchParams: Promise<{ etat?: string; avis?: string }> }) {
   if (process.env.DRESSY_APERCU !== '1') notFound();
-  const { etat } = await searchParams;
+  const { etat, avis } = await searchParams;
 
   const pieces = etat === 'vide' ? [] : etat === 'debut' ? PIECES.filter((p) => ['h1', 'h2', 'c1'].includes(p.id)) : PIECES;
   const contexte = contexteFictif();
@@ -55,7 +57,7 @@ export default async function ApercuAccueil({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <HomeView home={home} name="Alice" />
+      <HomeView home={home} name="Alice" avis={avis === '1' ? (AVIS[0] ?? null) : null} />
       <TabBar active="/accueil" />
     </>
   );

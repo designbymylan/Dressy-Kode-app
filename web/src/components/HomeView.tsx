@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Home } from '@/lib/accueil';
-import { parisDateLabel, parisHour } from '@/lib/dates';
+import { parisDateLabel, parisDay, parisHour } from '@/lib/dates';
 import { tendancesChezToi } from '@/lib/contexte';
 import { canCompose, missingForOutfit, sleeping } from '@/lib/outfits';
 import { HomeToday } from '@/components/HomeToday';
@@ -9,6 +9,8 @@ import { Sleeping, Trend } from '@/components/HomeSections';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { Icon } from '@/components/icons';
 import { Screen, Card } from '@/components/ui';
+import { AvisBand } from '@/components/AvisBand';
+import type { Avis } from '@/lib/avis';
 
 const WORD = { soleil: 'soleil', nuages: 'nuageux', pluie: 'pluie', averses: 'averses' } as const;
 
@@ -20,7 +22,7 @@ const WORD = { soleil: 'soleil', nuages: 'nuageux', pluie: 'pluie', averses: 'av
  * (aucune tenue possible) ne voit que son premier pas ; les sections
  * reviennent dès la première tenue.
  */
-export function HomeView({ home, name }: { home: Home; name: string | null }) {
+export function HomeView({ home, name, avis = null }: { home: Home; name: string | null; avis?: Avis | null }) {
   const { pieces, outfits, worn, now, city, hasCity, eventsToday, week, trip, contexte } = home;
   const n = pieces.length;
   const ready = outfits.length > 0;
@@ -71,6 +73,9 @@ export function HomeView({ home, name }: { home: Home; name: string | null }) {
           </div>
         ) : null}
       </header>
+
+      {/* Un changement des conditions ou de la politique (12/11) : prévenu avant tout le reste. */}
+      {avis ? <AvisBand avis={avis} today={parisDay()} /> : null}
 
       {n === 0 ? (
         <Card center i={1}>

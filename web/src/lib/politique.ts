@@ -410,3 +410,17 @@ export const CONDITIONS: Section[] = [
     ]
   }
 ];
+
+/** Les avis de changement, le plus récent en tête (lib/avis.ts dit lequel montrer). */
+export type Avis = { id: string; doc: 'politique' | 'conditions'; publie: string; effet: string; titre: string; texte: string };
+
+export const AVIS: Avis[] = [
+  {
+    "id": "politique-1.3",
+    "doc": "politique",
+    "publie": "2026-11-12",
+    "effet": "2026-11-12",
+    "titre": "Notre politique de confidentialité change",
+    "texte": "Nous comptons, en chiffres d’ensemble seulement, combien de personnes portent une tenue et reviennent. Rien de nouveau n’est collecté, et tu peux t’y opposer."
+  }
+];

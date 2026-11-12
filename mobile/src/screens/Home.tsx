@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Linking, ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +21,8 @@ import { Card, Tag, WeatherIcon } from '../ui/bits';
 import { NotForMeSheet } from '../ui/ecart';
 import { bilanDe, jourDeBilan, motDuPort, serie } from '../state/bilan';
 import { useOnce } from '../state/once';
+import { useAvis } from '../state/avis';
+import { CONDITIONS_URL, avisQuand } from '../data/legal';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -114,6 +116,9 @@ export function Home() {
           </View>
         </View>
 
+        {/* Un changement des conditions ou de la politique (12/11) : prévenu avant tout le reste, jusqu'à « Compris ». */}
+        <AvisCard />
+
         {/* Un dressing pas encore prêt : l'appel à ajouter reste en tête, quel que soit l'ordre choisi. */}
         {!outfits.length && <EmptyToday />}
 
@@ -126,6 +131,33 @@ export function Home() {
           .map((m) => (m.id === 'tenue' ? outfits.length ? <TodayCard key="tenue" W={W} /> : null : <Module key={m.id} id={m.id} W={W} />))}
       </Animated.ScrollView>
     </View>
+  );
+}
+
+/**
+ * L'avis de changement (12/11, `AVIS` dans data/legal.ts) : un bandeau beurre,
+ * ce qui change en une phrase, « Lire » le texte, « Compris » le range pour
+ * de bon (la lecture est gardée avec le compte).
+ */
+function AvisCard() {
+  const [avis, lu] = useAvis();
+  const nav = useNavigation<Nav>();
+  if (!avis) return null;
+  const lire = () => (avis.doc === 'politique' ? nav.navigate('Confidentialite') : Linking.openURL(CONDITIONS_URL));
+  return (
+    <Animated.View entering={FadeIn.duration(320)}>
+      <Card className="bg-butter" style={{ gap: 12 }} testID="home-avis">
+        <View style={{ gap: 6 }}>
+          <T v="label">{avisQuand(avis, isoOf(0))}</T>
+          <T v="cardTitle" accessibilityRole="header">{avis.titre}</T>
+          <T v="body">{avis.texte}</T>
+        </View>
+        <View className="flex-row" style={{ gap: 8 }}>
+          <Button label="Lire" variant="secondary" size="m" grow onPress={lire} testID="home-avis-lire" />
+          <Button label="Compris" variant="dark" size="m" grow onPress={lu} testID="home-avis-compris" />
+        </View>
+      </Card>
+    </Animated.View>
   );
 }
 

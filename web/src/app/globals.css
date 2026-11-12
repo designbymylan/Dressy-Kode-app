@@ -328,6 +328,17 @@ img { display: block; }
 }
 .band .muted { color: var(--butter-ink); opacity: 0.78; }
 
+/* L'avis de changement (12/11) : en tête de l'accueil, jusqu'à « Compris ». */
+.avis-band { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.avis-band .eyebrow { color: var(--butter-ink); opacity: 0.78; }
+.avis-band h2 { font-size: 20px; font-weight: 400; color: var(--butter-ink); }
+.avis-band p { color: var(--butter-ink); }
+.avis-band__actions { display: flex; gap: 8px; margin-top: 6px; }
+.avis-band__actions .btn { flex: 1; }
+.avis-band__ok { background: var(--butter-ink); color: var(--butter); border-color: transparent; }
+/* Le beurre reste clair en sombre : « Lire » garde son verre clair dessus. */
+.avis-band .btn-glass { background: rgba(255, 255, 255, 0.72); color: var(--butter-ink); border-color: rgba(255, 255, 255, 0.85); }
+
 /* ---------- typographie d'écran ---------- */
 
 .screen {

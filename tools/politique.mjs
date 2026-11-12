@@ -5,7 +5,7 @@
  *
  *   docs/rgpd/politique-de-confidentialite.md   (à lire, à joindre)
  *   docs/rgpd/conditions-generales.md           (à lire, à faire relire)
- *   web/src/lib/politique.ts                    (les pages /confidentialite et /conditions)
+ *   web/src/lib/politique.ts                    (les pages /confidentialite et /conditions, les avis de changement)
  *
  *   node tools/politique.mjs           écrit les deux copies
  *   node tools/politique.mjs --check   vérifie qu'elles sont à jour (code 1 sinon)
@@ -20,7 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 process.removeAllListeners('warning');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Une URL file:// et non un chemin : sous Windows, import() refuse « C:\… ».
-const { EDITEUR, POLITIQUE, POLITIQUE_VERSION, CONDITIONS, CONDITIONS_VERSION, HEBERGEURS } = await import(pathToFileURL(path.join(root, 'mobile/src/data/legal.ts')).href);
+const { EDITEUR, POLITIQUE, POLITIQUE_VERSION, CONDITIONS, CONDITIONS_VERSION, HEBERGEURS, AVIS } = await import(pathToFileURL(path.join(root, 'mobile/src/data/legal.ts')).href);
 
 const editeur = [EDITEUR.nom, EDITEUR.forme, EDITEUR.adresse, EDITEUR.siren && `SIREN ${EDITEUR.siren}`].filter(Boolean).join(' · ');
 const contact = EDITEUR.contact ?? 'L’adresse de contact sera indiquée ici avant la sortie de l’app.';
@@ -94,6 +94,11 @@ const ts = [
   `export const HEBERGEURS: string[] = ${JSON.stringify(HEBERGEURS, null, 2)};`,
   '',
   `export const CONDITIONS: Section[] = ${JSON.stringify(CONDITIONS, null, 2)};`,
+  '',
+  '/** Les avis de changement, le plus récent en tête (lib/avis.ts dit lequel montrer). */',
+  "export type Avis = { id: string; doc: 'politique' | 'conditions'; publie: string; effet: string; titre: string; texte: string };",
+  '',
+  `export const AVIS: Avis[] = ${JSON.stringify(AVIS, null, 2)};`,
   '',
 ].join('\n');
 

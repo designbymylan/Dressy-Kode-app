@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { avisLus } from '@/lib/avis';
 
 export type Theme = 'light' | 'dark' | 'auto';
 const THEMES: readonly Theme[] = ['light', 'dark', 'auto'];
@@ -24,6 +25,9 @@ export type Viewer = {
   /** Prénom donné par Google ou Apple à la première connexion, s'il y en a un. */
   givenName: string | null;
   onboardedAt: string | null;
+  /** Création du compte, et les avis de changement déjà lus (lib/avis.ts). */
+  inscritLe: string;
+  avisLus: string[];
   spaceId: string;
   spaceName: string;
   settings: Settings;
@@ -67,6 +71,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     displayName: profile?.display_name ?? null,
     givenName: full ? full.split(/\s+/)[0].slice(0, 30) : null,
     onboardedAt: profile?.onboarded_at ?? null,
+    inscritLe: user.created_at,
+    avisLus: avisLus(meta),
     spaceId: space.id,
     spaceName: space.name,
     settings: settings as Settings,

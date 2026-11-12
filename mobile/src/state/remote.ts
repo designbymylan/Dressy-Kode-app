@@ -288,6 +288,34 @@ export async function signOut() {
   await db().auth.signOut().catch(() => undefined);
 }
 
+/** Les avis de changement (12/11) : l'inscription et les avis lus, tirés du compte gardé sur le téléphone, sans appel réseau. */
+export async function avisDuCompte(): Promise<{ inscritLe: string; lus: string[] } | null> {
+  const { data: { session } } = await db().auth.getSession();
+  if (!session) return null;
+  const lus = session.user.user_metadata?.avis_lus;
+  return { inscritLe: session.user.created_at, lus: lus && typeof lus === 'object' ? Object.keys(lus) : [] };
+}
+
+/**
+ * « Compris » : la date de lecture rejoint le compte (métadonnées `avis_lus`),
+ * preuve que la personne a été prévenue, et l'avis ne revient sur aucun
+ * appareil. Le compte est relu d'abord, pour ne rien perdre d'un avis lu
+ * ailleurs.
+ */
+export async function marquerAvisLus(ids: string[]): Promise<void> {
+  const sb = db();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const prev = user.user_metadata?.avis_lus;
+  const lus: Record<string, string> = prev && typeof prev === 'object' ? { ...prev } : {};
+  const neufs = ids.filter((id) => !lus[id]);
+  if (!neufs.length) return;
+  const now = new Date().toISOString();
+  for (const id of neufs) lus[id] = now;
+  const { error } = await sb.auth.updateUser({ data: { avis_lus: lus } });
+  if (error) throw new Error(`avis : ${error.message}`);
+}
+
 /** Le compte connecté, tout entier ; null sans session. */
 export async function loadAccount(): Promise<Account | null> {
   const sb = db();
