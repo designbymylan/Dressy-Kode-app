@@ -17,6 +17,9 @@ const SUGGESTIONS = [
   "Je n'ai rien à me mettre",
 ];
 
+/** Les suites d'une réponse (12/11, comme l'app) : sous la dernière tenue, trois puces pour l'ajuster sans retaper. Kodi relit la conversation. */
+const SUITES = ['Une autre idée', 'Plus habillée', 'Plus décontractée'];
+
 const bubble = {
   maxWidth: '84%', borderRadius: 22, padding: '12px 16px', fontSize: 15, lineHeight: 1.45, whiteSpace: 'pre-wrap',
 } as const;
@@ -184,7 +187,7 @@ export function KodeChat({
           Dis-moi ce que tu as de prévu, je regarde ce que tu as déjà.
         </p>
 
-        {messages.map((m) =>
+        {messages.map((m, i) =>
           m.author === 'user' ? (
             <p
               key={m.id}
@@ -232,6 +235,15 @@ export function KodeChat({
                     </button>
                   </div>
                 </OutfitCard>
+              ) : null}
+              {m.outfit && i === messages.length - 1 && !busy && !closed ? (
+                <div className="pop" role="group" aria-label="Ajuster cette tenue" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {SUITES.map((q) => (
+                    <button key={q} type="button" className="chip" onClick={() => send(q)}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
               ) : null}
             </div>
           ),
