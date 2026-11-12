@@ -45,7 +45,8 @@
           "microphonePermission": false
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-status-bar"
     ],
     "backgroundColor": "#F1ECE3",
     "extra": {

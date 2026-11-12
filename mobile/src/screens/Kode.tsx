@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, TextInput, View, type ScrollView } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,7 +34,7 @@ export function Kode() {
   const { c } = useTheme();
   const [text, setText] = useState('');
   const [keyboard, setKeyboard] = useState(false);
-  const list = useRef<ScrollView>(null);
+  const list = useRef<ComponentRef<typeof ScrollView>>(null);
   // Les réponses déjà là à l'ouverture se relisent ; seules les nouvelles tenues s'assemblent.
   const known_ = useRef(new Set(s.messages.map((m) => m.id)));
   const left = questionsLeft(s);

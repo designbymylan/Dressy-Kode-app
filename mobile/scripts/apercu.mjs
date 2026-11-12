@@ -1,7 +1,7 @@
 // Publie l'app dans Expo Go par EAS Update : `npm run apercu`.
 //
 // Sans ordinateur ni compte Apple payant : la mise à jour s'ouvre dans Expo Go
-// (runtimeVersion « sdkVersion » dans app.json, donc exposdk:57.0.0), sur un
+// (runtimeVersion « sdkVersion » dans app.json, donc exposdk:58.0.0), sur un
 // iPhone connecté au même compte Expo que le projet. Le lien affiché à la fin
 // ne change pas : il ouvre toujours la dernière version du canal « apercu ».
 //

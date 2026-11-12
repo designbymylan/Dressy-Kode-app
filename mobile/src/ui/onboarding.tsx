@@ -2,7 +2,7 @@
  * Les pièces de l'onboarding : règle graduée, emplacements photo, figure de
  * mesures, cartes de style, couleurs aimées/évitées, premier portant.
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Platform, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
@@ -30,7 +30,7 @@ const TICK = 10;
  */
 export function Ruler({ value, onChange, min, max, unit, label, width, testID }: { value: number; onChange: (v: number) => void; min: number; max: number; unit: string; label: string; width: number; testID?: string }) {
   const { c } = useTheme();
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
   const last = useRef(value);
   const pad = width / 2;
   const count = max - min;

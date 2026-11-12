@@ -31,7 +31,7 @@ l'échelle est dans `src/theme/tokens.ts` (`type`).
 
 ## L'essayer sur ton iPhone
 
-1. Installe **Expo Go** depuis l'App Store (il doit être en version SDK 57).
+1. Installe **Expo Go** depuis l'App Store (il doit être en version SDK 58).
 2. Sur ton ordinateur, dans ce dossier :
    ```bash
    npm install
@@ -59,8 +59,8 @@ qui ouvre toujours la dernière version dans Expo Go, branchée sur Supabase.
 - Sur l'iPhone, Expo Go doit être connecté à un compte Expo membre de l'organisation
   `dresskodes-team` (propriétaire du projet).
 - Lien fixe vers la dernière version (canal `apercu`) :
-  `exp://u.expo.dev/7d598be6-b07e-4f0d-b7b0-2623fa014d12?runtime-version=exposdk%3A57.0.0&channel-name=apercu`
-- `runtimeVersion` reste en `sdkVersion` (`exposdk:57.0.0`) : c'est ce qui permet à Expo
+  `exp://u.expo.dev/7d598be6-b07e-4f0d-b7b0-2623fa014d12?runtime-version=exposdk%3A58.0.0&channel-name=apercu`
+- `runtimeVersion` reste en `sdkVersion` (`exposdk:58.0.0`) : c'est ce qui permet à Expo
   Go de charger la mise à jour. Le jour d'une vraie build (TestFlight, App Store), on
   passera à `fingerprint` et à des builds `eas build --profile preview` (`eas.json`).
 - `npm run apercu -- "message"` pour nommer la version, `-- --android` pour publier

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -495,7 +495,7 @@ function Hanging({
   piece: Piece; index: number; swing: SharedValue<number>; shelf: boolean; dark: boolean; rod: string;
   arriving: number | null; onLanded: () => void; onPress: (from?: Origin) => void;
 }) {
-  const art = useRef<View>(null);
+  const art = useRef<ComponentRef<typeof View>>(null);
   const reduced = useReducedMotion();
   const k = 0.8 + (index % 3) * 0.15;
   const drop = useSharedValue(arriving !== null && !reduced ? 1 : 0);

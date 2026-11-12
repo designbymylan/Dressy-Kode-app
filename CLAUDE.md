@@ -9,7 +9,7 @@ en français : interface, textes, commentaires, documentation.
 
 Deux applications, un seul projet Supabase :
 
-- **`mobile/` : l'app iPhone (Expo SDK 57, React Native, NativeWind,
+- **`mobile/` : l'app iPhone (Expo SDK 58, React Native, NativeWind,
   Reanimated). C'est le produit principal.** 18 écrans en clair et en sombre,
   branchés sur Supabase quand `mobile/.env` existe (voir `.env.example`),
   en démonstration sans réseau sinon. Travailler sur l'app native est
@@ -630,7 +630,7 @@ c'est ainsi que la version Dresskode est restée hors ligne jusqu'au 18/10.
 # App mobile
 cd mobile && npx tsc --noEmit                  # vérification des types
 cd mobile && npx expo start                    # Expo Go (--clear après un changement de .env)
-cd mobile && EXPO_OFFLINE=1 npx expo install <paquet>   # ajouter une dépendance compatible SDK 57
+cd mobile && EXPO_OFFLINE=1 npx expo install <paquet>   # ajouter une dépendance compatible SDK 58
 cd mobile && npm run apercu                    # EAS Update : publie dans Expo Go (EXPO_TOKEN requis, voir mobile/README.md)
 python3 design/refonte/contraste.py            # contraste AA de la palette mobile (doit tout passer)
 

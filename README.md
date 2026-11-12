@@ -8,7 +8,7 @@ avec ce qu'on possède déjà.
 
 | Dossier | Contenu |
 |---|---|
-| `mobile/` | L'app iPhone (Expo SDK 57, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, branchée sur Supabase (mode démonstration sans réseau). Voir `mobile/README.md`. |
+| `mobile/` | L'app iPhone (Expo SDK 58, NativeWind, Reanimated) : la refonte, 18 écrans en clair et sombre, branchée sur Supabase (mode démonstration sans réseau). Voir `mobile/README.md`. |
 | `web/` | L'application web (Next.js App Router, React 19, `@supabase/ssr`), branchée sur Supabase. |
 | `supabase/functions/dressy-agent/` | L'agent central : photo → Opus 5 (toutes les pièces) → Nano Banana (une image par pièce, en parallèle) → Sonnet 5 → dressing. |
 | `supabase/functions/kode/` | Kodi, le styliste : question → Claude → tenue composée avec les pièces du dressing. |

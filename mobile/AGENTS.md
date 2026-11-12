@@ -1,4 +1,4 @@
-Application mobile Dresskode : Expo SDK 57 (React Native 0.86), iOS d'abord.
+Application mobile Dresskode : Expo SDK 58 (React Native 0.88), iOS d'abord.
 Disposition : « version cartes » du 05/10 (voir `../CLAUDE.md`), sur la base B « Éditorial »
 (`../design/refonte/02-design-system.md`).
 Apparence : couleurs de la « galerie » et typographie v2 (Inter Tight et Inter), sur les arrondis et
@@ -53,7 +53,7 @@ le verre (règles visuelles dans `../CLAUDE.md`).
 ## Commandes
 
 ```bash
-npx expo install <paquet>   # jamais npm install directement : versions compatibles SDK 57
+npx expo install <paquet>   # jamais npm install directement : versions compatibles SDK 58
 npx expo start              # Expo Go sur le téléphone (même Wi-Fi), ou « w » pour le web
 npx tsc --noEmit            # typage
 npx expo export --platform web
