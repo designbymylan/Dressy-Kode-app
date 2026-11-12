@@ -594,6 +594,24 @@ changent.
 - Vérifié dans l'aperçu navigateur (19 contrôles) ; les gestes restent à
   essayer sur un vrai iPhone.
 
+**Suite du 12/11, demandée par l'utilisateur** :
+
+- **Tirer pour actualiser** (`usePullRefresh`, `ui/refresh.tsx`) sur Accueil,
+  Dressing, Calendrier et Moi, compte connecté seulement (sans compte, il n'y
+  a rien à relire, donc pas de geste). Le compte et les données du jour sont
+  relus (`a.refresh`, action `resync`) sans toucher à l'écran en cours :
+  tenue montrée, dessins suivis, conversation en route.
+- **« Je la porte » dans le Calendrier** (`screens/Agenda.tsx`), sous la
+  tenue d'aujourd'hui, prévue ou proposée.
+- **Mesure de l'usage** : vue `usage_funnel` (migration `mesure_usage`), une
+  ligne d'agrégats sur les données déjà en base : première tenue portée,
+  retour le lendemain et dans la semaine, question posée à Kodi. Aucune
+  nouvelle collecte, aucun service externe ; fermée au client, compte
+  créateur écarté. Elle se lit dans Supabase : `select * from usage_funnel;`.
+  « Retour » veut dire un acte (pièce ajoutée, port, question), pas une
+  ouverture de l'app : mesurer les ouvertures demanderait une nouvelle
+  donnée, donc une décision. Registre des traitements, §7 ter.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

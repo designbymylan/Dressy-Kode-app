@@ -172,6 +172,22 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Durée** : journal, 13 mois ; images en cache, 30 jours (fonction `menage`,
   RPC `purge_generation`) ; le tout part avec le compte.
 
+### 7 ter. Mesure de l'usage (12/11)
+
+- **Finalité** : savoir si l'app tient sa promesse, par trois chiffres
+  d'ensemble : part des comptes qui portent une première tenue, part qui
+  revient le lendemain ou dans la semaine, part qui pose une question à Kodi.
+- **Base** : intérêt légitime (améliorer le service, art. 6.1.f).
+- **Données** : aucune nouvelle. La vue relit des dates déjà gardées pour
+  d'autres finalités (création du compte §1, ajout d'une pièce §2, question à
+  Kodi §3, port noté §6) et n'en sort que des comptes et des parts. Ni
+  identifiant, ni contenu, ni traceur, ni ouverture de l'app.
+- **Table** : vue `usage_funnel` (une seule ligne d'agrégats, fermée au
+  client, lue seulement par l'éditeur). Le compte créateur en est écarté.
+- **Destinataires** : Supabase.
+- **Durée** : rien n'est stocké ; les chiffres se recalculent à chaque
+  lecture et suivent les durées des données d'origine.
+
 ## 8. Rappels
 
 - **Finalité** : rappeler la tenue du matin, le planning, le bilan du

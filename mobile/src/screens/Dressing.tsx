@@ -21,6 +21,7 @@ import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { UsagePanel } from '../ui/usage';
 import { FavorisView } from '../ui/favoris';
+import { usePullRefresh } from '../ui/refresh';
 import { KodeThinking } from '../ui/KodeThinking';
 import { isActive, isPiece, jobStep } from '../state/jobs';
 import type { Nav, Route } from '../navigation/types';
@@ -63,6 +64,7 @@ export function Dressing() {
 
   const limit = pieceLimit(s);
   const top = useTabTop();
+  const refreshControl = usePullRefresh(top - 8);
   // Ce que Kodi dessine en ce moment (12/11) : on le voit ici, là où les pièces vont arriver.
   const working = s.jobs.filter(isActive);
   const drawing = working.filter(isPiece).length;
@@ -277,7 +279,7 @@ export function Dressing() {
       <View className="bg-paper" style={{ flex: 1 }} testID="screen-dressing-favoris">
         <Ambient />
         <ScrollEdge y={edge} />
-        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}>
+        <Animated.ScrollView refreshControl={refreshControl} onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 18 }}>
           {header}
           <FavorisView
             pieces={list}
@@ -311,6 +313,7 @@ export function Dressing() {
           data={list}
           numColumns={cols}
           keyExtractor={(p) => p.id}
+          refreshControl={refreshControl}
           onScroll={onScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
@@ -356,7 +359,7 @@ export function Dressing() {
     <View className="bg-paper" style={{ flex: 1 }}>
       <Ambient />
       <ScrollEdge y={edge} />
-      <Animated.ScrollView testID="screen-dressing" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
+      <Animated.ScrollView testID="screen-dressing" refreshControl={refreshControl} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 22 }}>
         {header}
         {s.pieces.length === 0 ? (
           <View style={{ paddingHorizontal: space.gutter }}>

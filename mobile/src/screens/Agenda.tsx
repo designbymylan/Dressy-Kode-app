@@ -15,6 +15,8 @@ import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
 import { F } from '../theme/fonts';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
+import { usePullRefresh } from '../ui/refresh';
+import { motDuPort } from '../state/bilan';
 import { Badge, Card, DotChip, Tag, WeatherIcon } from '../ui/bits';
 import { OutfitBoard } from '../ui/outfit';
 import { Icon } from '../ui/Icon';
@@ -36,6 +38,7 @@ export function Agenda() {
   const [day, setDay] = useState(0);
   const [week, setWeek] = useState(0);
   const top = useTabTop();
+  const refreshControl = usePullRefresh(top - 8);
 
   useEffect(() => {
     if (route.params?.day !== undefined) {
@@ -101,7 +104,7 @@ export function Agenda() {
     <View style={{ flex: 1 }} className="bg-paper">
       <Ambient />
       <ScrollEdge y={edge} />
-      <Animated.ScrollView testID="screen-agenda" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 12 }}>
+      <Animated.ScrollView testID="screen-agenda" refreshControl={refreshControl} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 12 }}>
         {/* Le calendrier, au centre de la page (06/10) : la semaine, sa météo et ses rendez-vous d'un coup d'œil. */}
         <Card style={{ padding: 14, gap: 14 }} testID="agenda-calendar">
           <View className="flex-row items-center justify-between">
@@ -217,6 +220,8 @@ export function Agenda() {
               <OutfitBoard pieces={pieces} width={W - 28 - 24} numbered={false} onPiece={(p) => nav.navigate('Piece', { id: p.id })} />
             </View>
             <T v="cardTitle" style={{ paddingHorizontal: 4 }}>{planned.title}</T>
+            {/* Aujourd'hui (12/11) : la tenue se porte d'ici aussi, sans repasser par l'accueil. */}
+            {day === 0 && !todayOutfit && <Button testID="agenda-wear" label="Je la porte" size="m" feedback="success" onPress={() => a.wear(pieces.map((p) => p.id), motDuPort(s.journal))} />}
             {!todayOutfit && <Button testID="agenda-change" label="Changer la tenue" variant="quiet" size="m" icon="layers" onPress={() => nav.navigate('Compose', { date: iso, pieces: planned.pieces })} />}
           </Card>
         ) : (

@@ -30,6 +30,7 @@ import { Ambient } from '../ui/Ambient';
 import { AccountSheet } from '../ui/account';
 import { Avatar, Card, DotChip, Ring, Tag } from '../ui/bits';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
+import { usePullRefresh } from '../ui/refresh';
 import { PLANS, price } from './Offers';
 import type { Nav } from '../navigation/types';
 
@@ -40,6 +41,7 @@ export function Me() {
   const edge = useSharedValue(0);
   const onScroll = useTabScroll(edge);
   const top = useTabTop();
+  const refreshControl = usePullRefresh(top - 8);
   const { c, scheme } = useTheme();
   const [account, setAccount] = useState(false);
   const p = s.profile;
@@ -81,7 +83,7 @@ export function Me() {
       <Ambient />
       <ScrollEdge y={edge} />
       <TabHeader title="Profil" y={edge} actions={[{ icon: 'gear', label: 'Réglages', onPress: () => nav.navigate('Settings'), testID: 'me-settings' }]} />
-      <Animated.ScrollView testID="screen-me" onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top + 4, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 14 }}>
+      <Animated.ScrollView testID="screen-me" refreshControl={refreshControl} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top + 4, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 14 }}>
         {/* Toi (09/10) : la photo à gauche, le nom choisi en fin, le pseudo dessous. */}
         <Tap testID="me-avatar" onPress={() => nav.navigate('ProfileEdit')} accessibilityLabel="Modifier mon profil" scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 4 }}>
           <View>

@@ -258,6 +258,7 @@ export function tenuesDuJour(s: Pick<State, 'pieces' | 'planned' | 'ecarts' | 'c
 type Action =
   | { t: 'hydrate'; patch: Partial<State> }
   | { t: 'account'; acc: Account }
+  | { t: 'resync'; acc: Account }
   | { t: 'session'; session: Session | null; pendingEmail: string | null }
   | { t: 'onboard'; profile: Profile; pieces: Piece[]; photos: Photo[] }
   | { t: 'pendingPhotos'; photos: Photo[] }
@@ -351,6 +352,42 @@ function reducer(s: State, a: Action): State {
         creator: acc.creator,
         plan: acc.plan,
         period: acc.period,
+      };
+    }
+    case 'resync': {
+      // Tirer pour actualiser (12/11) : ce que le compte sait remplace ce que le téléphone croyait,
+      // sans rien toucher de l'écran en cours (tenue montrée, dessins suivis, message, données du jour).
+      const { acc } = a;
+      if (s.account !== 'connecte' || !acc.onboarded) return s;
+      const known = new Set(s.pieces.map((p) => p.id));
+      const arrived = acc.pieces.filter((p) => !known.has(p.id));
+      return {
+        ...s,
+        session: acc.session,
+        profile: acc.profile,
+        pieces: acc.pieces,
+        fresh: [...s.fresh, ...arrived.map((p) => p.id)],
+        planned: acc.planned,
+        events: acc.events,
+        trips: acc.trips,
+        ecarts: acc.ecarts,
+        coeurs: acc.coeurs,
+        souvenirs: acc.souvenirs,
+        gouts: acc.gouts,
+        journal: acc.journal,
+        wornToday: acc.journal[isoOf(0)] ?? null,
+        // Une réponse en route n'est pas encore en base : la conversation à l'écran reste.
+        messages: s.kodeTyping ? s.messages : acc.messages,
+        kodeUsed: acc.kodeUsed,
+        extraPlaces: acc.extraPlaces,
+        gen: acc.gen,
+        creator: acc.creator,
+        plan: acc.plan,
+        period: acc.period,
+        // Un « Annuler » d'avant la relecture remettrait d'anciennes pièces : il n'a plus cours.
+        undo: null,
+        undoJour: [],
+        toast: arrived.length ? { id: ++toastId, text: arrived.length > 1 ? `${arrived.length} pièces rejoignent tes portants` : `${arrived[0].name} rejoint tes portants`, go: VOIR_DRESSING } : s.toast?.undo ? null : s.toast,
       };
     }
     case 'session':
@@ -1066,6 +1103,24 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
           dispatch({ t: 'pieces', pieces: await remote.loadPieces(session.spaceId) });
         } catch (e) {
           console.warn('[supabase] pièces :', e instanceof Error ? e.message : e);
+        }
+      },
+      /**
+       * Tirer pour actualiser (12/11) : le compte et les données du jour sont relus d'un coup.
+       * Rend false sans compte connecté ou sans réseau (le message le dit) ; l'écran garde alors ce qu'il a.
+       */
+      refresh: async (): Promise<boolean> => {
+        if (!live()) return false;
+        try {
+          const [acc, c] = await Promise.all([remote.loadAccount(), remote.loadContexte(getState().profile.city).catch(() => null)]);
+          if (!live()) return false;
+          if (acc) dispatch({ t: 'resync', acc });
+          if (c) dispatch({ t: 'contexte', contexte: c, at: Date.now() });
+          return !!acc;
+        } catch (e) {
+          console.warn('[supabase] actualiser :', e instanceof Error ? e.message : e);
+          dispatch({ t: 'toast', text: NETWORK, warn: true });
+          return false;
         }
       },
       /** Une pièce nouvelle a fait son entrée sur la tringle : elle ne la refera pas. */

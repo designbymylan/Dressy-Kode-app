@@ -29,6 +29,7 @@ import { KodeThinking } from '../ui/KodeThinking';
 import { isActive } from '../state/jobs';
 import type { Nav } from '../navigation/types';
 import { F } from '../theme/fonts';
+import { usePullRefresh } from '../ui/refresh';
 
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 /** Le salut suit l'heure (10/11) : « Bonjour » à 22 h sonne faux. */
@@ -68,6 +69,7 @@ export function Home() {
   const semaineVisible = s.modules.some((m) => m.id === 'semaine' && m.on);
   const W = width - space.gutter * 2;
   const top = useTabTop();
+  const refreshControl = usePullRefresh(top - 8);
 
   return (
     <View style={{ flex: 1 }} className="bg-paper">
@@ -76,6 +78,7 @@ export function Home() {
       <TabHeader title="Dresskode" brand y={edge} actions={[{ icon: 'sliders', label: 'Personnaliser l’accueil', onPress: () => nav.navigate('Customize'), testID: 'customize-home' }]} />
       <Animated.ScrollView
         testID="screen-home"
+        refreshControl={refreshControl}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: TAB_CLEARANCE + insets.bottom, gap: 28 }}
