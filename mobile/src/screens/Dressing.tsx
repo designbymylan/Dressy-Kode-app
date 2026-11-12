@@ -2,10 +2,10 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { CATEGORIES, COLOR_FAMILIES, familyOf, isNew, newLabel, wornLabel, type CategoryId, type Piece, type Season } from '../data/wardrobe';
 import { pieceLimit, useStore } from '../state/store';
-import { useTheme } from '../theme/ThemeProvider';
+import { LightScope, useTheme } from '../theme/ThemeProvider';
 import { motion, space, TAB_CLEARANCE } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap, haptic } from '../ui/Tap';
@@ -21,6 +21,8 @@ import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { UsagePanel } from '../ui/usage';
 import { FavorisView } from '../ui/favoris';
+import { KodeThinking } from '../ui/KodeThinking';
+import { isActive, isPiece, jobStep } from '../state/jobs';
 import type { Nav, Route } from '../navigation/types';
 import { F } from '../theme/fonts';
 
@@ -61,6 +63,13 @@ export function Dressing() {
 
   const limit = pieceLimit(s);
   const top = useTabTop();
+  // Ce que Kodi dessine en ce moment (12/11) : on le voit ici, là où les pièces vont arriver.
+  const working = s.jobs.filter(isActive);
+  const drawing = working.filter(isPiece).length;
+  // Les pièces qui viennent d'arriver, dans l'ordre où la grille les montre : elles se posent l'une après l'autre.
+  const fresh = new Map(s.fresh.map((id, i) => [id, i]));
+  // Elles attendent que l'onglet soit devant : une arrivée jouée dans le dos ne sert à rien.
+  const focused = useIsFocused();
   const active = (filters.color ? 1 : 0) + (filters.season ? 1 : 0) + (filters.usage ? 1 : 0);
 
   const apply = (f: Filters, cat: CategoryId | null, q: string) => {
@@ -144,6 +153,19 @@ export function Dressing() {
         <View style={{ marginHorizontal: -space.gutter, marginTop: -26, marginBottom: 4 }}>
           <UsagePanel pieces={s.pieces} />
         </View>
+      )}
+      {!searching && working.length > 0 && (
+        <Animated.View testID="dressing-drawing" entering={FadeIn.duration(240)} accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingHorizontal: 14, borderRadius: 22, backgroundColor: c.butter }}>
+          <LightScope style={{ flex: 1 }}>
+            <KodeThinking
+              phrases={drawing ? [drawing > 1 ? `Kodi dessine ${drawing} pièces` : 'Kodi dessine une pièce', drawing > 1 ? 'Elles arrivent ici, sans fond' : 'Elle arrive ici, sans fond'] : ['Kodi repère tes pièces', 'Elles arrivent ici, sans fond']}
+              step={jobStep(working[0])}
+              size={20}
+              every={2600}
+              style={{ minHeight: 28, gap: 10 }}
+            />
+          </LightScope>
+        </Animated.View>
       )}
       <Circles value={category} onChange={(v) => { setFavs(false); setCategory(v); }} favoris={favs} onFavoris={() => { setCategory(null); setFavs(true); }} />
       {/* Le nombre de pièces à gauche ; la vue (grille, portants) et les filtres à droite. */}
@@ -309,7 +331,19 @@ export function Dressing() {
             />
             )
           }
-          renderItem={({ item }) => <PieceTile piece={item} width={tileW} dense={s.density === 'dense'} liked={s.coeurs.includes(item.id)} onLike={() => a.coeur(item.id)} onPress={(from) => nav.navigate('Piece', { id: item.id, from })} />}
+          renderItem={({ item }) => (
+            <PieceTile
+              piece={item}
+              width={tileW}
+              dense={s.density === 'dense'}
+              liked={s.coeurs.includes(item.id)}
+              onLike={() => a.coeur(item.id)}
+              arriving={fresh.get(item.id) ?? null}
+              hold={!focused}
+              onLanded={() => a.landed(item.id)}
+              onPress={(from) => nav.navigate('Piece', { id: item.id, from })}
+            />
+          )}
         />
         {capsule}
         {filterSheet}

@@ -563,6 +563,37 @@ disposition ni aux couleurs.
   `wears` (`streak`, `lib/accueil.ts`) et dite par `WornLine`, flèche qui
   tourne, cadenas qui rebondit, salut à l'heure de Paris (`parisHour`).
 
+**Parcours du 12/11 (mobile), demandés par l'utilisateur** : ce qui
+s'affiche après un geste, sur le modèle des apps de garde-robe (mélange par
+glissé, conversation qui s'ajuste). Ni la disposition ni les couleurs ne
+changent.
+
+- **La tenue prévue passe en tête de l'accueil** (`tenuesDuJour`, `estPrevue`,
+  `state/store.tsx`) : prévue la veille, elle est la tenue du jour, étiquetée
+  « Prévue pour aujourd'hui » ; « Une autre » mène aux propositions de Kodi.
+  Le site le faisait déjà (`planned0`, `lib/accueil.ts`).
+- **Après « Je la porte »** : sous la récompense, « Préparer demain » (ouvre
+  Habille-moi) ou « Demain est prête » (ouvre le calendrier).
+- **Un message peut mener à la suite** (`ToastGo`, `navigation/ref.ts`) : un
+  bouton « Voir » (pièces qui arrivent, tenue prévue). Jamais avec « Annuler ».
+- **Kodi** (`screens/Kode.tsx`, `state/kode.ts`) : sous sa tenue, « Je la
+  porte » si la question parle d'aujourd'hui (`pourAujourdhui`), « Prévoir
+  demain » sinon ; le bouton dit ce qui est fait (« Prévue demain », lu dans
+  l'agenda). Sous la dernière réponse seulement, trois puces (`KODE_SUITES` :
+  « Une autre idée », « Plus habillée », « Plus décontractée »), aussi sur le
+  site (`KodeChat.tsx`) ; chacune compte comme une question. « Nouvelle
+  conversation » dans l'en-tête (`newChat`, fonction `kode_reset`).
+- **Habille-moi** : les rangées se glissent comme à l'accueil (`SwipeRow`,
+  `ui/outfit.tsx`), la pièce entre du côté d'où elle vient, même indice
+  unique (`useOnce('rangees')`). « Mélanger » ne dit plus rien quand le
+  changement se voit ; un message seulement si rien n'a pu bouger.
+- **Dressing** : tant que Kodi dessine, une ligne beurre le dit là où les
+  pièces arriveront ; dans la grille, une pièce qui arrive se pose avec
+  « Vient d'arriver », une fois, quand l'onglet est devant (`PieceTile`,
+  `arriving`, `hold`).
+- Vérifié dans l'aperçu navigateur (19 contrôles) ; les gestes restent à
+  essayer sur un vrai iPhone.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

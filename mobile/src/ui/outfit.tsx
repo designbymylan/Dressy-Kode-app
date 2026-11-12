@@ -353,6 +353,41 @@ function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece
   );
 }
 
+/**
+ * Une rangée qui se glisse (12/11) : le même geste qu'à l'accueil, pour
+ * « Habille-moi ». La rangée suit le doigt puis revient ; `onSwipe` reçoit
+ * 1 quand on glisse vers la gauche (la pièce suivante), -1 vers la droite.
+ * Le geste ne prend la main que sur un mouvement horizontal : la page défile.
+ */
+export function SwipeRow({ enabled = true, onSwipe, style, children, accessibilityLabel }: { enabled?: boolean; onSwipe: (dir: -1 | 1) => void; style?: object; children: ReactNode; accessibilityLabel?: string }) {
+  const reduced = useReducedMotion();
+  const x = useSharedValue(0);
+  const fire = (dir: -1 | 1) => {
+    haptic('select');
+    onSwipe(dir);
+  };
+  const pan = Gesture.Pan()
+    .enabled(enabled)
+    .activeOffsetX([-14, 14])
+    .failOffsetY([-12, 12])
+    .onChange((e) => {
+      if (!reduced) x.value = Math.max(-FOLLOW, Math.min(FOLLOW, e.translationX * 0.5));
+    })
+    .onEnd((e) => {
+      x.value = withSpring(0, motion.snappy);
+      if (e.translationX <= -SWIPE) runOnJS(fire)(1);
+      else if (e.translationX >= SWIPE) runOnJS(fire)(-1);
+    });
+  const follow = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  return (
+    <GestureDetector gesture={pan} touchAction="pan-y">
+      <Animated.View style={[style, follow]} accessibilityLabel={accessibilityLabel}>
+        {children}
+      </Animated.View>
+    </GestureDetector>
+  );
+}
+
 /** Une tenue posée à plat : le haut à gauche, le bas qui le chevauche, les chaussures devant. */
 export function FlatLay({ pieces, w, h }: { pieces: Piece[]; w: number; h: number }) {
   const { c, scheme } = useTheme();

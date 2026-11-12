@@ -4,7 +4,9 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { lcFirst, type Piece } from '../data/wardrobe';
-import { kodeStarters, type KodeMessage } from '../state/kode';
+import { KODE_SUITES, kodeStarters, pourAujourdhui, type KodeMessage } from '../state/kode';
+import { cleTenue } from '../state/ecarts';
+import { motDuPort } from '../state/bilan';
 import { LIMITS, eventsOn, questionsLeft, useMeteo, useStore } from '../state/store';
 import { isoOf } from '../state/planning';
 import { dateLongue, jourIso, periode } from '../state/contexte';
@@ -111,7 +113,13 @@ export function Kode() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className="bg-paper" testID="screen-kode">
       <Ambient />
-      <TabHeader title="Kodi" y={scrollY} meta={quota === null ? 'sans limite' : `${left} / ${quota}`} />
+      <TabHeader
+        title="Kodi"
+        y={scrollY}
+        meta={quota === null ? 'sans limite' : `${left} / ${quota}`}
+        // Repartir d'une page blanche (12/11, comme le site) : seulement quand il y a une conversation, jamais pendant une réponse.
+        actions={s.messages.length > 0 && !s.kodeTyping ? [{ icon: 'plus', label: 'Nouvelle conversation', onPress: a.newChat, testID: 'kode-new' }] : []}
+      />
       <Animated.ScrollView ref={list as never} onScroll={onScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: space.gutter, paddingTop: top, paddingBottom: 24, gap: 14 }}>
         {s.messages.length === 0 && (
           <Animated.View entering={FadeInUp.duration(300)} style={{ gap: 12 }}>
@@ -144,7 +152,13 @@ export function Kode() {
           </Animated.View>
         )}
 
-        {s.messages.map((m) => (m.from === 'me' ? <Mine key={m.id} m={m} /> : <FromKode key={m.id} m={m} fresh={!known_.current.has(m.id)} />))}
+        {s.messages.map((m, i) => {
+          if (m.from === 'me') return <Mine key={m.id} m={m} />;
+          // La question qui a mené à cette réponse : elle dit si la tenue est pour aujourd'hui ou pour demain.
+          const asked = [...s.messages.slice(0, i)].reverse().find((x) => x.from === 'me')?.text ?? '';
+          const last = i === s.messages.length - 1;
+          return <FromKode key={m.id} m={m} fresh={!known_.current.has(m.id)} today={pourAujourdhui(asked)} onSuite={last && !s.kodeTyping && !out ? send : undefined} />;
+        })}
         {s.kodeTyping && <Typing />}
 
         {out && (
@@ -193,7 +207,13 @@ function Mine({ m }: { m: KodeMessage }) {
   );
 }
 
-function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
+/**
+ * Une réponse de Kodi. Sous sa tenue (12/11) : le geste qui va avec la
+ * question (« Je la porte » pour aujourd'hui, « Prévoir demain » sinon), un
+ * bouton qui dit ce qui est fait une fois touché, et, sous la dernière
+ * réponse seulement, trois puces pour l'ajuster sans retaper.
+ */
+function FromKode({ m, fresh, today, onSuite }: { m: KodeMessage; fresh: boolean; today: boolean; onSuite?: (q: string) => void }) {
   const { c } = useTheme();
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -201,6 +221,10 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
   const byId = new Map(s.pieces.map((p) => [p.id, p]));
   const pieces = (m.outfit?.pieces ?? []).map((id) => byId.get(id)).filter(Boolean) as Piece[];
   const open = (p: Piece) => nav.navigate('Piece', { id: p.id });
+  // L'état se lit dans l'agenda et le journal, pas dans l'écran : il reste vrai en revenant plus tard.
+  const key = cleTenue(pieces.map((p) => p.id));
+  const planned = !!s.planned[isoOf(1)] && cleTenue(s.planned[isoOf(1)].pieces) === key;
+  const worn = pieces.length > 0 && pieces.every((p) => s.wornToday?.includes(p.id));
   return (
     <Animated.View entering={FadeInDown.duration(320)} style={{ alignSelf: 'flex-start', width: '94%' }} accessibilityLiveRegion="polite">
       {/* La réponse de Kodi : un bandeau de service beurre (21/10), texte noir en clair comme en sombre. */}
@@ -221,9 +245,32 @@ function FromKode({ m, fresh }: { m: KodeMessage; fresh: boolean }) {
               </T>
             </Animated.View>
             <View className="flex-row" style={{ gap: 8 }}>
-              <Button testID={`kode-plan-${m.id}`} label="Prévoir demain" size="m" grow onPress={() => { a.plan(isoOf(1), { title: m.outfit!.title, pieces: m.outfit!.pieces }); a.toast('Prévue pour demain, dans ton agenda'); }} />
-              <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces })} />
+              {today ? (
+                <Button testID={`kode-wear-${m.id}`} label={worn ? 'Portée aujourd’hui' : 'Je la porte'} icon={worn ? 'check' : undefined} size="m" grow disabled={worn} feedback="success" onPress={() => a.wear(pieces.map((p) => p.id), motDuPort(s.journal))} />
+              ) : (
+                <Button
+                  testID={`kode-plan-${m.id}`}
+                  label={planned ? 'Prévue demain' : 'Prévoir demain'}
+                  icon={planned ? 'check' : undefined}
+                  size="m"
+                  grow
+                  disabled={planned}
+                  feedback="success"
+                  onPress={() => {
+                    a.plan(isoOf(1), { title: m.outfit!.title, pieces: m.outfit!.pieces });
+                    a.toast('Prévue pour demain', false, { label: 'Voir', route: 'Planning', params: { date: isoOf(1) } });
+                  }}
+                />
+              )}
+              <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces, ...(today ? { day: 0 } : {}) })} />
             </View>
+            {onSuite && (
+              <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length) + 200).duration(400) : undefined} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }} testID="kode-suites">
+                {KODE_SUITES.map((q, k) => (
+                  <DotChip key={q} testID={`kode-suite-${k}`} label={q} onPress={() => onSuite(q)} />
+                ))}
+              </Animated.View>
+            )}
           </>
         )}
         {m.link && (

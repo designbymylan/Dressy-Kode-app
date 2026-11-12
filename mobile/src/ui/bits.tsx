@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Image, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import type { Piece, Weather } from '../data/wardrobe';
 import { agree, isNew, newLabel, wornLabel } from '../data/wardrobe';
@@ -10,8 +10,9 @@ import { glassSurface } from './Glass';
 import { HeartButton } from './Heart';
 import { Icon, type IconName } from './Icon';
 import { T } from './T';
-import { Tap } from './Tap';
+import { Tap, haptic } from './Tap';
 import { F } from '../theme/fonts';
+import { motion } from '../theme/tokens';
 
 export function WeatherIcon({ w, size = 18, color }: { w: Weather; size?: number; color: string }) {
   const name: IconName = w.kind === 'soleil' ? 'sun' : w.kind === 'nuages' ? 'cloud' : w.kind === 'pluie' ? 'rain' : 'showers';
@@ -122,13 +123,38 @@ export function measureOrigin(view: View | null, then: (from?: Origin) => void) 
  * portée, puis son nom en capitales espacées et ses ports en gris, comme
  * une fiche produit de grande enseigne.
  */
-export function PieceTile({ piece, width, onPress, dense, liked, onLike }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean; liked?: boolean; onLike?: () => void }) {
+/**
+ * `arriving` (12/11) : son rang parmi les pièces qui viennent d'arriver. Dans
+ * la grille, vue par défaut, la pièce se pose avec un petit ressort et porte
+ * « Vient d'arriver », une seule fois ; `onLanded` la sort des nouvelles.
+ * Avant, seuls les portants montraient une arrivée.
+ */
+export function PieceTile({ piece, width, onPress, dense, liked, onLike, arriving = null, hold = false, onLanded }: { piece: Piece; width: number; onPress: (from?: Origin) => void; dense?: boolean; liked?: boolean; onLike?: () => void; arriving?: number | null; /** L'écran n'est pas devant : la pièce attend pour se poser sous les yeux. */ hold?: boolean; onLanded?: () => void }) {
   const { scheme, c } = useTheme();
   const art = width * (dense ? 0.62 : 0.56);
   const frame = useRef<View>(null);
-  const tag = piece.wears === 0 ? (isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : `Jamais porté${agree(piece)}`) : null;
+  const reduced = useReducedMotion();
+  const landing = arriving !== null;
+  const k = useSharedValue(landing && !reduced ? 0 : 1);
+  useEffect(() => {
+    if (arriving === null || hold) return;
+    if (reduced) {
+      onLanded?.();
+      return;
+    }
+    const wait = 180 + Math.min(arriving, 8) * 110;
+    k.value = withDelay(wait, withSpring(1, motion.gentle));
+    const buzz = setTimeout(() => arriving === 0 && haptic('light'), wait + 120);
+    const done = setTimeout(() => onLanded?.(), wait + 2600);
+    return () => {
+      clearTimeout(buzz);
+      clearTimeout(done);
+    };
+  }, [landing, hold]); // eslint-disable-line react-hooks/exhaustive-deps
+  const land = useAnimatedStyle(() => ({ opacity: Math.min(1, k.value * 1.6), transform: [{ scale: 0.82 + 0.18 * k.value }, { translateY: (1 - k.value) * -18 }] }));
+  const tag = landing ? 'Vient d’arriver' : piece.wears === 0 ? (isNew(piece) ? newLabel(piece)[0].toUpperCase() + newLabel(piece).slice(1) : `Jamais porté${agree(piece)}`) : null;
   return (
-    <View style={{ width }}>
+    <Animated.View style={[{ width }, land]}>
     <Tap testID={`tile-${piece.id}`} onPress={() => measureOrigin(frame.current, onPress)} accessibilityLabel={`${piece.name}, ${wornLabel(piece)}${liked ? ', dans tes favoris' : ''}`} accessibilityHint="Ouvre la fiche" style={{ width }} scaleTo={0.97}>
       <View ref={frame} className="items-center justify-center" style={{ height: width * (dense ? 1.05 : 1.12), borderRadius: dense ? 18 : 22, backgroundColor: c.stage }}>
         <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} dark={scheme === 'dark'} label={piece.name} />
@@ -151,7 +177,7 @@ export function PieceTile({ piece, width, onPress, dense, liked, onLike }: { pie
     </Tap>
     {/* Le cœur est posé à côté de la vignette, pas dedans : deux zones tactiles, deux libellés. */}
     {onLike && <HeartButton testID={`heart-${piece.id}`} liked={!!liked} onToggle={onLike} name={piece.name} size={dense ? 30 : 34} outerStyle={{ position: 'absolute', top: dense ? 6 : 8, right: dense ? 6 : 8 }} />}
-    </View>
+    </Animated.View>
   );
 }
 

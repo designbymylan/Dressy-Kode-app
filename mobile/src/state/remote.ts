@@ -832,6 +832,11 @@ export async function askKode(question: string): Promise<{ reply: Omit<KodeMessa
   return { reply: { id: m.id, text: m.text, outfit: m.outfit }, counted: true };
 }
 
+/** Une conversation neuve : les bulles en cours sont archivées (fonction `kode_reset`), le ménage les efface plus tard. */
+export async function resetKode() {
+  check(await db().rpc('kode_reset'), 'conversation');
+}
+
 /**
  * Les données du jour (météo, fériés, vacances scolaires, tendances…) pour la
  * ville du profil, depuis la fonction serveur `donnees`. Jamais d'appel direct

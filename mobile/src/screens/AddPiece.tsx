@@ -203,7 +203,7 @@ export function AddPiece() {
         onSave={(p) => {
           setManual(false);
           a.addPiece({ ...p, id: `n${Date.now()}`, wears: 0, lastWorn: null, addedDaysAgo: 0 });
-          a.toast(`C’est rangé : ${p.name.charAt(0).toLowerCase() + p.name.slice(1)}`);
+          a.toast(`C’est rangé : ${p.name.charAt(0).toLowerCase() + p.name.slice(1)}`, false, { label: 'Voir', route: 'Tabs', params: { screen: 'Dressing', params: { view: 'grille' } } });
           setTimeout(() => nav.goBack(), 320);
         }}
       />

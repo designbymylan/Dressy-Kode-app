@@ -10,9 +10,9 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 import { AppState, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EVENTS, PIECES, WEATHER, type Piece, type Weather } from '../data/wardrobe';
+import { EVENTS, PIECES, WEATHER, type Outfit, type Piece, type Weather } from '../data/wardrobe';
 import { supabase } from '../lib/supabase';
-import { kodeReply, type KodeMessage, type KodeOutfit } from './kode';
+import { derniereTenue, kodeReply, type KodeMessage, type KodeOutfit } from './kode';
 import { todayOutfits } from './outfits';
 import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
@@ -26,7 +26,9 @@ export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
 export type HomeModule = 'tenue' | 'semaine' | 'oubliees' | 'tendance' | 'porte' | 'nouveautes' | 'prets' | 'bilan';
 export type Share = { id: string; pieceId: string; friend: string; mode: 'montrer' | 'preter' | 'donner' };
-export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean };
+/** `go` (12/11) : la confirmation mène à la suite (« Voir »), vers un écran. */
+export type ToastGo = { label: string; route: string; params?: object };
+export type Toast = { id: number; text: string; undo?: boolean; warn?: boolean; go?: ToastGo };
 
 /**
  * Mêmes valeurs que public.plan_limits() côté base (migration
@@ -227,6 +229,32 @@ const demo: State = {
   plan: 'capsule',
 };
 
+/** Où mène « Voir » quand des pièces arrivent : la grille du dressing, les plus récentes en tête. */
+const VOIR_DRESSING: ToastGo = { label: 'Voir', route: 'Tabs', params: { screen: 'Dressing', params: { view: 'grille' } } };
+
+const PREVUE = 'prevue-';
+/** Cette tenue du jour est celle que la personne (ou Kodi, à sa demande) avait prévue. */
+export const estPrevue = (o: Pick<Outfit, 'id'>) => o.id.startsWith(PREVUE);
+
+/**
+ * Les tenues du jour (12/11) : celle prévue pour aujourd'hui passe devant,
+ * comme sur le site. Prévoir la veille puis découvrir une autre tenue le
+ * matin cassait la promesse du planning. « Une autre » mène ensuite aux
+ * propositions de Kodi ; écartée par « Pas pour moi », elle ne revient pas.
+ */
+export function tenuesDuJour(s: Pick<State, 'pieces' | 'planned' | 'ecarts' | 'coeurs'>, w: Weather | null): Outfit[] {
+  const av = evite(s.ecarts, s.coeurs);
+  const list = todayOutfits(s.pieces, w, av);
+  const p = s.planned[isoOf(0)];
+  if (!p) return list;
+  const ids = new Set(s.pieces.map((x) => x.id));
+  // Une pièce retirée du dressing depuis sort de la tenue ; à moins de deux, ce n'est plus une tenue.
+  const pieces = p.pieces.filter((id) => ids.has(id));
+  const key = cleTenue(pieces);
+  if (pieces.length < 2 || av.tenues.has(key)) return list;
+  return [{ id: `${PREVUE}${isoOf(0)}`, lead: p.title, em: '', pieces, why: 'Tu l’avais prévue pour aujourd’hui.' }, ...list.filter((o) => cleTenue(o.pieces) !== key)];
+}
+
 type Action =
   | { t: 'hydrate'; patch: Partial<State> }
   | { t: 'account'; acc: Account }
@@ -266,7 +294,8 @@ type Action =
   | { t: 'resetModules' }
   | { t: 'density'; value: State['density'] }
   | { t: 'share'; share: Share }
-  | { t: 'toast'; text: string; undo?: boolean; warn?: boolean }
+  | { t: 'toast'; text: string; undo?: boolean; warn?: boolean; go?: ToastGo }
+  | { t: 'newChat' }
   | { t: 'hideToast' }
   | { t: 'jobs'; jobs: JobRow[] }
   | { t: 'pieces'; pieces: Piece[] }
@@ -376,7 +405,7 @@ function reducer(s: State, a: Action): State {
       return { ...s, pieces: s.undo, undo: null, undoJour: [], wornToday: s.undoJour.length ? s.undoJour : null, journal, toast: null };
     }
     case 'nextOutfit':
-      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, todayOutfits(s.pieces, meteoDe(s).jours[0], evite(s.ecarts, s.coeurs)).length), wornToday: null };
+      return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, tenuesDuJour(s, meteoDe(s).jours[0]).length), wornToday: null };
     case 'ecart':
       // La tenue écartée sort de la liste : le même rang montre déjà la suivante.
       return { ...s, ecarts: garder([a.ecart, ...s.ecarts]), wornToday: null };
@@ -388,7 +417,7 @@ function reducer(s: State, a: Action): State {
       // Retiré, l'accord emporte les souvenirs : les cœurs restent, ce sont des favoris.
       return { ...s, gouts: a.date, souvenirs: a.date ? s.souvenirs : [] };
     case 'addPiece':
-      return { ...s, pieces: [a.piece, ...s.pieces], fresh: [...s.fresh, a.piece.id], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants` } };
+      return { ...s, pieces: [a.piece, ...s.pieces], fresh: [...s.fresh, a.piece.id], toast: { id: ++toastId, text: `${a.piece.name} rejoint tes portants`, go: VOIR_DRESSING } };
     case 'swapId': {
       // La base a donné son identifiant à une pièce ajoutée : on le reporte partout où elle apparaît.
       const swap = (id: string) => (id === a.from ? a.to : id);
@@ -459,7 +488,9 @@ function reducer(s: State, a: Action): State {
     case 'share':
       return { ...s, shares: [a.share, ...s.shares] };
     case 'toast':
-      return { ...s, toast: { id: ++toastId, text: a.text, undo: a.undo, warn: a.warn } };
+      return { ...s, toast: { id: ++toastId, text: a.text, undo: a.undo, warn: a.warn, go: a.go } };
+    case 'newChat':
+      return { ...s, messages: [], kodeTyping: false };
     case 'hideToast':
       return { ...s, toast: null, undo: null };
     case 'jobs': {
@@ -474,7 +505,7 @@ function reducer(s: State, a: Action): State {
         ...s,
         pieces: a.pieces,
         fresh: [...s.fresh, ...arrived.map((p) => p.id)],
-        toast: arrived.length ? { id: ++toastId, text: arrived.length > 1 ? `${arrived.length} pièces rejoignent tes portants` : `${arrived[0].name} rejoint tes portants` } : s.toast,
+        toast: arrived.length ? { id: ++toastId, text: arrived.length > 1 ? `${arrived.length} pièces rejoignent tes portants` : `${arrived[0].name} rejoint tes portants`, go: VOIR_DRESSING } : s.toast,
       };
     }
     case 'landed':
@@ -892,7 +923,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
               // Service en panne (07/11) : Kodi répond quand même, en version simple, avec le moteur de tenues du téléphone.
               if (panne) {
                 const now = getState();
-                const local = kodeReply(text, now.pieces, now.profile, meteoDe(now).jours);
+                const local = kodeReply(text, now.pieces, now.profile, meteoDe(now).jours, derniereTenue(now.messages));
                 if (local.outfit?.pieces.length) {
                   return dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...local, text: `Je te réponds en version simple pour l’instant. ${local.text}` }, refund: true });
                 }
@@ -902,7 +933,7 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
             .catch(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', text: NETWORK }, refund: true }));
           return true;
         }
-        const reply = kodeReply(text, s.pieces, s.profile, meteoDe(s).jours);
+        const reply = kodeReply(text, s.pieces, s.profile, meteoDe(s).jours, derniereTenue(s.messages));
         // Le temps de « réfléchir » : assez pour lire l'état, jamais assez pour agacer.
         setTimeout(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...reply } }), 1100);
         return true;
@@ -973,7 +1004,12 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       resetModules: () => dispatch({ t: 'resetModules' }),
       setDensity: (value: State['density']) => dispatch({ t: 'density', value }),
       share: (share: Share) => dispatch({ t: 'share', share }),
-      toast: (text: string, warn?: boolean) => dispatch({ t: 'toast', text, warn }),
+      toast: (text: string, warn?: boolean, go?: ToastGo) => dispatch({ t: 'toast', text, warn, go }),
+      /** Une conversation neuve avec Kodi (12/11, comme le site) : l'ancienne est archivée, pas effacée. */
+      newChat: () => {
+        dispatch({ t: 'newChat' });
+        if (live()) sync(remote.resetKode());
+      },
       hideToast: () => dispatch({ t: 'hideToast' }),
 
       /** Sans compte : les photos attendent sur le téléphone (10 au plus) et partent à sa création. */
@@ -1254,7 +1290,8 @@ export const useMeteo = () => {
 export const useTodayOutfits = () => {
   const { s } = useStore();
   const today = useMeteo().jours[0];
-  return useMemo(() => todayOutfits(s.pieces, today, evite(s.ecarts, s.coeurs)), [s.pieces, today, s.ecarts, s.coeurs]);
+  const prevue = s.planned[isoOf(0)];
+  return useMemo(() => tenuesDuJour({ pieces: s.pieces, planned: prevue ? { [isoOf(0)]: prevue } : {}, ecarts: s.ecarts, coeurs: s.coeurs }, today), [s.pieces, today, s.ecarts, s.coeurs, prevue]);
 };
 
 export { precision } from './profile';

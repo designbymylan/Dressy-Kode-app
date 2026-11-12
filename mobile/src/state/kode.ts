@@ -40,12 +40,54 @@ export function kodeStarters(profile: Profile, pieces: Piece[], events: RdvEvent
 type Reply = Omit<KodeMessage, 'id' | 'from'>;
 
 /**
+ * Les suites d'une réponse (12/11) : sous la dernière tenue de Kodi, trois
+ * puces pour l'ajuster sans retaper. Le serveur relit la conversation ; ici,
+ * la version de secours fait de son mieux avec le moteur de tenues.
+ */
+export const KODE_SUITES = ['Une autre idée', 'Plus habillée', 'Plus décontractée'] as const;
+
+/** Les pièces de la dernière tenue proposée par Kodi, pour ne pas la redonner. */
+export function derniereTenue(messages: KodeMessage[]): string[] | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) if (messages[i].from === 'kode' && messages[i].outfit) return messages[i].outfit!.pieces;
+  return undefined;
+}
+
+/** La question parle-t-elle d'aujourd'hui ? Alors la tenue se porte, elle ne se prévoit pas pour demain. */
+export function pourAujourdhui(question: string): boolean {
+  const q = norm(question);
+  if (has(q, ['demain', 'week-end', 'weekend', 'semaine'])) return false;
+  return has(q, ['ce soir', 'aujourd', 'ce matin', 'ce midi', 'cet apres', 'maintenant', 'tout de suite', 'la journee']);
+}
+
+const HABILLE = ['blazer', 'chemise', 'escarpins', 'mocassins', 'robe', 'pantalon', 'trench', 'manteau', 'jupe'];
+const DETENDU = ['baskets', 'tshirt', 't-shirt', 'jean', 'sweat', 'pull', 'short', 'blouson', 'mariniere'];
+const cle = (ids: string[]) => [...ids].sort().join(',');
+
+/** Une suite, en version simple : une autre tenue que la dernière, la plus habillée ou la plus décontractée de celles possibles. */
+function suite(question: string, pieces: Piece[], w: Weather | null, last?: string[]): Reply | null {
+  const q = norm(question);
+  const mode = has(q, ['plus habille']) ? 'habille' : has(q, ['plus decontracte']) ? 'detendu' : has(q, ['autre idee']) ? 'autre' : null;
+  if (!mode) return null;
+  const byId = new Map(pieces.map((p) => [p.id, p]));
+  const avoid = last ? cle(last) : '';
+  const others = suggestOutfits(pieces, w).filter((o) => cle(o.pieces) !== avoid);
+  if (!others.length) return { text: 'Avec tes pièces du moment, je n’ai pas d’autre tenue à te proposer. Ajoute une pièce ou deux et j’aurai plus de choix.', link: { label: 'Ajouter une pièce', route: 'AddPiece' } };
+  const words = mode === 'habille' ? HABILLE : DETENDU;
+  const score = (ids: string[]) => ids.reduce((n, id) => n + (words.some((k) => norm(`${byId.get(id)?.kind ?? ''} ${byId.get(id)?.name ?? ''}`).includes(k)) ? 1 : 0), 0);
+  const pick = mode === 'autre' ? others[0] : [...others].sort((a, b) => score(b.pieces) - score(a.pieces))[0];
+  return {
+    text: mode === 'habille' ? 'Plus habillée, avec ce que tu as :' : mode === 'detendu' ? 'Plus décontractée, avec ce que tu as :' : 'Une autre piste, avec tes pièces :',
+    outfit: { title: mode === 'habille' ? 'Un cran au-dessus' : mode === 'detendu' ? 'Plus simple' : 'Autre idée', pieces: pick.pieces, why: pick.why },
+  };
+}
+
+/**
  * Répond avec les pièces de l'utilisatrice. Tant qu'aucune tenue n'est
  * possible, Kodi le dit et propose d'ajouter ce qui manque ; si la réponse
  * écrite pour la démo cite des pièces absentes, il compose avec les siennes.
  */
 /** `jours` : la météo connue (aujourd'hui, demain…) ; sans compte, elle ne l'est pas et Kodi n'en parle pas. */
-export function kodeReply(question: string, pieces: Piece[], profile: Profile, jours: (Weather | null)[] = WEATHER): Reply {
+export function kodeReply(question: string, pieces: Piece[], profile: Profile, jours: (Weather | null)[] = WEATHER, last?: string[]): Reply {
   const first = profile.name ? `${profile.name}, ` : '';
   if (!canCompose(pieces)) {
     const missing = missingForOutfit(pieces);
@@ -60,6 +102,9 @@ export function kodeReply(question: string, pieces: Piece[], profile: Profile, j
       link: { label: 'Ajouter une pièce', route: 'AddPiece' },
     };
   }
+  // Une suite (« Une autre idée », « Plus habillée »…) repart de la dernière tenue, pas d'une réponse écrite d'avance.
+  const next = suite(question, pieces, jours[0] ?? null, last);
+  if (next) return next;
   const reply = curated(question, pieces);
   if (reply.outfit && reply.outfit.pieces.length >= 3) return reply;
   const w = jours[0] ?? null;

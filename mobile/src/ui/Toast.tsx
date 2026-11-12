@@ -10,6 +10,10 @@ import { T } from './T';
 import { Tap } from './Tap';
 import { Icon } from './Icon';
 import { F } from '../theme/fonts';
+import { allerA } from '../navigation/ref';
+
+/** Pour le lecteur d'écran, « Voir » seul ne dit rien : on rappelle de quoi il s'agit. */
+const libelleSuite = (label: string, text: string) => `${label} : ${text}`;
 
 /**
  * Le retour d'une action (« Notée dans ton journal · Annuler »), posé
@@ -43,6 +47,23 @@ export function ToastHost({ aboveTabs }: { aboveTabs: boolean }) {
           <T v="bodyStrong" style={{ flex: 1 }} numberOfLines={3}>
             {toast.text}
           </T>
+          {/* La suite (12/11) : « Voir » mène là où l'action vient de porter ses fruits. */}
+          {toast.go && !toast.undo && (
+            <Tap
+              testID="toast-go"
+              onPress={() => {
+                const go = toast.go!;
+                a.hideToast();
+                allerA(go.route, go.params);
+              }}
+              accessibilityLabel={libelleSuite(toast.go.label, toast.text)}
+              style={{ alignItems: 'center', justifyContent: 'center', height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: c.pill }}
+            >
+              <T v="caption" style={F.s600}>
+                {toast.go.label}
+              </T>
+            </Tap>
+          )}
           {toast.undo && (
             <Tap testID="toast-undo" onPress={a.undo} accessibilityLabel="Annuler" style={{ alignItems: 'center', justifyContent: 'center', height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: c.pill }}>
               <T v="caption" style={F.s600}>

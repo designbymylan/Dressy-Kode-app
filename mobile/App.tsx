@@ -10,6 +10,7 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { PortalHost } from './src/ui/Sheet';
 import { ToastHost } from './src/ui/Toast';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { navRef } from './src/navigation/ref';
 import { PhoneFrame } from './src/web/PhoneFrame';
 import { FONT_FILES } from './src/theme/fonts';
 import { ErrorBoundary } from './src/ui/ErrorBoundary';
@@ -53,7 +54,7 @@ function Shell() {
   return (
     <PhoneFrame>
       <PortalHost>
-        <NavigationContainer theme={theme} onStateChange={track}>
+        <NavigationContainer ref={navRef} theme={theme} onStateChange={track}>
           <RootNavigator />
         </NavigationContainer>
         <ToastHost aboveTabs={onTabs} />

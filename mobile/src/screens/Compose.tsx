@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { type CategoryId, type Piece } from '../data/wardrobe';
@@ -17,6 +17,8 @@ import { EmptyState } from '../ui/bits';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { Sheet } from '../ui/Sheet';
+import { SwipeRow } from '../ui/outfit';
+import { useOnce } from '../state/once';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import type { Nav, Route } from '../navigation/types';
@@ -88,11 +90,17 @@ export function Compose() {
   const [picking, setPicking] = useState<SlotId | null>(null);
   const chosen = SLOTS.map((sl) => (slots[sl.id] ? byId.get(slots[sl.id]!) : undefined)).filter(Boolean) as Piece[];
 
+  // D'où entre la pièce d'une rangée (12/11) : du côté d'où elle vient ; 0, elle apparaît sur place (« Mélanger », choix dans la feuille).
+  const [entry, setEntry] = useState<Partial<Record<SlotId, -1 | 0 | 1>>>({});
+  // L'indice du geste, le même qu'à l'accueil : qui a déjà glissé une rangée ne le revoit pas.
+  const [hint, hintDone] = useOnce('rangees');
+
   const step = (id: SlotId, dir: -1 | 1) => {
     // La rangée tourne sur ses pièces, avec une case « sans » pour laisser l'emplacement vide.
     const seq = [null, ...pools[id].map((p) => p.id)];
     const i = seq.indexOf(slots[id]);
     const next = seq[(i + dir + seq.length) % seq.length];
+    setEntry((e) => ({ ...e, [id]: dir }));
     setSlots({ ...slots, [id]: next, ...(id === 'bas' && next && byId.get(next)?.category === 'robes' ? { haut: null } : {}) });
   };
 
@@ -107,13 +115,18 @@ export function Compose() {
       const pick = pool.slice(0, 3)[Math.floor(Math.random() * Math.min(3, pool.length))];
       if (pick && (sl.id !== 'veste' && sl.id !== 'sac' ? true : Math.random() < 0.6)) next[sl.id] = pick.id;
     }
+    // Le changement se voit : les pièces se posent l'une après l'autre. Un message seulement quand rien n'a pu bouger.
+    if (SLOTS.every((sl) => next[sl.id] === slots[sl.id])) return a.toast(locked.size ? 'Rien à mélanger : libère une pièce gardée.' : 'Rien à mélanger : ajoute des pièces pour varier.');
+    setEntry({});
     setSlots(next);
-    a.toast('Kodi a mélangé la tenue');
   };
 
   const save = () => {
     a.plan(date, { title: chosen.length ? `Avec ${chosen[0].name.toLowerCase()}` : 'Ma tenue', pieces: chosen.map((p) => p.id), tripId: s.planned[date]?.tripId ?? null });
-    a.toast(`Tenue prévue ${offsetOf(date) === 0 ? 'pour aujourd’hui' : `pour ${dayName(date).toLowerCase()}`}`);
+    // « Voir » mène au jour prévu, sauf si l'on vient du calendrier : on y retourne déjà.
+    const st = nav.getState();
+    const back = st.routes[st.index - 1]?.name;
+    a.toast(`Tenue prévue ${offsetOf(date) === 0 ? 'pour aujourd’hui' : `pour ${dayName(date).toLowerCase()}`}`, false, back === 'Planning' ? undefined : { label: 'Voir', route: 'Planning', params: { date } });
     nav.goBack();
   };
 
@@ -128,7 +141,7 @@ export function Compose() {
       <Ambient />
       <StackHeader title="Habille-moi" y={y} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 12 }}>
-        {SLOTS.map((sl) => {
+        {SLOTS.map((sl, row) => {
           const seq = [null, ...pools[sl.id].map((p) => p.id)];
           const i = Math.max(0, seq.indexOf(slots[sl.id]));
           const prev = seq.length > 1 ? seq[(i - 1 + seq.length) % seq.length] : undefined;
@@ -145,7 +158,16 @@ export function Compose() {
             );
           };
           return (
-            <View key={sl.id} accessibilityLabel={sl.label} className="flex-row items-center justify-between" style={{ height: 132 }}>
+            <SwipeRow
+              key={sl.id}
+              accessibilityLabel={sl.label}
+              enabled={seq.length > 1}
+              onSwipe={(dir) => {
+                step(sl.id, dir);
+                if (hint) hintDone();
+              }}
+              style={{ height: 132, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            >
               {neighbour(prev, -1)}
               <Tap
                 testID={`slot-${sl.id}`}
@@ -155,7 +177,10 @@ export function Compose() {
                 style={{ width: big, height: 132, borderRadius: 22, backgroundColor: c.stage, alignItems: 'center', justifyContent: 'center', borderWidth: keep ? 1.5 : 0, borderColor: c.ink }}
               >
                 {cur ? (
-                  <Garment kind={cur.kind} tint={cur.tint} image={cur.image} size={big * 0.6} dark={scheme === 'dark'} label={cur.name} />
+                  // La pièce entre du côté d'où elle vient ; mélangée, elle se pose à son tour, de haut en bas.
+                  <Animated.View key={cur.id} entering={entry[sl.id] === 1 ? FadeInRight.duration(240) : entry[sl.id] === -1 ? FadeInLeft.duration(240) : FadeIn.delay(row * 70).duration(260)}>
+                    <Garment kind={cur.kind} tint={cur.tint} image={cur.image} size={big * 0.6} dark={scheme === 'dark'} label={cur.name} />
+                  </Animated.View>
                 ) : pools[sl.id].length ? (
                   <T v="kicker" tone="ink2">{`Sans ${sl.label.toLowerCase()}`}</T>
                 ) : (
@@ -183,9 +208,21 @@ export function Compose() {
                 )}
               </Tap>
               {neighbour(next, 1)}
-            </View>
+            </SwipeRow>
           );
         })}
+
+        {hint && s.pieces.length > 3 && (
+          <Animated.View testID="compose-hint" entering={FadeIn.delay(700).duration(400)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <View style={{ transform: [{ scaleX: -1 }] }}>
+              <Icon name="arrow" size={13} color={c.ink2} />
+            </View>
+            <T v="small" tone="ink2">
+              Glisse une rangée pour changer une pièce
+            </T>
+            <Icon name="arrow" size={13} color={c.ink2} />
+          </Animated.View>
+        )}
 
         <Animated.View key={advice(chosen)} entering={FadeIn.duration(220)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, paddingTop: 4 }}>
           <Icon name="kode" size={16} color={c.ink} />
@@ -228,6 +265,7 @@ export function Compose() {
                 key={p.id}
                 testID={`pick-${p.id}`}
                 onPress={() => {
+                  setEntry((e) => ({ ...e, [slot!.id]: 0 }));
                   setSlots({ ...slots, [slot!.id]: p.id, ...(slot!.id === 'bas' && p.category === 'robes' ? { haut: null } : {}) });
                   setPicking(null);
                 }}

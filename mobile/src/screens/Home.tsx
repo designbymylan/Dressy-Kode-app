@@ -4,7 +4,7 @@ import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSh
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { WEATHER_WORD, DAYS, DAYS_LETTER, DAYS_SHORT, MONTHS, dayDate, euros, relativeDay, shortDate, sinceLabel, type Piece } from '../data/wardrobe';
-import { MODULE_LABELS, eventsOn, precision, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
+import { MODULE_LABELS, estPrevue, eventsOn, precision, sleeping, usageRate, useMeteo, useStore, useTodayOutfits, type HomeModule } from '../state/store';
 import { isoOf, spanLabel } from '../state/planning';
 import { usePlanifier } from '../state/usePlanifier';
 import { ferieDu, tendancesChezToi } from '../state/contexte';
@@ -173,7 +173,8 @@ function TodayCard({ W }: { W: number }) {
       {/* Le matin, un geste (09/10) : « Je la porte » et « Une autre » en tête de carte, visibles sans défiler. */}
       <View className="flex-row items-center" style={{ gap: 8, minHeight: 40 }}>
         <View style={{ flex: 1 }}>
-          <Tag label={worn ? 'Portée aujourd’hui' : 'Tenue du jour'} />
+          {/* Prévue la veille (12/11) : on le dit, c'est elle qu'on attend le matin. */}
+          <Tag testID="today-tag" label={worn ? 'Portée aujourd’hui' : estPrevue(outfit) ? 'Prévue pour aujourd’hui' : 'Tenue du jour'} />
         </View>
         {!worn && (
           <>
@@ -292,6 +293,8 @@ function BilanCard() {
 function WornToday({ pieces, animate = true }: { pieces: Piece[]; animate?: boolean }) {
   const { c } = useTheme();
   const { s } = useStore();
+  const nav = useNavigation<Nav>();
+  const demain = !!s.planned[isoOf(1)];
   // La série (10/11) : dite à partir de deux jours de suite, jamais quand elle s'arrête.
   const jours = serie(s.journal);
   const reduced = useReducedMotion() || !animate;
@@ -335,6 +338,26 @@ function WornToday({ pieces, animate = true }: { pieces: Piece[]; animate?: bool
             {`${total} port${total > 1 ? 's' : ''} pour ces pièces${cpw !== null ? ` · coût par port ${euros(cpw)}` : ''}`}
           </T>
         </Animated.View>
+        {/* Et après ? (12/11) Le geste suivant, c'est demain : le préparer, ou voir qu'il est prêt. */}
+        {canCompose(s.pieces) && (
+          <Animated.View entering={reduced ? undefined : FadeIn.delay(900).duration(400)} style={{ alignSelf: 'flex-start' }}>
+            <Tap
+              testID="worn-next"
+              onPress={() => (demain ? nav.navigate('Planning', { date: isoOf(1) }) : nav.navigate('Compose', { day: 1 }))}
+              scaleTo={0.98}
+              hitSlop={8}
+              accessibilityRole="link"
+              accessibilityLabel={demain ? 'Demain est prête, voir la tenue prévue' : 'Préparer la tenue de demain'}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 }}
+            >
+              {demain && <Icon name="check" size={13} color={c.positive} strokeWidth={2.4} />}
+              <T v="label" tone={demain ? 'ink2' : 'ink'}>
+                {demain ? 'Demain est prête' : 'Préparer demain'}
+              </T>
+              <Icon name="arrow" size={13} color={demain ? c.ink2 : c.ink} />
+            </Tap>
+          </Animated.View>
+        )}
       </View>
     </View>
   );
