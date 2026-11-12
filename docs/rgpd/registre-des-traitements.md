@@ -184,6 +184,12 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   identifiant, ni contenu, ni traceur, ni ouverture de l'app.
 - **Table** : vue `usage_funnel` (une seule ligne d'agrégats, fermée au
   client, lue seulement par l'éditeur). Le compte créateur en est écarté.
+- **Opposition** (art. 21) : sur demande écrite, l'éditeur inscrit l'espace
+  dans `usage_exclus` (identifiant de l'espace et date, fermée au client,
+  effacée avec le compte) : il sort du calcul.
+  `insert into usage_exclus (space_id) values ('<identifiant>');`
+- **Information** : politique de confidentialité, version 1.3, « Des
+  chiffres d'ensemble ».
 - **Destinataires** : Supabase.
 - **Durée** : rien n'est stocké ; les chiffres se recalculent à chaque
   lecture et suivent les durées des données d'origine.

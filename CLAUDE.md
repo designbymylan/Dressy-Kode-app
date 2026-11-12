@@ -611,6 +611,13 @@ changent.
   « Retour » veut dire un acte (pièce ajoutée, port, question), pas une
   ouverture de l'app : mesurer les ouvertures demanderait une nouvelle
   donnée, donc une décision. Registre des traitements, §7 ter.
+- **Politique de confidentialité, version 1.3** (demandée le 12/11) : « Des
+  chiffres d'ensemble » dans « Ce que nous gardons, et pourquoi » (finalité,
+  intérêt légitime, aucun traceur, droit d'opposition), et une phrase dans
+  « Cookies et traceurs ». L'opposition est tenue par la table `usage_exclus`
+  (migration `mesure_usage_opposition`, fermée au client) : l'éditeur y
+  inscrit l'espace sur demande écrite, il sort du calcul. « En bref » n'a pas
+  bougé. À faire relire par le juriste avec le reste.
 
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :

@@ -38,7 +38,7 @@ export const HEBERGEURS = [
   'Comptes, dressing et photos : Supabase, serveurs situés dans l’Union européenne (Irlande).',
 ];
 
-export const POLITIQUE_VERSION = 'Version 1.2 du 8 novembre 2026';
+export const POLITIQUE_VERSION = 'Version 1.3 du 12 novembre 2026';
 
 /** Les durées de conservation, les mêmes que celles appliquées chaque nuit (fonction `menage`). */
 export const DUREES = {
@@ -83,6 +83,8 @@ export const POLITIQUE: Section[] = [
       { titre: 'Ton abonnement', texte: 'Ton offre et ton historique de paiement. Pour te facturer. Base : le contrat et nos obligations comptables. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez le prestataire de paiement, qui garde les factures 10 ans comme la loi l’exige.' },
       { titre: 'Les rappels', texte: 'Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning. Rien ne part de nos serveurs. Base : ton accord, que tu changes dans Réglages.' },
       { titre: 'La sécurité', texte: 'Des journaux techniques (erreurs, connexions) gardés quelques jours chez notre hébergeur. Pour faire fonctionner et protéger le service. Base : notre intérêt légitime.' },
+      // Mesure de l'usage (12/11, vue `usage_funnel`) : des totaux sur des dates déjà gardées, rien de collecté en plus.
+      { titre: 'Des chiffres d’ensemble', texte: 'Pour savoir si Dresskode tient sa promesse, nous comptons combien de comptes portent une première tenue, reviennent le lendemain ou dans la semaine, et posent une question à Kodi. Ces chiffres se calculent sur nos serveurs, à partir de dates déjà gardées : création du compte, pièce ajoutée, port noté, question posée. Il n’en sort que des totaux, jamais ton nom, ton e-mail ni le contenu de ton dressing. Rien de nouveau n’est collecté, rien n’est gardé en plus, et rien ne part chez un prestataire de mesure. Base : notre intérêt légitime à améliorer le service. Tu peux t’y opposer en nous écrivant : ton compte sort alors du calcul.' },
     ],
   },
   {
@@ -157,6 +159,7 @@ export const POLITIQUE: Section[] = [
     titre: 'Cookies et traceurs',
     texte: [
       'L’app iPhone n’utilise aucun traceur publicitaire ni de mesure d’audience.',
+      'Les chiffres d’ensemble décrits plus haut ne passent par aucun traceur : ils se calculent sur nos serveurs, sans rien lire sur ton téléphone ni dans ton navigateur.',
       'Le site n’utilise que des cookies strictement nécessaires : ta connexion, et ton choix de thème clair ou sombre. Ils ne demandent pas d’accord. Il n’y a ni cookie publicitaire, ni mesure d’audience.',
     ],
   },

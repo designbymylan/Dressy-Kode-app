@@ -1,6 +1,6 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.2 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.3 du 12 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
@@ -27,6 +27,7 @@ Nous n’avons pas de délégué à la protection des données. Pour toute quest
 - **Ton abonnement.** Ton offre et ton historique de paiement. Pour te facturer. Base : le contrat et nos obligations comptables. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez le prestataire de paiement, qui garde les factures 10 ans comme la loi l’exige.
 - **Les rappels.** Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning. Rien ne part de nos serveurs. Base : ton accord, que tu changes dans Réglages.
 - **La sécurité.** Des journaux techniques (erreurs, connexions) gardés quelques jours chez notre hébergeur. Pour faire fonctionner et protéger le service. Base : notre intérêt légitime.
+- **Des chiffres d’ensemble.** Pour savoir si Dresskode tient sa promesse, nous comptons combien de comptes portent une première tenue, reviennent le lendemain ou dans la semaine, et posent une question à Kodi. Ces chiffres se calculent sur nos serveurs, à partir de dates déjà gardées : création du compte, pièce ajoutée, port noté, question posée. Il n’en sort que des totaux, jamais ton nom, ton e-mail ni le contenu de ton dressing. Rien de nouveau n’est collecté, rien n’est gardé en plus, et rien ne part chez un prestataire de mesure. Base : notre intérêt légitime à améliorer le service. Tu peux t’y opposer en nous écrivant : ton compte sort alors du calcul.
 
 ## Ce que tu n’es pas obligé de donner
 
@@ -97,6 +98,8 @@ Sans compte, tout reste sur ton téléphone : rien n’est envoyé à nos serveu
 ## Cookies et traceurs
 
 L’app iPhone n’utilise aucun traceur publicitaire ni de mesure d’audience.
+
+Les chiffres d’ensemble décrits plus haut ne passent par aucun traceur : ils se calculent sur nos serveurs, sans rien lire sur ton téléphone ni dans ton navigateur.
 
 Le site n’utilise que des cookies strictement nécessaires : ta connexion, et ton choix de thème clair ou sombre. Ils ne demandent pas d’accord. Il n’y a ni cookie publicitaire, ni mesure d’audience.
 
