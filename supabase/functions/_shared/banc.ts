@@ -12,8 +12,8 @@
  * liens signés valables un jour.
  *
  * Deux fonctions l'accueillent, chacune avec ses modes : `dressy-agent`
- * (sondes photo, découpe) et `banc-ia` (Kodi), pour ne déployer que ce que
- * l'essai utilise.
+ * (sondes photo, découpe, vérification des clés) et `banc-ia` (Kodi), pour ne
+ * déployer que ce que l'essai utilise.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
