@@ -24,7 +24,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ANSWER_SCHEMA, PLAN_SCHEMA, eventText, type AgendaLine, type Answer, type Corps, type EcartRow, type EventRow, type Profile } from './prompt.ts';
 import { pickPieces, pickPlan, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
 import { conditionsDuJour, type Conditions } from './meteo.ts';
-import { askClaude, readJson, servedBy, KodeError, MODEL, EFFORT } from './claude.ts';
+import { askClaude, readJson, servedBy, KodeError, MODEL, EFFORT, type Reponse } from './claude.ts';
 import { demandeReponse, demandePlan, type Coeurs, type MeteoJours, type Trip } from './demande.ts';
 import { parisDay, shift, weekday, dayLabel } from './dates.ts';
 import { lireCle } from '../_shared/fournisseurs.ts';
@@ -202,7 +202,7 @@ function within<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> 
 
 // ---------------------------------------------------------------- Claude
 
-function readAnswer(res: Parameters<typeof readJson>[0]): Answer {
+function readAnswer(res: Reponse): Answer {
   const raw = readJson<Answer>(res);
   return {
     reponse: String(raw.reponse ?? '').trim(),

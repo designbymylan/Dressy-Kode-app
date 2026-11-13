@@ -47,7 +47,7 @@ export function avecRepli(model: string): boolean {
   return AVEC_REPLI.has(model);
 }
 
-/** Une fois refusé par le fournisseur, le repli n'est plus demandé jusqu'au prochain démarrage. */
+/** Une fois refusé ou fautif chez le fournisseur, le repli n'est plus demandé jusqu'au prochain démarrage. */
 let repliRefuse = false;
 
 export type Turn = { role: 'user' | 'assistant'; content: string };
@@ -64,12 +64,36 @@ export type Appel = {
 const anthropic = (apiKey: string, timeout: number, retries: number) =>
   new Anthropic({ apiKey, baseURL: anthropicBase(), timeout, maxRetries: retries });
 
+/** Ce qu'on lit d'une réponse, qu'elle vienne de l'appel standard ou bêta. */
+export type Reponse = {
+  model: string;
+  stop_reason: string | null;
+  content: { type: string; text?: string }[];
+  usage: Anthropic.Usage;
+};
+
+const texteDe = (r: Reponse) => r.content.map((b) => (b.type === 'text' ? b.text ?? '' : '')).join('');
+const estJson = (t: string) => {
+  try {
+    JSON.parse(t);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 /**
  * Un appel dont la réponse suit `schema` (sorties structurées). Les règles
  * puis le contexte (dressing, profil) : ils bougent peu d'une question à
  * l'autre, le cache évite de les repayer à chaque bulle.
+ *
+ * Le repli sur refus passe par l'API bêta. Sonde du 13/11 : à travers
+ * l'intermédiaire, cet appel perd le format JSON (le modèle répond en texte
+ * libre). Le repli n'est donc demandé qu'en direct chez Anthropic, et s'il
+ * casse le format malgré tout, il est coupé jusqu'au prochain démarrage et
+ * la question repart sans lui.
  */
-export async function askClaude(system: string, context: string, turns: Turn[], schema: Schema, opts: Appel = {}) {
+export async function askClaude(system: string, context: string, turns: Turn[], schema: Schema, opts: Appel = {}): Promise<Reponse> {
   const apiKey = lireCle('ANTHROPIC_API_KEY');
   if (!apiKey) {
     console.error('ANTHROPIC_API_KEY absent des secrets Supabase');
@@ -77,7 +101,7 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
   }
   const model = opts.model ?? MODEL;
   const c = anthropic(apiKey, opts.timeout ?? 60_000, opts.retries ?? 1);
-  const body = (repli: boolean) => ({
+  const body = {
     model,
     max_tokens: opts.maxTokens ?? 16000,
     system: [
@@ -86,25 +110,34 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
     ],
     messages: turns,
     output_config: { effort: opts.effort ?? EFFORT.reponse, format: { type: 'json_schema' as const, schema } },
-    // Si les filtres du modèle refusent la question, l'API la rejoue sur le
-    // modèle de repli recommandé au lieu de la perdre.
-    ...(repli ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
-  });
+  };
+  const standard = async () => (await c.messages.create(body)) as unknown as Reponse;
+  // Si les filtres du modèle refusent la question, l'API la rejoue sur le
+  // modèle de repli recommandé au lieu de la perdre.
+  const avecLeRepli = async () =>
+    (await c.beta.messages.create({ ...body, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' })) as unknown as Reponse;
 
-  const repli = avecRepli(model) && !repliRefuse;
+  const repli = avecRepli(model) && !repliRefuse && !anthropicViaIntermediaire();
   try {
+    if (!repli) return await standard();
+    let res: Reponse;
     try {
-      return await c.beta.messages.create(body(repli));
+      res = await avecLeRepli();
     } catch (err) {
-      // Un intermédiaire peut refuser l'en-tête bêta ou le champ `fallbacks` :
-      // on le note une fois et on repart sans, plutôt que de perdre la question.
-      if (repli && err instanceof Anthropic.BadRequestError && /fallback|beta/i.test(err.message)) {
+      // Un fournisseur peut refuser l'en-tête bêta ou le champ `fallbacks`.
+      if (err instanceof Anthropic.BadRequestError && /fallback|beta/i.test(err.message)) {
         repliRefuse = true;
-        console.warn(`repli sur refus refusé par le fournisseur${anthropicViaIntermediaire() ? ' (intermédiaire)' : ''} : ${err.message.slice(0, 200)}`);
-        return await c.beta.messages.create(body(false));
+        console.warn(`repli sur refus refusé par le fournisseur : ${err.message.slice(0, 200)}`);
+        return await standard();
       }
       throw err;
     }
+    if (res.stop_reason === 'end_turn' && !estJson(texteDe(res))) {
+      repliRefuse = true;
+      console.warn('repli sur refus : le format JSON n’est pas tenu, appel refait sans repli');
+      return await standard();
+    }
+    return res;
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
       console.error('Claude refuse la clé :', err.message);
@@ -126,11 +159,11 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
 }
 
 /** La réponse en JSON ; le refus se lit avant le contenu. */
-export function readJson<T>(res: Anthropic.Beta.BetaMessage): Partial<T> {
+export function readJson<T>(res: Reponse): Partial<T> {
   if (res.stop_reason === 'refusal') {
     throw new KodeError('Kodi ne peut pas répondre à cette question. Reformule-la autour de tes vêtements.', 422);
   }
-  const text = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
+  const text = texteDe(res);
   try {
     return JSON.parse(text);
   } catch {
@@ -140,7 +173,7 @@ export function readJson<T>(res: Anthropic.Beta.BetaMessage): Partial<T> {
 }
 
 /** Le modèle qui a vraiment répondu : celui du repli quand il a pris la main. */
-export function servedBy(res: Anthropic.Beta.BetaMessage): string {
+export function servedBy(res: Reponse): string {
   const blocs = res.content as unknown as { type: string; to?: { model?: string } }[];
   const repli = blocs.filter((b) => b.type === 'fallback').at(-1)?.to?.model;
   return repli ?? res.model;
