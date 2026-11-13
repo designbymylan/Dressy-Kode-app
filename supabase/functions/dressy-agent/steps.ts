@@ -282,12 +282,16 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
  * prend le modèle le plus fort et ne donne pas le cadre de Kodi, pour la
  * reprise après un « rendu incorrect ».
  */
-export async function segment(photo: Img, target: Target, opts: { strong: boolean }): Promise<{ segments: Segment[]; usage: Usage; model: string }> {
+export async function segment(
+  photo: Img,
+  target: Target,
+  opts: { strong: boolean; model?: string; thinking?: Reflexion },
+): Promise<{ segments: Segment[]; usage: Usage; model: string; reflexion: Reflexion }> {
   // Chez Google directement quand `GOOGLE_API_KEY` existe, sinon comme le dessin.
   const acces = accesGoogle();
   if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
   const key = acces.cle;
-  const model = opts.strong ? MODELS.segmentStrong : MODELS.segment;
+  const model = opts.model ?? (opts.strong ? MODELS.segmentStrong : MODELS.segment);
   const url = geminiUrl(model, 'generateContent', acces.base);
 
   const hint = !opts.strong && target.box
@@ -299,29 +303,27 @@ export async function segment(photo: Img, target: Target, opts: { strong: boolea
     { inline_data: { mime_type: photo.mime, data: b64(photo.bytes) } },
     { text },
   ];
-  const call = (thinking: boolean) =>
+  const call = (thinking: Reflexion) =>
     fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       signal: AbortSignal.timeout(60_000),
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: 0,
-          responseMimeType: 'application/json',
-          ...(thinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-        },
-      }),
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: segmentConfig(model, thinking) }),
     });
 
+  // Le réglage de réflexion demandé, puis, si le modèle le refuse, les suivants
+  // de sa famille (un modèle fort ne se laisse pas toujours couper la réflexion).
+  const essais = [...new Set([opts.thinking ?? reflexionPour(model), ...(/^gemini-2\.5/.test(model) ? ['aucun' as const] : REPLIS_REFLEXION)])];
   let res: Response;
+  let reflexion: Reflexion = essais[0];
   try {
-    res = await call(true);
-    // Certains modèles (les plus forts) ne se laissent pas couper la réflexion.
-    if (res.status === 400) {
+    res = await call(reflexion);
+    for (const suivant of essais.slice(1)) {
+      if (res.status !== 400) break;
       const body = await res.text();
       if (!/think/i.test(body)) throw httpError('Gemini (découpe)', 400, body);
-      res = await call(false);
+      reflexion = suivant;
+      res = await call(reflexion);
     }
   } catch (err) {
     if (err instanceof AgentError) throw err;
@@ -336,7 +338,33 @@ export async function segment(photo: Img, target: Target, opts: { strong: boolea
 
   const answer = ((candidate?.content?.parts ?? []) as { text?: string; thought?: boolean }[])
     .filter((p) => p.text && !p.thought).map((p) => p.text).join('');
-  return { segments: parseSegments(answer), usage: body?.usageMetadata ?? null, model };
+  return { segments: parseSegments(answer), usage: body?.usageMetadata ?? null, model, reflexion };
+}
+
+/**
+ * La réflexion d'un modèle Gemini pendant la découpe. Les modèles 2.5 se
+ * règlent par un budget (0 : aucune) ; les suivants (3.x, 4) par un niveau
+ * (`minimal`, `low`…) et refusent le budget. `aucun` n'envoie rien : le
+ * modèle garde son réglage par défaut.
+ */
+export type Reflexion = 'budget0' | 'minimal' | 'low' | 'aucun';
+const REPLIS_REFLEXION: Reflexion[] = ['minimal', 'low', 'aucun'];
+
+export function reflexionPour(model: string): Reflexion {
+  const voulu = env('GEMINI_SEGMENT_THINKING');
+  if (voulu && ['budget0', 'minimal', 'low', 'aucun'].includes(voulu)) return voulu as Reflexion;
+  return /^gemini-2\.5/.test(model) ? 'budget0' : 'minimal';
+}
+
+/** La configuration de génération de la découpe. La température 0 ne vaut que pour les 2.5 : Google la déconseille ensuite. */
+export function segmentConfig(model: string, r: Reflexion): Record<string, unknown> {
+  const ancien = /^gemini-2\.5/.test(model);
+  return {
+    ...(ancien ? { temperature: 0 } : {}),
+    responseMimeType: 'application/json',
+    ...(r === 'budget0' ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+    ...(r === 'minimal' || r === 'low' ? { thinkingConfig: { thinkingLevel: r } } : {}),
+  };
 }
 
 // ---------------------------------------------------------------- vérification
