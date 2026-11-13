@@ -35,7 +35,7 @@ const coutImage = (model: string) => (/2\.1/.test(model) ? 0.034 : 0.067);
 
 const court = (e: unknown) => (e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e)).replace(/\s+/g, ' ').slice(0, 400);
 
-const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 /**
  * Paramètres : { photo, indice?, modeles: ['gemini-3.6-flash:minimal', …],

@@ -1,6 +1,6 @@
 /**
  * La découpe d'une pièce dans sa photo, sans base ni rangement : partagée par
- * l'agent (index.ts) et le banc d'essai (`banc-ia`), qui essaie plusieurs
+ * l'agent (index.ts) et son banc d'essai (banc.ts), qui essaie plusieurs
  * modèles sur les mêmes photos avec exactement ce code.
  *
  * Masque de Gemini d'abord ; si les contrôles automatiques le refusent, un
