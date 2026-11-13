@@ -63,6 +63,33 @@ function outils(db: SupabaseClient, ligne: Ligne): Banc {
 const refus = () => Response.json({ error: 'refusé' }, { status: 403 });
 
 /**
+ * La ligne de `banc_ia` que l'appel a le droit de lancer, prise pour lui (un
+ * seul appel la prend) ; `null` sinon : identifiant ou jeton faux, mode non
+ * accueilli ici, ligne déjà prise ou vieille de plus d'un jour.
+ */
+export async function prendreLigne(db: SupabaseClient, input: { id?: unknown; jeton?: unknown }, modes: string[]): Promise<Ligne | null> {
+  const id = String(input.id ?? '');
+  const jeton = String(input.jeton ?? '');
+  if (!/^[0-9a-f-]{36}$/.test(id) || jeton.length < 32) return null;
+
+  const { data } = await db.from('banc_ia').select('id, mode, libelle, params, jeton_sha256, status, created_at').eq('id', id).maybeSingle();
+  const ligne = data as Ligne | null;
+  if (!ligne || !modes.includes(ligne.mode) || ligne.status !== 'queued' || Date.now() - Date.parse(ligne.created_at) > 86_400_000 || (await sha256(jeton)) !== ligne.jeton_sha256) {
+    return null;
+  }
+  const { data: pris } = await db.from('banc_ia').update({ status: 'running', started_at: new Date().toISOString() })
+    .eq('id', id).eq('status', 'queued').select('id');
+  return pris?.length ? ligne : null;
+}
+
+/** Clôt une ligne : réussie avec son résultat, ou en échec avec l'erreur. */
+export async function clore(db: SupabaseClient, id: string, r: { result: unknown; cost?: number } | { error: string }) {
+  await db.from('banc_ia').update('error' in r
+    ? { status: 'failed', finished_at: new Date().toISOString(), error: r.error.slice(0, 2000) }
+    : { status: 'done', finished_at: new Date().toISOString(), result: r.result, cost_usd: Math.round((r.cost ?? 0) * 1e5) / 1e5 }).eq('id', id);
+}
+
+/**
  * Lance l'essai demandé, en arrière-plan, s'il est autorisé ; sinon 403, la
  * même réponse dans tous les cas de refus (rien ne se devine de l'extérieur).
  */
@@ -72,20 +99,8 @@ export async function lancerBanc(
   modes: Modes,
   arrierePlan: (p: Promise<unknown>) => void,
 ): Promise<Response> {
-  const id = String(input.id ?? '');
-  const jeton = String(input.jeton ?? '');
-  if (!/^[0-9a-f-]{36}$/.test(id) || jeton.length < 32) return refus();
-
-  const { data } = await db.from('banc_ia').select('id, mode, libelle, params, jeton_sha256, status, created_at').eq('id', id).maybeSingle();
-  const ligne = data as Ligne | null;
-  if (!ligne || !(ligne.mode in modes) || ligne.status !== 'queued' || Date.now() - Date.parse(ligne.created_at) > 86_400_000 || (await sha256(jeton)) !== ligne.jeton_sha256) {
-    return refus();
-  }
-
-  // Prise de la ligne : un seul appel la lance.
-  const { data: pris } = await db.from('banc_ia').update({ status: 'running', started_at: new Date().toISOString() })
-    .eq('id', id).eq('status', 'queued').select('id');
-  if (!pris?.length) return refus();
+  const ligne = await prendreLigne(db, input, Object.keys(modes));
+  if (!ligne) return refus();
 
   const fichiers = Array.isArray(input.fichiers) ? input.fichiers as { nom?: unknown; b64?: unknown }[] : [];
   for (const f of fichiers.slice(0, 40)) {
@@ -100,14 +115,12 @@ export async function lancerBanc(
   arrierePlan((async () => {
     try {
       const r = await modes[ligne.mode](b, ligne.params);
-      await db.from('banc_ia').update({
-        status: 'done', finished_at: new Date().toISOString(), result: r.result, cost_usd: Math.round(r.cost * 1e5) / 1e5,
-      }).eq('id', ligne.id);
+      await clore(db, ligne.id, r);
       b.log(`terminé en ${Date.now() - t0} ms, environ ${r.cost.toFixed(4)} $`);
     } catch (err) {
       const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       b.log(`échec : ${message}`);
-      await db.from('banc_ia').update({ status: 'failed', finished_at: new Date().toISOString(), error: message.slice(0, 2000) }).eq('id', ligne.id);
+      await clore(db, ligne.id, { error: message });
     }
   })());
   return Response.json({ accepted: true }, { status: 202 });
