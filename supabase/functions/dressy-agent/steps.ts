@@ -24,6 +24,7 @@ import {
 } from './prompts.ts';
 import { parseSegments, type Segment } from './segment.ts';
 import { sniffMime } from './codec.ts';
+import { accesGoogle, anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
 export type Usage = Record<string, unknown> | null;
@@ -71,9 +72,11 @@ export const EFFORT = {
 };
 
 export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
+/** Les clés obligatoires, plus `GOOGLE_API_KEY` (facultative : découpe et vecteurs chez Google directement). */
+type SecretName = (typeof KEYS)[number] | 'GOOGLE_API_KEY';
 
 /** La clé telle que collée, sans les espaces ni guillemets qu'un copier-coller ajoute souvent. */
-function readKey(name: (typeof KEYS)[number]): string | undefined {
+function readKey(name: SecretName): string | undefined {
   const raw = Deno.env.get(name);
   if (!raw) return undefined;
   return raw.trim().replace(/^["']+|["']+$/g, '').trim() || undefined;
@@ -89,7 +92,7 @@ function secret(name: (typeof KEYS)[number]): string {
  * À quoi ressemble une clé, sans en montrer un seul caractère : sert à repérer
  * une clé collée sous le mauvais nom (une clé Google dans ANTHROPIC_API_KEY…).
  */
-function keyShape(name: (typeof KEYS)[number]) {
+function keyShape(name: SecretName) {
   const raw = Deno.env.get(name) ?? '';
   const k = readKey(name) ?? '';
   const famille = /^sk-ant-/.test(k) ? 'Anthropic' : /^sk-/.test(k) ? 'OpenAI' : /^AIza/.test(k) ? 'Google' : 'inconnue';
@@ -101,13 +104,7 @@ const b64 = (u: Uint8Array) => Buffer.from(u).toString('base64');
 /** Traduit un code HTTP d'un fournisseur en message lisible, le détail partant aux journaux. */
 function httpError(who: string, status: number, text: string): AgentError {
   const detail = `${who} ${status} : ${text.replace(/\s+/g, ' ').slice(0, 300)}`;
-  if (status === 401 || status === 403) {
-    // Clé refusée : le journal dit laquelle et à quoi elle ressemble (jamais un
-    // caractère de la clé), pour la corriger dans les secrets sans deviner.
-    const name = /^Claude/.test(who) ? 'ANTHROPIC_API_KEY' : 'GEMINI_API_KEY';
-    const forme = keyShape(name);
-    return new AgentError(SAY.notReady, `${detail} | CLE REFUSEE : secret ${name} (famille ${forme.famille}, ${forme.longueur} caractères${forme.nettoyee ? ', espaces ou guillemets retirés' : ''}), à remplacer dans Supabase > Edge Functions > Secrets`);
-  }
+  if (status === 401 || status === 403) return new AgentError(SAY.notReady, detail);
   if (status === 429 || status === 529 || /credit|quota|billing/i.test(text)) return new AgentError(SAY.busy, detail);
   return new AgentError(SAY.failed, detail);
 }
@@ -117,7 +114,7 @@ function httpError(who: string, status: number, text: string): AgentError {
 export async function generate(prompt: string, sources: Img[], opts: { search?: boolean; model?: string; size?: '1K' | '2K' } = {}): Promise<Img & { usage: Usage; searched: boolean }> {
   const key = secret('GEMINI_API_KEY');
   const model = opts.model ?? MODELS.gemini;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const url = geminiUrl(model);
 
   // Consigne d'abord, puis les photos de référence : Nano Banana redessine la
   // pièce à partir de la vraie, au lieu de l'imaginer d'après le texte.
@@ -200,7 +197,7 @@ let client: Anthropic | null = null;
 function anthropic(): Anthropic {
   // Une seule reprise automatique : au-delà, c'est la file de l'agent qui
   // retente, sans bloquer le passage.
-  client ??= new Anthropic({ apiKey: secret('ANTHROPIC_API_KEY'), timeout: 100_000, maxRetries: 1 });
+  client ??= new Anthropic({ apiKey: secret('ANTHROPIC_API_KEY'), baseURL: anthropicBase(), timeout: 100_000, maxRetries: 1 });
   return client;
 }
 
@@ -286,9 +283,12 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
  * reprise après un « rendu incorrect ».
  */
 export async function segment(photo: Img, target: Target, opts: { strong: boolean }): Promise<{ segments: Segment[]; usage: Usage; model: string }> {
-  const key = secret('GEMINI_API_KEY');
+  // Chez Google directement quand `GOOGLE_API_KEY` existe, sinon comme le dessin.
+  const acces = accesGoogle();
+  if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
+  const key = acces.cle;
   const model = opts.strong ? MODELS.segmentStrong : MODELS.segment;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const url = geminiUrl(model, 'generateContent', acces.base);
 
   const hint = !opts.strong && target.box
     ? ` It is roughly inside the box [y0, x0, y1, x1] = [${[target.box[1], target.box[0], target.box[1] + target.box[3], target.box[0] + target.box[2]].map((v) => Math.round(v * 1000)).join(', ')}] (0-1000), but that box is only approximate.`
@@ -356,7 +356,7 @@ type Probe = {
  * corps des réponses (certains fournisseurs y recopient la clé masquée).
  */
 async function probe(
-  name: (typeof KEYS)[number],
+  name: SecretName,
   model: string,
   lookup: (key: string) => Promise<Response>,
   list: (key: string) => Promise<string[]>,
@@ -387,40 +387,62 @@ export async function checkSetup() {
   const timeout = () => AbortSignal.timeout(15_000);
   const headers = (k: string) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' });
 
-  const claudeModels = async (k: string) => {
-    const b = await (await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: headers(k), signal: timeout() })).json();
+  const claude = anthropicBase();
+  const gemini = geminiBase();
+
+  // Chez le fournisseur lui-même, on lit la fiche du modèle. Un intermédiaire
+  // n'offre en général que la liste de ses modèles (GET /v1/models) : on y
+  // cherche le modèle. Dans les deux cas, aucune génération.
+  const listeDe = (base: string) => async (k: string): Promise<string[]> => {
+    const b = await (await fetch(`${base}/v1/models?limit=1000`, { headers: headers(k), signal: timeout() })).json();
     return (b.data ?? []).map((m: { id: string }) => m.id).sort();
   };
-  const claudeProbe = (model: string) => probe(
-    'ANTHROPIC_API_KEY', model,
-    (k) => fetch(`https://api.anthropic.com/v1/models/${model}`, { headers: headers(k), signal: timeout() }),
-    claudeModels,
-  );
-
-  const geminiList = async (k: string) => {
-    const b = await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
-    return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
+  const ficheParListe = (base: string, model: string) => async (k: string): Promise<Response> => {
+    const res = await fetch(`${base}/v1/models?limit=1000`, { headers: headers(k), signal: timeout() });
+    if (!res.ok) return res;
+    const ids = ((await res.json()).data ?? []).map((m: { id: string }) => m.id);
+    return new Response('{}', { status: ids.includes(model) ? 200 : 404 });
   };
 
+  const claudeProbe = (model: string) => probe(
+    'ANTHROPIC_API_KEY', model,
+    anthropicViaIntermediaire()
+      ? ficheParListe(claude, model)
+      : (k) => fetch(`${claude}/v1/models/${model}`, { headers: headers(k), signal: timeout() }),
+    listeDe(claude),
+  );
+
+  const geminiProbe = (model: string, nomCle: SecretName, base: string) => {
+    const chezGoogle = base === GEMINI_OFFICIEL;
+    return probe(
+      nomCle, model,
+      chezGoogle
+        ? (k) => fetch(`${base}/v1beta/models/${model}`, { headers: { 'x-goog-api-key': k }, signal: timeout() })
+        : ficheParListe(base, model),
+      chezGoogle
+        ? async (k: string) => {
+          const b = await (await fetch(`${base}/v1beta/models?pageSize=1000`, { headers: { 'x-goog-api-key': k }, signal: timeout() })).json();
+          return (b.models ?? []).map((m: { name: string }) => m.name.replace(/^models\//, '')).sort();
+        }
+        : listeDe(base),
+    );
+  };
+
+  // La découpe a parfois sa propre clé, chez Google (GOOGLE_API_KEY) ; le dessin garde la sienne.
+  const dec = accesGoogle();
   const [decoupe, decoupeFort, dessin, repérage] = await Promise.all([
-    probe(
-      'GEMINI_API_KEY', MODELS.segment,
-      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.segment}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      geminiList,
-    ),
-    probe(
-      'GEMINI_API_KEY', MODELS.segmentStrong,
-      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.segmentStrong}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      geminiList,
-    ),
-    probe(
-      'GEMINI_API_KEY', MODELS.gemini,
-      (k) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}`, { headers: { 'x-goog-api-key': k }, signal: timeout() }),
-      geminiList,
-    ),
+    geminiProbe(MODELS.segment, dec.nomCle, dec.base),
+    geminiProbe(MODELS.segmentStrong, dec.nomCle, dec.base),
+    geminiProbe(MODELS.gemini, 'GEMINI_API_KEY', gemini),
     claudeProbe(MODELS.survey),
   ]);
 
   const pret = [decoupe, decoupeFort, dessin, repérage].every((p) => p.cle === 'valide' && p.modele_trouve === true);
-  return { pret, decoupe, decoupeFort, dessin, reperage: repérage };
+  // Seul le fait de passer par un intermédiaire se dit : jamais son adresse
+  // (cette route est ouverte).
+  return {
+    pret,
+    intermediaire: { claude: anthropicViaIntermediaire(), dessin: geminiViaIntermediaire(), decoupe: dec.base !== GEMINI_OFFICIEL },
+    decoupe, decoupeFort, dessin, reperage: repérage,
+  };
 }
