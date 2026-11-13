@@ -34,6 +34,8 @@ import { MAX_RUNS } from './decide.ts';
 import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
+import { MODES_AGENT } from './banc.ts';
+import { lancerBanc } from '../_shared/banc.ts';
 import { cacheKey, drawWithQuota, imageSettings, price, tokenCost, type Ports } from './quota.ts';
 import { cutoutBackground, downscale, type Raster } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
@@ -459,6 +461,10 @@ Deno.serve(async (req) => {
     return Response.json({ agent: 'dressy-agent', gabarit: CUTOUT.version, models: MODELS, effort: EFFORT, keys });
   }
   if (req.method !== 'POST') return new Response('Méthode non prise en charge', { status: 405 });
+
+  // Un essai du banc (13/11) : seulement avec le jeton d'une ligne de banc_ia.
+  const input = await req.json().catch(() => null) as { banc?: Record<string, unknown> } | null;
+  if (input?.banc) return lancerBanc(db, input.banc, MODES_AGENT, (p) => EdgeRuntime.waitUntil(p));
 
   EdgeRuntime.waitUntil(
     runOnce().catch((err) => console.error('passage :', err instanceof Error ? err.message : err)),

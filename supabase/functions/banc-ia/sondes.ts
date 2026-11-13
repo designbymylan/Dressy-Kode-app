@@ -1,27 +1,22 @@
 /**
- * Les sondes du fournisseur : l'appel le moins cher qui prouve chaque
- * comportement dont le code dépend, avant de construire dessus (13/11).
+ * Les sondes du fournisseur pour Kodi : l'appel le moins cher qui prouve
+ * chaque comportement dont le code dépend, avant de construire dessus (13/11).
  *
- *   - Claude : sorties structurées et effort, repli sur refus (en-tête bêta
- *     et `fallbacks`), cache de consigne (deuxième appel lu en cache), image
- *     en entrée (le vrai repérage de l'agent), modèle effectivement servi ;
- *   - Gemini : masques de segmentation (la vraie découpe, par modèle et par
- *     réglage de réflexion), génération d'image (`imageConfig`), vecteurs.
+ *   - sorties structurées et effort, modèle par modèle, et modèle servi ;
+ *   - repli sur refus (en-tête bêta et `fallbacks: 'default'`) ;
+ *   - cache de consigne avec la vraie demande de Kodi (le deuxième appel doit
+ *     lire en cache), par le vrai `askClaude` (kode/claude.ts).
  *
  * Paramètres (`banc_ia.params`), tous facultatifs :
- *   { claude?: string[], repli?: string[], cache?: string, photo?: string,
- *     decoupe?: string[], dessin?: string | null, vecteurs?: boolean }
+ *   { claude?: ['modele:effort', …], repli?: string[], cache?: string }
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { anthropicBase, anthropicViaIntermediaire, geminiViaIntermediaire, lireCle } from '../_shared/fournisseurs.ts';
-import { survey, generate, segment, MODELS, type Reflexion } from '../dressy-agent/steps.ts';
-import { decode } from '../dressy-agent/codec.ts';
-import { vectoriser } from '../_shared/embeddings.ts';
+import { anthropicBase, anthropicViaIntermediaire, lireCle } from '../_shared/fournisseurs.ts';
 import { askClaude, readJson, servedBy } from '../kode/claude.ts';
 import { demandeReponse, type Dossier } from '../kode/demande.ts';
 import { ANSWER_SCHEMA } from '../kode/prompt.ts';
-import { coutClaude, coutGemini, coutImage } from './tarifs.ts';
-import type { Banc, Rendu } from './index.ts';
+import { coutClaude } from './tarifs.ts';
+import type { Banc, Rendu } from '../_shared/banc.ts';
 
 type Sonde = { nom: string; ok: boolean; ms: number; detail: string; donnees?: unknown };
 
@@ -126,70 +121,9 @@ export async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu
     };
   });
 
-  // 4. Image en entrée : le vrai repérage de l'agent, sur une photo de test.
-  const photo = (p.photo as string | undefined) ?? null;
-  let cible: Awaited<ReturnType<typeof survey>>['pieces'][number] | null = null;
-  let img: { bytes: Uint8Array; mime: string } | null = null;
-  if (photo) {
-    img = await b.lire(photo);
-    await essai(`reperage ${MODELS.survey}`, async () => {
-      const r = await survey({ sources: [img!], hint: '', gender: null });
-      cible = r.pieces[0] ?? null;
-      return {
-        ok: r.pieces.length > 0,
-        detail: `${r.pieces.length} pièce(s) : ${r.pieces.map((x) => `${x.name} (${x.kind ?? '?'}, ${x.hex?.join('/') ?? ''})`).join(', ')}`,
-        donnees: { pieces: r.pieces.map(({ prompt: _p, ...x }) => x), usage: r.usage, octets: img!.bytes.length },
-        cout: coutClaude(MODELS.survey, r.usage),
-      };
-    });
-  }
-
-  // 5. Les masques de segmentation, modèle par modèle (« modele:reflexion »).
-  if (img && cible) {
-    const decoupe = (p.decoupe as string[] | undefined) ?? ['gemini-3.6-flash:minimal', 'gemini-4-hydrogen:minimal', 'gemini-3.5-flash-lite:minimal'];
-    for (const spec of decoupe) {
-      const [model, reflexion] = spec.split(':') as [string, Reflexion | undefined];
-      await essai(`masque ${spec}`, async () => {
-        const r = await segment(img!, cible!, { strong: false, model, thinking: reflexion });
-        const masques = r.segments.filter((s) => s.mask);
-        let taille = '';
-        if (masques[0]?.mask) {
-          const bytes = Uint8Array.from(atob(masques[0].mask), (c) => c.charCodeAt(0));
-          const m = decode(bytes, bytes[0] === 0x89 ? 'image/png' : 'image/jpeg');
-          taille = `${m.width}×${m.height}`;
-        }
-        return {
-          ok: masques.length > 0 && !!taille,
-          detail: `${r.segments.length} segment(s), ${masques.length} masque(s)${taille ? ` (${taille})` : ''}, réflexion ${r.reflexion}`,
-          donnees: { usage: r.usage, cadres: r.segments.map((s) => s.box) },
-          cout: coutGemini(r.usage),
-        };
-      });
-    }
-  }
-
-  // 6. Une image générée (1K), par le vrai `generate()` : coûte une image.
-  const dessin = p.dessin === undefined ? null : (p.dessin as string | null);
-  if (dessin && img) {
-    await essai(`dessin ${dessin}`, async () => {
-      const r = await generate('Reproduce only the garment from this photo, flat lay, centred, on a plain pure white background.', [img!], { model: dessin, size: '1K' });
-      const url = await b.ranger(`dessin-${dessin}.${r.mime === 'image/png' ? 'png' : 'jpg'}`, r.bytes, r.mime);
-      return { ok: r.bytes.length > 10_000, detail: `${Math.round(r.bytes.length / 1024)} Ko, ${r.mime}`, donnees: { url, usage: r.usage }, cout: coutImage(dessin) };
-    });
-  }
-
-  // 7. Les vecteurs de la mémoire de Kodi.
-  if (p.vecteurs !== false) {
-    await essai('vecteurs', async () => {
-      const v = await vectoriser(['aime le denim'], 'RETRIEVAL_QUERY', { timeout: 8000 });
-      return { ok: !!v, detail: v ? `${v[0].length} dimensions` : 'aucun vecteur (voir les journaux)' };
-    });
-  }
-
   return {
     result: {
-      intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() },
-      modeles: MODELS,
+      intermediaire: anthropicViaIntermediaire(),
       sondes: out,
     },
     cost,
