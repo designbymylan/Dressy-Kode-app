@@ -6,6 +6,7 @@
  */
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
 import { conditionsDuJour, plafondDe, besoinDe, interdites, meteoTexte, chaleurDe, type Jour } from './meteo.ts';
+import { controler, variantePropre, type PieceControle } from './controle.ts';
 import { profileText, agendaText, eventText, ecartsText, hourText, planDaysText, voyageText, aimeesText, faitsText, interditesText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
 
 let fails = 0;
@@ -201,6 +202,9 @@ const mi = conditionsDuJour(jour({ min: 10, max: 23 }));
 check('saison : pièce d’hiver écartée par temps doux, pièce d’été par temps froid',
   ecartees(mi, [piece('h', 'pull', { season: 'hiver' }), piece('e', 'debardeur', { season: 'ete' }), piece('ex', 'tshirt', { season: 'toute_annee' })]),
   ['h']);
+check('saison : pièce d’hiver gardée par temps froid (5° à 8°)',
+  ecartees(conditionsDuJour(jour({ min: 5, max: 8, ciel: 'pluie' })), [piece('m', 'manteau', { season: 'hiver' }), piece('d', 'doudoune', { season: 'hiver' }), piece('p', 'pull', { season: 'hiver', material: 'laine' })]), []);
+check('saison : pièce d’hiver gardée à 15°', ecartees(conditionsDuJour(jour({ min: 8, max: 15 })), [piece('p', 'pull', { season: 'hiver' })]), []);
 check('saison : pièce d’été écartée quand il fait froid le matin',
   ecartees(conditionsDuJour(jour({ min: 5, max: 14 })), [piece('e', 'debardeur', { season: 'ete' })]), ['e']);
 
@@ -235,6 +239,42 @@ check('souvenirs retenus', faitsText([{ texte: 'Ne porte pas de couleurs vives.'
 check('aucun souvenir : rien', faitsText([]), '');
 check('pièces interdites, avec les références', interditesText(new Map([['a', 'trop chaud pour la journée, il fait 28° au plus chaud']]), new Map([['a', 'p1']])),
   'Pièces à ne pas proposer ce jour-là, à cause de la météo :\n- p1 : trop chaud pour la journée, il fait 28° au plus chaud');
+
+
+// ---------------------------------------------------------------- contrôle des tenues (K2, 13/11)
+
+const pc = (ref: string, category_id: string, kind: string, colors: string[] = ['noir'], size: string | null = null): PieceControle =>
+  ({ id: ref, ref, name: ref, category_id, kind, colors, size });
+const sansProfil = { avoidColours: [], metals: [] };
+const ctl = (ps: PieceControle[], chaussures = true, profil = sansProfil) => controler(ps, profil, chaussures).erreurs;
+
+check('contrôle : haut, bas, chaussures', ctl([pc('p1', 'hauts', 'tshirt'), pc('p2', 'bas', 'jean'), pc('p3', 'chaussures', 'baskets')]), []);
+check('contrôle : robe et chaussures', ctl([pc('p1', 'robes', 'robe'), pc('p3', 'chaussures', 'escarpins')]), []);
+check('contrôle : deux bas', ctl([pc('p1', 'hauts', 'tshirt'), pc('p4', 'bas', 'jean'), pc('p9', 'bas', 'jupe'), pc('p3', 'chaussures', 'baskets')]), ['la tenue a deux bas : p4 et p9']);
+check('contrôle : robe et pantalon', ctl([pc('p1', 'robes', 'robe'), pc('p2', 'bas', 'pantalon'), pc('p3', 'chaussures', 'baskets')]), ['une robe ne se porte pas avec un bas : p1 et p2']);
+check('contrôle : robe et legging permis', ctl([pc('p1', 'robes', 'robe'), pc('p2', 'bas', 'legging'), pc('p3', 'chaussures', 'bottines')]), []);
+check('contrôle : sans bas', ctl([pc('p1', 'hauts', 'pull'), pc('p3', 'chaussures', 'baskets')]), ['la tenue n’a pas de bas']);
+check('contrôle : superposition t-shirt sous pull', ctl([pc('p1', 'hauts', 'tshirt'), pc('p5', 'hauts', 'pull'), pc('p2', 'bas', 'jean'), pc('p3', 'chaussures', 'baskets')]), []);
+check('contrôle : deux pulls', ctl([pc('p1', 'hauts', 'pull'), pc('p5', 'hauts', 'sweat'), pc('p2', 'bas', 'jean'), pc('p3', 'chaussures', 'baskets')]), ['deux hauts qui ne se superposent pas : p1 et p5']);
+check('contrôle : blazer sous manteau', ctl([pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p6', 'vestes', 'blazer'), pc('p7', 'vestes', 'manteau'), pc('p3', 'chaussures', 'mocassins')]), []);
+check('contrôle : deux manteaux', ctl([pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p6', 'vestes', 'trench'), pc('p7', 'vestes', 'manteau'), pc('p3', 'chaussures', 'mocassins')]), ['deux vestes qui ne se superposent pas : p6 et p7']);
+check('contrôle : deux paires et deux sacs', ctl([pc('p1', 'hauts', 'tshirt'), pc('p2', 'bas', 'jean'), pc('p3', 'chaussures', 'baskets'), pc('p8', 'chaussures', 'bottines'), pc('s1', 'sacs', 'cabas'), pc('s2', 'sacs', 'pochette')]),
+  ['la tenue a deux paires de chaussures : p3 et p8', 'la tenue a deux sacs : s1 et s2']);
+check('contrôle : chaussures exigées si le dressing en a', ctl([pc('p1', 'hauts', 'tshirt'), pc('p2', 'bas', 'jean')]), ['la tenue n’a pas de chaussures alors que le dressing en a']);
+check('contrôle : sans chaussures au dressing, pas d’exigence', ctl([pc('p1', 'hauts', 'tshirt'), pc('p2', 'bas', 'jean')], false), []);
+check('contrôle : couleur évitée (couleur principale)', ctl([pc('p1', 'hauts', 'pull', ['moutarde']), pc('p2', 'bas', 'jean', ['bleu', 'moutarde']), pc('p3', 'chaussures', 'baskets')], true, { avoidColours: ['moutarde'], metals: [] }),
+  ['couleur que la personne évite : p1 (moutarde)']);
+check('contrôle : métal préféré', ctl([pc('p1', 'robes', 'robe'), pc('p3', 'chaussures', 'escarpins'), pc('b1', 'bijoux', 'collier', ['argente'])], true, { avoidColours: [], metals: ['or'] }),
+  ['un bijou d’un autre métal que celui qu’elle préfère : b1'.replace(/’/g, "'")]);
+check('contrôle : deux métaux sans « je mélange »', ctl([pc('p1', 'robes', 'robe'), pc('p3', 'chaussures', 'escarpins'), pc('b1', 'bijoux', 'collier', ['argente']), pc('b2', 'bijoux', 'bague', ['dore'])]),
+  ['deux métaux mélangés : b1 et b2']);
+check('contrôle : taille qui ne correspond pas', ctl([pc('p1', 'hauts', 'tshirt', ['noir'], 'L'), pc('p2', 'bas', 'jean', ['bleu'], '38'), pc('p3', 'chaussures', 'baskets', ['blanc'], '39')], true, { avoidColours: [], metals: [], sizes: { haut: 'S', bas: '38', pointure: '39' } }),
+  ['taille qui ne correspond pas : p1 (L)']);
+
+const principale = [pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p3', 'chaussures', 'mocassins')];
+check('variante : même base, seulement les chaussures', variantePropre(principale, [pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p8', 'chaussures', 'baskets')]).ok, false);
+check('variante : autre base', variantePropre(principale, [pc('r1', 'robes', 'robe'), pc('p3', 'chaussures', 'mocassins')]).ok, true);
+check('variante : même base, veste et chaussures changées', variantePropre(principale, [pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p6', 'vestes', 'blazer'), pc('p8', 'chaussures', 'bottines')]).ok, true);
 
 console.log(fails ? `\n${fails} échec(s)` : '\ntout est bon');
 if (fails) process.exit(1);

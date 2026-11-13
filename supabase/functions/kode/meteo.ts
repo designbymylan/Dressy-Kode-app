@@ -119,7 +119,11 @@ export function raisonEcarte(
   if (c.pluie && g.material && CRAINT_LA_PLUIE.test(g.material)) return 'matière qui craint la pluie';
   if (c.vent && g.kind && ['jupe', 'robe'].includes(g.kind) && g.material && LEGER.test(g.material)) return 'jupe légère avec le vent';
   if (c.vent && g.kind === 'chapeau') return 'chapeau qui s’envole avec le vent';
-  if (g.season === 'hiver' && c.plafond >= 3) return `pièce d’hiver, il fait ${c.max}° au plus chaud`;
+  // Une pièce d'hiver s'écarte quand il fait doux ou chaud (20° et plus au plus
+  // chaud), jamais par temps froid : le plafond est bas quand il fait chaud.
+  // (Le test était inversé jusqu'au 13/11, sans effet tant que l'agent
+  // n'écrivait pas la saison des pièces.)
+  if (g.season === 'hiver' && c.plafond <= 3) return `pièce d’hiver, il fait ${c.max}° au plus chaud`;
   if (g.season === 'ete' && c.besoin >= 3) return `pièce d’été, il fait ${c.min}° le matin`;
 
   const chaleur = chaleurDe(g.kind, g.material);

@@ -16,6 +16,12 @@ export type Garment = {
   material: string | null;
   wear_count: number;
   last_worn_on: string | null;
+  /** L'allure relevée à la photo (F5, 13/11) : motif, coupe, habillage de 1 à 5, détails. */
+  fiche?: { motif?: string | null; coupe?: string | null; habillage?: number | null; details?: string | null } | null;
+  /** Ce que la personne a saisi : coupe (« slim »), taille, note. */
+  fit?: string | null;
+  size?: string | null;
+  notes?: string | null;
 };
 
 const SAISON: Record<string, string> = { mi_saison: 'mi-saison', hiver: 'hiver', ete: 'été' };

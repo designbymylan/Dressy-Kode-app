@@ -21,11 +21,12 @@
  * question dans le quota et écrire la réponse de Kodi.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { ANSWER_SCHEMA, PLAN_SCHEMA, eventText, type AgendaLine, type Answer, type Corps, type EcartRow, type EventRow, type Profile } from './prompt.ts';
-import { pickPieces, pickPlan, MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
+import { eventText, type AgendaLine, type Corps, type EcartRow, type EventRow, type Profile } from './prompt.ts';
+import { MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
 import { conditionsDuJour, type Conditions } from './meteo.ts';
-import { askClaude, readJson, servedBy, KodeError, MODEL, EFFORT, type Reponse } from './claude.ts';
-import { demandeReponse, demandePlan, type Coeurs, type MeteoJours, type Trip } from './demande.ts';
+import { servedBy, KodeError, MODEL, EFFORT } from './claude.ts';
+import { type Coeurs, type MeteoJours, type Trip } from './demande.ts';
+import { repondre, planifier } from './repondre.ts';
 import { parisDay, shift, weekday, dayLabel } from './dates.ts';
 import { lireCle } from '../_shared/fournisseurs.ts';
 import { vectoriser, versPgvector, LOT_MAX } from '../_shared/embeddings.ts';
@@ -202,18 +203,6 @@ function within<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> 
 
 // ---------------------------------------------------------------- Claude
 
-function readAnswer(res: Reponse): Answer {
-  const raw = readJson<Answer>(res);
-  return {
-    reponse: String(raw.reponse ?? '').trim(),
-    tenue: {
-      titre: String(raw.tenue?.titre ?? '').trim().slice(0, 80),
-      pourquoi: String(raw.tenue?.pourquoi ?? '').trim().slice(0, 400),
-      pieces: Array.isArray(raw.tenue?.pieces) ? raw.tenue!.pieces.map(String) : [],
-    },
-  };
-}
-
 // ---------------------------------------------------------------- réponse
 
 /** La personne derrière le jeton et son espace ; toutes les lectures passent par la RLS. */
@@ -303,13 +292,10 @@ async function reply(token: string, question: string) {
     const c = await monde;
     const souv = (await souvenirs) ?? [];
     const meteo = c ? meteoDuJour(c) : null;
-    const demande = demandeReponse(ctx, question, { texte: c ? contexteTexte(c) : '', meteo }, souv);
-
     const t2 = Date.now();
-    const res = await askClaude(demande.system, demande.context, demande.turns, ANSWER_SCHEMA, { effort: EFFORT.reponse });
+    const { answer, pieces, demande, appels } = await repondre(ctx, question, { texte: c ? contexteTexte(c) : '', meteo }, souv, { effort: EFFORT.reponse });
     ch.note('modele', t2);
-    const answer = readAnswer(res);
-    const pieces = pickPieces(answer.tenue.pieces, demande.refs, demande.interdit);
+    const res = appels.at(-1)!;
 
     let outfitId: string | null = null;
     if (pieces.length) {
@@ -444,18 +430,16 @@ async function plan(token: string, input: PlanInput) {
   try {
     const w = await weather;
     const souv = (await souvenirs) ?? [];
-    const demande = demandePlan(ctx, days, { trip, consigne, meteo: w, souvenirs: souv });
-
     // Plusieurs jours demandent plus de réflexion : un seul essai, mais plus long.
     const t2 = Date.now();
-    const res = await askClaude(demande.system, demande.context, demande.turns, PLAN_SCHEMA, { timeout: 110_000, retries: 0, effort: EFFORT.planifier });
+    const p = await planifier(ctx, days, { trip, consigne, meteo: w, souvenirs: souv }, { timeout: 110_000, retries: 0, effort: EFFORT.planifier });
     ch.note('modele', t2);
-    const raw = readJson<{ message: string; jours: unknown }>(res);
-    const planned = pickPlan(raw.jours, demande.refs, days, demande.interditsParJour);
-    const dressed = planned.filter((p) => p.pieces.length);
+    const res = p.appels.at(-1)!;
+    const planned = p.jours;
+    const dressed = planned.filter((x) => x.pieces.length);
 
     const servi = servedBy(res);
-    const body = String(raw.message ?? '').trim() ||
+    const body = p.message ||
       (dressed.length
         ? `C’est prévu : ${dressed.length} tenue${dressed.length > 1 ? 's' : ''} dans ton planning.`
         : 'Je n’ai pas pu habiller ces jours avec ton dressing.');

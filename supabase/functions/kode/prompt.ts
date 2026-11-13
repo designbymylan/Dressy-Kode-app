@@ -143,6 +143,8 @@ export type Profile = {
   styles: string[];
   colours: string[];
   avoid: string[];
+  /** Les couleurs à éviter (identifiants de couleur, mobile et site). */
+  avoid_colours?: string[];
   occasions: string[];
   favourite_items: string[];
   goals: string[];
