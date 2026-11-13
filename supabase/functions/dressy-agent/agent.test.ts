@@ -5,7 +5,7 @@
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
 import { cutoutBackground, alphaRatio, cropToContent, contentBox, downscale, type Raster } from './cutout.ts';
-import { backdropFor, cleanTarget, cleanBox, deltaE, isMetal, stripClauses } from './prompts.ts';
+import { backdropFor, cleanTarget, cleanBox, cleanFiche, deltaE, isMetal, stripClauses, KINDS } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -210,6 +210,20 @@ check('cadre minuscule ou illisible → ignoré', [cleanBox({ x: 10, y: 10, w: 5
 check('fiche : cadre repris', cleanTarget({ name: 'Veste', category: 'vestes', prompt: 'x', box: { x: 100, y: 200, w: 300, h: 400 } })?.box, [0.1, 0.2, 0.3, 0.4]);
 check('fiche sans consigne → consigne de repli bâtie par gabarit', cleanTarget({ name: 'Pull', category: 'hauts', where: 'sur le lit', description: 'Grey ribbed jumper.' })?.prompt.includes('Grey ribbed jumper.'), true);
 check('fiche vide → écartée', cleanTarget({ category: 'hauts' }), null);
+
+// ---------------------------------------------------------------- fiche de style (F5, 13/11)
+
+const style = cleanTarget({
+  name: 'Chemise rayée', category: 'hauts', kind: 'chemise', colors: ['blanc', 'marine'], prompt: 'x',
+  motif: 'rayures', coupe: 'droite', habillage: 3, saison: 'mi_saison', details: '  Col classique,   manches longues ',
+});
+check('fiche de style relue', style?.fiche, { motif: 'rayures', coupe: 'droite', habillage: 3, details: 'Col classique, manches longues' });
+check('saison relue', style?.saison, 'mi_saison');
+const bancale = cleanTarget({ name: 'Pull', category: 'hauts', prompt: 'x', motif: 'zebre', coupe: 'moulante', habillage: 9, saison: 'automne', details: '' });
+check('fiche de style : valeurs inconnues écartées, habillage borné', [bancale?.fiche, bancale?.saison], [null, null]);
+check('fiche de style : habillage arrondi', cleanFiche({ habillage: 2.6 })?.habillage, 3);
+check('nouveaux types reconnus', ['polo', 'capuche', 'chino', 'jupeculotte', 'salopette', 'mules', 'derbies'].map((k) => Object.values(KINDS).some((ks) => ks.includes(k))), [true, true, true, true, true, true, true]);
+check('chaque type tient dans la contrainte de la base', Object.values(KINDS).flat().every((k) => /^[a-z]{2,20}$/.test(k)), true);
 
 console.log(fails === 0 ? '\nTOUT PASSE' : `\n${fails} ÉCHEC(S)`);
 process.exit(fails ? 1 : 0);

@@ -60,11 +60,13 @@ export const MODELS = {
   survey: env('CLAUDE_SURVEY_MODEL') ?? 'claude-sonnet-5',
   segment: env('GEMINI_SEGMENT_MODEL') ?? 'gemini-2.5-flash',
   segmentStrong: env('GEMINI_SEGMENT_MODEL_STRONG') ?? 'gemini-2.5-pro',
-  // Nano Banana 2 (2K) pour les abonnées, sa version Lite (1K) pour le gratuit.
+  // Le modèle complet en 2K pour les abonnées, en 1K pour le gratuit (quota.ts).
   // Les identifiants se règlent dans les secrets Supabase (GEMINI_IMAGE_MODEL,
   // GEMINI_IMAGE_MODEL_LITE) : le code ne les devine pas.
-  gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
-  geminiLite: env('GEMINI_IMAGE_MODEL_LITE') ?? env('GEMINI_IMAGE_MODEL') ?? 'gemini-3.1-flash-image',
+  // Nano Banana 2.1 par défaut depuis le 13/11 (décision de l'utilisateur) :
+  // meilleur et deux fois moins cher que 2 en tarif public.
+  gemini: env('GEMINI_IMAGE_MODEL') ?? 'gemini-nano-banana-2.1',
+  geminiLite: env('GEMINI_IMAGE_MODEL_LITE') ?? env('GEMINI_IMAGE_MODEL') ?? 'gemini-nano-banana-2.1',
 };
 
 export const EFFORT = {

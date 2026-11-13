@@ -13,7 +13,7 @@
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
  * avec l'essai.
  */
-import { survey, segment, generate, MODELS, type Reflexion } from './steps.ts';
+import { survey, segment, generate, checkSetup, MODELS, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { fitOnCanvas } from './normalize.ts';
 import { downscale } from './cutout.ts';
@@ -158,4 +158,7 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   return { result: { intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() }, modeles: MODELS, sondes: out }, cost };
 }
 
-export const MODES_AGENT: Modes = { sonde: sondes, decoupe: essaiDecoupe };
+/** La vérification des clés et des modèles (`?verifier`), pour le banc depuis qu'elle est réservée au compte créateur. */
+const verifier = async (): Promise<Rendu> => ({ result: await checkSetup(), cost: 0 });
+
+export const MODES_AGENT: Modes = { sonde: sondes, decoupe: essaiDecoupe, verifier };

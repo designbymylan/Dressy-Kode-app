@@ -78,7 +78,7 @@ export default async function Moi({
   ]);
   // Le compte créateur voit si Kodi tourne vraiment (clés d'IA acceptées) : une panne ne passe plus inaperçue.
   const generation = await loadGeneration(supabase, viewer.spaceId);
-  const services = generation && isCreator(generation) ? await etatDesServices() : null;
+  const services = generation && isCreator(generation) ? await etatDesServices(supabase) : null;
 
   const total = pieces ?? 0;
   const since = parisDay(-90);

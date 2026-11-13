@@ -111,11 +111,11 @@ check('Fashion : modèle complet en 2K', imageSettings('capsule', models), { mod
 check('Sapologue : modèle complet en 2K', imageSettings('atelier', models), { model: 'complet', size: '2K' });
 
 // Clé de cache.
-check('clé : photo, pièce, modèle, version', cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'm' }), 'p:q:m:dessin-1');
+check('clé : photo, pièce, modèle, version', cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'm' }), 'p:q:m:dessin-2');
 check('clé : un autre modèle ne réutilise pas l’image',
   cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'lite' }) === cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'complet' }), false);
 check('clé : une autre version de la consigne ne réutilise pas l’image',
-  cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'm', promptVersion: 'dessin-2' }) === cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'm' }), false);
+  cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'm', promptVersion: 'dessin-1' }) === cacheKey({ photoHash: 'p', pieceHash: 'q', model: 'm' }), false);
 
 // Coûts.
 check('prix illisible : repli', price('abc', 0.04), 0.04);

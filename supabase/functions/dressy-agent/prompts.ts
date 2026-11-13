@@ -34,16 +34,22 @@ export const COLOUR_RGB: Record<(typeof COLOUR_IDS)[number], [number, number, nu
 // Types de pièce par catégorie : mêmes identifiants que web/src/lib/wardrobe.ts
 // (colonne garments.kind, minuscules sans séparateur).
 export const KINDS: Record<Category, readonly string[]> = {
-  hauts: ['tshirt', 'chemise', 'blouse', 'pull', 'sweat', 'debardeur', 'top'],
-  bas: ['jean', 'pantalon', 'jupe', 'short', 'legging'],
-  robes: ['robe', 'combinaison'],
+  hauts: ['tshirt', 'chemise', 'blouse', 'polo', 'pull', 'sweat', 'capuche', 'debardeur', 'top'],
+  bas: ['jean', 'pantalon', 'chino', 'jupe', 'jupeculotte', 'short', 'legging'],
+  robes: ['robe', 'combinaison', 'salopette'],
   vestes: ['veste', 'blazer', 'manteau', 'trench', 'doudoune', 'gilet'],
-  chaussures: ['baskets', 'bottines', 'bottes', 'escarpins', 'sandales', 'mocassins', 'ballerines'],
+  chaussures: ['baskets', 'bottines', 'bottes', 'escarpins', 'sandales', 'mules', 'mocassins', 'derbies', 'ballerines'],
   sacs: ['sacamain', 'bandouliere', 'pochette', 'cabas', 'sacados'],
   bijoux: ['collier', 'boucles', 'bracelet', 'bague', 'montre', 'broche'],
   accessoires: ['ceinture', 'bandeau', 'pince', 'foulard', 'echarpe', 'chapeau', 'casquette', 'bonnet', 'lunettes', 'gants'],
 };
 const ALL_KINDS = [...new Set(Object.values(KINDS).flat())];
+
+// La fiche de style d'une pièce (F5, 13/11) : ce que Kodi doit savoir de son
+// allure pour composer juste (volumes, motifs, niveau d'habillage, saison).
+export const MOTIFS = ['uni', 'rayures', 'carreaux', 'imprime', 'fleuri', 'pois', 'logo', 'graphique', 'texture'] as const;
+export const COUPES = ['ajustee', 'droite', 'ample', 'oversize', 'evasee', 'sans_objet'] as const;
+export const SAISONS = ['toute_annee', 'mi_saison', 'hiver', 'ete'] as const;
 const KINDS_TEXT = Object.entries(KINDS).map(([c, ks]) => `${c} → ${ks.join(', ')}`).join(' ; ');
 
 /** Au-delà, une photo de groupe ou de penderie coûterait trop cher en une fois. */
@@ -71,13 +77,18 @@ Champs de chaque pièce :
 - where : en français, où se trouve la pièce sur la photo, pour la distinguer des autres (« portée sur les épaules, par-dessus la chemise », « au poignet gauche », « posée à droite du sac »).
 - box : le cadre de la pièce sur la PREMIÈRE photo, en millièmes de sa largeur et de sa hauteur : x et y pour le coin haut gauche, w et h pour la largeur et la hauteur (0 à 1000). Englobe toute la partie visible de la pièce, sans la couper. Il guide la découpe.
 - description : en ANGLAIS, une à deux phrases factuelles (coupe, longueur, col, manches, fermeture, motifs, marquages visibles). Uniquement ce qui se voit.
+- motif : ${MOTIFS.join(', ')} (« texture » pour une matière marquée sans dessin : grosse maille, velours côtelé ; « logo » quand un logo ou une inscription domine).
+- coupe : ${COUPES.join(', ')} (« sans_objet » pour les sacs, bijoux, accessoires et chaussures).
+- habillage : de 1 (très décontracté : sport, détente) à 5 (très habillé : soirée, cérémonie) ; 3 pour une pièce qui va au bureau comme le week-end.
+- saison : ${SAISONS.join(', ')}, d'après la matière et l'épaisseur visibles (un t-shirt en coton : toute_annee ; une doudoune : hiver ; une robe en lin : ete).
+- details : en français, au plus une phrase courte sur ce qui compte pour s'habiller (col, manches, longueur, fermeture, taille haute…), sans marque.
 
 Si aucune pièce ne peut être repérée, rends une liste vide et explique pourquoi en une phrase, en français, dans « note » (sinon « note » est une chaîne vide).`;
 
 const PIECE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['name', 'category', 'kind', 'colors', 'hex', 'material', 'where', 'box', 'description'],
+  required: ['name', 'category', 'kind', 'colors', 'hex', 'material', 'where', 'box', 'description', 'motif', 'coupe', 'habillage', 'saison', 'details'],
   properties: {
     name: { type: 'string' },
     category: { type: 'string', enum: [...CATEGORIES] },
@@ -93,6 +104,11 @@ const PIECE_SCHEMA = {
       properties: { x: { type: 'integer' }, y: { type: 'integer' }, w: { type: 'integer' }, h: { type: 'integer' } },
     },
     description: { type: 'string' },
+    motif: { type: 'string', enum: [...MOTIFS] },
+    coupe: { type: 'string', enum: [...COUPES] },
+    habillage: { type: 'integer' },
+    saison: { type: 'string', enum: [...SAISONS] },
+    details: { type: 'string' },
   },
 } as const;
 
@@ -131,7 +147,33 @@ export type Target = {
   description: string;
   /** Consigne du générateur : ne sert qu'au « rendu incorrect » de second niveau. */
   prompt: string;
+  /** L'allure de la pièce, pour Kodi (F5) ; absente des tâches d'avant le 13/11. */
+  fiche?: Fiche | null;
+  saison?: (typeof SAISONS)[number] | null;
 };
+
+/** Ce que `garments.fiche` garde (2 Ko au plus, contrainte de la base). */
+export type Fiche = {
+  motif: (typeof MOTIFS)[number] | null;
+  coupe: (typeof COUPES)[number] | null;
+  /** De 1 (décontracté) à 5 (très habillé). */
+  habillage: number | null;
+  details: string;
+};
+
+const parmi = <T extends string>(liste: readonly T[], v: unknown): T | null => (liste.includes(String(v) as T) ? String(v) as T : null);
+
+/** La fiche relue et bornée : valeurs connues seulement, habillage de 1 à 5, texte court. */
+export function cleanFiche(o: Record<string, unknown>): Fiche | null {
+  const h = Math.round(Number(o.habillage));
+  const fiche: Fiche = {
+    motif: parmi(MOTIFS, o.motif),
+    coupe: parmi(COUPES, o.coupe),
+    habillage: Number.isFinite(h) && h >= 1 && h <= 5 ? h : null,
+    details: String(o.details ?? '').replace(/\s+/g, ' ').trim().slice(0, 200),
+  };
+  return fiche.motif || fiche.coupe || fiche.habillage || fiche.details ? fiche : null;
+}
 
 
 /**
@@ -196,7 +238,12 @@ export function cleanTarget(raw: unknown): Target | null {
     box: cleanBox(o.box),
     description,
   };
-  return { ...t, prompt: String(o.prompt ?? '').trim().slice(0, 6000) || fallbackPrompt(t) };
+  return {
+    ...t,
+    prompt: String(o.prompt ?? '').trim().slice(0, 6000) || fallbackPrompt(t),
+    fiche: cleanFiche(o),
+    saison: parmi(SAISONS, o.saison),
+  };
 }
 
 

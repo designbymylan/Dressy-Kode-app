@@ -31,7 +31,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
-import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
+import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { MODES_AGENT } from './banc.ts';
@@ -99,10 +99,12 @@ async function setJob(job: Job, patch: Record<string, unknown>) {
 // ---------------------------------------------------------------- mesures
 
 /** Prix estimés en dollars, réglables dans les secrets sans toucher au code. */
+// Tarifs publics du 13/11 (Nano Banana 2.1, Claude Sonnet 5) : ceux d'un
+// intermédiaire peuvent différer, les secrets COST_* les remplacent.
 const COST = {
-  image1k: price(Deno.env.get('COST_IMAGE_1K_USD'), 0.04),
-  image2k: price(Deno.env.get('COST_IMAGE_2K_USD'), 0.1),
-  claude: { in: price(Deno.env.get('COST_CLAUDE_IN_PER_M_USD'), 3), out: price(Deno.env.get('COST_CLAUDE_OUT_PER_M_USD'), 15) },
+  image1k: price(Deno.env.get('COST_IMAGE_1K_USD'), 0.034),
+  image2k: price(Deno.env.get('COST_IMAGE_2K_USD'), 0.05),
+  claude: { in: price(Deno.env.get('COST_CLAUDE_IN_PER_M_USD'), 2), out: price(Deno.env.get('COST_CLAUDE_OUT_PER_M_USD'), 10) },
   gemini: { in: price(Deno.env.get('COST_GEMINI_IN_PER_M_USD'), 0.3), out: price(Deno.env.get('COST_GEMINI_OUT_PER_M_USD'), 2.5) },
 };
 
@@ -253,6 +255,30 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
   await store(job, target, d.best.cut, 'photo', j, log);
 }
 
+const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail). Image 2 is the original photo: use it only for parts hidden or cut off in image 1.';
+
+/** La pièce rangée (PNG transparent), posée sur le fond voulu ; `null` si elle manque. */
+async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | null> {
+  try {
+    const { data } = await db.from('garments').select('image_path').eq('id', garmentId).maybeSingle();
+    if (!data?.image_path) return null;
+    const png = await download('garments', data.image_path as string);
+    const r = decode(png.bytes, 'image/png');
+    const [br, bg, bb] = [1, 3, 5].map((i) => parseInt(fond.slice(i, i + 2), 16));
+    const out = new Uint8Array(r.data.length);
+    for (let i = 0; i < r.data.length; i += 4) {
+      const a = r.data[i + 3] / 255;
+      out[i] = Math.round(r.data[i] * a + br * (1 - a));
+      out[i + 1] = Math.round(r.data[i + 1] * a + bg * (1 - a));
+      out[i + 2] = Math.round(r.data[i + 2] * a + bb * (1 - a));
+      out[i + 3] = 255;
+    }
+    return { bytes: encodePng({ width: r.width, height: r.height, data: out }), mime: 'image/png' };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Nano Banana redessine la pièce à partir de la photo, sur un fond uni retiré
  * ensuite : après deux « rendu incorrect », ou à la demande (« Image propre »).
@@ -261,8 +287,16 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
  */
 async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
+  // « Image propre » (F3, 13/11) : la pièce déjà découpée passe en premier, posée
+  // sur le fond voulu, car elle montre exactement quoi dessiner ; la photo
+  // d'origine suit pour les détails cachés. Après deux « rendu incorrect », la
+  // découpe est jugée fausse : la photo seule, comme avant.
+  const fond = backdropFor(target.colors, target.hex, isMetal(target));
+  const decoupe = job.clean && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
+  const references = decoupe ? [decoupe, ...sources] : sources;
   const prompt = [
     stripClauses(target.prompt),
+    decoupe ? REFERENCES_CLAUSE : '',
     colourClause(target),
     isolationClause(target),
     backdropClause(target.colors, target.hex, isMetal(target)),
@@ -274,7 +308,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   const { model, size } = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
 
   const photoHash = await sha256(sources[0].bytes);
-  const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors]));
+  const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors, Boolean(decoupe)]));
   const key = cacheKey({ photoHash, pieceHash, model });
 
   await setJob(job, { status: 'generating', refined_prompt: prompt, image_model: model });
@@ -308,7 +342,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     },
     noteCacheHit: () => note(job, 'google', 'dessin', model, 'succes', true, 0),
     call: async () => {
-      const img = await generate(prompt, sources, { model, size });
+      const img = await generate(prompt, references, { model, size });
       usage = img.usage;
       return { bytes: img.bytes, mime: img.mime };
     },
@@ -393,6 +427,10 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
         kind: t.kind ?? null,
         name: t.name,
         colors: t.colors,
+        // La saison et la fiche de style relevées au repérage (F5, 13/11) : Kodi
+        // les lit pour composer, la météo écarte d'après la saison.
+        season: t.saison ?? null,
+        fiche: t.fiche ? { ...t.fiche, description: t.description.slice(0, 400) } : null,
         // La teinte mesurée sur les pixels de la pièce : la pastille de couleur de la fiche.
         tint,
         material: clip(d.material, 80) ?? (t.material || null),
@@ -450,10 +488,23 @@ async function runOnce() {
   }
 }
 
+/** L'appel vient-il du compte créateur (table `admins`) ? Le jeton est revalidé par `getUser`. */
+async function estCreateur(req: Request): Promise<boolean> {
+  const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  const { data } = await db.auth.getUser(token);
+  if (!data.user) return false;
+  const { data: admin } = await db.from('admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
+  return Boolean(admin);
+}
+
 Deno.serve(async (req) => {
   // GET : état de la configuration, sans jamais révéler une clé.
-  // GET ?verifier : interroge chaque fournisseur sur la fiche du modèle (gratuit).
+  // GET ?verifier : interroge chaque fournisseur sur la fiche du modèle
+  // (gratuit). Réservé au compte créateur depuis le 13/11 (I4) : la réponse
+  // dit la famille et la longueur des clés et le recours à un intermédiaire.
   if (req.method === 'GET' && new URL(req.url).searchParams.has('verifier')) {
+    if (!(await estCreateur(req))) return Response.json({ error: 'réservé au compte créateur' }, { status: 403 });
     return Response.json(await checkSetup());
   }
   if (req.method === 'GET') {
