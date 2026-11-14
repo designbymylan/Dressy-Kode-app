@@ -13,7 +13,7 @@
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
  * avec l'essai.
  */
-import { survey, segment, generate, checkSetup, MODELS, type Reflexion } from './steps.ts';
+import { survey, segment, generate, checkSetup, MODELS, AgentError, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { fitOnCanvas } from './normalize.ts';
 import { downscale } from './cutout.ts';
@@ -33,7 +33,9 @@ const coutGemini = (u: unknown) => {
 };
 const coutImage = (model: string) => (/2\.1/.test(model) ? 0.034 : 0.067);
 
-const court = (e: unknown) => (e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e)).replace(/\s+/g, ' ').slice(0, 400);
+/** L'erreur en une ligne, avec le détail technique d'une AgentError (le message seul est celui montré à la personne). */
+const court = (e: unknown) =>
+  (e instanceof Error ? `${e.constructor.name}: ${e.message}${e instanceof AgentError && e.detail ? ` (${e.detail})` : ''}` : String(e)).replace(/\s+/g, ' ').slice(0, 600);
 
 const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
