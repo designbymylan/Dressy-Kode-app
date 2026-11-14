@@ -711,7 +711,9 @@ demandé par l'utilisateur.** Décisions et état :
   (`CONSENT_VERSION`, `remote.ts`) ; Sapologue reste « sans limite » dans un
   **usage raisonnable de 300 questions par mois**, appliqué à partir du
   15/12/2026 (conditions 1.3, politique 1.4, avis `conditions-1.3` et
-  `politique-1.4`). Migration `kodi_v2`.
+  `politique-1.4`). Migration `kodi_v2` (appliquée le 14/11, version
+  `20261114132242`), `kode` déployé le même jour. Le compartiment `depot` est vide
+  et privé : Supabase interdit de le supprimer par SQL, à retirer depuis Storage.
 - **Banc d'essai** (`banc-ia`, table `banc_ia` fermée au client) : une ligne
   porte l'empreinte d'un jeton à usage unique ; 40 scénarios de Kodi
   (`banc-ia/scenarios.ts`) notés par un juge, sondes des fournisseurs, essais
