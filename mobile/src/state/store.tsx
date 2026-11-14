@@ -12,7 +12,7 @@ import { AppState, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EVENTS, PIECES, WEATHER, type Outfit, type Piece, type Weather } from '../data/wardrobe';
 import { supabase } from '../lib/supabase';
-import { derniereTenue, kodeReply, type KodeMessage, type KodeOutfit } from './kode';
+import { derniereTenue, kodeReply, reponseGratuite, VARIANTE_LIBELLES, type KodeMessage, type KodeOutfit } from './kode';
 import { todayOutfits } from './outfits';
 import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
@@ -283,8 +283,9 @@ type Action =
   | { t: 'coeur'; id: string; aime: boolean }
   | { t: 'removeSouvenir'; id: string }
   | { t: 'gouts'; date: string | null }
-  | { t: 'ask'; message: KodeMessage }
+  | { t: 'ask'; message: KodeMessage; free?: boolean }
   | { t: 'answer'; message: KodeMessage; refund?: boolean }
+  | { t: 'varianteServie'; id: string }
   | { t: 'setPlan'; plan: PlanId; period: Period }
   | { t: 'planSync'; plan: PlanId; period: Period; kodeUsed: number; extraPlaces: number; gen: number | null; creator: boolean }
   | { t: 'gen'; gen: number | null }
@@ -487,7 +488,9 @@ function reducer(s: State, a: Action): State {
     case 'notifs':
       return { ...s, notifs: a.choice };
     case 'ask':
-      return { ...s, messages: [...s.messages, a.message], kodeUsed: s.kodeUsed + 1, kodeTyping: true };
+      return { ...s, messages: [...s.messages, a.message], kodeUsed: a.free ? s.kodeUsed : s.kodeUsed + 1, kodeTyping: true };
+    case 'varianteServie':
+      return { ...s, messages: s.messages.map((m) => (m.id === a.id && m.variante ? { ...m, variante: { ...m.variante, servie: true } } : m)) };
     case 'answer':
       return { ...s, messages: [...s.messages, a.message], kodeTyping: false, kodeUsed: a.refund ? Math.max(0, s.kodeUsed - 1) : s.kodeUsed };
     case 'setPlan':
@@ -950,8 +953,10 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       askKode: (text: string) => {
         const s = getState();
         const quota = LIMITS[s.plan].questions;
-        if (quota !== null && s.kodeUsed >= quota) return false;
-        dispatch({ t: 'ask', message: { id: `m${Date.now()}`, from: 'me', text } });
+        // Répondre à la question de Kodi ne compte pas (13/11) : ni quota, ni compteur.
+        const free = !!live() && reponseGratuite(s.messages);
+        if (!free && quota !== null && s.kodeUsed >= quota) return false;
+        dispatch({ t: 'ask', message: { id: `m${Date.now()}`, from: 'me', text }, free });
         if (live()) {
           // Kodi répond depuis la fonction `kode` ; sans réponse, la question ne compte pas.
           remote
@@ -962,12 +967,12 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
                 const now = getState();
                 const local = kodeReply(text, now.pieces, now.profile, meteoDe(now).jours, derniereTenue(now.messages));
                 if (local.outfit?.pieces.length) {
-                  return dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...local, text: `Je te réponds en version simple pour l’instant. ${local.text}` }, refund: true });
+                  return dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', ...local, text: `Je te réponds en version simple pour l’instant. ${local.text}` }, refund: !free });
                 }
               }
-              dispatch({ t: 'answer', message: { id: id ?? `k${Date.now()}`, from: 'kode', ...reply }, refund: !counted });
+              dispatch({ t: 'answer', message: { id: id ?? `k${Date.now()}`, from: 'kode', ...reply }, refund: !counted && !free });
             })
-            .catch(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', text: NETWORK }, refund: true }));
+            .catch(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', text: NETWORK }, refund: !free }));
           return true;
         }
         const reply = kodeReply(text, s.pieces, s.profile, meteoDe(s).jours, derniereTenue(s.messages));
@@ -1043,6 +1048,20 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       share: (share: Share) => dispatch({ t: 'share', share }),
       toast: (text: string, warn?: boolean, go?: ToastGo) => dispatch({ t: 'toast', text, warn, go }),
       /** Une conversation neuve avec Kodi (12/11, comme le site) : l'ancienne est archivée, pas effacée. */
+      /**
+       * La variante déjà prête d'une réponse (13/11) : la puce devient la
+       * question, la tenue arrive sans appel au modèle, et rien n'est décompté.
+       */
+      serveVariante: (m: KodeMessage) => {
+        const s = getState();
+        if (!m.variante || m.variante.servie || s.kodeTyping || !live()) return;
+        dispatch({ t: 'ask', message: { id: `m${Date.now()}`, from: 'me', text: VARIANTE_LIBELLES[m.variante.direction] ?? 'Une variante' }, free: true });
+        dispatch({ t: 'varianteServie', id: m.id });
+        remote
+          .serveVariante(m.id)
+          .then((r) => dispatch({ t: 'answer', message: r.ok ? r.reply : { id: `k${Date.now()}`, from: 'kode', text: r.message } }))
+          .catch(() => dispatch({ t: 'answer', message: { id: `k${Date.now()}`, from: 'kode', text: NETWORK } }));
+      },
       newChat: () => {
         dispatch({ t: 'newChat' });
         if (live()) sync(remote.resetKode());

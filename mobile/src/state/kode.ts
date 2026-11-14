@@ -11,13 +11,51 @@ import type { Profile } from './profile';
 
 export type KodeOutfit = { title: string; pieces: string[]; why: string };
 export type KodeLink = { label: string; route: 'Offers' | 'Event' | 'Shop' | 'Compose' | 'AddPiece'; params?: Record<string, unknown> };
+/** La variante d'une réponse (Kodi v2, 13/11) : déjà contrôlée, servie sans question décomptée. */
+export type KodeVariante = { direction: string; titre: string; pieces: string[]; servie: boolean };
+
 export type KodeMessage = {
   id: string;
   from: 'me' | 'kode';
   text: string;
   outfit?: KodeOutfit;
   link?: KodeLink;
+  /** La question de Kodi, s'il en pose une : y répondre ne compte pas. */
+  question?: string;
+  /** Ce qui manque au dressing pour bien répondre (un type de pièce, jamais une marque). */
+  manque?: string;
+  variante?: KodeVariante;
 };
+
+/** Le nom d'une direction de variante, celui de sa puce (le même que DIRECTION_LIBELLES, supabase/functions/kode/prompt.ts). */
+export const VARIANTE_LIBELLES: Record<string, string> = {
+  plus_habillee: 'Plus habillée',
+  plus_decontractee: 'Plus décontractée',
+  plus_chaude: 'Plus chaude',
+  plus_legere: 'Plus légère',
+  plus_audacieuse: 'Plus audacieuse',
+  plus_sobre: 'Plus sobre',
+  piece_oubliee: 'Avec une pièce oubliée',
+  autre_base: 'Sur une autre base',
+};
+
+/** La dernière bulle est une question de Kodi : y répondre est gratuit (la base le décide aussi, `kode_ask`). */
+export const reponseGratuite = (messages: KodeMessage[]) => {
+  const m = messages.at(-1);
+  return m?.from === 'kode' && !!m.question;
+};
+
+/**
+ * Les puces sous la dernière réponse : les trois de toujours (chacune compte
+ * comme une question), et celle de la variante, déjà prête, qui ne compte pas.
+ * Si la variante va dans une direction qui a déjà sa puce, c'est cette puce
+ * qui devient prête.
+ */
+export function suitesDe(m: KodeMessage): { label: string; prete: boolean }[] {
+  const v = m.variante && !m.variante.servie ? VARIANTE_LIBELLES[m.variante.direction] : undefined;
+  const base = KODE_SUITES.map((label) => ({ label: label as string, prete: label === v }));
+  return v && !base.some((x) => x.prete) ? [...base, { label: v, prete: true }] : base;
+}
 
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const has = (s: string, words: string[]) => words.some((w) => s.includes(w));

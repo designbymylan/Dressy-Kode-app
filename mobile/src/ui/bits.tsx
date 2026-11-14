@@ -306,17 +306,27 @@ export function Struck({ label, tone = 'ink2' }: { label: string; tone?: 'ink2' 
  * couleur quand il s'agit d'une teinte. Sans `onPress`, elle se lit
  * (l'étiquette d'une pièce) ; avec, elle se touche (les suggestions de Kodi).
  */
-export function DotChip({ label, onPress, swatch, testID, disabled }: { label: string; onPress?: () => void; swatch?: string; testID?: string; disabled?: boolean }) {
+/**
+ * Une puce. `selected` la passe en bleu (ce qui est choisi, ou prêt) ; `badge`
+ * ajoute un mot en capitales après le libellé (« prête »).
+ */
+export function DotChip({ label, onPress, swatch, testID, disabled, selected, badge }: { label: string; onPress?: () => void; swatch?: string; testID?: string; disabled?: boolean; selected?: boolean; badge?: string }) {
   const { c } = useTheme();
+  const fg = selected ? { color: c['primary-fg'] } : undefined;
   const body = (
     <>
       {swatch ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: c.rule }} /> : null}
-      <T v="small" numberOfLines={1} style={{ flexShrink: 1 }}>
+      <T v="small" numberOfLines={1} style={[{ flexShrink: 1 }, fg]}>
         {label}
       </T>
+      {badge ? (
+        <T v="label" style={fg}>
+          {badge}
+        </T>
+      ) : null}
     </>
   );
-  const style = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c.pill, opacity: disabled ? 0.5 : 1 };
+  const style = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: selected ? c['primary-bg'] : c.pill, opacity: disabled ? 0.5 : 1 };
   if (!onPress)
     return (
       <View testID={testID} style={style} accessible accessibilityLabel={label}>
@@ -324,7 +334,7 @@ export function DotChip({ label, onPress, swatch, testID, disabled }: { label: s
       </View>
     );
   return (
-    <Tap testID={testID} onPress={onPress} disabled={disabled} feedback="select" hitSlop={6} accessibilityRole="button" accessibilityLabel={label} scaleTo={0.97} style={style}>
+    <Tap testID={testID} onPress={onPress} disabled={disabled} feedback="select" hitSlop={6} accessibilityRole="button" accessibilityLabel={badge ? `${label}, ${badge}` : label} scaleTo={0.97} style={style}>
       {body}
     </Tap>
   );

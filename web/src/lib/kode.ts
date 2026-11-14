@@ -2,6 +2,7 @@
 import type { createClient } from '@/lib/supabase/server';
 import { signAll } from '@/lib/storage';
 import { colourHex } from '@/lib/onboarding';
+import type { VarianteVue } from '@/lib/kodi-suites';
 
 type Db = Awaited<ReturnType<typeof createClient>>;
 
@@ -21,6 +22,10 @@ export type KodeMessage = {
   author: 'user' | 'kode';
   body: string;
   outfit: OutfitView | null;
+  /** Kodi v2 (13/11) : sa question (y répondre ne compte pas), ce qui manque au dressing, sa variante prête. */
+  question?: string | null;
+  manque?: string | null;
+  variante?: VarianteVue | null;
 };
 
 /** quota null : questions illimitées (offre Sapologue). */
@@ -69,7 +74,14 @@ type MessageRow = {
   id: string;
   author: 'user' | 'kode';
   body: string;
-  meta: { titre?: string | null; pourquoi?: string | null } | null;
+  meta: {
+    titre?: string | null;
+    pourquoi?: string | null;
+    question?: string | null;
+    manque?: string | null;
+    variante?: { direction: string; titre: string; pieces: unknown[] } | null;
+    variante_servie?: unknown;
+  } | null;
   outfits: OutfitRow | null;
 };
 
@@ -100,6 +112,11 @@ export async function loadMessages(supabase: Db, spaceId: string, ids?: string[]
     author: r.author,
     body: r.body,
     outfit: r.outfits ? outfits.get(r.outfits.id) ?? null : null,
+    question: r.author === 'kode' ? r.meta?.question?.trim() || null : null,
+    manque: r.author === 'kode' ? r.meta?.manque?.trim() || null : null,
+    variante: r.author === 'kode' && r.meta?.variante?.pieces?.length
+      ? { direction: r.meta.variante.direction, titre: r.meta.variante.titre, servie: !!r.meta.variante_servie }
+      : null,
   }));
 }
 

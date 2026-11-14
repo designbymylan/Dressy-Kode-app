@@ -4,7 +4,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { lcFirst, type Piece } from '../data/wardrobe';
-import { KODE_SUITES, kodeStarters, pourAujourdhui, type KodeMessage } from '../state/kode';
+import { kodeStarters, pourAujourdhui, reponseGratuite, suitesDe, type KodeMessage } from '../state/kode';
 import { cleTenue } from '../state/ecarts';
 import { motDuPort } from '../state/bilan';
 import { LIMITS, eventsOn, questionsLeft, useMeteo, useStore } from '../state/store';
@@ -42,6 +42,9 @@ export function Kode() {
   const left = questionsLeft(s);
   const quota = LIMITS[s.plan].questions;
   const out = left === 0;
+  // Kodi vient de poser une question : y répondre est gratuit, même sans question restante.
+  const gratuite = reponseGratuite(s.messages);
+  const ferme = out && !gratuite;
 
   useEffect(() => {
     const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboard(true));
@@ -157,7 +160,17 @@ export function Kode() {
           // La question qui a mené à cette réponse : elle dit si la tenue est pour aujourd'hui ou pour demain.
           const asked = [...s.messages.slice(0, i)].reverse().find((x) => x.from === 'me')?.text ?? '';
           const last = i === s.messages.length - 1;
-          return <FromKode key={m.id} m={m} fresh={!known_.current.has(m.id)} today={pourAujourdhui(asked)} onSuite={last && !s.kodeTyping && !out ? send : undefined} />;
+          return (
+            <FromKode
+              key={m.id}
+              m={m}
+              fresh={!known_.current.has(m.id)}
+              today={pourAujourdhui(asked)}
+              pending={last && !s.kodeTyping}
+              onSuite={last && !s.kodeTyping && !out ? send : undefined}
+              onVariante={last && !s.kodeTyping ? () => a.serveVariante(m) : undefined}
+            />
+          );
         })}
         {s.kodeTyping && <Typing />}
 
@@ -173,13 +186,13 @@ export function Kode() {
       </Animated.ScrollView>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: keyboard ? 10 : TAB_CLEARANCE - 14 + insets.bottom }}>
-        <View className="flex-row items-end bg-sunk" style={{ borderRadius: 26, paddingLeft: 18, paddingRight: 4, paddingVertical: 4, gap: 8, opacity: out ? 0.5 : 1 }}>
+        <View className="flex-row items-end bg-sunk" style={{ borderRadius: 26, paddingLeft: 18, paddingRight: 4, paddingVertical: 4, gap: 8, opacity: ferme ? 0.5 : 1 }}>
           <TextInput
             testID="kode-input"
             value={text}
             onChangeText={setText}
-            editable={!out}
-            placeholder={out ? 'Plus de questions ce mois-ci' : 'Pose ta question'}
+            editable={!ferme}
+            placeholder={gratuite ? 'Réponds à Kodi' : out ? 'Plus de questions ce mois-ci' : 'Pose ta question'}
             placeholderTextColor={c.ink2}
             multiline
             onSubmitEditing={() => send(text)}
@@ -188,7 +201,7 @@ export function Kode() {
             accessibilityLabel="Ta question à Kodi"
             style={{ flex: 1, color: c.ink, ...F.s400, fontSize: 16, lineHeight: 21, minHeight: 42, maxHeight: 120, paddingTop: 11, paddingBottom: 10 }}
           />
-          <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} disabled={!text.trim() || s.kodeTyping || out} onPress={() => send(text)} />
+          <IconButton testID="kode-send" icon="send" label="Envoyer" variant="solid" size={44} disabled={!text.trim() || s.kodeTyping || ferme} onPress={() => send(text)} />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -212,8 +225,13 @@ function Mine({ m }: { m: KodeMessage }) {
  * question (« Je la porte » pour aujourd'hui, « Prévoir demain » sinon), un
  * bouton qui dit ce qui est fait une fois touché, et, sous la dernière
  * réponse seulement, trois puces pour l'ajuster sans retaper.
+ *
+ * Kodi v2 (maquette validée le 14/11) : sa question en bas de la bulle (y
+ * répondre ne compte pas) ; la puce de la variante déjà prête, en bleu, qui
+ * la montre sans question décomptée ; « Ce qui te manque » quand le dressing
+ * ne permet pas de bien répondre, avec « Ajouter une pièce ».
  */
-function FromKode({ m, fresh, today, onSuite }: { m: KodeMessage; fresh: boolean; today: boolean; onSuite?: (q: string) => void }) {
+function FromKode({ m, fresh, today, pending, onSuite, onVariante }: { m: KodeMessage; fresh: boolean; today: boolean; pending: boolean; onSuite?: (q: string) => void; onVariante?: () => void }) {
   const { c } = useTheme();
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -264,15 +282,52 @@ function FromKode({ m, fresh, today, onSuite }: { m: KodeMessage; fresh: boolean
               )}
               <Button label="Ajuster" size="m" variant="secondary" icon="layers" grow onPress={() => nav.navigate('Compose', { pieces: m.outfit!.pieces, ...(today ? { day: 0 } : {}) })} />
             </View>
-            {onSuite && (
-              <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length) + 200).duration(400) : undefined} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }} testID="kode-suites">
-                {KODE_SUITES.map((q, k) => (
-                  <DotChip key={q} testID={`kode-suite-${k}`} label={q} onPress={() => onSuite(q)} />
-                ))}
-              </Animated.View>
-            )}
           </>
         )}
+        {m.question ? (
+          <View style={{ gap: 3, paddingTop: 2 }} testID={`kode-question-${m.id}`}>
+            <View style={{ height: 1, backgroundColor: c['butter-ink'], opacity: 0.12, marginBottom: 9 }} />
+            <T v="body" style={[F.s600, { color: c['butter-ink'] }]}>
+              {m.question}
+            </T>
+            {pending && (
+              <T v="caption" style={{ color: c['butter-ink'] }}>
+                Ta réponse ne compte pas dans tes questions.
+              </T>
+            )}
+          </View>
+        ) : null}
+        {m.manque ? (
+          <View className="bg-paper" style={{ borderRadius: 18, padding: 12, flexDirection: 'row', gap: 12, alignItems: 'flex-start' }} testID={`kode-manque-${m.id}`}>
+            <View className="bg-sunk" style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="hanger" size={20} color={c.ink} />
+            </View>
+            <View style={{ flex: 1, gap: 3 }}>
+              <T v="label" tone="ink2">
+                Ce qui te manque
+              </T>
+              <T v="body" style={F.s600}>
+                {m.manque}
+              </T>
+            </View>
+          </View>
+        ) : null}
+        {m.outfit && pieces.length > 0 && (onSuite || onVariante) && (
+          <Animated.View entering={fresh ? FadeInDown.delay(assembleDelay(pieces.length) + 200).duration(400) : undefined} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }} testID="kode-suites">
+            {suitesDe(m).map((x, k) =>
+              x.prete ? (
+                onVariante && <DotChip key={x.label} testID="kode-variante" label={x.label} badge="prête" selected onPress={onVariante} />
+              ) : (
+                onSuite && <DotChip key={x.label} testID={`kode-suite-${k}`} label={x.label} onPress={() => onSuite(x.label)} />
+              ),
+            )}
+          </Animated.View>
+        )}
+        {m.manque && pending ? (
+          <View style={{ flexDirection: 'row' }}>
+            <DotChip testID="kode-manque-ajouter" label="Ajouter une pièce" onPress={() => nav.navigate('AddPiece')} />
+          </View>
+        ) : null}
         {m.link && (
           <Button label={m.link.label} variant="secondary" size="m" iconRight="chevron" onPress={() => (nav.navigate as (route: string, params?: object) => void)(m.link!.route, m.link!.params)} />
         )}

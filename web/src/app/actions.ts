@@ -500,6 +500,28 @@ export async function askKode(question: string): Promise<KodeResult> {
 }
 
 /**
+ * La variante déjà prête d'une réponse de Kodi (13/11) : servie par la
+ * fonction `kode` sans appel au modèle, elle ne compte pas dans le quota.
+ */
+export async function serveVariante(replyId: string): Promise<KodeResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: 'Session expirée.', code: null };
+  const supabase = await createClient();
+  const { data, error } = await supabase.functions.invoke<{ question_id: string; reply_id: string }>('kode', {
+    body: { action: 'variante', reply_id: String(replyId ?? '') },
+  });
+  if (error || !data) {
+    const body = error instanceof FunctionsHttpError ? await (error.context as Response).json().catch(() => null) : null;
+    return { error: body?.error ?? 'Kodi n’a pas pu montrer la variante. Réessaie dans un instant.', code: body?.code ?? null };
+  }
+  const [messages, usage] = await Promise.all([
+    loadMessages(supabase, viewer.spaceId, [data.question_id, data.reply_id]),
+    loadUsage(supabase, viewer.spaceId),
+  ]);
+  return { messages, usage };
+}
+
+/**
  * La réponse de secours de Kodi : la tenue du jour composée par le moteur du
  * site (lib/outfits.ts : ton dressing, la météo, les tenues écartées), dite
  * simplement. Elle n'est pas enregistrée et ne compte pas dans le quota.

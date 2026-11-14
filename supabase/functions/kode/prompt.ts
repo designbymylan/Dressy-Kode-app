@@ -123,6 +123,21 @@ Ce que tu rends :
 export const INTENTIONS = ['tenue', 'conseil', 'clarification', 'hors_sujet'] as const;
 export const DIRECTIONS = ['', 'plus_habillee', 'plus_decontractee', 'plus_chaude', 'plus_legere', 'plus_audacieuse', 'plus_sobre', 'piece_oubliee', 'autre_base'] as const;
 
+/**
+ * Le nom d'une direction à l'écran : celui de la puce qui sert la variante
+ * (les deux premiers sont ceux de KODE_SUITES, mobile/src/state/kode.ts).
+ */
+export const DIRECTION_LIBELLES: Record<Exclude<(typeof DIRECTIONS)[number], ''>, string> = {
+  plus_habillee: 'Plus habillée',
+  plus_decontractee: 'Plus décontractée',
+  plus_chaude: 'Plus chaude',
+  plus_legere: 'Plus légère',
+  plus_audacieuse: 'Plus audacieuse',
+  plus_sobre: 'Plus sobre',
+  piece_oubliee: 'Avec une pièce oubliée',
+  autre_base: 'Sur une autre base',
+};
+
 /** La réponse v2 (13/11). Sorties structurées : tout est requis, rien n'est borné ici ; le code borne ensuite. */
 export const ANSWER_SCHEMA = {
   type: 'object',

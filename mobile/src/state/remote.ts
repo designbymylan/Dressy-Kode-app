@@ -197,7 +197,15 @@ function garmentRow(p: Piece, spaceId: string) {
 }
 
 type OutfitEmbed = { name: string | null; outfit_items: { garment_id: string }[] } | null;
-type MessageRow = { id: string; author: string; body: string; meta: { titre?: string | null; pourquoi?: string | null } | null; outfits: OutfitEmbed };
+type MessageMeta = {
+  titre?: string | null;
+  pourquoi?: string | null;
+  question?: string | null;
+  manque?: string | null;
+  variante?: { direction: string; titre: string; pieces: { id: string }[] } | null;
+  variante_servie?: { reply_id?: string } | null;
+};
+type MessageRow = { id: string; author: string; body: string; meta: MessageMeta | null; outfits: OutfitEmbed };
 
 function toMessage(m: MessageRow): KodeMessage {
   const pieces = (m.outfits?.outfit_items ?? []).map((i) => i.garment_id);
@@ -207,6 +215,19 @@ function toMessage(m: MessageRow): KodeMessage {
     text: m.body,
     outfit: m.author === 'kode' && pieces.length >= 2
       ? { title: m.meta?.titre || m.outfits?.name || 'Proposée par Kodi', pieces, why: m.meta?.pourquoi ?? '' }
+      : undefined,
+    ...(m.author === 'kode' ? kodiV2(m.meta) : {}),
+  };
+}
+
+/** Les champs de Kodi v2 (13/11), s'ils sont là. */
+function kodiV2(meta: MessageMeta | null): Pick<KodeMessage, 'question' | 'manque' | 'variante'> {
+  const v = meta?.variante;
+  return {
+    question: meta?.question?.trim() || undefined,
+    manque: meta?.manque?.trim() || undefined,
+    variante: v?.pieces?.length
+      ? { direction: v.direction, titre: v.titre, pieces: v.pieces.map((p) => p.id), servie: !!meta?.variante_servie }
       : undefined,
   };
 }
@@ -867,8 +888,22 @@ export async function askKode(question: string): Promise<{ reply: Omit<KodeMessa
   }
   const row = await sb.from('kode_messages').select('id, author, body, meta, outfits(name, outfit_items(garment_id))').eq('id', data.reply_id).single();
   if (row.error) return { reply: { text: 'Kodi a répondu, mais la réponse n’a pas pu être relue. Rouvre la conversation dans un instant.' }, counted: true };
-  const m = toMessage(row.data as unknown as MessageRow);
-  return { reply: { id: m.id, text: m.text, outfit: m.outfit }, counted: true };
+  const { from: _, ...m } = toMessage(row.data as unknown as MessageRow);
+  return { reply: m, counted: true };
+}
+
+/**
+ * Sert la variante déjà prête d'une réponse (fonction `kode`, action
+ * `variante`) : aucun appel au modèle, aucune question décomptée. Rend la
+ * réponse de Kodi telle qu'enregistrée, ou un message.
+ */
+export async function serveVariante(replyId: string): Promise<Result<{ reply: KodeMessage }>> {
+  const sb = db();
+  const { data, error } = await sb.functions.invoke<{ question_id: string; reply_id: string }>('kode', { body: { action: 'variante', reply_id: replyId } });
+  if (error || !data) return { ok: false, ...(await functionError(error, 'Kodi n’a pas pu montrer la variante. Réessaie dans un instant.')) };
+  const row = await sb.from('kode_messages').select('id, author, body, meta, outfits(name, outfit_items(garment_id))').eq('id', data.reply_id).single();
+  if (row.error) return { ok: false, message: 'La variante est prête, mais n’a pas pu être relue. Rouvre la conversation dans un instant.' };
+  return { ok: true, reply: toMessage(row.data as unknown as MessageRow) };
 }
 
 /** Une conversation neuve : les bulles en cours sont archivées (fonction `kode_reset`), le ménage les efface plus tard. */

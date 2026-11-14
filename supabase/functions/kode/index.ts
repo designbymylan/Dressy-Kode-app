@@ -15,13 +15,18 @@
  *   POST { action: 'planifier', jours, voyage?, consigne? }
  *     →  { message, jours: [{ date, titre, pourquoi, pieces (id des pièces) }] }
  *
+ * Sert la variante déjà calculée d'une réponse (13/11), sans appel au modèle
+ * et sans compter de question (décision de l'utilisateur) :
+ *
+ *   POST { action: 'variante', reply_id }  →  { question_id, reply_id }
+ *
  * Déployée AVEC vérification JWT : l'appel porte le jeton de la personne,
  * et toutes les lectures passent par la RLS avec ce jeton. La clé service ne
  * sert qu'à ce que le navigateur ne doit pas pouvoir faire : compter la
  * question dans le quota et écrire la réponse de Kodi.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { eventText, type AgendaLine, type Corps, type EcartRow, type EventRow, type Profile } from './prompt.ts';
+import { eventText, DIRECTION_LIBELLES, type AgendaLine, type Corps, type EcartRow, type EventRow, type Profile } from './prompt.ts';
 import { MIN_PIECES, type Garment, type Turn } from './wardrobe.ts';
 import { conditionsDuJour, type Conditions } from './meteo.ts';
 import { servedBy, KodeError, MODEL, EFFORT } from './claude.ts';
@@ -397,6 +402,71 @@ async function reply(token: string, question: string) {
   }
 }
 
+// ---------------------------------------------------------------- variante servie
+
+type VarianteMeta = { direction: keyof typeof DIRECTION_LIBELLES; titre: string; pieces: { id: string; slot: string }[] };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * La variante d'une réponse, déjà contrôlée quand Kodi l'a proposée : elle
+ * devient une bulle de la conversation (la puce comme question, gratuite, puis
+ * la tenue), sans appel au modèle. Servie une seule fois.
+ */
+async function serveVariante(token: string, replyId: string) {
+  if (!UUID.test(replyId)) throw new KodeError('Cette réponse n’existe plus.', 404);
+  const { db, space } = await openSession(token);
+  const { data: m } = await db.from('kode_messages').select('id, author, meta').eq('id', replyId).eq('space_id', space.id).maybeSingle();
+  const meta = (m?.meta ?? {}) as Record<string, unknown> & { variante?: VarianteMeta | null; variante_servie?: { question_id: string; reply_id: string } | null };
+  if (!m || m.author !== 'kode') throw new KodeError('Cette réponse n’existe plus.', 404);
+  if (meta.variante_servie?.reply_id) return { question_id: meta.variante_servie.question_id, reply_id: meta.variante_servie.reply_id };
+  const v = meta.variante;
+  if (!v?.pieces?.length || !(v.direction in DIRECTION_LIBELLES)) throw new KodeError('Cette variante n’est plus disponible.', 409);
+
+  // Les pièces doivent être encore là, et actives.
+  const ids = v.pieces.map((p) => p.id);
+  const { data: actives } = await db.from('garments').select('id').in('id', ids).eq('status', 'active');
+  if ((actives ?? []).length !== new Set(ids).size) throw new KodeError('Une pièce de cette variante n’est plus dans ton dressing.', 409);
+
+  // Réservée d'abord : deux touchers ne la servent pas deux fois.
+  const pris = await admin.from('kode_messages').update({ meta: { ...meta, variante_servie: { en_cours: true } } })
+    .eq('id', replyId).is('meta->variante_servie', null).select('id');
+  if (pris.error) throw new Error(`variante : ${pris.error.message}`);
+  if (!pris.data?.length) throw new KodeError('Cette variante est déjà dans la conversation.', 409);
+
+  const libelle = DIRECTION_LIBELLES[v.direction];
+  const crees: { question?: string; tenue?: string } = {};
+  try {
+    const { data: q, error: qe } = await admin.from('kode_messages')
+      .insert({ space_id: space.id, author: 'user', body: libelle, meta: { gratuit: 'variante' } }).select('id').single();
+    if (qe) throw new Error(`variante, question : ${qe.message}`);
+    crees.question = q.id;
+    const { data: outfit, error: oe } = await db.from('outfits').insert({ space_id: space.id, name: v.titre || null, source: 'kode' }).select('id').single();
+    if (oe) throw new Error(`variante, tenue : ${oe.message}`);
+    crees.tenue = outfit.id;
+    const items = await db.from('outfit_items').insert(v.pieces.map((p) => ({ outfit_id: outfit.id, garment_id: p.id, slot: p.slot })));
+    if (items.error) throw new Error(`variante, pièces : ${items.error.message}`);
+    const { data: r, error: re } = await admin.from('kode_messages').insert({
+      space_id: space.id,
+      author: 'kode',
+      body: `Voilà la version ${libelle.toLowerCase()}, déjà préparée.`,
+      outfit_id: outfit.id,
+      meta: { titre: v.titre || null, pourquoi: null, variante_de: replyId, direction: v.direction, gratuit: 'variante' },
+    }).select('id').single();
+    if (re) throw new Error(`variante, réponse : ${re.message}`);
+    await admin.from('kode_messages').update({ meta: { ...meta, variante_servie: { question_id: q.id, reply_id: r.id } } }).eq('id', replyId);
+    console.log(`[${space.id.slice(0, 8)}] variante servie · ${v.direction} · ${ids.length} pièce(s)`);
+    return { question_id: q.id as string, reply_id: r.id as string };
+  } catch (err) {
+    // Rien de laissé à moitié, et la variante rendue disponible : la personne pourra réessayer.
+    if (crees.question) await admin.from('kode_messages').delete().eq('id', crees.question);
+    if (crees.tenue) await admin.from('outfits').delete().eq('id', crees.tenue);
+    // La clé retirée (pas mise à null : le filtre `is null` ne verrait pas un null JSON).
+    const { variante_servie: _, ...sans } = meta;
+    await admin.from('kode_messages').update({ meta: sans }).eq('id', replyId);
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------- plusieurs jours
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -534,6 +604,7 @@ Deno.serve(async (req) => {
   try {
     const input = await req.json().catch(() => ({}));
     if (input?.action === 'planifier') return Response.json(await plan(token, input));
+    if (input?.action === 'variante') return Response.json(await serveVariante(token, String(input?.reply_id ?? '')));
     const question = String(input?.question ?? '').trim().slice(0, MAX_QUESTION);
     if (!question) throw new KodeError('Écris ta question à Kodi.');
     return Response.json(await reply(token, question));

@@ -694,8 +694,16 @@ demandé par l'utilisateur.** Décisions et état :
   sept derniers jours, et les 50 souvenirs les plus récents (plus de vecteurs
   ni d'appel à Google). La taille d'une pièce ne part qu'avec l'accord
   silhouette. Tout est gardé dans `kode_messages.meta` (contrôles, variante,
-  durées, jetons cumulés). **L'écran ne montre pas encore** la variante, la
-  question ni le manque : maquette à faire valider avant.
+  durées, jetons cumulés).
+- **Écran de Kodi v2** (maquette https://claude.ai/artifact/3BzxVFrF4WtjfZxgmbyLbW,
+  validée le 14/11, mobile `screens/Kode.tsx` et site `KodeChat.tsx`) : la
+  question de Kodi en bas de sa bulle, avec « Ta réponse ne compte pas dans tes
+  questions » et le champ « Réponds à Kodi » (même à zéro question) ; la puce
+  de la variante prête en bleu avec « prête » (`suitesDe`, `DotChip selected
+  badge`), servie par l'action `variante` de la fonction `kode`, sans modèle
+  ni question décomptée, une seule fois ; « Ce qui te manque » (un type de
+  pièce, jamais une marque) avec « Ajouter une pièce ». Planche du site :
+  `/apercu/kodi?cas=question|chaude|manque&quota=0`.
 - **Décisions Kodi v2** : répondre à la question de Kodi est gratuit
   (`kode_ask`, `meta.gratuit`) ; une puce servie par la variante sera
   gratuite ; Kodi retient ce qu'on lui dit (souvenirs `dit`, deux au plus,

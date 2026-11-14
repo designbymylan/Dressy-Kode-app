@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { askKode, planTomorrow, resetKode } from '@/app/actions';
+import { askKode, planTomorrow, resetKode, serveVariante } from '@/app/actions';
+import { VARIANTE_LIBELLES, suitesDe } from '@/lib/kodi-suites';
 import type { KodeMessage, KodeUsage } from '@/lib/kode';
 import { OutfitCard } from '@/components/OutfitCard';
 import { ErrorNote, buttonPrimary, buttonQuiet } from '@/components/ui';
@@ -16,9 +17,6 @@ const SUGGESTIONS = [
   'Quelque chose pour ce soir',
   "Je n'ai rien à me mettre",
 ];
-
-/** Les suites d'une réponse (12/11, comme l'app) : sous la dernière tenue, trois puces pour l'ajuster sans retaper. Kodi relit la conversation. */
-const SUITES = ['Une autre idée', 'Plus habillée', 'Plus décontractée'];
 
 const bubble = {
   maxWidth: '84%', borderRadius: 22, padding: '12px 16px', fontSize: 15, lineHeight: 1.45, whiteSpace: 'pre-wrap',
@@ -54,7 +52,10 @@ export function KodeChat({
   const unlimited = usage.quota === null;
   const left = unlimited ? Infinity : Math.max(0, usage.quota! - usage.used);
   const tooFew = pieces < 2;
-  const closed = tooFew || left === 0;
+  // Kodi vient de poser une question : y répondre ne compte pas (13/11), même sans question restante.
+  const last = messages.at(-1);
+  const gratuite = last?.author === 'kode' && !!last.question;
+  const closed = tooFew || (left === 0 && !gratuite);
 
   // La dernière bulle reste visible au-dessus du champ de saisie.
   useEffect(() => {
@@ -118,6 +119,24 @@ export function KodeChat({
       e.preventDefault();
       send(text);
     }
+  }
+
+  /** La variante déjà prête : sa puce devient la question, la tenue arrive sans appel au modèle, rien n'est décompté. */
+  async function variante(m: KodeMessage) {
+    if (busy || !m.variante || m.variante.servie) return;
+    setError(null);
+    setBusy(true);
+    const temp: KodeMessage = { id: `envoi-${Date.now()}`, author: 'user', body: VARIANTE_LIBELLES[m.variante.direction] ?? 'Une variante', outfit: null };
+    setMessages((xs) => [...xs.map((x) => (x.id === m.id && x.variante ? { ...x, variante: { ...x.variante, servie: true } } : x)), temp]);
+    const res = await serveVariante(m.id).catch(() => ({ error: 'La variante n’est pas arrivée. Vérifie ta connexion et réessaie.', code: null }));
+    if ('error' in res) {
+      setMessages((xs) => xs.filter((x) => x.id !== temp.id).map((x) => (x.id === m.id && x.variante ? { ...x, variante: { ...x.variante, servie: false } } : x)));
+      setError(res.error);
+    } else {
+      setMessages((xs) => [...xs.filter((x) => x.id !== temp.id), ...res.messages]);
+      setUsage(res.usage);
+    }
+    setBusy(false);
   }
 
   async function reset() {
@@ -236,13 +255,45 @@ export function KodeChat({
                   </div>
                 </OutfitCard>
               ) : null}
-              {m.outfit && i === messages.length - 1 && !busy && !closed ? (
+              {m.question ? (
+                <div
+                  className="pop"
+                  style={{ ...bubble, alignSelf: 'flex-start', background: 'var(--butter)', color: 'var(--butter-ink)', borderRadius: '20px 20px 20px 6px', display: 'flex', flexDirection: 'column', gap: 3 }}
+                >
+                  <strong style={{ fontWeight: 600 }}>{m.question}</strong>
+                  {i === messages.length - 1 && !busy ? <span style={{ fontSize: 12.5 }}>Ta réponse ne compte pas dans tes questions.</span> : null}
+                </div>
+              ) : null}
+              {m.manque ? (
+                <div
+                  className="pop"
+                  style={{ alignSelf: 'flex-start', maxWidth: '84%', background: 'var(--butter)', color: 'var(--butter-ink)', borderRadius: '20px 20px 20px 6px', padding: 10 }}
+                >
+                  <div style={{ background: '#ffffff', color: 'var(--butter-ink)', borderRadius: 16, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ce qui te manque</span>
+                    <strong style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4 }}>{m.manque}</strong>
+                  </div>
+                  {i === messages.length - 1 ? (
+                    <Link href="/dressing/ajouter" className="chip" style={{ marginTop: 8, display: 'inline-flex' }}>
+                      Ajouter une pièce
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+              {m.outfit && i === messages.length - 1 && !busy ? (
                 <div className="pop" role="group" aria-label="Ajuster cette tenue" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {SUITES.map((q) => (
-                    <button key={q} type="button" className="chip" onClick={() => send(q)}>
-                      {q}
-                    </button>
-                  ))}
+                  {suitesDe(m.variante).map((x) =>
+                    x.prete ? (
+                      <button key={x.label} type="button" className="chip" aria-pressed="true" onClick={() => variante(m)}>
+                        {x.label}
+                        <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', marginLeft: 6 }}>prête</span>
+                      </button>
+                    ) : left === 0 || tooFew ? null : (
+                      <button key={x.label} type="button" className="chip" onClick={() => send(x.label)}>
+                        {x.label}
+                      </button>
+                    ),
+                  )}
                 </div>
               ) : null}
             </div>
@@ -279,7 +330,7 @@ export function KodeChat({
                 Ajouter une pièce
               </Link>
             </div>
-          ) : left === 0 ? (
+          ) : left === 0 && !gratuite ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--ground)', borderRadius: 22, padding: 16 }}>
               <p style={{ fontSize: 13.5, lineHeight: 1.45 }}>
                 Tes {usage.quota} questions du mois sont utilisées. Elles reviennent le 1er du mois.
@@ -328,7 +379,7 @@ export function KodeChat({
                     grow();
                   }}
                   onKeyDown={onKey}
-                  placeholder="Écris à Kodi…"
+                  placeholder={gratuite ? 'Réponds à Kodi' : 'Écris à Kodi…'}
                   style={{
                     flex: 1, border: 'none', outline: 'none', resize: 'none', background: 'transparent',
                     fontSize: 16, lineHeight: 1.4, padding: '11px 0', maxHeight: 120,
