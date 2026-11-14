@@ -52,20 +52,21 @@ export const CATEGORIES: CategoryMeta[] = [
     id: 'hauts', label: 'Hauts', slot: 'haut', icon: I.haut,
     kinds: [
       { id: 'tshirt', label: 'T-shirt' }, { id: 'chemise', label: 'Chemise' }, { id: 'blouse', label: 'Blouse' },
-      { id: 'pull', label: 'Pull' }, { id: 'sweat', label: 'Sweat' }, { id: 'debardeur', label: 'Débardeur' },
-      { id: 'top', label: 'Top' },
+      { id: 'polo', label: 'Polo' }, { id: 'pull', label: 'Pull' }, { id: 'sweat', label: 'Sweat' },
+      { id: 'capuche', label: 'Sweat à capuche' }, { id: 'debardeur', label: 'Débardeur' }, { id: 'top', label: 'Top' },
     ],
   },
   {
     id: 'bas', label: 'Bas', slot: 'bas', icon: I.bas,
     kinds: [
-      { id: 'jean', label: 'Jean' }, { id: 'pantalon', label: 'Pantalon' }, { id: 'jupe', label: 'Jupe' },
-      { id: 'short', label: 'Short' }, { id: 'legging', label: 'Legging' },
+      { id: 'jean', label: 'Jean' }, { id: 'pantalon', label: 'Pantalon' }, { id: 'chino', label: 'Chino' },
+      { id: 'jupe', label: 'Jupe' }, { id: 'jupeculotte', label: 'Jupe-culotte' }, { id: 'short', label: 'Short' },
+      { id: 'legging', label: 'Legging' },
     ],
   },
   {
     id: 'robes', label: 'Robes', slot: 'robe', icon: I.robe,
-    kinds: [{ id: 'robe', label: 'Robe' }, { id: 'combinaison', label: 'Combinaison' }],
+    kinds: [{ id: 'robe', label: 'Robe' }, { id: 'combinaison', label: 'Combinaison' }, { id: 'salopette', label: 'Salopette' }],
   },
   {
     id: 'vestes', label: 'Vestes et manteaux', slot: 'veste', icon: I.veste,
@@ -78,8 +79,8 @@ export const CATEGORIES: CategoryMeta[] = [
     id: 'chaussures', label: 'Chaussures', slot: 'chaussures', icon: I.chaussures,
     kinds: [
       { id: 'baskets', label: 'Baskets' }, { id: 'bottines', label: 'Bottines' }, { id: 'bottes', label: 'Bottes' },
-      { id: 'escarpins', label: 'Escarpins' }, { id: 'sandales', label: 'Sandales' }, { id: 'mocassins', label: 'Mocassins' },
-      { id: 'ballerines', label: 'Ballerines' },
+      { id: 'escarpins', label: 'Escarpins' }, { id: 'sandales', label: 'Sandales' }, { id: 'mules', label: 'Mules' },
+      { id: 'mocassins', label: 'Mocassins' }, { id: 'derbies', label: 'Derbies' }, { id: 'ballerines', label: 'Ballerines' },
     ],
   },
   {

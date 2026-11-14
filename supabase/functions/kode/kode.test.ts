@@ -167,6 +167,8 @@ check('plafond : le plus chaud de la journée', [plafondDe(33), plafondDe(29), p
 check('besoin : le plus froid de la journée', [besoinDe(3), besoinDe(8), besoinDe(12), besoinDe(17), besoinDe(22)], [4, 3, 2, 1, 0]);
 check('chaleur : débardeur 0, pull 3, doudoune 4, pull en laine 4', [chaleurDe('debardeur', null), chaleurDe('pull', null), chaleurDe('doudoune', null), chaleurDe('pull', 'laine')], [0, 3, 4, 4]);
 check('chaleur : le lin allège, la laine alourdit', [chaleurDe('pantalon', 'lin'), chaleurDe('pantalon', 'coton')], [1, 2]);
+check('chaleur des types ajoutés le 13/11 : polo, capuche, chino, jupe-culotte, salopette, mules, derbies',
+  ['polo', 'capuche', 'chino', 'jupeculotte', 'salopette', 'mules', 'derbies'].map((k) => chaleurDe(k, null)), [1, 3, 2, 1, 2, 1, 1]);
 check('chaleur inconnue pour un bijou ou un sac', [chaleurDe('collier', null), chaleurDe(null, null)], [null, null]);
 
 const chaud = conditionsDuJour(jour({ min: 18, max: 28, ciel: 'soleil', uv: 8 }));

@@ -47,12 +47,12 @@ export type Conditions = {
 /** Chaleur d’une pièce : 0 pour un débardeur, 4 pour une doudoune. */
 const CHALEUR_PAR_TYPE: Record<string, number> = {
   // hauts, bas, robes
-  debardeur: 0, short: 0, top: 1, tshirt: 1, blouse: 1, chemise: 1, robe: 1, combinaison: 1, jupe: 1, legging: 1,
-  jean: 2, pantalon: 2, sweat: 3, pull: 3,
+  debardeur: 0, short: 0, top: 1, tshirt: 1, polo: 1, blouse: 1, chemise: 1, robe: 1, combinaison: 1, jupe: 1, jupeculotte: 1, legging: 1,
+  jean: 2, pantalon: 2, chino: 2, salopette: 2, sweat: 3, capuche: 3, pull: 3,
   // vestes
   gilet: 2, blazer: 2, veste: 2, trench: 2, manteau: 3, doudoune: 4,
   // chaussures
-  sandales: 0, ballerines: 1, escarpins: 1, mocassins: 1, baskets: 1, bottines: 2, bottes: 3,
+  sandales: 0, mules: 1, ballerines: 1, escarpins: 1, mocassins: 1, derbies: 1, baskets: 1, bottines: 2, bottes: 3,
   // accessoires chauds
   chapeau: 1, casquette: 0, foulard: 1, echarpe: 2, bonnet: 3, gants: 3,
 };

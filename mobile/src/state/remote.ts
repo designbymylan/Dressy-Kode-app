@@ -138,6 +138,8 @@ const KIND_ALIAS: Record<string, GarmentKind> = {
   blouse: 'chemise', sweat: 'pull', top: 'debardeur', legging: 'pantalon', combinaison: 'robe', manteau: 'trench',
   doudoune: 'veste', gilet: 'cardigan', bottes: 'bottines', sandales: 'escarpins', ballerines: 'mocassins',
   sacamain: 'sac', bandouliere: 'sac', pochette: 'sac', cabas: 'sac', sacados: 'sac', echarpe: 'foulard', bandeau: 'foulard',
+  // Types ajoutés le 13/11 (repérage plus fin) : l'illustration la plus proche.
+  polo: 'chemise', capuche: 'pull', chino: 'pantalon', jupeculotte: 'jupe', salopette: 'robe', mules: 'mocassins', derbies: 'mocassins',
 };
 
 /** L'illustration d'une pièce venue de la base : son type, un proche, ou celui de sa catégorie. */
