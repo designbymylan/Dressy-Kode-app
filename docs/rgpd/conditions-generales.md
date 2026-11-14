@@ -1,6 +1,6 @@
 # Conditions générales de Dresskode
 
-_Version 1.2 du 8 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici. Rédigé pendant l'audit du 07/11 : à faire relire par un professionnel du droit avant la sortie._
+_Version 1.3 du 14 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici. Rédigé pendant l'audit du 07/11 : à faire relire par un professionnel du droit avant la sortie._
 
 ## En bref
 
@@ -75,9 +75,9 @@ Les prix sont en euros, toutes taxes comprises, et affichés avant chaque paieme
 
 Découverte est gratuite, sans carte bancaire et sans limite de durée : 15 pièces, 5 questions à Kodi par mois, et 4 générations offertes une seule fois, sans renouvellement.
 
-Fashion (8,99 € par mois ou 75 € par an) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois ou 159 € par an) : jusqu’à 100 pièces, 100 générations et Kodi sans limite. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.
+Fashion (8,99 € par mois ou 75 € par an) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois ou 159 € par an) : jusqu’à 100 pièces, 100 générations et Kodi sans limite, dans un usage raisonnable de 300 questions par mois (à partir du 15 décembre 2026), bien au-delà d’un usage personnel quotidien ; au-delà, les questions reviennent le 1er du mois. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.
 
-Les générations et les questions se renouvellent chaque mois, y compris avec un abonnement annuel ; celles qui ne sont pas utilisées ne se reportent pas.
+Les générations et les questions se renouvellent chaque mois, y compris avec un abonnement annuel ; celles qui ne sont pas utilisées ne se reportent pas. Répondre à une question que Kodi vient de te poser ne compte pas comme une question.
 
 Une génération est un nouveau dessin d’une pièce (« Image propre », ou la seconde reprise d’un rendu incorrect). Elle n’est comptée que si le dessin aboutit.
 

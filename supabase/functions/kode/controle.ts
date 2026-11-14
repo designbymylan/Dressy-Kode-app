@@ -18,6 +18,8 @@
  * robe, des chaussures et au plus une veste : ils restent dans ces règles.
  */
 
+import type { Picked } from './wardrobe.ts';
+
 export type PieceControle = {
   id: string;
   ref: string;
@@ -125,4 +127,50 @@ export function variantePropre(principale: PieceControle[], variante: PieceContr
   const retirees = visibles(principale).filter((p) => !variante.some((v) => v.id === p.id)).length;
   const changees = Math.max(ajoutees, retirees);
   return changees >= 2 ? { ok: true, erreurs: [] } : { ok: false, erreurs: ['la variante ressemble trop à la tenue principale : change la base ou au moins deux pièces visibles'] };
+}
+
+/**
+ * Ce que Kodi ne garde jamais en mémoire, même avec l'accord « goûts » : la
+ * santé, le corps et les données sensibles (RGPD, art. 9), ni un tiers.
+ */
+const SENSIBLE = /\b(sant[ée]|malad|douleur|mal (au|à|aux)|enceinte|grossesse|handicap|poids|kilos?|kg|mesure|tour de|taille \d|cm\b|régime|religi|prière|politi|syndic|sexu|orientation|médic|traitement|thérap|dépress|anxi|cicatric|opér(é|ation)|mon mari|ma femme|mon copain|ma copine|mon fils|ma fille|ma mère|mon père)/i;
+
+/** Les faits à retenir, filtrés : deux au plus, courts, jamais sensibles. */
+export function aRetenir(v: unknown, accord: boolean): string[] {
+  if (!accord) return [];
+  return (Array.isArray(v) ? v.map(String) : []).map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 120)).filter((x) => x.length >= 6 && !SENSIBLE.test(x)).slice(0, 2);
+}
+
+/**
+ * Ce que le code peut réparer sans le modèle : retirer ce qui dépasse, dans
+ * l'ordre où Kodi l'a proposé (la première pièce d'un emplacement reste).
+ * Ne fabrique jamais une base qui manque.
+ */
+export function reparer(ps: Picked[], profil: ProfilControle): Picked[] {
+  const evitees = new Set(profil.avoidColours.map((c) => c.toLowerCase()));
+  const prefere = profil.metals.filter((m) => m === 'or' || m === 'argent');
+  const metal = (p: Picked) => (p.garment.colors.includes('dore') ? 'or' : p.garment.colors.includes('argente') ? 'argent' : null);
+  let out = ps.filter((p) => !(p.garment.colors[0] && evitees.has(p.garment.colors[0].toLowerCase())));
+  if (prefere.length === 1) out = out.filter((p) => p.garment.category_id !== 'bijoux' || !metal(p) || metal(p) === prefere[0]);
+
+  const garde: Picked[] = [];
+  const compte = (cat: string) => garde.filter((p) => p.garment.category_id === cat).length;
+  const robe = out.some((p) => p.garment.category_id === 'robes');
+  for (const p of out) {
+    const c = p.garment.category_id, k = p.garment.kind ?? '';
+    if (c === 'robes' && compte('robes')) continue;
+    if (c === 'bas' && (robe ? k !== 'legging' : compte('bas'))) continue;
+    if ((c === 'chaussures' || c === 'sacs') && compte(c)) continue;
+    if (c === 'hauts') {
+      const h = garde.filter((x) => x.garment.category_id === 'hauts');
+      if (h.length >= (robe ? 1 : 2)) continue;
+      if (h.length === 1 && (DESSOUS.has(h[0].garment.kind ?? '') === DESSOUS.has(k) && !(k === 'chemise' || h[0].garment.kind === 'chemise'))) continue;
+    }
+    if (c === 'vestes') {
+      const v = garde.filter((x) => x.garment.category_id === 'vestes');
+      if (v.length >= 2 || (v.length === 1 && LEGERES.has(v[0].garment.kind ?? '') === LEGERES.has(k))) continue;
+    }
+    garde.push(p);
+  }
+  return garde;
 }

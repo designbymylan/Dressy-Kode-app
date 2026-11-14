@@ -25,7 +25,7 @@ jamais dans l'app ni dans le code ; jeton revalidé côté serveur par
 | --- | --- | --- |
 | Supabase | Base de données, authentification, fichiers, fonctions serveur | Union européenne (Irlande) |
 | Anthropic | IA : repérage des pièces sur les photos, réponses et tenues de Kode, recherche du modèle d'une pièce | États-Unis |
-| Google (API Gemini) | IA : dessin des pièces ; vectorisation des souvenirs de goût (textes courts, avec l'accord « gouts ») | États-Unis |
+| Google (API Gemini) | IA : découpe et dessin des pièces (plus aucun souvenir de Kodi depuis le 13/11) | États-Unis |
 | Stripe | Paiement, factures | États-Unis et Union européenne |
 | Expo (EAS Update) | Distribution des mises à jour de l'app, sans donnée de compte | États-Unis |
 
@@ -92,11 +92,20 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Tables** : `style_profile`, `settings`, `outfits`, `outfit_items`,
   `kode_messages`, `loans`.
 - **Destinataires** : Supabase ; Anthropic, pour chaque question : la liste
-  des pièces (avec leur type, leur saison et leur matière), le profil de
-  style, l'agenda des deux semaines à venir, les tenues écartées, la météo
-  du jour, les cœurs et les souvenirs retrouvés (traitement 11), et la
-  silhouette, la taille et les tailles habituelles seulement avec l'accord
-  du traitement 4. Jamais le nom, l'e-mail, le poids ni les mesures.
+  des pièces (type, saison, matière, fiche de la pièce : motif, coupe,
+  détails ; la coupe et la note écrites par la personne), le profil de
+  style (couleurs évitées comprises), l'agenda des deux semaines à venir,
+  les pièces portées ces sept derniers jours (13/11, pour ne pas reproposer
+  une tenue récente), les tenues écartées, la météo du jour, les cœurs et
+  les cinquante souvenirs les plus récents (traitement 11), et la
+  silhouette, la taille, les tailles habituelles et la taille des pièces
+  seulement avec l'accord du traitement 4. Jamais le nom, l'e-mail, le
+  poids ni les mesures. L'app conseille de ne noter aucune information de
+  santé dans les notes de pièces et les questions.
+- **Contrôle (13/11)** : la tenue proposée est vérifiée par le code (une
+  base, un bas, une paire, couleurs évitées, métal, taille) ; le résultat
+  du contrôle, la variante et la question éventuelle de Kodi sont gardés
+  dans la réponse (`kode_messages.meta`), avec les conversations.
 - **Durée** : profil et tenues, tant que le compte existe ; conversations,
   12 mois, 2 mois une fois archivées.
 - **Profilage** : les tenues sont des suggestions ; aucune décision
@@ -252,16 +261,23 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Base** : les cœurs, exécution du contrat (favoris). La mémoire de Kodi,
   consentement : accord « gouts » (« Kodi apprend de mes choix »), donné
   ou retiré à tout moment dans Réglages › Mes choix, daté et versionné
-  (table `consents`).
+  (table `consents`). **Version 2 (13/11)** : l'accord couvre aussi ce que
+  la personne dit à Kodi de ses goûts ; un accord en version 1 vaut pour
+  les cœurs et les tenues écartées, et Kodi ne retient rien des messages
+  tant qu'il n'est pas redonné (vérifié par la fonction `kode`).
 - **Données** : pièces et tenues aimées (cœurs) ; souvenirs en phrases
   (« Pièce aimée : … », « Tenue écartée (raison) : … ») créés à partir des
-  cœurs et des tenues écartées ; leur vecteur (embedding, 768 nombres, qui
-  ne se lit pas comme du texte mais décrit le sens d'une phrase).
-- **Tables** : `likes`, `kodi_faits` (avec la colonne `embedding`), `consents`.
-- **Destinataires** : Supabase (base, vecteurs) ; Google (API Gemini), qui
-  reçoit le texte des souvenirs pour les vectoriser (à la première
-  question qui suit leur création) ; Anthropic, pour chaque question, les
-  souvenirs les plus proches de la question, jamais le vecteur.
+  cœurs et des tenues écartées ; depuis le 13/11, souvenirs « dits »
+  (origine `dit`) : deux faits courts au plus par réponse, tirés de ce que
+  la personne écrit à Kodi (« n'aime pas le jaune », « tenue sobre en
+  semaine »), filtrés par le code (`aRetenir`, `kode/controle.ts`) : rien
+  sur la santé, le corps, le poids, les mesures, la religion, les
+  opinions, la vie intime ni un proche. Les vecteurs ne sont plus calculés
+  (K4, 13/11) : la colonne `embedding` reste vide et sera retirée.
+- **Tables** : `likes`, `kodi_faits`, `consents`.
+- **Destinataires** : Supabase ; Anthropic, pour chaque question, les
+  cinquante souvenirs les plus récents. Plus aucun souvenir ne part chez
+  Google.
 - **Durée** : cœurs, tant que le compte existe ou jusqu'au retrait ;
   souvenirs, 12 mois (pg_cron `kodi-faits-retention`), et effacés aussitôt
   si l'accord est retiré, si le cœur ou la tenue d'origine disparaît, ou si

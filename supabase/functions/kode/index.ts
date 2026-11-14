@@ -29,7 +29,6 @@ import { type Coeurs, type MeteoJours, type Trip } from './demande.ts';
 import { repondre, planifier } from './repondre.ts';
 import { parisDay, shift, weekday, dayLabel } from './dates.ts';
 import { lireCle } from '../_shared/fournisseurs.ts';
-import { vectoriser, versPgvector, LOT_MAX } from '../_shared/embeddings.ts';
 import { cachePostgres } from '../_shared/donnees/cache.ts';
 import { contexteDuJour, type Contexte } from '../_shared/donnees/contexte.ts';
 import { contexteTexte } from '../_shared/donnees/texte.ts';
@@ -38,10 +37,10 @@ import { meteoVoyage } from '../_shared/donnees/voyage.ts';
 const HISTORY = 12; // bulles relues pour suivre la conversation
 const MAX_QUESTION = 600;
 const MAX_DAYS = 31; // jours prévus d'un coup, un mois ou un long voyage
-const SOUVENIRS = 6; // souvenirs retrouvés par question
-const SIMILARITE_MIN = 0.4; // en dessous, le souvenir n'a pas de rapport avec la question
+const SOUVENIRS = 50; // souvenirs relus par question, les plus récents (K4)
 const ATTENTE_MONDE = 9000; // ms : météo, fériés, tendances (cache partagé)
-const ATTENTE_SOUVENIRS = 8000; // ms : la recherche des souvenirs
+const ATTENTE_SOUVENIRS = 3000; // ms : la lecture des souvenirs (une requête simple depuis K4)
+const RETENIR_DEPUIS = 2; // version de l'accord « goûts » qui couvre ce que la personne dit à Kodi
 
 // ---------------------------------------------------------------- clés
 
@@ -93,12 +92,12 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
   const from = window?.from ?? today;
   const horizon = window?.to ?? parisDay(14);
 
-  const [settings, style, categories, garments, stats, planned, events, history, ecarts, silhouette, accord, gouts, likes] = await Promise.all([
+  const [settings, style, categories, garments, stats, planned, events, history, ecarts, silhouette, accord, gouts, accordGouts, likes, portees] = await Promise.all([
     db.from('settings').select('city').eq('space_id', spaceId).maybeSingle(),
     db.from('style_profile').select('*').eq('space_id', spaceId).maybeSingle(),
     db.from('categories').select('id, label').order('sort'),
     db.from('garments')
-      .select('id, name, category_id, kind, season, colors, material')
+      .select('id, name, category_id, kind, season, colors, material, fiche, fit, size, notes')
       .eq('space_id', spaceId)
       .eq('status', 'active')
       .order('created_at')
@@ -132,11 +131,16 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
     db.rpc('has_consent', { target: spaceId, what: 'silhouette' }),
     // Mes choix : Kodi n'en tire quelque chose qu'avec l'accord « gouts ».
     db.rpc('has_consent', { target: spaceId, what: 'gouts' }),
+    // Sa version : depuis la 2 (13/11), l'accord couvre aussi ce que la personne dit à Kodi.
+    db.from('consents').select('granted, version').eq('space_id', spaceId).eq('kind', 'gouts')
+      .order('created_at', { ascending: false }).limit(1).maybeSingle(),
     db.from('likes')
       .select('garment_id, outfit_id, outfits(name, outfit_items(garment_id))')
       .eq('space_id', spaceId)
       .order('created_at', { ascending: false })
       .limit(30),
+    // Les ports des sept derniers jours (K6) : ne pas reproposer la tenue d'avant-hier.
+    db.from('wears').select('garment_id, worn_on').gte('worn_on', shift(today, -7)).lte('worn_on', today),
   ]);
 
   for (const r of [categories, garments, stats, planned, events, history]) {
@@ -154,7 +158,17 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
     material: g.material,
     wear_count: byGarment.get(g.id)?.wear_count ?? 0,
     last_worn_on: byGarment.get(g.id)?.last_worn_on ?? null,
+    fiche: (g.fiche as Garment['fiche']) ?? null,
+    fit: g.fit ?? null,
+    // La taille d'une pièce dit celle de la personne : seulement avec l'accord « silhouette », comme ses tailles habituelles.
+    size: accord.data === true ? g.size ?? null : null,
+    notes: g.notes ?? null,
   }));
+  const ids = new Set(wardrobe.map((g) => g.id));
+  const parJour = new Map<string, string[]>();
+  for (const w of (portees.error ? [] : portees.data ?? []) as { garment_id: string; worn_on: string }[]) {
+    if (ids.has(w.garment_id)) parJour.set(w.worn_on, [...(parJour.get(w.worn_on) ?? []), w.garment_id]);
+  }
 
   const agenda: AgendaLine[] = [];
   const plannedNames = new Map<string, string>();
@@ -167,15 +181,18 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
   const eventRows = (events.data ?? []) as EventRow[];
   for (const e of eventRows) agenda.push({ day: `${e.day} (${weekday(e.day)})`, text: `rendez-vous ${eventText(e)}` });
 
-  const turns: Turn[] = ((history.data ?? []) as unknown as {
-    author: string; body: string; meta: { titre?: string } | null; outfits: OutfitEmbed;
-  }[])
+  type Bulle = { author: string; body: string; meta: { titre?: string; question?: string } | null; outfits: OutfitEmbed };
+  const bulles = (history.data ?? []) as unknown as Bulle[];
+  // La dernière réponse de Kodi posait-elle une question ? Alors pas de question cette fois.
+  const derniereKodi = bulles.find((m) => m.author === 'kode');
+  const turns: Turn[] = [...bulles]
     .reverse()
     .map((m): Turn => {
       if (m.author === 'user') return { role: 'user', content: m.body };
       const names = pieceNames(m.outfits);
       const card = names ? `\n[Tenue proposée : « ${m.meta?.titre ?? m.outfits?.name ?? ''} » : ${names}]` : '';
-      return { role: 'assistant', content: m.body + card };
+      const question = m.meta?.question ? `\n[Question posée : « ${m.meta.question} »]` : '';
+      return { role: 'assistant', content: m.body + card + question };
     });
 
   return {
@@ -192,6 +209,10 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
     plannedNames,
     turns,
     coeurs: gouts.data === true ? coeursDe((likes.data ?? []) as unknown as Coeur[]) : null,
+    gouts: gouts.data === true,
+    retenir: gouts.data === true && accordGouts.data?.granted === true && (accordGouts.data?.version ?? 1) >= RETENIR_DEPUIS,
+    portees: [...parJour].map(([day, ids]) => ({ day, ids })),
+    questionPosee: Boolean(derniereKodi?.meta?.question),
   };
 }
 
@@ -220,9 +241,13 @@ async function openSession(token: string) {
   return { db, user, space: space as { id: string } };
 }
 
-/** Compte la question dans le quota du mois et l'écrit dans la conversation ; rend son id. */
-async function countQuestion(spaceId: string, question: string): Promise<string> {
-  const asked = await admin.rpc('kode_ask', { target: spaceId, question });
+/**
+ * Compte la question dans le quota du mois et l'écrit dans la conversation ;
+ * rend son id. Répondre à la question que Kodi vient de poser est gratuit
+ * (la base le décide) ; une planification ne l'est jamais.
+ */
+async function countQuestion(spaceId: string, question: string, peutEtreGratuite = true): Promise<string> {
+  const asked = await admin.rpc('kode_ask', { target: spaceId, question, peut_etre_gratuite: peutEtreGratuite });
   if (asked.error) {
     if (asked.error.hint === 'quota') throw new KodeError(asked.error.message, 429, 'quota');
     throw new Error(`enregistrement de la question : ${asked.error.message}`);
@@ -238,26 +263,38 @@ function meteoDuJour(c: Contexte): Conditions | null {
   return conditionsDuJour({ ...j, vent: m.maintenant.vent });
 }
 
-/** Les souvenirs qui n'ont pas encore de vecteur : une poignée à la fois, sans bloquer la réponse. */
-async function completerSouvenirs(spaceId: string): Promise<void> {
-  const { data, error } = await admin.from('kodi_faits').select('id, texte').eq('space_id', spaceId).is('embedding', null).limit(LOT_MAX);
-  if (error || !data?.length) return;
-  const vecteurs = await vectoriser(data.map((f) => f.texte), 'RETRIEVAL_DOCUMENT');
-  if (!vecteurs) return;
-  await Promise.all(data.map((f, i) => admin.from('kodi_faits').update({ embedding: versPgvector(vecteurs[i]) }).eq('id', f.id)));
-}
-
-/** Les souvenirs les plus proches de la question, par ressemblance de sens. Vide sans réponse à temps. */
-async function souvenirsPour(db: SupabaseClient, spaceId: string, question: string): Promise<{ texte: string }[]> {
-  await completerSouvenirs(spaceId);
-  const q = await vectoriser([question], 'RETRIEVAL_QUERY');
-  if (!q) return [];
-  const { data, error } = await db.rpc('match_kodi_faits', { target: spaceId, query: versPgvector(q[0]), n: SOUVENIRS });
+/**
+ * Les souvenirs de Kodi (K4, 13/11) : tant qu'un espace en a peu, tous, du
+ * plus récent au plus ancien, sans passer par les vecteurs (cassés depuis le
+ * changement de clé, et jusqu'à 8 s d'attente). Une centaine de jetons, au
+ * plus quelques centaines. Seulement avec l'accord « goûts ».
+ */
+async function souvenirsPour(db: SupabaseClient, spaceId: string, gouts: boolean): Promise<{ texte: string }[]> {
+  if (!gouts) return [];
+  const { data, error } = await db.from('kodi_faits').select('texte').eq('space_id', spaceId).order('created_at', { ascending: false }).limit(SOUVENIRS);
   if (error) {
     console.warn('souvenirs :', error.message);
     return [];
   }
-  return ((data ?? []) as { texte: string; similarite: number }[]).filter((f) => f.similarite >= SIMILARITE_MIN);
+  return (data ?? []) as { texte: string }[];
+}
+
+/** Les jetons de tous les appels d'une réponse (deux avec une relance). */
+function usageTotal(appels: { usage: object }[]) {
+  const n = (k: string) => appels.reduce((s, a) => s + (Number((a.usage as Record<string, unknown>)[k]) || 0), 0);
+  return {
+    input_tokens: n('input_tokens'),
+    output_tokens: n('output_tokens'),
+    cache_read_input_tokens: n('cache_read_input_tokens'),
+    cache_creation_input_tokens: n('cache_creation_input_tokens'),
+  };
+}
+
+/** Les faits à retenir qui ne sont pas déjà dans ses souvenirs. */
+function nouveauxFaits(faits: string[], souvenirs: { texte: string }[]): string[] {
+  const cle = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const deja = new Set(souvenirs.map((s) => cle(s.texte)));
+  return faits.filter((f) => !deja.has(cle(f)));
 }
 
 /** Les durées d'une réponse, en ms, pour savoir où part le temps (K5, 13/11). */
@@ -284,7 +321,7 @@ async function reply(token: string, question: string) {
   const t1 = Date.now();
   const monde = within(contexteDuJour(cachePostgres(admin), ctx.city), ATTENTE_MONDE, 'contexte du jour').finally(() => ch.note('monde', t1));
   // Les souvenirs : même règle, sans eux Kodi répond comme avant.
-  const souvenirs = within(souvenirsPour(db, space.id, question), ATTENTE_SOUVENIRS, 'souvenirs').finally(() => ch.note('souvenirs', t1));
+  const souvenirs = within(souvenirsPour(db, space.id, ctx.gouts), ATTENTE_SOUVENIRS, 'souvenirs').finally(() => ch.note('souvenirs', t1));
 
   const questionId = await countQuestion(space.id, question);
 
@@ -293,9 +330,10 @@ async function reply(token: string, question: string) {
     const souv = (await souvenirs) ?? [];
     const meteo = c ? meteoDuJour(c) : null;
     const t2 = Date.now();
-    const { answer, pieces, demande, appels } = await repondre(ctx, question, { texte: c ? contexteTexte(c) : '', meteo }, souv, { effort: EFFORT.reponse });
+    const { answer, pieces, variante, demande, appels, controles } = await repondre(ctx, question, { texte: c ? contexteTexte(c) : '', meteo }, souv, { effort: EFFORT.reponse });
     ch.note('modele', t2);
     const res = appels.at(-1)!;
+    const usage = usageTotal(appels);
 
     let outfitId: string | null = null;
     if (pieces.length) {
@@ -320,16 +358,37 @@ async function reply(token: string, question: string) {
       meta: {
         titre: pieces.length ? answer.tenue.titre : null,
         pourquoi: pieces.length ? answer.tenue.pourquoi : null,
+        // Kodi v2 (13/11) : ce que l'écran pourra montrer une fois validé.
+        intention: answer.intention,
+        question: answer.question || null,
+        manque: answer.manque || null,
+        // La variante reste dans la réponse (pas une tenue de plus dans « Mes tenues ») ;
+        // la montrer ne coûte aucune question.
+        variante: variante.length
+          ? { direction: answer.variante.direction, titre: answer.variante.titre, pieces: variante.map((p) => ({ id: p.garment.id, slot: p.slot })) }
+          : null,
+        controles,
+        appels: appels.length,
         model: servi,
-        usage: res.usage,
+        usage,
         ms: ch.d,
       },
     }).select('id').single();
     if (error) throw new Error(`enregistrement de la réponse : ${error.message}`);
 
+    // Ce que Kodi retient de ce qu'elle lui a dit : seulement avec l'accord
+    // « goûts » version 2, jamais rien de sensible (filtré par aRetenir).
+    const retenus = ctx.retenir ? nouveauxFaits(answer.a_retenir, souv) : [];
+    if (retenus.length) {
+      const faits = await admin.from('kodi_faits')
+        .insert(retenus.map((texte) => ({ space_id: space.id, origine: 'dit', origine_id: questionId, texte })));
+      if (faits.error) console.warn('souvenirs dits :', faits.error.message);
+    }
+
     ch.note('total');
-    const u = res.usage;
-    console.log(`[${space.id.slice(0, 8)}] ${servi}${servi !== MODEL ? ` (demandé ${MODEL})` : ''} · ${u.input_tokens} + ${u.cache_read_input_tokens ?? 0} lus en cache + ${u.cache_creation_input_tokens ?? 0} mis en cache → ${u.output_tokens} · ${pieces.length} pièce(s) · ${souv.length} souvenir(s) · ${demande.interdit.size} écartée(s) par la météo · ${Object.entries(ch.d).map(([k, v]) => `${k} ${v} ms`).join(', ')}`);
+    const u = usage;
+    const ctl = controles.essais[0].length ? ` · contrôle : ${controles.essais.map((e) => e.length ? e.join(' ; ') : 'ok').join(' → ')}${controles.repare ? ' → réparée' : ''}${controles.abandon ? ' → sans tenue' : ''}` : '';
+    console.log(`[${space.id.slice(0, 8)}] ${servi}${servi !== MODEL ? ` (demandé ${MODEL})` : ''} · ${answer.intention} · ${appels.length} appel(s) · ${u.input_tokens} + ${u.cache_read_input_tokens ?? 0} lus en cache + ${u.cache_creation_input_tokens ?? 0} mis en cache → ${u.output_tokens} · ${pieces.length} pièce(s)${variante.length ? ` + variante ${variante.length}` : ''} · ${souv.length} souvenir(s), ${retenus.length} retenu(s) · ${demande.interdit.size} écartée(s) par la météo${ctl} · ${Object.entries(ch.d).map(([k, v]) => `${k} ${v} ms`).join(', ')}`);
     return { question_id: questionId, reply_id: saved.id as string };
   } catch (err) {
     // Sans réponse, la question ne doit pas compter dans le quota du mois.
@@ -424,8 +483,8 @@ async function plan(token: string, input: PlanInput) {
     ? `Prévois mes tenues pour ${trip.destination}, du ${dayLabel(from)} au ${dayLabel(to)}.`
     : `Prévois mes tenues : ${days.map(dayLabel).join(', ')}.`;
   const demandeTexte = `${asked}${consigne ? ` ${consigne}` : ''}`;
-  const souvenirs = within(souvenirsPour(db, space.id, demandeTexte), ATTENTE_SOUVENIRS, 'souvenirs').finally(() => ch.note('souvenirs', t1));
-  const questionId = await countQuestion(space.id, demandeTexte);
+  const souvenirs = within(souvenirsPour(db, space.id, ctx.gouts), ATTENTE_SOUVENIRS, 'souvenirs').finally(() => ch.note('souvenirs', t1));
+  const questionId = await countQuestion(space.id, demandeTexte, false);
 
   try {
     const w = await weather;
@@ -447,12 +506,12 @@ async function plan(token: string, input: PlanInput) {
       space_id: space.id,
       author: 'kode',
       body,
-      meta: { planifie: dressed.map((p) => p.date), model: servi, usage: res.usage, ms: ch.d },
+      meta: { planifie: dressed.map((p) => p.date), controles: p.controles, model: servi, usage: res.usage, ms: ch.d },
     });
     if (error) throw new Error(`enregistrement de la réponse : ${error.message}`);
 
     ch.note('total');
-    console.log(`[${space.id.slice(0, 8)}] planifier ${servi} · ${days.length} jour(s) → ${dressed.length} tenue(s) · ${res.usage.input_tokens} + ${res.usage.cache_read_input_tokens ?? 0} en cache → ${res.usage.output_tokens} · ${souv.length} souvenir(s) · ${Object.entries(ch.d).map(([k, v]) => `${k} ${v} ms`).join(', ')}`);
+    console.log(`[${space.id.slice(0, 8)}] planifier ${servi} · ${days.length} jour(s) → ${dressed.length} tenue(s) · ${res.usage.input_tokens} + ${res.usage.cache_read_input_tokens ?? 0} en cache → ${res.usage.output_tokens} · ${souv.length} souvenir(s)${Object.keys(p.controles).length ? ` · contrôle : ${Object.entries(p.controles).map(([d, e]) => `${d} ${e.join(' ; ')}`).join(' | ')}` : ''} · ${Object.entries(ch.d).map(([k, v]) => `${k} ${v} ms`).join(', ')}`);
     return {
       message: body,
       jours: planned.map((p) => ({ date: p.date, titre: p.titre, pourquoi: p.pourquoi, pieces: p.pieces.map((x) => x.garment.id) })),

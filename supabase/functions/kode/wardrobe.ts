@@ -25,6 +25,10 @@ export type Garment = {
 };
 
 const SAISON: Record<string, string> = { mi_saison: 'mi-saison', hiver: 'hiver', ete: 'été' };
+const MOTIF: Record<string, string> = {
+  uni: 'uni', rayures: 'rayures', carreaux: 'carreaux', imprime: 'imprimé', fleuri: 'fleuri', pois: 'à pois', logo: 'logo', graphique: 'graphique', texture: 'matière texturée',
+};
+const COUPE: Record<string, string> = { ajustee: 'coupe ajustée', droite: 'coupe droite', ample: 'coupe ample', oversize: 'coupe oversize', evasee: 'coupe évasée' };
 
 export type Slot = 'haut' | 'bas' | 'robe' | 'veste' | 'chaussures' | 'sac' | 'accessoire' | 'bijou';
 
@@ -42,7 +46,9 @@ export const SLOT_BY_CATEGORY: Record<string, Slot> = {
 };
 
 export const MIN_PIECES = 2;
-export const MAX_PIECES = 6;
+// Sept depuis le 13/11 : une superposition, une veste, des chaussures, un sac
+// et un bijou doivent tenir sur la carte.
+export const MAX_PIECES = 7;
 
 /**
  * Chaque pièce reçoit une référence courte (p1, p2…) plutôt que son UUID :
@@ -67,7 +73,16 @@ export function wardrobeText(refs: Map<string, Garment>, labels: Map<string, str
     if (g.kind) parts.push(g.kind);
     if (g.colors.length) parts.push(g.colors.join('/'));
     if (g.material) parts.push(g.material);
+    // L'allure de la pièce (K1, 13/11) : sans elle, Kodi devinait d'après le nom.
+    const f = g.fiche;
+    if (f?.motif && MOTIF[f.motif]) parts.push(MOTIF[f.motif]);
+    if (f?.coupe && COUPE[f.coupe]) parts.push(COUPE[f.coupe]);
+    if (f?.habillage) parts.push(`habillage ${f.habillage}/5`);
     if (g.season && SAISON[g.season]) parts.push(SAISON[g.season]);
+    if (f?.details) parts.push(f.details);
+    if (g.fit) parts.push(`coupe notée par la personne : ${g.fit}`);
+    if (g.size) parts.push(`taille ${g.size}`);
+    if (g.notes) parts.push(`sa note : « ${g.notes.replace(/\s+/g, ' ').slice(0, 120)} »`);
     parts.push(wornLabel(g, today));
     const list = byCategory.get(g.category_id) ?? [];
     list.push(`- ${parts.join(' · ')}`);

@@ -77,7 +77,12 @@ niveaux ci-dessous sont ceux qui restent, mesures en place.
   minimisées avant l'envoi, aucun identifiant direct transmis.
 - **Reste à faire** : accepter les contrats de sous-traitance, vérifier que
   l'API Gemini tourne sur un compte payant et la durée de conservation de
-  chaque prestataire (voir `README.md`, points 2 à 4).
+  chaque prestataire (voir `README.md`, points 2 à 4). **Constat du 13/11** :
+  les clés en place passaient par un intermédiaire (revendeur d'accès aux
+  modèles), absent de la politique et sans contrat de sous-traitance connu ;
+  décision de l'utilisateur : passer aux clés directes d'Anthropic et de
+  Google, et retirer les adresses de l'intermédiaire. Tant que ce n'est pas
+  fait, ce risque reste **important**.
 - **Gravité** : importante. **Vraisemblance** : limitée une fois ces
   vérifications faites, importante sinon.
 
@@ -115,8 +120,24 @@ niveaux ci-dessous sont ceux qui restent, mesures en place.
 - **Mesures** : Kode conseille (« tu pourrais »), ne décide rien ; « Pas
   pour moi » permet de dire ce qui ne va pas, et Kode en tient compte ; la
   consigne de Kode lui interdit de commenter le corps
-  (`supabase/functions/kode/prompt.ts`).
+  (`supabase/functions/kode/prompt.ts`) ; depuis le 13/11, chaque tenue est
+  vérifiée par le code avant d'être montrée (`kode/controle.ts`) : une
+  tenue qui ne tient pas est corrigée ou remplacée par une phrase honnête.
 - **Gravité** : limitée. **Vraisemblance** : limitée.
+
+### 4.7 Ce que Kodi retient de ce qu'on lui dit (13/11)
+
+- **Ce qui est redouté** : une confidence (santé, corps, religion, un
+  proche) gardée comme souvenir et renvoyée à chaque question.
+- **Mesures** : seulement avec l'accord « goûts » version 2, dont le texte
+  le dit ; deux faits courts au plus par réponse, limités aux goûts de
+  vêtements ; le code écarte tout fait qui touche à la santé, au corps, au
+  poids, aux mesures, à la religion, aux opinions, à la vie intime ou à un
+  proche (`aRetenir`, testé dans `kode.test.ts`) ; chaque souvenir se voit
+  et s'efface dans Mes choix, tous partent au retrait de l'accord, et au
+  bout de 12 mois ; plus aucun souvenir n'est envoyé à Google.
+- **Gravité** : limitée. **Vraisemblance** : limitée (un filtre par mots
+  ne voit pas tout : la liste est à étendre si un cas passe).
 
 ## 5. Conclusion
 

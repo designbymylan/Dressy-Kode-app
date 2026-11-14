@@ -55,7 +55,7 @@ export function MesChoix() {
           <Tag label="Kodi apprend de mes choix" />
           <Toggle testID="gouts-consent" value={accord} onChange={(v) => a.accorderGouts(v)} label="Kodi apprend de mes choix" />
           <T v="small" tone="ink2">
-            Quand tu aimes une pièce ou une tenue, ou que tu écartes une tenue, Kodi s’en souvient pour mieux te proposer. Retirer l’accord efface tout ce qu’il retient. Tes cœurs restent dans tes favoris.
+            Quand tu aimes une pièce ou une tenue, que tu écartes une tenue ou que tu lui parles de tes goûts, Kodi s’en souvient pour mieux te proposer. Jamais ta santé ni ton corps. Retirer l’accord efface tout ce qu’il retient. Tes cœurs restent dans tes favoris.
           </T>
         </Card>
 
@@ -90,9 +90,9 @@ export function MesChoix() {
                   <Row
                     key={f.id}
                     testID={`souvenir-${f.id}`}
-                    icon={f.origine === 'aime' ? 'heart' : 'close'}
+                    icon={f.origine === 'aime' ? 'heart' : f.origine === 'dit' ? 'kode' : 'close'}
                     title={f.texte}
-                    detail={`${f.origine === 'aime' ? 'Aimé' : 'Écarté'} le ${date(f.date)}`}
+                    detail={`${f.origine === 'aime' ? 'Aimé' : f.origine === 'dit' ? 'Dit à Kodi' : 'Écarté'} le ${date(f.date)}`}
                     right={
                       <Tap testID={`souvenir-effacer-${f.id}`} onPress={() => a.retirerSouvenir(f.id)} accessibilityRole="button" accessibilityLabel="Effacer ce souvenir" style={{ padding: 8 }}>
                         <Icon name="trash" size={18} color={c.ink2} />
@@ -102,7 +102,7 @@ export function MesChoix() {
                 ))}
               </Group>
             ) : (
-              <EmptyState title="Rien encore" body="Kodi retiendra ce que tu aimes et ce que tu écartes." />
+              <EmptyState title="Rien encore" body="Kodi retiendra ce que tu aimes, ce que tu écartes et ce que tu lui dis de tes goûts." />
             )}
           </>
         )}

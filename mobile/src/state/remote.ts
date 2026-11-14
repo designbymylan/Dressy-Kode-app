@@ -635,6 +635,14 @@ async function loadJournal(): Promise<Record<Iso, string[]>> {
 
 export type ConsentKind = 'silhouette' | 'gouts';
 
+/**
+ * La version du texte que la personne accepte. « gouts » passe en 2 le 13/11 :
+ * l'accord couvre aussi ce qu'elle dit à Kodi de ses goûts (Mes choix). Un
+ * accord en version 1 reste valable pour les cœurs et les tenues écartées,
+ * mais Kodi ne retient rien de ses messages tant qu'il n'est pas redonné.
+ */
+const CONSENT_VERSION: Record<ConsentKind, number> = { silhouette: 1, gouts: 2 };
+
 /** L'accord en vigueur : sa date s'il est donné, null s'il ne l'est pas ou plus. */
 /** Les pièces aimées (cœurs). En cas d'échec, la liste reste vide. */
 async function loadCoeurs(spaceId: string): Promise<string[]> {
@@ -647,7 +655,7 @@ async function loadCoeurs(spaceId: string): Promise<string[]> {
 }
 
 /** Un souvenir de Kodi : ce qu'il a retenu d'un cœur ou d'une tenue écartée. */
-export type Souvenir = { id: string; origine: 'aime' | 'ecarte'; texte: string; date: string };
+export type Souvenir = { id: string; origine: 'aime' | 'ecarte' | 'dit'; texte: string; date: string };
 
 async function loadSouvenirs(spaceId: string): Promise<Souvenir[]> {
   const r = await db().from('kodi_faits').select('id, origine, texte, created_at').eq('space_id', spaceId).order('created_at', { ascending: false }).limit(100);
@@ -672,7 +680,7 @@ async function loadConsent(spaceId: string, kind: ConsentKind): Promise<string |
  * base efface aussitôt la taille, le poids, la silhouette et les mesures.
  */
 export async function saveConsent(session: Session, kind: ConsentKind, granted: boolean) {
-  check(await db().from('consents').insert({ space_id: session.spaceId, profile_id: session.userId, kind, granted, version: 1 }), 'accord');
+  check(await db().from('consents').insert({ space_id: session.spaceId, profile_id: session.userId, kind, granted, version: CONSENT_VERSION[kind] }), 'accord');
 }
 
 /** Toutes tes données, préparées par la fonction `compte` : un lien valable une heure. */

@@ -1,6 +1,6 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.3 du 12 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.4 du 14 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
@@ -20,7 +20,7 @@ Nous n’avons pas de délégué à la protection des données. Pour toute quest
 - **Ton compte.** E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).
 - **Ton dressing.** Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.
 - **Ton style.** Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat.
-- **Mes choix.** Les pièces et les tenues que tu aimes (cœurs). Pour les retrouver dans « Mes choix ». Base : le contrat. Si tu acceptes que Kodi apprenne de tes choix, il garde aussi, en phrases, ce que tu aimes et ce que tu écartes, pour mieux te proposer. Base : ton accord « Kodi apprend de mes choix », que tu retires d’un geste : ces souvenirs sont alors effacés aussitôt.
+- **Mes choix.** Les pièces et les tenues que tu aimes (cœurs). Pour les retrouver dans « Mes choix ». Base : le contrat. Si tu acceptes que Kodi apprenne de tes choix, il garde aussi, en phrases, ce que tu aimes, ce que tu écartes et ce que tu lui dis de tes goûts (deux faits courts au plus par message, jamais ta santé, ton corps, tes opinions ni une autre personne), pour mieux te proposer. Base : ton accord « Kodi apprend de mes choix », que tu retires d’un geste : ces souvenirs sont alors effacés aussitôt.
 - **Ta silhouette.** Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé.
 - **Ton agenda et Kodi.** Tes rendez-vous, voyages, tenues prévues et conversations avec Kodi. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).
 - **Tes « Pas pour moi ».** Les tenues que tu écartes et leur raison. Pour ne plus te proposer ce qui ne te plaît pas. Base : le contrat. Gardées 6 mois.
@@ -37,23 +37,21 @@ Tout le reste est facultatif : prénom, ville, silhouette, mesures, âge, photo 
 
 ## Kodi est une intelligence artificielle
 
-Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
+Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison, leur matière, leur coupe, leurs détails et les notes que tu as écrites dessus), ton profil de style, ton agenda des deux semaines à venir, les pièces portées ces sept derniers jours, tes tenues écartées, la météo du jour, tes cœurs et tes souvenirs les plus récents ; ta silhouette, ta taille, tes tailles habituelles et la taille de tes pièces si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
 
-Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis redessinées par Google (Gemini, États-Unis).
+Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis découpées et redessinées par Google (Gemini, États-Unis).
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
 Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent. Kodi ne prend aucune décision automatisée qui produise un effet juridique ou comparable à ton égard (art. 22 du RGPD) : ce que Kodi te propose ne vaut que si tu le valides.
 
-Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous.
+Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous, dans les notes de tes pièces ni dans tes questions à Kodi.
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin des pièces et mémoire de Kodi, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).
 
 Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.
-
-Si tu as accepté que Kodi apprenne de tes choix, les souvenirs qu’il retient sont transformés en vecteurs de sens par un service d’intelligence artificielle (Google), pour être retrouvés selon ta question. Seul le texte court d’un souvenir part, jamais ton nom ni ton e-mail.
 
 La liste nominative de nos prestataires t’est envoyée sur simple demande. Personne d’autre : aucune vente, aucun partage publicitaire.
 

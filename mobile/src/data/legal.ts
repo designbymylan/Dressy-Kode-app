@@ -38,7 +38,7 @@ export const HEBERGEURS = [
   'Comptes, dressing et photos : Supabase, serveurs situés dans l’Union européenne (Irlande).',
 ];
 
-export const POLITIQUE_VERSION = 'Version 1.3 du 12 novembre 2026';
+export const POLITIQUE_VERSION = 'Version 1.4 du 14 novembre 2026';
 
 /**
  * Prévenir d'un changement (12/11) : les conditions le promettent (« Nous te
@@ -61,6 +61,22 @@ export const POLITIQUE_VERSION = 'Version 1.3 du 12 novembre 2026';
 export type Avis = { id: string; doc: 'politique' | 'conditions'; publie: string; effet: string; titre: string; texte: string };
 
 export const AVIS: Avis[] = [
+  {
+    id: 'conditions-1.3',
+    doc: 'conditions',
+    publie: '2026-11-14',
+    effet: '2026-12-15',
+    titre: 'Nos conditions changent le 15 décembre',
+    texte: 'Avec Sapologue, Kodi reste sans limite dans un usage raisonnable, 300 questions par mois. Et répondre à une question que Kodi te pose ne compte plus.',
+  },
+  {
+    id: 'politique-1.4',
+    doc: 'politique',
+    publie: '2026-11-14',
+    effet: '2026-11-14',
+    titre: 'Notre politique de confidentialité change',
+    texte: 'Si tu l’acceptes dans Mes choix, Kodi peut retenir ce que tu lui dis de tes goûts, jamais ta santé ni ton corps. Ses souvenirs ne passent plus par Google.',
+  },
   {
     id: 'politique-1.3',
     doc: 'politique',
@@ -127,7 +143,7 @@ export const POLITIQUE: Section[] = [
       { titre: 'Ton compte', texte: 'E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).' },
       { titre: 'Ton dressing', texte: 'Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.' },
       { titre: 'Ton style', texte: 'Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat.' },
-      { titre: 'Mes choix', texte: 'Les pièces et les tenues que tu aimes (cœurs). Pour les retrouver dans « Mes choix ». Base : le contrat. Si tu acceptes que Kodi apprenne de tes choix, il garde aussi, en phrases, ce que tu aimes et ce que tu écartes, pour mieux te proposer. Base : ton accord « Kodi apprend de mes choix », que tu retires d’un geste : ces souvenirs sont alors effacés aussitôt.' },
+      { titre: 'Mes choix', texte: 'Les pièces et les tenues que tu aimes (cœurs). Pour les retrouver dans « Mes choix ». Base : le contrat. Si tu acceptes que Kodi apprenne de tes choix, il garde aussi, en phrases, ce que tu aimes, ce que tu écartes et ce que tu lui dis de tes goûts (deux faits courts au plus par message, jamais ta santé, ton corps, tes opinions ni une autre personne), pour mieux te proposer. Base : ton accord « Kodi apprend de mes choix », que tu retires d’un geste : ces souvenirs sont alors effacés aussitôt.' },
       { titre: 'Ta silhouette', texte: 'Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé.' },
       { titre: 'Ton agenda et Kodi', texte: 'Tes rendez-vous, voyages, tenues prévues et conversations avec Kodi. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).' },
       { titre: 'Tes « Pas pour moi »', texte: 'Les tenues que tu écartes et leur raison. Pour ne plus te proposer ce qui ne te plaît pas. Base : le contrat. Gardées 6 mois.' },
@@ -148,19 +164,18 @@ export const POLITIQUE: Section[] = [
   {
     titre: 'Kodi est une intelligence artificielle',
     texte: [
-      'Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison et leur matière), ton profil de style, ton agenda des deux semaines à venir, tes tenues écartées, la météo du jour, tes cœurs et les souvenirs qui se rapprochent de ta question ; ta silhouette, ta taille et tes tailles habituelles si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.',
-      'Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis redessinées par Google (Gemini, États-Unis).',
+      'Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison, leur matière, leur coupe, leurs détails et les notes que tu as écrites dessus), ton profil de style, ton agenda des deux semaines à venir, les pièces portées ces sept derniers jours, tes tenues écartées, la météo du jour, tes cœurs et tes souvenirs les plus récents ; ta silhouette, ta taille, tes tailles habituelles et la taille de tes pièces si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.',
+      'Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis découpées et redessinées par Google (Gemini, États-Unis).',
       'Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.',
       'Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent. Kodi ne prend aucune décision automatisée qui produise un effet juridique ou comparable à ton égard (art. 22 du RGPD) : ce que Kodi te propose ne vaut que si tu le valides.',
-      'Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous.',
+      'Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous, dans les notes de tes pièces ni dans tes questions à Kodi.',
     ],
   },
   {
     titre: 'Qui reçoit tes données',
     texte: [
-      'Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin des pièces et mémoire de Kodi, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).',
+      'Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).',
       'Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.',
-      'Si tu as accepté que Kodi apprenne de tes choix, les souvenirs qu’il retient sont transformés en vecteurs de sens par un service d’intelligence artificielle (Google), pour être retrouvés selon ta question. Seul le texte court d’un souvenir part, jamais ton nom ni ton e-mail.',
       'La liste nominative de nos prestataires t’est envoyée sur simple demande. Personne d’autre : aucune vente, aucun partage publicitaire.',
     ],
   },
@@ -222,7 +237,7 @@ export const POLITIQUE: Section[] = [
 
 /* ---- Conditions générales d'utilisation et de vente (07/11, revues le 08/11) ---- */
 
-export const CONDITIONS_VERSION = 'Version 1.2 du 8 novembre 2026';
+export const CONDITIONS_VERSION = 'Version 1.3 du 14 novembre 2026';
 
 /** Les conditions se lisent sur le site (publiques, sans compte) ; l'app y renvoie. */
 export const CONDITIONS_URL = 'https://dresskode-app.vercel.app/conditions';
@@ -307,8 +322,8 @@ export const CONDITIONS: Section[] = [
     texte: [
       'Les prix sont en euros, toutes taxes comprises, et affichés avant chaque paiement. Le régime de TVA de l’éditeur figure sur les factures.',
       'Découverte est gratuite, sans carte bancaire et sans limite de durée : 15 pièces, 5 questions à Kodi par mois, et 4 générations offertes une seule fois, sans renouvellement.',
-      'Fashion (8,99 € par mois ou 75 € par an) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois ou 159 € par an) : jusqu’à 100 pièces, 100 générations et Kodi sans limite. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.',
-      'Les générations et les questions se renouvellent chaque mois, y compris avec un abonnement annuel ; celles qui ne sont pas utilisées ne se reportent pas.',
+      'Fashion (8,99 € par mois ou 75 € par an) : jusqu’à 50 pièces, 50 générations et 30 questions à Kodi par mois. Sapologue (18,99 € par mois ou 159 € par an) : jusqu’à 100 pièces, 100 générations et Kodi sans limite, dans un usage raisonnable de 300 questions par mois (à partir du 15 décembre 2026), bien au-delà d’un usage personnel quotidien ; au-delà, les questions reviennent le 1er du mois. Une fonction signalée « bientôt » dans l’app ne fait pas partie de l’offre et n’est pas vendue.',
+      'Les générations et les questions se renouvellent chaque mois, y compris avec un abonnement annuel ; celles qui ne sont pas utilisées ne se reportent pas. Répondre à une question que Kodi vient de te poser ne compte pas comme une question.',
       'Une génération est un nouveau dessin d’une pièce (« Image propre », ou la seconde reprise d’un rendu incorrect). Elle n’est comptée que si le dessin aboutit.',
       'Les packs de places (+10 places pour 1,99 €, +30 places pour 4,99 €) s’ajoutent à la limite de ton offre et restent tant que ton compte existe. Ce sont des places, jamais des générations. Le paiement est unique.',
       'Nous pouvons modifier nos offres et nos prix. Une hausse du prix d’un abonnement t’est annoncée au moins un mois avant son entrée en vigueur ; tu peux alors résilier sans frais avant qu’elle s’applique.',

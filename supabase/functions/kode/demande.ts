@@ -37,7 +37,28 @@ export type Dossier = {
   plannedNames: Map<string, string>;
   turns: Turn[];
   ecarts: EcartRow[];
+  /** L'accord « goûts » en vigueur : cœurs, tenues écartées et souvenirs. */
+  gouts?: boolean;
+  /**
+   * L'accord « goûts » dans sa version 2 (13/11), qui couvre aussi ce que la
+   * personne dit à Kodi : sans lui, Kodi ne retient rien de ses messages.
+   */
+  retenir?: boolean;
+  /** Les pièces portées ces sept derniers jours, jour par jour (K6). */
+  portees?: { day: string; ids: string[] }[];
+  /** La dernière réponse de Kodi posait-elle une question ? (jamais deux de suite) */
+  questionPosee?: boolean;
 };
+
+/** Les tenues portées ces sept derniers jours, avec les références du dressing. */
+export function porteesTexte(portees: { day: string; ids: string[] }[], refsById: Map<string, string>): string {
+  const lignes = portees
+    .map((p) => ({ day: p.day, refs: p.ids.map((id) => refsById.get(id)).filter(Boolean) }))
+    .filter((p) => p.refs.length)
+    .sort((a, b) => b.day.localeCompare(a.day))
+    .map((p) => `- ${dayLabel(p.day)} : ${p.refs.join(', ')}`);
+  return lignes.length ? `Portées ces sept derniers jours (évite de reproposer une tenue récente telle quelle) :\n${lignes.join('\n')}` : '';
+}
 
 /** L'identifiant d'une pièce vers sa référence courte (p1, p2…). */
 export const refOf = (refs: Map<string, Garment>) => new Map<string, string>([...refs].map(([ref, g]): [string, string] => [g.id, ref]));
@@ -66,9 +87,11 @@ export function demandeReponse(d: Dossier, question: string, jour: Jour, souveni
 
   const context = [
     profileText(d.style, d.corps),
+    `Accord pour retenir ce qu'elle te dit de ses goûts : ${d.retenir ? 'donné' : 'pas donné, a_retenir reste vide'}.`,
     coeursTexte(d.coeurs, refsById),
     `Agenda Dresskode des deux prochaines semaines :\n${agendaText(d.agenda)}`,
     dressingTexte(refs, d),
+    porteesTexte(d.portees ?? [], refsById),
     ecartsText(d.ecarts, refsById),
   ].filter(Boolean).join('\n\n');
 
@@ -85,6 +108,7 @@ export function demandeReponse(d: Dossier, question: string, jour: Jour, souveni
         jour.meteo ? meteoTexte(jour.meteo, 'd’aujourd’hui') : '',
         interdit.size ? interditesText(interdit, refsById) : '',
         faitsText(souvenirs),
+        d.questionPosee ? 'Ta réponse précédente posait déjà une question : cette fois, pas de question.' : '',
         question,
       ].filter(Boolean).join('\n\n'),
     },
@@ -113,6 +137,7 @@ export function demandePlan(
     profileText(d.style, d.corps),
     coeursTexte(d.coeurs, refsById),
     dressingTexte(refs, d),
+    porteesTexte(d.portees ?? [], refsById),
     ecartsText(d.ecarts, refsById),
   ].filter(Boolean).join('\n\n');
 

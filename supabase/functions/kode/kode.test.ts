@@ -6,7 +6,7 @@
  */
 import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
 import { conditionsDuJour, plafondDe, besoinDe, interdites, meteoTexte, chaleurDe, type Jour } from './meteo.ts';
-import { controler, variantePropre, type PieceControle } from './controle.ts';
+import { controler, variantePropre, reparer, aRetenir, type PieceControle } from './controle.ts';
 import { profileText, agendaText, eventText, ecartsText, hourText, planDaysText, voyageText, aimeesText, faitsText, interditesText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
 
 let fails = 0;
@@ -48,8 +48,8 @@ check('doublon retiré, casse et espaces tolérés',
 check('une seule pièce : pas de tenue', pickPieces(['p1'], refs), []);
 check('que des références inventées : pas de tenue', pickPieces(['x', 'p0', 'p42'], refs), []);
 check('réponse mal formée : pas de tenue', pickPieces('p1,p2', refs), []);
-check('six pièces au plus',
-  pickPieces(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'], refs).length, 6);
+check('sept pièces au plus (13/11)',
+  pickPieces(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p7'], refs).length, 7);
 check('un UUID recopié n’est pas une référence', pickPieces(['a', 'b'], refs), []);
 
 // ---------------------------------------------------------------- dressing
@@ -109,8 +109,8 @@ check('agenda trié par jour', agendaText([
   { day: '2026-09-27 (dimanche)', text: 'Brunch' },
 ]), '- 2026-09-27 (dimanche) : Brunch\n- 2026-09-30 (mardi) : Entretien');
 check('agenda vide', agendaText([]), 'Rien de noté dans son agenda Dresskode.');
-check('schéma strict : tout est requis', [ANSWER_SCHEMA.required, ANSWER_SCHEMA.properties.tenue.required],
-  [['reponse', 'tenue'], ['titre', 'pourquoi', 'pieces']]);
+check('schéma v2 strict : tout est requis', [ANSWER_SCHEMA.required, ANSWER_SCHEMA.properties.tenue.required, ANSWER_SCHEMA.properties.variante.required],
+  [['intention', 'reponse', 'tenue', 'variante', 'question', 'manque', 'a_retenir'], ['titre', 'pourquoi', 'pieces'], ['direction', 'titre', 'pieces']]);
 
 // ---------------------------------------------------------------- plusieurs jours (07/10)
 
@@ -275,6 +275,27 @@ const principale = [pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), p
 check('variante : même base, seulement les chaussures', variantePropre(principale, [pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p8', 'chaussures', 'baskets')]).ok, false);
 check('variante : autre base', variantePropre(principale, [pc('r1', 'robes', 'robe'), pc('p3', 'chaussures', 'mocassins')]).ok, true);
 check('variante : même base, veste et chaussures changées', variantePropre(principale, [pc('p1', 'hauts', 'chemise'), pc('p2', 'bas', 'pantalon'), pc('p6', 'vestes', 'blazer'), pc('p8', 'chaussures', 'bottines')]).ok, true);
+
+// ---------------------------------------------------------------- fiche lue par Kodi (K1), réparation, mémoire (13/11)
+
+const avecFiche = withRefs([g('x', 'hauts', 'Chemise rayée', { kind: 'chemise', colors: ['blanc', 'marine'], material: 'coton', season: 'mi_saison', wear_count: 4, last_worn_on: '2026-09-14',
+  fiche: { motif: 'rayures', coupe: 'droite', habillage: 3, details: 'col classique, manches longues' }, fit: 'slim', notes: 'un peu courte' })]);
+check('la ligne de la pièce dit son allure', wardrobeText(avecFiche, new Map([['hauts', 'Hauts']]), '2026-09-26').split('\n')[1],
+  '- p1 · Chemise rayée · chemise · blanc/marine · coton · rayures · coupe droite · habillage 3/5 · mi-saison · col classique, manches longues · coupe notée par la personne : slim · sa note : « un peu courte » · portée 4 fois, la dernière il y a 12 jours');
+
+const pk = (id: string, category_id: string, kind: string, colors: string[] = ['noir']) => ({ garment: g(id, category_id, id, { kind, colors }), slot: 'haut' as const });
+const ids2 = (ps: { garment: { id: string } }[]) => ps.map((p) => p.garment.id);
+check('réparer : le second bas et la seconde paire partent', ids2(reparer([pk('a', 'hauts', 'tshirt'), pk('b', 'bas', 'jean'), pk('c', 'bas', 'jupe'), pk('d', 'chaussures', 'baskets'), pk('e', 'chaussures', 'bottines')], sansProfil)), ['a', 'b', 'd']);
+check('réparer : la couleur évitée part', ids2(reparer([pk('a', 'hauts', 'pull', ['moutarde']), pk('f', 'hauts', 'tshirt'), pk('b', 'bas', 'jean')], { avoidColours: ['moutarde'], metals: [] })), ['f', 'b']);
+check('réparer : robe et pantalon, le pantalon part', ids2(reparer([pk('r', 'robes', 'robe'), pk('b', 'bas', 'pantalon'), pk('d', 'chaussures', 'escarpins')], sansProfil)), ['r', 'd']);
+check('réparer : deux couches, la seconde part', ids2(reparer([pk('a', 'hauts', 'pull'), pk('s', 'hauts', 'sweat'), pk('b', 'bas', 'jean')], sansProfil)), ['a', 'b']);
+check('réparer : chemise ouverte sur t-shirt gardée', ids2(reparer([pk('t', 'hauts', 'tshirt'), pk('c', 'hauts', 'chemise'), pk('b', 'bas', 'jean')], sansProfil)), ['t', 'c', 'b']);
+check('réparer : ne fabrique pas un bas qui manque', ids2(reparer([pk('a', 'hauts', 'pull'), pk('d', 'chaussures', 'baskets')], sansProfil)), ['a', 'd']);
+
+check('à retenir : sans accord, rien', aRetenir(['n’aime pas le jaune'], false), []);
+check('à retenir : deux au plus, rien de sensible', aRetenir(['n’aime pas le jaune', 'a mal au dos', 'travaille dans une banque, tenue sobre en semaine', 'préfère le confort'], true),
+  ['n’aime pas le jaune', 'travaille dans une banque, tenue sobre en semaine']);
+check('à retenir : ni poids, ni religion, ni un proche', aRetenir(['pèse 70 kg', 'porte le voile par religion', 'mon mari aime le rouge'], true), []);
 
 console.log(fails ? `\n${fails} échec(s)` : '\ntout est bon');
 if (fails) process.exit(1);

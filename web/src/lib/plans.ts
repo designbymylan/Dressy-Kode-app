@@ -88,7 +88,7 @@ export const COMPARE: { icon: string; title: string; sub: string; capsule: boole
   { icon: 'sparkle', title: 'Générations d’images', sub: '50 par mois avec Fashion, 100 avec Sapologue', capsule: true, atelier: true },
   { icon: 'cloud', title: 'Tenue du jour', sub: 'Selon la météo et ton agenda', capsule: true, atelier: true },
   { icon: 'chart', title: 'Suivi de ta garde-robe', sub: 'Pièces portées, barre de progression', capsule: true, atelier: true },
-  { icon: 'infinity', title: 'Kodi sans limite', sub: 'Questions illimitées avec Sapologue', capsule: false, atelier: true },
+  { icon: 'infinity', title: 'Kodi sans limite', sub: 'Usage raisonnable : 300 questions par mois', capsule: false, atelier: true },
   { icon: 'party', title: 'Occasions et voyages', sub: 'Kodi prépare la tenue et la valise', capsule: false, atelier: true },
   { icon: 'layers', title: 'Audit de garde-robe', sub: 'Doublons, oublis et manques, chaque trimestre', capsule: false, atelier: true, soon: true },
 ];
