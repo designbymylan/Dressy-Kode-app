@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase';
 import { COLOR_CHOICES, COLOURS, type CategoryId, type Piece, type Season } from '../data/wardrobe';
 import { CONDITIONS_VERSION } from '../data/legal';
 import { GARMENT_KINDS, type GarmentKind } from '../ui/Garment';
+import { reduire } from '../lib/photo';
 import { AGES, EMPTY_PROFILE, OCCASIONS, STYLE_CARDS, type MeasureId, type Profile, type Rayon, type Silhouette } from './profile';
 import type { Bloc, Contexte, JourMeteo } from './contexte';
 import type { KodeLink, KodeMessage } from './kode';
@@ -995,7 +996,9 @@ const cleanDetails = (d?: PieceDetails) => {
 export async function sendPhotos(session: Session, photos: Photo[], hint: string, details?: PieceDetails): Promise<Result<{ jobs: JobRow[]; paths: string[] }>> {
   const sb = db();
   const stamp = Date.now().toString(36);
-  const items = photos.map((ph, i) => {
+  // Réduites sur le téléphone avant l'envoi (2048 px, JPEG), toutes en même temps.
+  const reduites = await Promise.all(photos.map(reduire));
+  const items = reduites.map((ph, i) => {
     const mime = ph.mime && PHOTO_TYPES[ph.mime] ? ph.mime : 'image/jpeg';
     return { ...ph, mime, path: `${session.spaceId}/${stamp}-${i}-${Math.random().toString(36).slice(2, 8)}.${PHOTO_TYPES[mime]}` };
   });

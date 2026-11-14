@@ -67,7 +67,9 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   précisions facultatives sur la pièce (marque, taille, coupe, matière, note),
   pièces détourées, étiquettes (nom, catégorie, couleur, matière, saison,
   prix), ports, signalements « rendu incorrect » (niveau de reprise et
-  contrôles de l'image, sans la photo).
+  contrôles de l'image, sans la photo). Depuis le 13/11, l'app réduit la
+  photo sur le téléphone avant l'envoi (2048 px, JPEG) et la réécrit sans
+  les métadonnées de l'appareil, dont la position (minimisation).
 - **Tables et fichiers** : `ai_jobs` (dont le journal de découpe : méthode,
   contrôles, durées, jetons), `ai_images`, `garments`, `garment_reports`,
   `categories` ; seaux `uploads`, `ai-generated`, `garments`.

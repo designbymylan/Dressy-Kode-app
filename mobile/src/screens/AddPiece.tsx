@@ -133,7 +133,7 @@ export function AddPiece() {
       if (camera && native && live) {
         // En rafale : chaque photo part chez Kodi pendant qu'on prend la suivante.
         const sending: ReturnType<typeof confide>[] = [];
-        const shots = await shootBurst({ max: 10, quality: 0.5, onShot: (shot) => sending.push(confide([shot])) });
+        const shots = await shootBurst({ max: 10, quality: 0.8, onShot: (shot) => sending.push(confide([shot])) });
         if (!shots.length) return;
         const results = await Promise.all(sending);
         const first = results[0];
@@ -143,9 +143,9 @@ export function AddPiece() {
       let picked: Picked[];
       if (camera && native) {
         // Sans compte, la rafale attend sur le téléphone ; la démonstration simule une seule photo.
-        picked = await shootBurst({ max: demo ? 1 : Math.max(1, 10 - waiting), quality: 0.5 });
+        picked = await shootBurst({ max: demo ? 1 : Math.max(1, 10 - waiting), quality: 0.8 });
       } else {
-        const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
+        const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
         picked = r.canceled ? [] : r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType, ratio: x.width && x.height ? x.width / x.height : 0.75 }));
       }
       if (!picked.length) return;

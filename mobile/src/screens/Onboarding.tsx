@@ -799,8 +799,8 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
       if (camera && (await cameraAccess()) === 'blocked') return a.toast(CAMERA_BLOCKED, true);
       // L'appareil en rafale : il se rouvre après chaque photo, jusqu'à « Annuler ».
       const picked = camera
-        ? await shootBurst({ max: room, quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7 }).then((r) => (r.canceled ? [] : r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType }))));
+        ? await shootBurst({ max: room, quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: room, quality: 0.8 }).then((r) => (r.canceled ? [] : r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType }))));
       if (!picked.length) return;
       setPhotos([...photos, ...picked.map((x) => ({ uri: x.uri, mime: x.mime }))].slice(0, MAX_PHOTOS));
       haptic('success');
