@@ -31,7 +31,8 @@ Deux applications, un seul projet Supabase :
   (`screens/Settings.tsx`) et en bas de `/confidentialite` sur le web
   (`lib/sources.ts`), à tenir à jour avec les `mention` des sources.
 
-Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur :
+Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur
+(les modèles ont changé depuis : voir « Chantier IA du 13/11 » plus bas) :
 
 - **Une photo, toutes ses pièces.** Opus 5 (`claude-opus-5`) repère chaque
   pièce visible (vêtements, chaussures, sacs, bijoux, accessoires) et écrit
@@ -666,6 +667,55 @@ Safe Area Context 5.11, SVG 15.16, `react-native-web` 0.21.4), par
 - `npm audit` : 16 vulnérabilités signalées avant, 7 après, toutes dans l'outillage
   de build (aucune dans le bundle). Ne pas lancer `npm audit fix --force`.
 
+**Chantier IA du 13/11 (« pièces fidèles et Kodi qui conseille juste »),
+demandé par l'utilisateur.** Décisions et état :
+
+- **Fournisseurs** : les clés en place passaient par un intermédiaire
+  (revendeur) qui perd les sorties JSON structurées : Kodi et le repérage des
+  photos échouaient en production. Décision : **clés directes** d'Anthropic et
+  de Google, à poser par l'utilisateur dans les secrets, puis retirer
+  `ANTHROPIC_BASE_URL` et `GEMINI_BASE_URL`. `_shared/fournisseurs.ts` lit les
+  clés et ces adresses facultatives ; `GOOGLE_API_KEY` facultative. Budget des
+  essais d'IA : 10 $.
+- **Agent photo** : repérage par Sonnet 5 (`MODELS.survey`), découpe de la vraie
+  pièce par masque de segmentation Gemini (`decoupage.ts`), dessin seulement sur
+  « Image propre » par **Nano Banana 2.1** (`gemini-nano-banana-2.1`, accordé).
+  Fiche de pièce (motif, coupe, habillage, saison, détails) gardée dans
+  `garments.fiche`. Nouveaux types (F7) : polo, capuche, chino, jupeculotte,
+  salopette, mules, derbies, connus du site, de l'app et de `kode/meteo.ts`.
+- **Photos réduites sur le téléphone** (F4, `lib/photo.ts`,
+  `expo-image-manipulator` accordé) : 2048 px, JPEG 0,85, sans métadonnées.
+- **Kodi v2** (`kode/repondre.ts`, `controle.ts`, `prompt.ts`) : réponse en
+  JSON (intention, réponse, tenue, variante, question, manque, a_retenir) ;
+  la tenue passe un **contrôle du code** (une base, un bas, une paire, un sac,
+  superpositions, couleurs évitées, métal, taille) ; une relance avec l'erreur,
+  puis réparation, sinon pas de tenue et une phrase honnête. Sept pièces au
+  plus ; Kodi lit la fiche, la coupe et la note des pièces, les portées des
+  sept derniers jours, et les 50 souvenirs les plus récents (plus de vecteurs
+  ni d'appel à Google). La taille d'une pièce ne part qu'avec l'accord
+  silhouette. Tout est gardé dans `kode_messages.meta` (contrôles, variante,
+  durées, jetons cumulés). **L'écran ne montre pas encore** la variante, la
+  question ni le manque : maquette à faire valider avant.
+- **Décisions Kodi v2** : répondre à la question de Kodi est gratuit
+  (`kode_ask`, `meta.gratuit`) ; une puce servie par la variante sera
+  gratuite ; Kodi retient ce qu'on lui dit (souvenirs `dit`, deux au plus,
+  rien de sensible, `aRetenir`) seulement avec l'accord « goûts » **version 2**
+  (`CONSENT_VERSION`, `remote.ts`) ; Sapologue reste « sans limite » dans un
+  **usage raisonnable de 300 questions par mois**, appliqué à partir du
+  15/12/2026 (conditions 1.3, politique 1.4, avis `conditions-1.3` et
+  `politique-1.4`). Migration `kodi_v2`.
+- **Banc d'essai** (`banc-ia`, table `banc_ia` fermée au client) : une ligne
+  porte l'empreinte d'un jeton à usage unique ; 40 scénarios de Kodi
+  (`banc-ia/scenarios.ts`) notés par un juge, sondes des fournisseurs, essais
+  de découpe (`dressy-agent`, mode banc). Référence avant v2 : étiquette git
+  `banc-v1`.
+- **Déploiement des fonctions** : par la CLI Supabase, depuis un commit
+  poussé, `supabase functions deploy <fonction> --use-api --project-ref
+  pxjlbtevrexlckhxskdn`, avec un jeton d'accès personnel donné par
+  l'utilisateur (jamais dans le code ni la conversation), puis contrôle que le
+  code servi est celui du dépôt. Les fonctions `depot` et `nettoyage-comptes`
+  sont supprimées.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 
@@ -742,6 +792,8 @@ cd web && npm run typecheck
 cd web && npm run build                        # référence pour valider une modif
 cd web && npm run test:agent                   # tests de l'agent (détourage, décisions)
 cd web && npm run test:donnees                 # chaque source de données, contre la vraie API
+cd supabase/functions/kode && deno run -A kode.test.ts   # Kodi : contrôle, réparation, souvenirs, météo
+cd supabase/functions/kode && deno check index.ts        # types d'une fonction (avec son deno.json)
 
 node tools/serve.mjs                           # maquettes sur http://localhost:4173
 node tools/qa-web.mjs --base http://localhost:3000 --routes /bienvenue,/connexion --out <dossier>
