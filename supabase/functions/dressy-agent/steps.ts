@@ -216,13 +216,25 @@ const imageBlock = (img: Img): Block => ({
   },
 });
 
-type Mode = 'schema' | 'texte';
+/**
+ * Les moyens d'obtenir du JSON, du plus strict au plus tolérant :
+ *   schema : sorties structurées (`output_config.format`), ce que tient l'API d'Anthropic ;
+ *   texte  : le schéma est dans la consigne, l'effort reste réglé (`output_config.effort`),
+ *            la réponse est lue en tolérance ;
+ *   brut   : plus aucune option, pour un intermédiaire qui refuse même l'effort.
+ */
+type Mode = 'schema' | 'texte' | 'brut';
+const ECHELLE: Mode[] = ['schema', 'texte', 'brut'];
 
 /**
- * Un appel Claude. `schema` : sorties structurées (ce que l'API d'Anthropic
- * tient). `texte` : aucune option particulière, le schéma est dans la consigne
- * et la réponse est lue en tolérance, ce que tout intermédiaire sait faire.
+ * Le mode qui a marché la dernière fois : on repart de lui, sans perdre un
+ * appel à rejouer un mode que ce fournisseur n'a pas tenu. Gardé par instance
+ * de la fonction ; sans mémoire, on part de `texte` derrière un intermédiaire
+ * (ANTHROPIC_BASE_URL) et de `schema` chez Anthropic.
  */
+let modeConnu: Mode | null = null;
+export const _oublierMode = () => { modeConnu = null; };
+
 async function askOnce(opts: {
   model: string;
   effort: Effort;
@@ -231,17 +243,19 @@ async function askOnce(opts: {
   content: Block[];
   maxTokens: number;
 }, mode: Mode): Promise<{ text: string; usage: Usage; resume: string }> {
-  const texte = mode === 'texte';
+  const dansLaConsigne = mode !== 'schema';
   let res: Anthropic.Message;
   try {
     res = await anthropic().messages.create({
       model: opts.model,
-      max_tokens: texte ? opts.maxTokens + 4_000 : opts.maxTokens,
-      system: texte
+      max_tokens: dansLaConsigne ? opts.maxTokens + 4_000 : opts.maxTokens,
+      system: dansLaConsigne
         ? `${opts.system}\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(opts.schema)}`
         : opts.system,
       messages: [{ role: 'user', content: opts.content }],
-      ...(texte ? {} : { output_config: { effort: opts.effort, format: { type: 'json_schema', schema: opts.schema } } }),
+      ...(mode === 'schema'
+        ? { output_config: { effort: opts.effort, format: { type: 'json_schema', schema: opts.schema } } }
+        : mode === 'texte' ? { output_config: { effort: opts.effort } } : {}),
     });
   } catch (err) {
     if (err instanceof AgentError) throw err;
@@ -265,10 +279,10 @@ async function askOnce(opts: {
 
 /**
  * Un appel Claude dont la réponse suit un schéma JSON, par l'échelle des
- * moyens : d'abord les sorties structurées ; si l'intermédiaire les ignore (la
- * réponse n'est pas le JSON attendu) ou les refuse (erreur 400), un second
- * appel en texte simple, avec des photos allégées si `reprise` en fournit.
- * `valide` dit si le JSON lu a la forme voulue.
+ * moyens ci-dessus. On descend d'un cran quand la réponse n'est pas le JSON
+ * attendu ou quand l'option est refusée (erreur 400) ; une clé refusée, un
+ * quota ou un refus de contenu s'arrêtent net. `valide` dit si le JSON lu a la
+ * forme voulue ; `reprise` fournit les photos allégées pour les modes tolérants.
  */
 async function askJson(opts: {
   model: string;
@@ -280,21 +294,21 @@ async function askJson(opts: {
   valide: (data: unknown) => boolean;
   reprise?: () => Block[];
 }): Promise<{ data: unknown; usage: Usage }> {
+  const depart = ECHELLE.indexOf(modeConnu ?? (anthropicViaIntermediaire() ? 'texte' : 'schema'));
   const essais: string[] = [];
-  for (const mode of ['schema', 'texte'] as Mode[]) {
+  for (const mode of ECHELLE.slice(depart)) {
     try {
-      const { text, usage, resume } = await askOnce(mode === 'texte' && opts.reprise ? { ...opts, content: opts.reprise() } : opts, mode);
+      const { text, usage, resume } = await askOnce(mode !== 'schema' && opts.reprise ? { ...opts, content: opts.reprise() } : opts, mode);
       const data = lireJson(text);
       if (data !== undefined && opts.valide(data)) {
         if (essais.length) console.warn(`Claude : repli réussi (${resume}) après ${essais.join(' | ')}`);
+        modeConnu = mode;
         return { data, usage };
       }
       essais.push(`${resume} : réponse illisible (${text.replace(/\s+/g, ' ').slice(0, 160)})`);
     } catch (err) {
-      // Une option refusée (400) se contourne ; une clé refusée, un quota ou
-      // un refus de contenu, non.
-      if (err instanceof AgentError && mode === 'schema' && / 400 /.test(err.detail ?? '')) {
-        essais.push(`schema refusé : ${err.detail}`);
+      if (err instanceof AgentError && mode !== 'brut' && / 400 /.test(err.detail ?? '')) {
+        essais.push(`${mode} refusé : ${err.detail}`);
         continue;
       }
       if (err instanceof AgentError && essais.length) throw new AgentError(err.message, `${err.detail} (après ${essais.join(' | ')})`);
