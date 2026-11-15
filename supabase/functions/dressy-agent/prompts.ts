@@ -57,7 +57,7 @@ export const MAX_PIECES = 6;
 
 // ---------------------------------------------------------------- repérage
 
-export const SURVEY_SYSTEM = `Tu es le styliste de Dresskode, une garde-robe numérique. On te donne une ou plusieurs photos prises par la personne, chez elle : éclairage, fond, plis et cadrage quelconques. Elles montrent ses vêtements, portés ou posés. Tu repères les pièces à ranger dans son dressing, vite et juste : leur image sera découpée dans la photo, pas redessinée.
+export const SURVEY_SYSTEM = `Tu es le styliste de Dresskode, une garde-robe numérique. On te donne une ou plusieurs photos prises par la personne, chez elle : éclairage, fond, plis et cadrage quelconques. Elles montrent ses vêtements, portés ou posés. Tu repères les pièces à ranger dans son dressing, vite et juste : chacune sera REDESSINÉE à plat, de face, en photo produit, par un générateur d'image qui n'a que la photo et ta fiche. Plus la fiche est précise (coupe, col, fermeture, poches, matière, motifs, marquages), plus le dessin ressemble à la vraie pièce.
 
 Règles de repérage :
 - Par défaut : TOUTES les pièces visibles, chacune séparément : vêtements, chaussures, sacs, bijoux, accessoires. Une tenue portée donne donc plusieurs pièces (veste, haut, bas, chaussures, sac, collier…).
@@ -75,7 +75,7 @@ Champs de chaque pièce :
 - hex : 1 à 3 codes « #RRGGBB », un par couleur de colors, dans le même ordre : la vraie teinte de chaque zone sous une lumière du jour neutre (corrige la dominante de l'éclairage : lampe chaude, ombre, néon).
 - material : la matière apparente en français (« maille côtelée », « denim brut »), ou une chaîne vide.
 - where : en français, où se trouve la pièce sur la photo, pour la distinguer des autres (« portée sur les épaules, par-dessus la chemise », « au poignet gauche », « posée à droite du sac »).
-- box : le cadre de la pièce sur la PREMIÈRE photo, en millièmes de sa largeur et de sa hauteur : x et y pour le coin haut gauche, w et h pour la largeur et la hauteur (0 à 1000). Englobe toute la partie visible de la pièce, sans la couper. Il guide la découpe.
+- box : le cadre de la pièce sur la PREMIÈRE photo, en millièmes de sa largeur et de sa hauteur : x et y pour le coin haut gauche, w et h pour la largeur et la hauteur (0 à 1000). Englobe toute la partie visible de la pièce, sans la couper.
 - description : en ANGLAIS, une à deux phrases factuelles (coupe, longueur, col, manches, fermeture, motifs, marquages visibles). Uniquement ce qui se voit.
 - motif : ${MOTIFS.join(', ')} (« texture » pour une matière marquée sans dessin : grosse maille, velours côtelé ; « logo » quand un logo ou une inscription domine).
 - coupe : ${COUPES.join(', ')} (« sans_objet » pour les sacs, bijoux, accessoires et chaussures).
@@ -145,7 +145,7 @@ export type Target = {
   /** Cadre de la pièce sur la première photo, en fractions (0 à 1) : [x, y, largeur, hauteur]. */
   box?: [number, number, number, number] | null;
   description: string;
-  /** Consigne du générateur : ne sert qu'au « rendu incorrect » de second niveau. */
+  /** Consigne du générateur : bâtie par gabarit depuis la fiche (fallbackPrompt). */
   prompt: string;
   /** L'allure de la pièce, pour Kodi (F5) ; absente des tâches d'avant le 13/11. */
   fiche?: Fiche | null;
@@ -214,7 +214,7 @@ export function fallbackPrompt(t: Pick<Target, 'name' | 'category' | 'where' | '
     `Reproduce ONLY this item from the reference photo: "${t.name}"${t.where ? `, location in the photo: "${t.where}"` : ''}. Ignore the person and every other item.`,
     t.description ? `What it is: ${t.description}` : '',
     'Reproduce it exactly: same cut, proportions, colours, wash, patterns, texture and every visible detail (buttons, stitching, pockets). Logos, stripes and lettering that are part of the item stay exactly as they are: same shape, count, colour and place.',
-    `Photorealistic e-commerce product photo, ${shape}, whole item centred with a small margin. The item alone: no person, mannequin, hanger, hand, other item, added text or watermark.`,
+    `Photorealistic e-commerce product photo, ${shape}, whole item centred with a small margin, evenly lit, sharp, true to the real colours. In the reference photo the item may be worn, hanging on a hanger, held by a hand or crumpled: draw it alone as a catalogue shot, every fold smoothed out, parts hidden in the photo completed logically. The item alone: no person, mannequin, hanger, hand, other item, added text or watermark.`,
   ].filter(Boolean).join('\n\n');
 }
 

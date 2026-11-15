@@ -726,6 +726,20 @@ demandé par l'utilisateur.** Décisions et état :
   code servi est celui du dépôt. Les fonctions `depot` et `nettoyage-comptes`
   sont supprimées.
 
+**Retour au dessin (15/11), demandé par l'utilisateur, prioritaire** : la
+découpe brute de la photo (masque Gemini, chantier du 13/11) donnait des
+pièces floues, avec la main, le cintre et le mur ; l'image de référence reste
+le dessin à plat de Nano Banana (fond uni, puis détourage). **`dressy-agent`
+dessine donc chaque pièce par défaut**, depuis la photo seule (plus de pièce
+découpée en référence, consigne `dessin-3`). Chaque dessin prend une génération
+(`quota.ts`) ; « Rendu incorrect » et « Image propre » redessinent (hors
+cache). **Sans génération restante, la pièce est rangée découpée dans la photo**
+(repli, `decoupage.ts`), jamais le chemin normal. Ceci remplace « dessin
+seulement sur Image propre » du chantier du 13/11. **À trancher** : Découverte
+n'a que 4 générations offertes, soit quatre pièces dessinées ; les suivantes
+passent par le repli. Fashion : 50 pièces, 50 générations. Déploiement de
+`dressy-agent` à faire pour que ce soit actif.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

@@ -14,7 +14,7 @@
  */
 
 /** À changer quand la consigne de dessin change : l'ancien cache ne sert plus. */
-export const PROMPT_VERSION = 'dessin-2'; // 13/11 : « Image propre » part de la pièce découpée
+export const PROMPT_VERSION = 'dessin-3'; // 15/11 : retour au dessin depuis la photo seule (plus de pièce découpée en référence)
 
 export type Status = 'succes' | 'echec' | 'rejet';
 

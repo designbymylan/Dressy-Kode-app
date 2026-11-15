@@ -7,20 +7,23 @@
  *   photo confiée → Sonnet 5 repère TOUTES les pièces (ou celles que la
  *     personne a nommées) ; la tâche garde la première et crée une tâche fille
  *     par pièce en plus, que d'autres passages traitent en parallèle ;
- *   pièce → Gemini segmente la pièce (un masque, pas une image) et elle est
- *     DÉCOUPÉE dans la photo : ses pixels, ses couleurs, ses marquages sont
- *     ceux de la personne, rien n'est redessiné ;
- *     → contrôles automatiques (couverture, une seule pièce, bord net, taille,
- *       couleur dominante) ; sinon repli sur un détourage par contraste ;
+ *   pièce → Nano Banana DESSINE la pièce à plat, de face, sur un fond uni, à
+ *     partir de la photo (décision du 15/11 : la découpe brute de la photo,
+ *     essayée le 13/11, donnait des images floues, avec la main, le cintre
+ *     et le mur : inacceptable) ;
+ *     → le fond uni est retiré (détourage par chrominance), contrôles
+ *       automatiques (couverture, une seule pièce, bord net, taille, couleur) ;
  *     → mise au format fixe (canevas carré, marges, pièce centrée), vignette,
  *       rangement dans le dressing.
  *
- * « Rendu incorrect » (fiche pièce) remet la tâche en file : 1re fois, la
- * découpe reprend avec le modèle le plus fort ; 2e fois, Nano Banana redessine
- * la pièce. « Image propre » (fiche pièce) la redessine aussi, à la demande.
- * Ce sont les seuls cas de génération d'image, et chacun prend une génération
- * au compteur de la personne (quota.ts, migration quotas_generation) : rendue
- * si le dessin échoue, jamais prise si l'image est déjà en cache.
+ * Chaque dessin prend une génération au compteur de la personne (quota.ts,
+ * migration quotas_generation) : rendue si le dessin échoue, jamais prise si
+ * l'image est déjà en cache. Sans génération restante, la pièce est rangée
+ * quand même, découpée dans la photo (Gemini rend un masque, decoupage.ts) :
+ * c'est le repli, jamais le chemin normal.
+ *
+ * « Rendu incorrect » (fiche pièce) remet la tâche en file : la pièce est
+ * redessinée (nouvelle génération, hors cache). « Image propre » aussi.
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
  * ce qui a déjà été fait (repérage).
@@ -31,7 +34,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
-import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
+import { backdropClause, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { MODES_AGENT } from './banc.ts';
@@ -255,48 +258,17 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
   await store(job, target, d.best.cut, 'photo', j, log);
 }
 
-const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail). Image 2 is the original photo: use it only for parts hidden or cut off in image 1.';
-
-/** La pièce rangée (PNG transparent), posée sur le fond voulu ; `null` si elle manque. */
-async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | null> {
-  try {
-    const { data } = await db.from('garments').select('image_path').eq('id', garmentId).maybeSingle();
-    if (!data?.image_path) return null;
-    const png = await download('garments', data.image_path as string);
-    const r = decode(png.bytes, 'image/png');
-    const [br, bg, bb] = [1, 3, 5].map((i) => parseInt(fond.slice(i, i + 2), 16));
-    const out = new Uint8Array(r.data.length);
-    for (let i = 0; i < r.data.length; i += 4) {
-      const a = r.data[i + 3] / 255;
-      out[i] = Math.round(r.data[i] * a + br * (1 - a));
-      out[i + 1] = Math.round(r.data[i + 1] * a + bg * (1 - a));
-      out[i + 2] = Math.round(r.data[i + 2] * a + bb * (1 - a));
-      out[i + 3] = 255;
-    }
-    return { bytes: encodePng({ width: r.width, height: r.height, data: out }), mime: 'image/png' };
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Nano Banana redessine la pièce à partir de la photo, sur un fond uni retiré
- * ensuite : après deux « rendu incorrect », ou à la demande (« Image propre »).
- * C'est le seul endroit où une image est générée, donc le seul qui prend une
- * génération au compteur.
+ * Nano Banana dessine la pièce à partir de la photo, sur un fond uni retiré
+ * ensuite : c'est l'image de la pièce. Seul endroit où une image est générée,
+ * donc seul endroit qui prend une génération au compteur. La photo seule sert
+ * de référence : la découpe brute (main, cintre, mur) l'égarait.
  */
 async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
-  // « Image propre » (F3, 13/11) : la pièce déjà découpée passe en premier, posée
-  // sur le fond voulu, car elle montre exactement quoi dessiner ; la photo
-  // d'origine suit pour les détails cachés. Après deux « rendu incorrect », la
-  // découpe est jugée fausse : la photo seule, comme avant.
-  const fond = backdropFor(target.colors, target.hex, isMetal(target));
-  const decoupe = job.clean && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
-  const references = decoupe ? [decoupe, ...sources] : sources;
+  const references = sources;
   const prompt = [
     stripClauses(target.prompt),
-    decoupe ? REFERENCES_CLAUSE : '',
     colourClause(target),
     isolationClause(target),
     backdropClause(target.colors, target.hex, isMetal(target)),
@@ -308,7 +280,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   const { model, size } = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
 
   const photoHash = await sha256(sources[0].bytes);
-  const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors, Boolean(decoupe)]));
+  const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors, job.redo]));
   const key = cacheKey({ photoHash, pieceHash, model });
 
   await setJob(job, { status: 'generating', refined_prompt: prompt, image_model: model });
@@ -475,8 +447,17 @@ async function runOnce() {
 
     const sources = await loadSources(job);
     const target = job.target ?? await surveyPhoto(job, sources, log);
-    if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log);
-    else await cutOut(job, target, sources, log);
+    // Le chemin normal : Nano Banana dessine la pièce. Sans génération restante,
+    // une pièce neuve est quand même rangée, découpée dans la photo (repli) ;
+    // une reprise ou « Image propre » garde l'image en place et dit pourquoi.
+    try {
+      await redraw(job, targetOf(job), sources, log);
+    } catch (err) {
+      const sansGeneration = err instanceof AgentError && err.message === SAY.quota;
+      if (!sansGeneration || job.garment_id) throw err;
+      log('plus de génération : la pièce est rangée découpée dans la photo');
+      await cutOut(job, target, sources, log);
+    }
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
     // ni de nom de modèle. Le détail part dans les journaux de la fonction.
