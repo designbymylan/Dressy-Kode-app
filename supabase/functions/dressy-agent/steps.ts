@@ -251,11 +251,39 @@ async function askJson(opts: {
   if (res.stop_reason === 'max_tokens') throw new AgentError(SAY.failed, `Claude ${opts.model} : réponse coupée (max_tokens)`);
 
   const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
-  try {
-    return { data: JSON.parse(text), usage: res.usage as unknown as Usage };
-  } catch {
+  const data = lireJson(text);
+  if (data === undefined) {
     throw new AgentError(SAY.failed, `Claude ${opts.model} : JSON illisible (${text.slice(0, 120)})`);
   }
+  return { data, usage: res.usage as unknown as Usage };
+}
+
+/**
+ * Le JSON d'une réponse de Claude, même quand elle est enrobée : phrase
+ * d'introduction, bloc ```json, texte après. Un intermédiaire qui ne tient pas
+ * les sorties structurées rend souvent ce format. `undefined` si rien de lisible.
+ */
+export function lireJson(text: string): unknown {
+  const brut = text.trim();
+  try {
+    return JSON.parse(brut);
+  } catch { /* enrobé : on cherche le JSON dedans */ }
+  const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
+  const candidats = [bloc, brut].filter((c): c is string => Boolean(c));
+  for (const c of candidats) {
+    try {
+      return JSON.parse(c);
+    } catch { /* suite */ }
+    const debut = c.search(/[[{]/);
+    if (debut < 0) continue;
+    const ferme = c[debut] === '[' ? ']' : '}';
+    const fin = c.lastIndexOf(ferme);
+    if (fin <= debut) continue;
+    try {
+      return JSON.parse(c.slice(debut, fin + 1));
+    } catch { /* suite */ }
+  }
+  return undefined;
 }
 
 /** Le repérage des pièces d'une photo : un seul appel rapide, la découpe se fait ensuite pièce par pièce. */
@@ -268,7 +296,8 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
     content: [...input.sources.map(imageBlock), { type: 'text', text: surveyUserText(input) }],
     maxTokens: 8_000,
   });
-  const o = (data ?? {}) as { pieces?: unknown; note?: unknown };
+  // Une liste seule (sans l'objet { pieces, note }) vaut la liste des pièces.
+  const o = (Array.isArray(data) ? { pieces: data } : data ?? {}) as { pieces?: unknown; note?: unknown };
   const pieces = (Array.isArray(o.pieces) ? o.pieces : [])
     .map(cleanTarget)
     .filter((p): p is Target => p !== null)

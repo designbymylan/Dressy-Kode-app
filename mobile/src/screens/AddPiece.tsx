@@ -581,20 +581,24 @@ function LiveTracking({ sent, hint, onAgain }: { sent: Sent[]; hint: string; onA
   const playing = Object.keys(reveals).length > 0;
   const anyDone = jobs.some((j) => j.status === 'done' && isPiece(j));
   const groups = new Map(groupByPhoto(jobs).map((g) => [g.key, g.jobs]));
+  // Rien n'a abouti et au moins une pièce a échoué : ne pas annoncer « Tout est rangé ».
+  const nothingStored = !working && !playing && !anyDone && jobs.some((j) => j.status === 'failed');
 
   return (
     <Animated.View entering={FadeIn.duration(200)} style={{ gap: 22 }} accessibilityLiveRegion="polite">
       <View style={{ gap: 8 }}>
         <T v="title" accessibilityRole="header">
-          {working || playing ? 'Kodi s’occupe\n' : 'Tout est\n'}
+          {working || playing ? 'Kodi s’occupe\n' : nothingStored ? 'Ça n’a pas\n' : 'Tout est\n'}
           <T v="title" style={{ ...F.accent }}>
-            {working || playing ? 'de tes photos.' : 'rangé.'}
+            {working || playing ? 'de tes photos.' : nothingStored ? 'marché.' : 'rangé.'}
           </T>
         </T>
         <T v="body" tone="ink2">
           {working || playing
             ? 'Il repère chaque pièce et les découpe en même temps. Chacune arrive sur tes portants, détourée, sans fond.'
-            : 'Tes pièces sont sur tes portants, détourées et sans fond.'}
+            : nothingStored
+              ? 'Réessaie, ou confie une autre photo.'
+              : 'Tes pièces sont sur tes portants, détourées et sans fond.'}
         </T>
       </View>
 
