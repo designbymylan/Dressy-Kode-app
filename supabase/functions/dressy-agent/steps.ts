@@ -23,7 +23,7 @@ import {
   type Target,
 } from './prompts.ts';
 import { parseSegments, type Segment } from './segment.ts';
-import { sniffMime } from './codec.ts';
+import { alleger, sniffMime } from './codec.ts';
 import { accesGoogle, anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
@@ -216,10 +216,59 @@ const imageBlock = (img: Img): Block => ({
   },
 });
 
+type Mode = 'schema' | 'texte';
+
 /**
- * Un appel Claude dont la réponse suit un schéma JSON (sorties structurées).
- * La réflexion reste adaptative, par défaut sur ces modèles ; l'effort règle
- * la vitesse.
+ * Un appel Claude. `schema` : sorties structurées (ce que l'API d'Anthropic
+ * tient). `texte` : aucune option particulière, le schéma est dans la consigne
+ * et la réponse est lue en tolérance, ce que tout intermédiaire sait faire.
+ */
+async function askOnce(opts: {
+  model: string;
+  effort: Effort;
+  system: string;
+  schema: Record<string, unknown>;
+  content: Block[];
+  maxTokens: number;
+}, mode: Mode): Promise<{ text: string; usage: Usage; resume: string }> {
+  const texte = mode === 'texte';
+  let res: Anthropic.Message;
+  try {
+    res = await anthropic().messages.create({
+      model: opts.model,
+      max_tokens: texte ? opts.maxTokens + 4_000 : opts.maxTokens,
+      system: texte
+        ? `${opts.system}\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(opts.schema)}`
+        : opts.system,
+      messages: [{ role: 'user', content: opts.content }],
+      ...(texte ? {} : { output_config: { effort: opts.effort, format: { type: 'json_schema', schema: opts.schema } } }),
+    });
+  } catch (err) {
+    if (err instanceof AgentError) throw err;
+    if (err instanceof APIError && typeof err.status === 'number') throw httpError(`Claude ${opts.model} (${mode})`, err.status, err.message);
+    if (err instanceof APIConnectionTimeoutError) throw new AgentError(SAY.failed, `Claude ${opts.model} (${mode}) : délai dépassé`);
+    throw new AgentError(SAY.failed, `Claude ${opts.model} (${mode}) : ${err instanceof Error ? err.message : err}`);
+  }
+
+  if (res.stop_reason === 'refusal') {
+    throw new AgentError(SAY.refused, `Claude ${opts.model} a refusé (${JSON.stringify(res.stop_details ?? null)})`);
+  }
+  if (res.stop_reason === 'max_tokens') throw new AgentError(SAY.failed, `Claude ${opts.model} (${mode}) : réponse coupée (max_tokens)`);
+
+  const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
+  const u = res.usage as unknown as Record<string, unknown>;
+  // De quoi diagnostiquer un intermédiaire dans les journaux : le modèle qui a
+  // vraiment répondu et le nombre de jetons lus (une image perdue se voit là).
+  const resume = `${mode}, modèle ${res.model ?? '?'}, ${u?.input_tokens ?? '?'} jetons lus, ${u?.output_tokens ?? '?'} écrits`;
+  return { text, usage: res.usage as unknown as Usage, resume };
+}
+
+/**
+ * Un appel Claude dont la réponse suit un schéma JSON, par l'échelle des
+ * moyens : d'abord les sorties structurées ; si l'intermédiaire les ignore (la
+ * réponse n'est pas le JSON attendu) ou les refuse (erreur 400), un second
+ * appel en texte simple, avec des photos allégées si `reprise` en fournit.
+ * `valide` dit si le JSON lu a la forme voulue.
  */
 async function askJson(opts: {
   model: string;
@@ -228,34 +277,31 @@ async function askJson(opts: {
   schema: Record<string, unknown>;
   content: Block[];
   maxTokens: number;
+  valide: (data: unknown) => boolean;
+  reprise?: () => Block[];
 }): Promise<{ data: unknown; usage: Usage }> {
-  let res: Anthropic.Message;
-  try {
-    res = await anthropic().messages.create({
-      model: opts.model,
-      max_tokens: opts.maxTokens,
-      system: opts.system,
-      messages: [{ role: 'user', content: opts.content }],
-      output_config: { effort: opts.effort, format: { type: 'json_schema', schema: opts.schema } },
-    });
-  } catch (err) {
-    if (err instanceof AgentError) throw err;
-    if (err instanceof APIError && typeof err.status === 'number') throw httpError(`Claude ${opts.model}`, err.status, err.message);
-    if (err instanceof APIConnectionTimeoutError) throw new AgentError(SAY.failed, `Claude ${opts.model} : délai dépassé`);
-    throw new AgentError(SAY.failed, `Claude ${opts.model} : ${err instanceof Error ? err.message : err}`);
+  const essais: string[] = [];
+  for (const mode of ['schema', 'texte'] as Mode[]) {
+    try {
+      const { text, usage, resume } = await askOnce(mode === 'texte' && opts.reprise ? { ...opts, content: opts.reprise() } : opts, mode);
+      const data = lireJson(text);
+      if (data !== undefined && opts.valide(data)) {
+        if (essais.length) console.warn(`Claude : repli réussi (${resume}) après ${essais.join(' | ')}`);
+        return { data, usage };
+      }
+      essais.push(`${resume} : réponse illisible (${text.replace(/\s+/g, ' ').slice(0, 160)})`);
+    } catch (err) {
+      // Une option refusée (400) se contourne ; une clé refusée, un quota ou
+      // un refus de contenu, non.
+      if (err instanceof AgentError && mode === 'schema' && / 400 /.test(err.detail ?? '')) {
+        essais.push(`schema refusé : ${err.detail}`);
+        continue;
+      }
+      if (err instanceof AgentError && essais.length) throw new AgentError(err.message, `${err.detail} (après ${essais.join(' | ')})`);
+      throw err;
+    }
   }
-
-  if (res.stop_reason === 'refusal') {
-    throw new AgentError(SAY.refused, `Claude ${opts.model} a refusé (${JSON.stringify(res.stop_details ?? null)})`);
-  }
-  if (res.stop_reason === 'max_tokens') throw new AgentError(SAY.failed, `Claude ${opts.model} : réponse coupée (max_tokens)`);
-
-  const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
-  const data = lireJson(text);
-  if (data === undefined) {
-    throw new AgentError(SAY.failed, `Claude ${opts.model} : JSON illisible (${text.slice(0, 120)})`);
-  }
-  return { data, usage: res.usage as unknown as Usage };
+  throw new AgentError(SAY.failed, `Claude ${opts.model} : JSON illisible. ${essais.join(' | ')}`);
 }
 
 /**
@@ -295,6 +341,9 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
     schema: SURVEY_SCHEMA,
     content: [...input.sources.map(imageBlock), { type: 'text', text: surveyUserText(input) }],
     maxTokens: 8_000,
+    valide: (d) => Array.isArray(d) || Array.isArray((d as { pieces?: unknown })?.pieces),
+    // Reprise : photos en 1568 px, au cas où l'image n'aurait pas passé.
+    reprise: () => [...input.sources.map((s) => imageBlock(alleger(s))), { type: 'text', text: surveyUserText(input) }],
   });
   // Une liste seule (sans l'objet { pieces, note }) vaut la liste des pièces.
   const o = (Array.isArray(data) ? { pieces: data } : data ?? {}) as { pieces?: unknown; note?: unknown };
