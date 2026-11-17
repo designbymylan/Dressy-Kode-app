@@ -10,7 +10,7 @@ import { decode, tailleImage } from '../dressy-agent/codec.ts';
 import { exifOrientation, orient } from '../dressy-agent/normalize.ts';
 import { downscale, type Raster } from '../dressy-agent/cutout.ts';
 import { decouper, ouvrir } from '../dressy-agent/decoupage.ts';
-import { survey } from '../dressy-agent/steps.ts';
+import { survey, generate } from '../dressy-agent/steps.ts';
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void };
 
@@ -124,6 +124,23 @@ Deno.serve(async (req) => {
   const p = data.params as { diag: { path: string; box?: number[] } };
   EdgeRuntime.waitUntil((async () => {
     try {
+      if ((p.diag as { chrono?: boolean }).chrono) {
+        const piece = await db.storage.from('garments').download((p.diag as { piece: string }).piece);
+        const pb = new Uint8Array(await piece.data!.arrayBuffer());
+        const essai = async (nom: string, prompt: string, sources: { bytes: Uint8Array; mime: string }[]) => {
+          const t = Date.now();
+          try {
+            const img = await generate(prompt, sources, { size: '1K' });
+            return { nom, ms: Date.now() - t, ok: true, ko: Math.round(img.bytes.length / 1024) };
+          } catch (e) { return { nom, ms: Date.now() - t, ok: false, erreur: String(e instanceof Error ? (e as { detail?: string }).detail ?? e.message : e).slice(0, 200) }; }
+        };
+        const lignes = await Promise.all([
+          essai('texte seul', 'A plain red cotton t-shirt laid flat, e-commerce packshot, white background.', []),
+          essai('avec la pièce découpée', 'Photorealistic e-commerce catalogue packshot of this exact item, laid flat, seen from the front, soft even light, no shadow, on a flat solid white background.', [{ bytes: pb, mime: 'image/png' }]),
+        ]);
+        await db.from('banc_ia').update({ status: 'done', finished_at: new Date().toISOString(), result: { lignes }, cost_usd: 0 }).eq('id', id);
+        return;
+      }
       const dl = await db.storage.from('uploads').download(p.diag.path);
       if (dl.error || !dl.data) throw new Error('photo introuvable');
       const bytes = new Uint8Array(await dl.data.arrayBuffer());
