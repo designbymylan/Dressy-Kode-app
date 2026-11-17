@@ -214,7 +214,9 @@ export function fallbackPrompt(t: Pick<Target, 'name' | 'category' | 'where' | '
     `Reproduce ONLY this item from the reference photo: "${t.name}"${t.where ? `, location in the photo: "${t.where}"` : ''}. Ignore the person and every other item.`,
     t.description ? `What it is: ${t.description}` : '',
     'Reproduce it exactly: same cut, proportions, colours, wash, patterns, texture and every visible detail (buttons, stitching, pockets). Logos, stripes and lettering that are part of the item stay exactly as they are: same shape, count, colour and place.',
-    `Photorealistic e-commerce product photo, ${shape}, whole item centred with a small margin. The item alone: no person, mannequin, hanger, hand, other item, added text or watermark.`,
+    // Consigne « catalogue » retenue le 17/11 sur le comparatif du banc (A manuelle, B agent, C catalogue).
+    // Sans ombre : une ombre douce se confond avec le fond et fait échouer le détourage.
+    `Photorealistic e-commerce catalogue packshot, ${shape}, whole item centred with a small margin, soft even studio lighting that casts no shadow. The item alone: no person, mannequin, hanger, hand, other item, added text or watermark.`,
   ].filter(Boolean).join('\n\n');
 }
 
