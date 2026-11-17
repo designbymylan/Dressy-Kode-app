@@ -39,7 +39,7 @@ Deno.test('refus : message dédié, lu avant le contenu', () => {
 
 Deno.test('le schéma passe dans la consigne', () => {
   const t = formatDansLaConsigne({ type: 'object', required: ['reponse'] });
-  if (!t.includes('FORMAT DE RÉPONSE') || !t.includes('"required":["reponse"]')) throw new Error(t);
+  if (!t.includes('FORMAT DE RÉPONSE') || !t.includes('"required":["reponse"]') || !t.includes('guillemet droit')) throw new Error(t);
 });
 
 // ---------------------------------------------------------------- une réponse illisible est redemandée une fois

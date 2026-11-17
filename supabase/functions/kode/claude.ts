@@ -177,7 +177,7 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
 
 /** La consigne de format quand le schéma ne passe pas par l'option de l'API. */
 export const formatDansLaConsigne = (schema: Schema): string =>
-  `\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(schema)}`;
+  `\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON. Dans les textes, n'écris jamais de guillemet droit (\") : utilise « » ou des apostrophes, et aucun retour à la ligne. Schéma :\n${JSON.stringify(schema)}`;
 
 /**
  * Le JSON d'une réponse, même enrobée (17/11) : bloc ```json, phrase avant ou
