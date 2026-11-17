@@ -15,7 +15,7 @@ import {
   aimeesText, faitsText, interditesText,
   type AgendaLine, type Corps, type EcartRow, type EventRow, type Profile, type Voyage,
 } from './prompt.ts';
-import { withRefs, wardrobeText, syntheseTexte, normaliseHistory, type Garment, type Turn } from './wardrobe.ts';
+import { withRefs, wardrobeText, normaliseHistory, type Garment, type Turn } from './wardrobe.ts';
 import { interdites, meteoTexte, type Conditions } from './meteo.ts';
 import { dayLabel, fullLabel } from './dates.ts';
 
@@ -91,7 +91,6 @@ export function demandeReponse(d: Dossier, question: string, jour: Jour, souveni
     coeursTexte(d.coeurs, refsById),
     `Agenda Dresskode des deux prochaines semaines :\n${agendaText(d.agenda)}`,
     dressingTexte(refs, d),
-    syntheseTexte(refs, d.style?.colours ?? [], d.today),
     porteesTexte(d.portees ?? [], refsById),
     ecartsText(d.ecarts, refsById),
   ].filter(Boolean).join('\n\n');
@@ -138,7 +137,6 @@ export function demandePlan(
     profileText(d.style, d.corps),
     coeursTexte(d.coeurs, refsById),
     dressingTexte(refs, d),
-    syntheseTexte(refs, d.style?.colours ?? [], d.today),
     porteesTexte(d.portees ?? [], refsById),
     ecartsText(d.ecarts, refsById),
   ].filter(Boolean).join('\n\n');
