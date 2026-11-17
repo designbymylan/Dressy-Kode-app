@@ -108,7 +108,7 @@ export async function decouper(
   if (!cands.some((c) => c.checks.ok)) {
     const t = Date.now();
     const region = target.box ? pixelBox(target.box, raster.width, raster.height, 0.08) : { x: 0, y: 0, w: raster.width, h: raster.height };
-    const lit = cutoutBackground(crop(raster, region), { garment: garmentRgbs(target.colors, target.hex) });
+    const lit = cutoutBackground(crop(raster, region), { garment: garmentRgbs(target.colors, target.hex), multi: true });
     const { cut, oneShare } = cleanSpecks(lit);
     cands.push({ method: 'contraste', cut, checks: runChecks(cut, oneShare, expected) });
     ms.contraste = Date.now() - t;

@@ -76,6 +76,7 @@ Champs de chaque pièce :
 - material : la matière apparente en français (« maille côtelée », « denim brut »), ou une chaîne vide.
 - where : en français, où se trouve la pièce sur la photo, pour la distinguer des autres (« portée sur les épaules, par-dessus la chemise », « au poignet gauche », « posée à droite du sac »).
 - box : le cadre de la pièce sur la PREMIÈRE photo, en millièmes de sa largeur et de sa hauteur : x et y pour le coin haut gauche, w et h pour la largeur et la hauteur (0 à 1000). Englobe toute la partie visible de la pièce, sans la couper. Il guide la découpe.
+- rotation : 0 le plus souvent. Si la pièce est POSÉE couchée ou renversée sur la photo (un sweat posé sur le côté, un pantalon posé à l'horizontale, un haut à l'envers), le nombre de degrés (90, 180 ou 270) dont il faut la tourner dans le sens des aiguilles d'une montre pour qu'elle soit à l'endroit : capuche, col ou ceinture en haut, bas du vêtement et semelles en bas. 0 pour une pièce portée, déjà à l'endroit, ou dans le doute.
 - description : en ANGLAIS, une à deux phrases factuelles (coupe, longueur, col, manches, fermeture, motifs, marquages visibles). Uniquement ce qui se voit.
 - motif : ${MOTIFS.join(', ')} (« texture » pour une matière marquée sans dessin : grosse maille, velours côtelé ; « logo » quand un logo ou une inscription domine).
 - coupe : ${COUPES.join(', ')} (« sans_objet » pour les sacs, bijoux, accessoires et chaussures).
@@ -118,7 +119,7 @@ If you see no item, answer [].`;
 const PIECE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['name', 'category', 'kind', 'colors', 'hex', 'material', 'where', 'box', 'description', 'motif', 'coupe', 'habillage', 'saison', 'details'],
+  required: ['name', 'category', 'kind', 'colors', 'hex', 'material', 'where', 'box', 'rotation', 'description', 'motif', 'coupe', 'habillage', 'saison', 'details'],
   properties: {
     name: { type: 'string' },
     category: { type: 'string', enum: [...CATEGORIES] },
@@ -133,6 +134,7 @@ const PIECE_SCHEMA = {
       required: ['x', 'y', 'w', 'h'],
       properties: { x: { type: 'integer' }, y: { type: 'integer' }, w: { type: 'integer' }, h: { type: 'integer' } },
     },
+    rotation: { type: 'integer', enum: [0, 90, 180, 270] },
     description: { type: 'string' },
     motif: { type: 'string', enum: [...MOTIFS] },
     coupe: { type: 'string', enum: [...COUPES] },
@@ -180,6 +182,8 @@ export type Target = {
   /** L'allure de la pièce, pour Kodi (F5) ; absente des tâches d'avant le 13/11. */
   fiche?: Fiche | null;
   saison?: (typeof SAISONS)[number] | null;
+  /** Degrés dans le sens des aiguilles d'une montre pour remettre la pièce à l'endroit (0, 90, 180, 270) ; absent avant le 17/11. */
+  rotation?: number;
 };
 
 /** Ce que `garments.fiche` garde (2 Ko au plus, contrainte de la base). */
@@ -275,6 +279,7 @@ export function cleanTarget(raw: unknown): Target | null {
     prompt: String(o.prompt ?? '').trim().slice(0, 6000) || fallbackPrompt(t),
     fiche: cleanFiche(o),
     saison: parmi(SAISONS, o.saison),
+    rotation: [90, 180, 270].includes(Number(o.rotation)) ? Number(o.rotation) : 0,
   };
 }
 

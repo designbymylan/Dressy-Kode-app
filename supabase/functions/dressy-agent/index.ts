@@ -41,7 +41,7 @@ import { cutoutBackground, downscale, type Raster } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
 import { CUTOUT } from './config.ts';
 import { dominantColour } from './color.ts';
-import { fitOnCanvas } from './normalize.ts';
+import { fitOnCanvas, rotate } from './normalize.ts';
 import { cleanSpecks } from './segment.ts';
 import { BLOCKING, runChecks, type Checks } from './checks.ts';
 
@@ -252,7 +252,9 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
 
   j.methode = d.best.method;
   j.controles = d.best.checks;
-  await store(job, target, d.best.cut, 'photo', j, log);
+  // Une pièce photographiée couchée (un sweat posé sur le côté) est remise à l'endroit.
+  if (target.rotation) log(`pièce remise à l'endroit : ${target.rotation} degrés`);
+  await store(job, target, rotate(d.best.cut, target.rotation ?? 0), 'photo', j, log);
 }
 
 const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail). Image 2 is the original photo: use it only for parts hidden or cut off in image 1.';

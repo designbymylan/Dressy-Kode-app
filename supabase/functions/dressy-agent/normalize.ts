@@ -122,3 +122,28 @@ export function orient(r: Raster, o: number): Raster {
   }
   return { width: nw, height: nh, data: out };
 }
+
+/**
+ * Tourne une image de 90, 180 ou 270 degrés dans le sens des aiguilles d'une
+ * montre : une pièce photographiée couchée est remise à l'endroit. Toute autre
+ * valeur laisse l'image telle quelle.
+ */
+export function rotate(r: Raster, degrees: number): Raster {
+  const d = ((Math.round(degrees) % 360) + 360) % 360;
+  if (d !== 90 && d !== 180 && d !== 270) return r;
+  const { width: w, height: h, data } = r;
+  const swap = d !== 180;
+  const nw = swap ? h : w, nh = swap ? w : h;
+  const out = new Uint8Array(nw * nh * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let nx: number, ny: number;
+      if (d === 90) { nx = h - 1 - y; ny = x; }
+      else if (d === 180) { nx = w - 1 - x; ny = h - 1 - y; }
+      else { nx = y; ny = w - 1 - x; }
+      const from = (y * w + x) * 4, to = (ny * nw + nx) * 4;
+      out[to] = data[from]; out[to + 1] = data[from + 1]; out[to + 2] = data[from + 2]; out[to + 3] = data[from + 3];
+    }
+  }
+  return { width: nw, height: nh, data: out };
+}

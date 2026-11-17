@@ -63,7 +63,62 @@ export type CutoutOptions = {
   tolerance?: number;
   /** Les vraies teintes de la pièce : la part de « fond » qu'elles ont elles-mêmes est permise. */
   garment?: Rgb[];
+  /**
+   * Photo prise chez soi : le fond (parquet, drap à motifs, tapis) n'est pas
+   * toujours d'une seule teinte. Si le pourtour de l'image en compte plusieurs,
+   * on les apprend (palette du pourtour) au lieu d'une seule médiane. Sans
+   * effet sur un fond uni ni sur un fond d'incrustation.
+   */
+  multi?: boolean;
 };
+
+const l1 = (a: ArrayLike<number>, b: ArrayLike<number>) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+
+/**
+ * Les teintes du fond quand il n'est pas uni : k-moyennes (4 groupes) sur le
+ * pourtour de l'image. `null` si le pourtour est uni (une teinte rend 90 % du
+ * pourtour) ou si l'on ne peut pas protéger la pièce (aucune teinte connue).
+ * Un groupe trop proche d'une teinte de la pièce est écarté : mieux vaut un
+ * joint sombre qui reste qu'un vêtement marine mangé par un parquet foncé.
+ */
+export function backgroundPalette(r: Raster, garment: Rgb[], tol: number): Rgb[] | null {
+  if (!garment.length) return null;
+  const { width: w, height: h, data } = r;
+  const ring = Math.max(1, Math.round(Math.min(w, h) * 0.006));
+  const pts: Rgb[] = [];
+  const stride = Math.max(1, Math.floor((2 * (w + h) * ring) / 6000));
+  let k = 0;
+  const take = (x: number, y: number) => {
+    if (k++ % stride) return;
+    const i = (y * w + x) * 4;
+    pts.push([data[i], data[i + 1], data[i + 2]]);
+  };
+  for (let t = 0; t < ring; t++) {
+    for (let x = 0; x < w; x++) { take(x, t); take(x, h - 1 - t); }
+    for (let y = ring; y < h - ring; y++) { take(t, y); take(w - 1 - t, y); }
+  }
+  if (pts.length < 50) return null;
+
+  const main = borderColour(r);
+  if (pts.filter((p) => l1(p, main) <= tol).length / pts.length >= 0.9) return null;
+
+  const lum = (p: Rgb) => 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2];
+  const sorted = [...pts].sort((a, b) => lum(a) - lum(b));
+  let centers: Rgb[] = [0.125, 0.375, 0.625, 0.875].map((q) => [...sorted[Math.floor(q * (sorted.length - 1))]] as Rgb);
+  let weights = [0, 0, 0, 0];
+  for (let it = 0; it < 8; it++) {
+    const sum = centers.map(() => [0, 0, 0, 0]);
+    for (const p of pts) {
+      let best = 0, bd = Infinity;
+      for (let c = 0; c < centers.length; c++) { const d = l1(p, centers[c]); if (d < bd) { bd = d; best = c; } }
+      sum[best][0] += p[0]; sum[best][1] += p[1]; sum[best][2] += p[2]; sum[best][3]++;
+    }
+    weights = sum.map((s) => s[3] / pts.length);
+    centers = centers.map((c, i) => (sum[i][3] ? [sum[i][0] / sum[i][3], sum[i][1] / sum[i][3], sum[i][2] / sum[i][3]] as Rgb : c));
+  }
+  const kept = centers.filter((c, i) => weights[i] >= 0.06 && garment.every((g) => l1(c, g) > 70));
+  return kept.length ? kept : null;
+}
 
 /**
  * Rend transparent le fond uni autour d'une pièce, en cinq temps.
@@ -101,10 +156,19 @@ export function cutoutBackground(r: Raster, opts: CutoutOptions | number = {}): 
   const own = chroma ? Math.max(0, ...garment.map((g) => tilt(g, chroma))) : 0;
   const room = chroma ? Math.max(0.05, chroma.strength - own) : 1;
 
+  // Fond de plusieurs teintes (parquet…) : la distance se mesure à la plus proche
+  // des teintes du pourtour ; une teinte de la pièce n'est jamais du fond.
+  const palette = opts && typeof opts === 'object' && opts.multi && !chroma ? backgroundPalette(r, garment, tol) : null;
+
   const dist = new Uint16Array(size);
   for (let p = 0; p < size; p++) {
     const i = p * 4;
-    if (chroma) {
+    if (palette) {
+      let d = Infinity;
+      for (const c of palette) d = Math.min(d, Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2]));
+      if (garment.some((g) => Math.abs(data[i] - g[0]) + Math.abs(data[i + 1] - g[1]) + Math.abs(data[i + 2] - g[2]) <= 40)) d = Math.max(d, tol * 2);
+      dist[p] = Math.min(65535, d);
+    } else if (chroma) {
       // 0 sur le fond, 2 × tol (franchement pièce) dès qu'il ne tire pas plus
       // vers le fond que la pièce elle-même : même échelle que la distance.
       const t = Math.max(0, tilt([data[i], data[i + 1], data[i + 2]], chroma) - own) / room;
@@ -168,6 +232,22 @@ export function cutoutBackground(r: Raster, opts: CutoutOptions | number = {}): 
     if (n >= minHole && uniform) for (const p of members) clear[p] = 1;
   }
 
+  // 2 bis. fond multicolore : les joints (lattes de parquet, plis de drap), trop
+  // sombres ou proches de la pièce pour entrer dans la palette, restent en
+  // traits fins collés à la pièce. Une ouverture (érosion puis dilatation) les
+  // retire ; une fine pièce de la même teinte que le vêtement (cordon) est gardée.
+  if (palette) {
+    const rad = Math.max(2, Math.round(Math.max(w, h) / 320));
+    const solid = new Uint8Array(size);
+    for (let p = 0; p < size; p++) solid[p] = clear[p] ? 0 : 1;
+    const opened = windowed(windowed(solid, w, h, rad, false), w, h, rad, true);
+    for (let p = 0; p < size; p++) {
+      if (!solid[p] || opened[p]) continue;
+      const i = p * 4;
+      if (!garment.some((g) => Math.abs(data[i] - g[0]) + Math.abs(data[i + 1] - g[1]) + Math.abs(data[i + 2] - g[2]) <= 30)) clear[p] = 1;
+    }
+  }
+
   // 3. îlots de poussière
   const label = new Int32Array(size).fill(-1);
   const areas: number[] = [];
@@ -213,7 +293,7 @@ export function cutoutBackground(r: Raster, opts: CutoutOptions | number = {}): 
     const x = p % w;
     return (x > 0 && mark(p - 1)) || (x < w - 1 && mark(p + 1)) || (p >= w && mark(p - w)) || (p < size - w && mark(p + w));
   };
-  const blend = (p: number) => dist[p] > tol && dist[p] < tol * 2;
+  const blend = (p: number) => !palette && dist[p] > tol && dist[p] < tol * 2; // fond multicolore : bords nets, la teinte à retrancher n'est pas unique
   const soften = (p: number) => {
     const a = (dist[p] - tol) / tol;
     const i = p * 4;
@@ -270,6 +350,29 @@ export function cutoutBackground(r: Raster, opts: CutoutOptions | number = {}): 
   }
 
   return { width: w, height: h, data: out };
+}
+
+/**
+ * Érosion (`grow` faux : un pixel reste s'il est entouré de pleins) ou dilatation
+ * (`grow` vrai) d'un masque 0/1, par une fenêtre carrée de rayon `rad`, en deux passes.
+ */
+function windowed(src: Uint8Array, w: number, h: number, rad: number, grow: boolean): Uint8Array {
+  const pass = (from: Uint8Array, horizontal: boolean): Uint8Array => {
+    const out = new Uint8Array(from.length);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let hit = grow ? 0 : 1;
+        for (let k = -rad; k <= rad; k++) {
+          const xx = horizontal ? x + k : x, yy = horizontal ? y : y + k;
+          const v = xx < 0 || yy < 0 || xx >= w || yy >= h ? 0 : from[yy * w + xx];
+          if (grow ? v : !v) { hit = grow ? 1 : 0; break; }
+        }
+        out[y * w + x] = hit;
+      }
+    }
+    return out;
+  };
+  return pass(pass(src, true), false);
 }
 
 /** Part des pixels rendus transparents : sert à repérer un détourage raté. */
