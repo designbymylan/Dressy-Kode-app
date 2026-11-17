@@ -119,6 +119,16 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
     output_config: dansLaConsigne ? { effort } : { effort, format: { type: 'json_schema' as const, schema } },
   };
   const standard = async () => (await c.messages.create(body)) as unknown as Reponse;
+  // Sans le format strict (intermédiaire), 1 réponse sur 20 environ est un JSON invalide (essai du 17/11,
+  // 2 sur 40) : on redemande une fois avant d'échouer.
+  const standardLisible = async () => {
+    const res = await standard();
+    if (dansLaConsigne && res.stop_reason === 'end_turn' && !reponseLisible(res)) {
+      console.warn('réponse illisible, appel refait une fois');
+      return await standard();
+    }
+    return res;
+  };
   // Si les filtres du modèle refusent la question, l'API la rejoue sur le
   // modèle de repli recommandé au lieu de la perdre.
   const avecLeRepli = async () =>
@@ -126,7 +136,7 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
 
   const repli = avecRepli(model) && !repliRefuse && !anthropicViaIntermediaire();
   try {
-    if (!repli) return await standard();
+    if (!repli) return await standardLisible();
     let res: Reponse;
     try {
       res = await avecLeRepli();
@@ -192,6 +202,12 @@ export function lireJson(text: string): unknown {
     } catch { /* suite */ }
   }
   return undefined;
+}
+
+/** La réponse contient-elle un objet JSON lisible ? */
+export function reponseLisible(res: Reponse): boolean {
+  const data = lireJson(texteDe(res));
+  return typeof data === 'object' && data !== null && !Array.isArray(data);
 }
 
 /** La réponse en JSON ; le refus se lit avant le contenu. */
