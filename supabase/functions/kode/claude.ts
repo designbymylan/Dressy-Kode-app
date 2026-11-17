@@ -101,15 +101,20 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
   }
   const model = opts.model ?? MODEL;
   const c = anthropic(apiKey, opts.timeout ?? 60_000, opts.retries ?? 1);
+  // Derrière un intermédiaire (essai du 17/11) : le format JSON strict est ignoré en silence et la
+  // réponse arrive en bloc de code. Le schéma passe alors dans la consigne, l'effort reste réglé,
+  // et readJson lit la réponse même enrobée. `KODE_FORMAT=schema` rétablit le format strict.
+  const dansLaConsigne = anthropicViaIntermediaire() && Deno.env.get('KODE_FORMAT')?.trim() !== 'schema';
+  const effort = opts.effort ?? EFFORT.reponse;
   const body = {
     model,
     max_tokens: opts.maxTokens ?? 16000,
     system: [
-      { type: 'text' as const, text: system },
+      { type: 'text' as const, text: dansLaConsigne ? `${system}${formatDansLaConsigne(schema)}` : system },
       { type: 'text' as const, text: context, cache_control: { type: 'ephemeral' as const } },
     ],
     messages: turns,
-    output_config: { effort: opts.effort ?? EFFORT.reponse, format: { type: 'json_schema' as const, schema } },
+    output_config: dansLaConsigne ? { effort } : { effort, format: { type: 'json_schema' as const, schema } },
   };
   const standard = async () => (await c.messages.create(body)) as unknown as Reponse;
   // Si les filtres du modèle refusent la question, l'API la rejoue sur le
@@ -158,18 +163,45 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
   }
 }
 
+/** La consigne de format quand le schéma ne passe pas par l'option de l'API. */
+export const formatDansLaConsigne = (schema: Schema): string =>
+  `\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(schema)}`;
+
+/**
+ * Le JSON d'une réponse, même enrobée (17/11) : bloc ```json, phrase avant ou
+ * après. Un intermédiaire qui ne tient pas le format strict rend ce genre de
+ * réponse, correcte sur le fond. `undefined` si rien de lisible.
+ */
+export function lireJson(text: string): unknown {
+  const brut = text.trim();
+  try {
+    return JSON.parse(brut);
+  } catch { /* enrobé : on cherche le JSON dedans */ }
+  const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
+  for (const c of [bloc, brut].filter((x): x is string => Boolean(x))) {
+    try {
+      return JSON.parse(c);
+    } catch { /* suite */ }
+    const debut = c.indexOf('{');
+    const fin = c.lastIndexOf('}');
+    if (debut < 0 || fin <= debut) continue;
+    try {
+      return JSON.parse(c.slice(debut, fin + 1));
+    } catch { /* suite */ }
+  }
+  return undefined;
+}
+
 /** La réponse en JSON ; le refus se lit avant le contenu. */
 export function readJson<T>(res: Reponse): Partial<T> {
   if (res.stop_reason === 'refusal') {
     throw new KodeError('Kodi ne peut pas répondre à cette question. Reformule-la autour de tes vêtements.', 422);
   }
   const text = texteDe(res);
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error(`réponse illisible (${res.stop_reason}) :`, text.slice(0, 300));
-    throw new KodeError('La réponse de Kodi est arrivée incomplète. Réessaie.', 502);
-  }
+  const data = lireJson(text);
+  if (data !== undefined && typeof data === 'object' && data !== null && !Array.isArray(data)) return data as Partial<T>;
+  console.error(`réponse illisible (${res.stop_reason}) :`, text.slice(0, 300));
+  throw new KodeError('La réponse de Kodi est arrivée incomplète. Réessaie.', 502);
 }
 
 /** Le modèle qui a vraiment répondu : celui du repli quand il a pris la main. */
