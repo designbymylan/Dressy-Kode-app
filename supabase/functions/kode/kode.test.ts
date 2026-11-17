@@ -4,7 +4,7 @@
  * Ne teste que les modules sans dépendance (dressing, historique, consigne) :
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
-import { withRefs, wardrobeText, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
+import { withRefs, wardrobeText, syntheseTexte, pickPieces, pickPlan, normaliseHistory, type Garment } from './wardrobe.ts';
 import { conditionsDuJour, plafondDe, besoinDe, interdites, meteoTexte, chaleurDe, type Jour } from './meteo.ts';
 import { controler, variantePropre, reparer, aRetenir, type PieceControle } from './controle.ts';
 import { profileText, agendaText, eventText, ecartsText, hourText, planDaysText, voyageText, aimeesText, faitsText, interditesText, ANSWER_SCHEMA, PLAN_SCHEMA, RULES, PLAN_RULES, type EventRow } from './prompt.ts';
@@ -298,6 +298,27 @@ check('à retenir : sans accord, rien', aRetenir(['n’aime pas le jaune'], fals
 check('à retenir : deux au plus, rien de sensible', aRetenir(['n’aime pas le jaune', 'a mal au dos', 'travaille dans une banque, tenue sobre en semaine', 'préfère le confort'], true),
   ['n’aime pas le jaune', 'travaille dans une banque, tenue sobre en semaine']);
 check('à retenir : ni poids, ni religion, ni un proche', aRetenir(['pèse 70 kg', 'porte le voile par religion', 'mon mari aime le rouge'], true), []);
+
+// ---------------------------------------------------------------- synthèse du dressing (17/11)
+
+const dressingRiche = withRefs([
+  g('a1', 'hauts', 'Pull camel', { colors: ['camel'], wear_count: 9, last_worn_on: '2026-11-10', fiche: { habillage: 2 } }),
+  g('a2', 'hauts', 'Chemise blanche', { colors: ['blanc'], wear_count: 4, last_worn_on: '2026-11-12', fiche: { habillage: 4 } }),
+  g('a3', 'hauts', 'T-shirt noir', { colors: ['noir'], wear_count: 0, fiche: { habillage: 1 } }),
+  g('a4', 'bas', 'Jean brut', { colors: ['marine'], wear_count: 6, last_worn_on: '2026-11-14', fiche: { habillage: 2 } }),
+  g('a5', 'chaussures', 'Baskets blanches', { colors: ['blanc'], wear_count: 8, last_worn_on: '2026-11-15', fiche: { habillage: 2 } }),
+  g('a6', 'hauts', 'Pull vert', { colors: ['vert'], wear_count: 2, last_worn_on: '2026-09-01', fiche: { habillage: 2 } }),
+]);
+const synthese = syntheseTexte(dressingRiche, ['camel', 'rose', 'blanc'], '2026-11-17');
+check('synthèse : sans « elle », titre neutre', synthese.split('\n')[0].startsWith('Ce que le dressing dit de la personne'), true);
+check('synthèse : palette', synthese.includes('Palette du dressing : blanc (2), camel (1)') || synthese.includes('Palette du dressing : blanc (2)'), true);
+check('synthèse : couleurs aimées présentes puis absentes', [synthese.includes('déjà dans le dressing : camel, blanc'), synthese.includes('sans aucune pièce : rose')], [true, true]);
+check('synthèse : pièces-phares dans l’ordre des ports', synthese.includes('Ses pièces-phares : p1 (9 fois), p5 (8 fois), p4 (6 fois), p2 (4 fois).'), true);
+check('synthèse : ce qui dort (jamais portée, puis pas depuis six semaines)', synthese.includes('qui dorment (jamais portées ici, ou pas depuis plus de six semaines) : p3, p6.'), true);
+check('synthèse : catégories légères (vestes absentes, une paire, un bas)', synthese.includes('Catégories très légères : vestes (0), chaussures (1), bas (1).'), true);
+check('synthèse : habillage entre 1 et 5', /habillage du dressing, pesé par ce qui est porté : [1-5]\.\d\/5/.test(synthese), true);
+check('synthèse : dressing trop petit, rien', syntheseTexte(withRefs(wardrobe.slice(0, 3)), ['camel'], '2026-11-17'), '');
+check('synthèse : jamais de prénom ni de donnée du corps', /taille|silhouette|prénom|kg/i.test(synthese), false);
 
 console.log(fails ? `\n${fails} échec(s)` : '\ntout est bon');
 if (fails) process.exit(1);
