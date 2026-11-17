@@ -171,9 +171,9 @@ async function surveyPhoto(job: Job, sources: Img[], log: (m: string) => void): 
     const { data: profile } = await db.from('style_profile').select('gender').eq('space_id', job.space_id).maybeSingle();
     const t0 = Date.now();
     const found = await survey({ sources, hint: job.user_input, gender: profile?.gender ?? null });
-    log(`repérage (${MODELS.survey}) → ${found.pieces.length} pièce(s) en ${Date.now() - t0} ms : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
+    log(`repérage (${found.modele}) → ${found.pieces.length} pièce(s) en ${Date.now() - t0} ms : ${found.pieces.map((p) => p.name).join(', ') || found.note}`);
     const u = (found.usage ?? {}) as Record<string, unknown>;
-    await note(job, 'anthropic', 'reperage', MODELS.survey, 'succes', false, tokenCost(u.input_tokens, u.output_tokens, COST.claude));
+    await note(job, found.fournisseur, 'reperage', found.modele, 'succes', false, tokenCost(u.input_tokens, u.output_tokens, found.fournisseur === 'google' ? COST.gemini : COST.claude));
     if (!found.pieces.length) throw new AgentError(SAY.nothing, found.note || 'aucune pièce repérée');
 
     // La photo compte déjà pour une pièce dans la limite de l'offre ; les
@@ -182,7 +182,7 @@ async function surveyPhoto(job: Job, sources: Img[], log: (m: string) => void): 
     const room = left === null || left === undefined ? Infinity : Math.max(0, Number(left));
     const extra = Math.min(found.pieces.length - 1, room);
     inv = { pieces: found.pieces.slice(0, 1 + extra), note: found.note, skipped: found.pieces.length - 1 - extra };
-    await setJob(job, { analysis: { inventory: inv }, prompt_model: MODELS.survey, cutout: { reperage: { ms: Date.now() - t0, usage: found.usage } } });
+    await setJob(job, { analysis: { inventory: inv }, prompt_model: found.modele, cutout: { reperage: { ms: Date.now() - t0, usage: found.usage } } });
   }
 
   const extras = inv.pieces.slice(1);

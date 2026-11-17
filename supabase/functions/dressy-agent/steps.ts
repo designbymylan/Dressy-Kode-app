@@ -58,6 +58,8 @@ export const MODELS = {
   // Sonnet 5 en effort bas : le repérage doit être rapide, la qualité de
   // l'image ne dépend plus de lui puisque la pièce est découpée dans la photo.
   survey: env('CLAUDE_SURVEY_MODEL') ?? 'claude-sonnet-5',
+  // Le repérage par Gemini seul (17/11) : voit les photos par un intermédiaire, ce que Claude ne fait pas.
+  vision: env('GEMINI_VISION_MODEL') ?? 'gemini-3.5-flash',
   segment: env('GEMINI_SEGMENT_MODEL') ?? 'gemini-2.5-flash',
   segmentStrong: env('GEMINI_SEGMENT_MODEL_STRONG') ?? 'gemini-2.5-pro',
   // Le modèle complet en 2K pour les abonnées, en 1K pour le gratuit (quota.ts).
@@ -371,23 +373,25 @@ export function verifierImagesVues(usage: Usage, nbPhotos: number): void {
 export const claudeVoitLesImages = (): boolean => !anthropicViaIntermediaire() || env('CLAUDE_VOIT_LES_IMAGES') === '1';
 
 /**
- * Le relais, première moitié : Gemini regarde les photos et rend ses
- * observations (JSON, en texte). Même clé et même adresse que la découpe.
+ * Un appel Gemini qui regarde des photos et répond en JSON (texte), niveau de
+ * réflexion minimal. Même clé et même adresse que la découpe. Sert au relais
+ * (observations) et au repérage par Gemini seul.
  */
-export async function observer(input: { sources: Img[]; hint: string }): Promise<{ texte: string; usage: Usage; model: string }> {
+async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: string }): Promise<{ texte: string; usage: Usage; model: string }> {
   const acces = accesGoogle();
   if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
-  const model = env('GEMINI_VISION_MODEL') ?? 'gemini-3.5-flash';
+  const model = MODELS.vision;
   const url = geminiUrl(model, 'generateContent', acces.base);
   const parts = [
     ...input.sources.map((s) => ({ inline_data: { mime_type: s.mime, data: b64(s.bytes) } })),
-    { text: observationPrompt({ hint: input.hint, photos: input.sources.length }) },
+    { text: input.texte },
   ];
   const call = (thinking: boolean) => fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': acces.cle! },
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(80_000),
     body: JSON.stringify({
+      ...(input.systeme ? { systemInstruction: { parts: [{ text: input.systeme }] } } : {}),
       contents: [{ parts }],
       generationConfig: { responseMimeType: 'application/json', ...(thinking ? { thinkingConfig: { thinkingLevel: 'minimal' } } : {}) },
     }),
@@ -398,21 +402,70 @@ export async function observer(input: { sources: Img[]; hint: string }): Promise
     // Un modèle qui refuse le niveau de réflexion : on reprend sans.
     if (res.status === 400 && /think/i.test(await res.clone().text())) res = await call(false);
   } catch (err) {
-    throw new AgentError(SAY.failed, `Gemini (observation) injoignable : ${err instanceof Error ? err.message : err}`);
+    throw new AgentError(SAY.failed, `Gemini (vision) injoignable : ${err instanceof Error ? err.message : err}`);
   }
-  if (!res.ok) throw httpError('Gemini (observation)', res.status, await res.text());
+  if (!res.ok) throw httpError('Gemini (vision)', res.status, await res.text());
   const body = await res.json();
   const candidate = body?.candidates?.[0];
   const blocked = body?.promptFeedback?.blockReason ?? (/SAFETY|PROHIBITED|BLOCK/.test(candidate?.finishReason ?? '') ? candidate.finishReason : null);
-  if (blocked) throw new AgentError(SAY.refused, `Gemini (observation) a refusé : ${blocked}`);
+  if (blocked) throw new AgentError(SAY.refused, `Gemini (vision) a refusé : ${blocked}`);
   const texte = ((candidate?.content?.parts ?? []) as { text?: string; thought?: boolean }[])
     .filter((p) => p.text && !p.thought).map((p) => p.text).join('').trim();
-  if (!texte) throw new AgentError(SAY.failed, 'Gemini (observation) : réponse vide');
+  if (!texte) throw new AgentError(SAY.failed, 'Gemini (vision) : réponse vide');
   return { texte, usage: body?.usageMetadata ?? null, model };
 }
 
+/** Le relais, première moitié : Gemini regarde les photos et rend ses observations (JSON, en texte). */
+export const observer = (input: { sources: Img[]; hint: string }) =>
+  geminiVoit({ sources: input.sources, texte: observationPrompt({ hint: input.hint, photos: input.sources.length }) });
+
+/** Les jetons d'un appel Gemini, dans la forme que l'agent compte (entrée, sortie réflexion comprise). */
+const jetonsGemini = (u: Usage): Usage => {
+  const x = (u ?? {}) as Record<string, number | undefined>;
+  return { input_tokens: x.promptTokenCount ?? 0, output_tokens: (x.candidatesTokenCount ?? 0) + (x.thoughtsTokenCount ?? 0) };
+};
+
+/**
+ * Le repérage par Gemini seul (17/11) : mêmes règles, même schéma, un seul
+ * appel, sans intermédiaire de vision. Essai comparatif du 17/11 : mêmes pièces,
+ * types et saisons que le relais Gemini puis Claude, trois fois moins cher et
+ * deux fois plus rapide. Une réponse illisible est redemandée une fois.
+ */
+async function surveyGemini(input: { sources: Img[]; hint: string; gender: string | null }): Promise<SurveyResult> {
+  const systeme = `${SURVEY_SYSTEM}\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(SURVEY_SCHEMA)}`;
+  const valide = (d: unknown) => Array.isArray(d) || Array.isArray((d as { pieces?: unknown })?.pieces);
+  let dernier = '';
+  for (let essai = 0; essai < 2; essai++) {
+    const r = await geminiVoit({ sources: input.sources, texte: surveyUserText(input), systeme });
+    const data = lireJson(r.texte);
+    if (data !== undefined && valide(data)) return lireSurvey(data, jetonsGemini(r.usage), 'google', r.model);
+    dernier = r.texte.replace(/\s+/g, ' ').slice(0, 160);
+  }
+  throw new AgentError(SAY.failed, `Gemini ${MODELS.vision} : JSON illisible (${dernier})`);
+}
+
+type SurveyResult = { pieces: Target[]; note: string; usage: Usage; fournisseur: 'google' | 'anthropic'; modele: string };
+
+/** Le JSON d'un repérage remis d'aplomb : pièces connues et bornées, une liste seule vaut la liste des pièces. */
+function lireSurvey(data: unknown, usage: Usage, fournisseur: SurveyResult['fournisseur'], modele: string): SurveyResult {
+  const o = (Array.isArray(data) ? { pieces: data } : data ?? {}) as { pieces?: unknown; note?: unknown };
+  const pieces = (Array.isArray(o.pieces) ? o.pieces : [])
+    .map(cleanTarget)
+    .filter((p): p is Target => p !== null)
+    .slice(0, MAX_PIECES);
+  return { pieces, note: String(o.note ?? '').trim(), usage, fournisseur, modele };
+}
+
+/**
+ * Qui repère les pièces : `gemini` (défaut depuis le 17/11) ou `claude`
+ * (SURVEY_PROVIDER). Claude reste pour Kodi ; pour le repérage il demande une
+ * clé Anthropic directe (derrière un intermédiaire, il ne voit pas les photos).
+ */
+export const fournisseurDuReperage = (): 'gemini' | 'claude' => (env('SURVEY_PROVIDER') === 'claude' ? 'claude' : 'gemini');
+
 /** Le repérage des pièces d'une photo : un seul appel rapide, la découpe se fait ensuite pièce par pièce. */
-export async function survey(input: { sources: Img[]; hint: string; gender: string | null }): Promise<{ pieces: Target[]; note: string; usage: Usage }> {
+export async function survey(input: { sources: Img[]; hint: string; gender: string | null }): Promise<SurveyResult> {
+  if (fournisseurDuReperage() === 'gemini') return surveyGemini(input);
   const relais = !claudeVoitLesImages();
   let observation = '';
   if (relais) observation = (await observer(input)).texte;
@@ -430,13 +483,7 @@ export async function survey(input: { sources: Img[]; hint: string; gender: stri
     reprise: relais ? undefined : () => [...input.sources.map((s) => imageBlock(alleger(s))), { type: 'text', text: surveyUserText(input) }],
   });
   if (!relais) verifierImagesVues(usage, input.sources.length);
-  // Une liste seule (sans l'objet { pieces, note }) vaut la liste des pièces.
-  const o = (Array.isArray(data) ? { pieces: data } : data ?? {}) as { pieces?: unknown; note?: unknown };
-  const pieces = (Array.isArray(o.pieces) ? o.pieces : [])
-    .map(cleanTarget)
-    .filter((p): p is Target => p !== null)
-    .slice(0, MAX_PIECES);
-  return { pieces, note: String(o.note ?? '').trim(), usage };
+  return lireSurvey(data, usage, 'anthropic', MODELS.survey);
 }
 
 // ---------------------------------------------------------------- Gemini : segmentation

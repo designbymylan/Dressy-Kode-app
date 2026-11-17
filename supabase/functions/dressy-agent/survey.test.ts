@@ -8,6 +8,8 @@ import jpeg from 'jpeg-js';
 import { survey, _oublierMode } from './steps.ts';
 
 Deno.env.set('ANTHROPIC_API_KEY', 'sk-ant-test');
+// Depuis le 17/11, le repérage est confié à Gemini par défaut : les tests de Claude le demandent.
+Deno.env.set('SURVEY_PROVIDER', 'claude');
 const piece = { name: 'T-shirt noir', category: 'hauts', kind: 'tshirt', colors: ['noir'], hex: ['#111111'], material: 'coton', where: 'torse', box: { x: 300, y: 200, w: 400, h: 300 }, description: 'Plain black tee.', motif: 'uni', coupe: 'ample', habillage: 2, saison: 'toute_annee', details: '' };
 const message = (text: string, lus = 3000) => new Response(JSON.stringify({
   id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-sonnet-5', stop_reason: 'end_turn', stop_sequence: null,
@@ -149,4 +151,44 @@ Deno.test('intermédiaire qui refuse même l\'effort (400) : dernier cran sans a
     ? new Response(JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', message: 'output_config not allowed' } }), { status: 400, headers: { 'content-type': 'application/json' } })
     : message(JSON.stringify({ pieces: [piece], note: '' })));
   if (r.pieces.length !== 1 || corps.length !== 3 || 'output_config' in corps[2]) throw new Error(`appels ${corps.length}`);
+});
+
+// ---------------------------------------------------------------- repérage par Gemini seul (17/11)
+
+async function avecGemini(reponses: (n: number) => Response) {
+  Deno.env.delete('SURVEY_PROVIDER');
+  Deno.env.set('GEMINI_API_KEY', 'AIza-test');
+  corps = [];
+  corpsGemini = [];
+  aiguilleGemini = () => reponses(corpsGemini.length);
+  try {
+    return { r: await survey({ sources: [photo], hint: '', gender: null }), corps, corpsGemini };
+  } finally {
+    Deno.env.set('SURVEY_PROVIDER', 'claude');
+    Deno.env.delete('GEMINI_API_KEY');
+  }
+}
+
+Deno.test('Gemini seul (défaut) : un seul appel, la photo et le schéma, aucun appel à Claude', async () => {
+  const { r, corps, corpsGemini } = await avecGemini(() => geminiRepond(JSON.stringify({ pieces: [piece], note: '' })));
+  if (r.pieces.length !== 1 || corpsGemini.length !== 1 || corps.length !== 0) throw new Error(`pièces ${r.pieces.length}, Gemini ${corpsGemini.length}, Claude ${corps.length}`);
+  if (r.fournisseur !== 'google') throw new Error(`fournisseur ${r.fournisseur}`);
+  const parts = (corpsGemini[0].contents as { parts: { inline_data?: unknown }[] }[])[0].parts;
+  if (!parts.some((p) => p.inline_data)) throw new Error("Gemini n'a pas reçu la photo");
+  const systeme = JSON.stringify(corpsGemini[0].systemInstruction);
+  if (!systeme.includes('Règles de repérage') || !systeme.includes('FORMAT DE RÉPONSE')) throw new Error('consigne ou schéma manquants');
+  if (typeof (r.usage as { input_tokens?: unknown }).input_tokens !== 'number') throw new Error('jetons non normalisés');
+});
+
+Deno.test('Gemini seul : réponse illisible, redemandée une fois', async () => {
+  const { r, corpsGemini } = await avecGemini((n) => n === 1 ? geminiRepond('Je ne sais pas.') : geminiRepond('```json\n' + JSON.stringify([piece]) + '\n```'));
+  if (r.pieces.length !== 1 || corpsGemini.length !== 2) throw new Error(`pièces ${r.pieces.length}, appels ${corpsGemini.length}`);
+});
+
+Deno.test('Gemini seul : deux réponses illisibles, échec honnête', async () => {
+  let err: { message?: string; detail?: string } | undefined;
+  try {
+    await avecGemini(() => geminiRepond('Aucune idée.'));
+  } catch (e) { err = e as { message?: string; detail?: string }; }
+  if (!/pas pu finir/.test(err?.message ?? '') || !/illisible/.test(err?.detail ?? '')) throw new Error(`erreur inattendue : ${err?.message} / ${err?.detail}`);
 });

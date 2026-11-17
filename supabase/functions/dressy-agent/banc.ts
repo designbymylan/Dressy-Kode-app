@@ -13,7 +13,7 @@
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
  * avec l'essai.
  */
-import { survey, segment, generate, checkSetup, MODELS, AgentError, type Reflexion } from './steps.ts';
+import { survey, segment, generate, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { fitOnCanvas } from './normalize.ts';
 import { downscale } from './cutout.ts';
@@ -30,6 +30,11 @@ const coutClaude = (u: unknown) => {
 const coutGemini = (u: unknown) => {
   const x = (u ?? {}) as Record<string, number | undefined>;
   return ((x.promptTokenCount ?? 0) * 0.3 + ((x.candidatesTokenCount ?? 0) + (x.thoughtsTokenCount ?? 0)) * 2.5) / 1e6;
+};
+/** Le repérage rend ses jetons sous la même forme chez Claude et chez Gemini : le prix suit le fournisseur. */
+const coutRepere = (u: unknown) => {
+  const x = (u ?? {}) as Record<string, number | undefined>;
+  return fournisseurDuReperage() === 'gemini' ? ((x.input_tokens ?? 0) * 0.3 + (x.output_tokens ?? 0) * 2.5) / 1e6 : coutClaude(u);
 };
 const coutImage = (model: string) => (/2\.1/.test(model) ? 0.034 : 0.067);
 
@@ -53,7 +58,7 @@ async function essaiDecoupe(b: Banc, p: Record<string, unknown>): Promise<Rendu>
   t = Date.now();
   const rep = await survey({ sources: [img], hint: String(p.indice ?? ''), gender: null });
   const reperage = Date.now() - t;
-  let cost = coutClaude(rep.usage);
+  let cost = coutRepere(rep.usage);
   const pieces = rep.pieces.slice(0, Number(p.max_pieces ?? 2));
 
   const specs = ((p.modeles as string[] | undefined) ?? []).map((s) => s.split(':') as [string, Reflexion | undefined]);
@@ -107,14 +112,14 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
 
   const img = await b.lire(String(p.photo ?? ''));
   let cible: Awaited<ReturnType<typeof survey>>['pieces'][number] | null = null;
-  await essai(`reperage ${MODELS.survey}`, async () => {
+  await essai(`reperage ${fournisseurDuReperage() === 'gemini' ? MODELS.vision : MODELS.survey}`, async () => {
     const r = await survey({ sources: [img], hint: '', gender: null });
     cible = r.pieces[0] ?? null;
     return {
       ok: r.pieces.length > 0,
       detail: `${r.pieces.length} pièce(s) : ${r.pieces.map((x) => `${x.name} (${x.kind ?? '?'}, ${x.hex?.join('/') ?? ''})`).join(', ')}`,
       donnees: { pieces: r.pieces.map(({ prompt: _p, ...x }) => x), usage: r.usage, octets: img.bytes.length },
-      cout: coutClaude(r.usage),
+      cout: coutRepere(r.usage),
     };
   });
 
