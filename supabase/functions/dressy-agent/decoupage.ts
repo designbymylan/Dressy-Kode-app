@@ -10,7 +10,7 @@
 import { garmentRgbs, type Target } from './prompts.ts';
 import { segment, AgentError, SAY, type Img, type Reflexion, type Usage } from './steps.ts';
 import { cutoutBackground, crop, downscale, type Raster } from './cutout.ts';
-import { decode, sniffMime } from './codec.ts';
+import { decode, sniffMime, tailleImage } from './codec.ts';
 import { exifOrientation, orient } from './normalize.ts';
 import { cleanSpecks, cutFromMask, pickSegment, pixelBox } from './segment.ts';
 import { BLOCKING, runChecks, type Checks } from './checks.ts';
@@ -27,6 +27,14 @@ export type Decoupe = {
   essais: { methode: string; echecs: string[] }[];
 };
 
+/**
+ * Pixels au plus pour une photo décodée (mesuré le 17/11 sous Deno : 1,9 Mpx →
+ * 130 Mo au pic, 3,1 Mpx → 165 Mo, 12 Mpx → 665 Mo ; la limite est de 256 Mo, et
+ * la découpe entière demande 40 Mo de plus). Le téléphone et le site envoient
+ * 1 600 px au plus, soit 1,9 Mpx.
+ */
+export const MAX_PIXELS = 2_300_000;
+
 const bytesOf = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 /** Erreurs qui arrêtent tout : inutile de tenter le contraste, la tâche doit être reprise plus tard. */
 export const fatal = (err: unknown) => err instanceof AgentError && (err.message === SAY.busy || err.message === SAY.notReady);
@@ -37,9 +45,19 @@ export const fatal = (err: unknown) => err instanceof AgentError && (err.message
  * le temps de calcul d'une Edge Function est compté (un iPhone envoie 12 Mpx).
  */
 export function ouvrir(photo: Img): Raster {
-  if (photo.mime !== 'image/jpeg' && photo.mime !== 'image/png') throw new AgentError(SAY.photo, `format non géré : ${photo.mime}`);
-  const raster = decode(photo.bytes, photo.mime);
-  const upright = photo.mime === 'image/jpeg' ? orient(raster, exifOrientation(photo.bytes)) : raster;
+  // La signature du fichier fait foi, pas le type annoncé : une photo HEIC envoyée
+  // sous le nom « .jpg » faisait échouer jpeg-js (« SOI not found »).
+  const vrai = sniffMime(photo.bytes);
+  if (vrai !== 'image/jpeg' && vrai !== 'image/png') throw new AgentError(SAY.unreadable, `format non géré : ${vrai ?? photo.mime}`);
+  // Refus avant décodage : au-delà de ce nombre de pixels, le décodage dépasse la
+  // mémoire de l'Edge Function, qui est alors tuée sans pouvoir noter l'échec
+  // (la tâche tournait six minutes avant d'échouer, constaté le 17/11).
+  const taille = tailleImage(photo.bytes);
+  if (taille && taille.width * taille.height > MAX_PIXELS) {
+    throw new AgentError(SAY.heavy, `photo de ${taille.width}x${taille.height} (${Math.round(taille.width * taille.height / 1e5) / 10} Mpx, au plus ${MAX_PIXELS / 1e6} Mpx)`);
+  }
+  const raster = decode(photo.bytes, vrai);
+  const upright = vrai === 'image/jpeg' ? orient(raster, exifOrientation(photo.bytes)) : raster;
   return Math.max(upright.width, upright.height) > 2000 ? downscale(upright, 1800) : upright;
 }
 

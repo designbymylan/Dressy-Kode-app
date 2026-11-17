@@ -45,6 +45,8 @@ export const SAY = {
   refused: "Kodi n'a pas pu dessiner cette pièce. Essaie avec une autre photo.",
   nothing: "Kodi n'a trouvé aucune pièce à ranger sur cette photo. Essaie avec une photo où elle se voit en entier.",
   photo: 'Kodi ne retrouve plus ta photo. Confie-la de nouveau.',
+  heavy: "Cette photo est trop grande pour Kodi. Reprends-la depuis l'app ou choisis-en une plus légère.",
+  unreadable: "Kodi ne sait pas lire le format de cette photo. Reprends-la en JPEG depuis l'app.",
   quota: "Tu as utilisé tes générations. Passe à une offre pour continuer à générer des images.",
 } as const;
 

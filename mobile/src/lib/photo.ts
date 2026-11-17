@@ -1,18 +1,23 @@
 /**
  * Une photo de vêtement avant l'envoi (F4, 13/11) : le grand côté ramené à
- * 2048 px, en JPEG 0,85. Assez pour que Kodi lise une étiquette, un logo ou
+ * 1 600 px, en JPEG 0,85. Assez pour que Kodi lise une étiquette, un logo ou
  * une couture, sans envoyer 12 mégapixels qui ralentissent l'envoi et
  * dépassent parfois la limite de 5 Mo.
+ *
+ * 1 600 px et non 2 048 (17/11) : le serveur découpe la pièce en mémoire, et
+ * une photo de 3 Mpx (2 048 px) dépassait les 256 Mo d'une Edge Function, qui
+ * était tuée sans rien dire ; 1,9 Mpx (1 600 px) passe.
  *
  * Le fichier réécrit ne garde pas les métadonnées de l'appareil (dont la
  * position) : elles ne partent plus avec la photo.
  *
  * En cas d'échec (format illisible, mémoire), la photo part telle quelle :
- * la limite de taille de `sendPhotos` reste le garde-fou.
+ * la limite de taille de `sendPhotos` reste le garde-fou, et le serveur
+ * refuse tout de suite, avec un message, une photo qu'il ne sait pas lire.
  */
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
-export const GRAND_COTE = 2048;
+export const GRAND_COTE = 1600;
 export const QUALITE = 0.85;
 
 export async function reduire(p: { uri: string; mime?: string | null }): Promise<{ uri: string; mime: string | null }> {
