@@ -726,6 +726,14 @@ demandé par l'utilisateur.** Décisions et état :
   code servi est celui du dépôt. Les fonctions `depot` et `nettoyage-comptes`
   sont supprimées.
 
+**Suite du chantier IA, essais du 17/11 (non déployée tant que les clés directes ne sont pas posées)** :
+
+- **Cause du repérage vide** : derrière l'intermédiaire (`ANTHROPIC_BASE_URL`), Claude ne voit pas les photos. Quatre formats essayés (image en base64, par adresse, format OpenAI, en-tête Bearer) : lues comme du texte (~0,34 jeton par octet) ou ignorées. « 0 pièce » est alors une réponse valide, donc aucun repli ne se déclenchait. Garde-fou : `verifierImagesVues` (`steps.ts`) lève une erreur claire quand Claude a lu bien plus de jetons que n'en coûtent des images.
+- **Relais** (`observer`, `claudeVoitLesImages`, `steps.ts` ; `RELAIS_SYSTEM`, `observationPrompt`, `prompts.ts`) : derrière un intermédiaire, Gemini regarde les photos (`gemini-3.5-flash`, `GEMINI_VISION_MODEL`) et Claude classe ses observations en texte, avec les mêmes règles de repérage. `CLAUDE_VOIT_LES_IMAGES=1` rétablit l'envoi direct si l'intermédiaire change. Une clé Anthropic directe rend le relais inutile.
+- **Découpe** : chez l'intermédiaire, aucun modèle Gemini ne rend de masque (8 essais : cadre seulement, 23 à 60 s). `decoupage.ts` passe donc directement au détourage par contraste ; `GOOGLE_API_KEY` (clé Google directe) rétablit les masques.
+- **Consigne « catalogue »** (choisie par l'utilisateur sur le comparatif A manuelle, B agent, C catalogue) : `fallbackPrompt` demande un packshot d'éclairage doux **sans ombre**, la clause de fond dynamique restant en fin de consigne ; `PROMPT_VERSION` passe à `dessin-3`. L'image reste dessinée sur fond uni puis détourée : Nano Banana ne produit jamais de vraie transparence.
+- **Fonction temporaire `banc-dessin`** (`supabase/functions/banc-dessin/`, déployée sans JWT, jeton à usage unique) : essais de consignes, de découpe et de « Claude voit-il la photo ». À supprimer depuis Supabase quand les essais sont finis.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

@@ -85,6 +85,36 @@ Champs de chaque pièce :
 
 Si aucune pièce ne peut être repérée, rends une liste vide et explique pourquoi en une phrase, en français, dans « note » (sinon « note » est une chaîne vide).`;
 
+/**
+ * Le relais (17/11) : quand l'intermédiaire de Claude ne transmet pas les
+ * photos (essais du 17/11 : image en base64, par adresse, format OpenAI, tous
+ * lus comme du texte ou ignorés), un collègue qui voit les photos (Gemini, qui
+ * les reçoit bien par le même intermédiaire) les décrit ; Claude, qui ne lit
+ * que du texte, classe ces observations avec les règles ci-dessus.
+ */
+export const RELAIS_SYSTEM = `
+
+IMPORTANT, relais : tu ne reçois PAS les photos. Un collègue qui les regarde t'envoie ses observations (JSON) dans le message. Appuie-toi uniquement sur elles : n'invente aucune pièce, aucune couleur, aucun cadre. Applique toutes les règles ci-dessus à partir de ses observations. Ses cadres « box_2d » sont [y0, x0, y1, x1] en millièmes : rends-les en box { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }. Si ses observations ne montrent aucune pièce, rends une liste vide et dis-le dans « note ».`;
+
+/** La consigne de l'observateur (Gemini) : des faits, pas de classement. */
+export function observationPrompt(input: { hint: string; photos: number }): string {
+  return `You are the eyes of a fashion stylist who cannot see the photo${input.photos > 1 ? 's' : ''}. ${input.photos > 1 ? `There are ${input.photos} photos, in order.` : ''} Observe carefully and report only what is visible.
+List every fashion item visible (clothes, shoes, bags, jewellery, accessories), each separately; a pair (shoes, earrings, gloves) is ONE item; ignore underwear, furniture, background and other people; at most ${MAX_PIECES} items, the most visible first.${input.hint.trim() ? `\nThe person asks: "${input.hint.trim()}". List ONLY what they ask for.` : ''}
+Answer with a JSON list. One object per item, with exactly these keys:
+- "name": short French name (e.g. "Jean large gris"), no brand;
+- "where": in French, where it is on the photo (worn, held, lying beside…);
+- "box_2d": [y0, x0, y1, x1] in thousandths of the FIRST photo (0 to 1000), around the whole visible item;
+- "colors": every colour with a real surface on the item, main first, each as {"name": plain colour word, "hex": "#RRGGBB"}: the true hue under neutral daylight (correct warm lamps, shadows);
+- "material": apparent fabric or material;
+- "description": 1 to 2 factual English sentences (cut, length, collar, sleeves, closure, patterns, visible logos or lettering);
+- "pattern": plain, stripes, checks, printed, floral, dots, logo, graphic or texture;
+- "fit": fitted, straight, loose, oversized or flared (or "n/a" for bags, jewellery, accessories, shoes);
+- "formality": 1 (sport, lounge) to 5 (ceremony);
+- "season_hint": from the fabric thickness (summer, winter, mid-season, all year);
+- "details": one short sentence on what matters to wear it (collar, sleeves, length, closure, high waist…).
+If you see no item, answer [].`;
+}
+
 const PIECE_SCHEMA = {
   type: 'object',
   additionalProperties: false,

@@ -9,10 +9,11 @@ import { survey, _oublierMode } from './steps.ts';
 
 Deno.env.set('ANTHROPIC_API_KEY', 'sk-ant-test');
 const piece = { name: 'T-shirt noir', category: 'hauts', kind: 'tshirt', colors: ['noir'], hex: ['#111111'], material: 'coton', where: 'torse', box: { x: 300, y: 200, w: 400, h: 300 }, description: 'Plain black tee.', motif: 'uni', coupe: 'ample', habillage: 2, saison: 'toute_annee', details: '' };
-const message = (text: string) => new Response(JSON.stringify({
+const message = (text: string, lus = 3000) => new Response(JSON.stringify({
   id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-sonnet-5', stop_reason: 'end_turn', stop_sequence: null,
-  content: [{ type: 'text', text }], usage: { input_tokens: 3000, output_tokens: 200 },
+  content: [{ type: 'text', text }], usage: { input_tokens: lus, output_tokens: 200 },
 }), { status: 200, headers: { 'content-type': 'application/json' } });
+const geminiRepond = (texte: string) => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: texte }] } }], usageMetadata: { totalTokenCount: 900 } }), { status: 200, headers: { 'content-type': 'application/json' } });
 
 const w = 64, h = 48;
 const photo = { bytes: new Uint8Array(jpeg.encode({ data: new Uint8Array(w * h * 4).fill(128), width: w, height: h }, 90).data), mime: 'image/jpeg' };
@@ -20,8 +21,15 @@ const photo = { bytes: new Uint8Array(jpeg.encode({ data: new Uint8Array(w * h *
 // Le client du SDK garde le fetch qu'il voit à sa création : un seul faux fetch, aiguillé par test.
 let aiguille: (body: Record<string, unknown>) => Response = () => message('');
 let corps: Record<string, unknown>[] = [];
-globalThis.fetch = ((_u: unknown, init?: RequestInit) => {
+let aiguilleGemini: (body: Record<string, unknown>) => Response = () => geminiRepond('[]');
+let corpsGemini: Record<string, unknown>[] = [];
+globalThis.fetch = ((u: unknown, init?: RequestInit) => {
   const b = JSON.parse(String(init?.body));
+  // Gemini (observation du relais) : même faux fetch, une autre réponse.
+  if (String(u).includes(':generateContent')) {
+    corpsGemini.push(b);
+    return Promise.resolve(aiguilleGemini(b));
+  }
   corps.push(b);
   return Promise.resolve(aiguille(b));
 }) as typeof fetch;
@@ -71,15 +79,59 @@ Deno.test('deux réponses illisibles : échec avec le détail des deux essais', 
   if (!err?.detail?.includes('schema') || !err.detail.includes('texte')) throw new Error(`détail : ${err?.detail}`);
 });
 
-Deno.test('derrière un intermédiaire : on part du mode texte (un seul appel), photo allégée', async () => {
+Deno.test('derrière un intermédiaire qui passe les images : on part du mode texte (un seul appel), photo allégée', async () => {
   Deno.env.set('ANTHROPIC_BASE_URL', 'https://exemple.test');
+  Deno.env.set('CLAUDE_VOIT_LES_IMAGES', '1');
   try {
     const { r, corps } = await avec(() => message(JSON.stringify({ pieces: [piece], note: '' })));
     if (r.pieces.length !== 1 || corps.length !== 1) throw new Error(`pièces ${r.pieces.length}, appels ${corps.length}`);
     if ((corps[0].output_config as { format?: unknown }).format) throw new Error('le format ne devait pas être envoyé');
   } finally {
     Deno.env.delete('ANTHROPIC_BASE_URL');
+    Deno.env.delete('CLAUDE_VOIT_LES_IMAGES');
   }
+});
+
+Deno.test('relais : derrière un intermédiaire, Gemini regarde la photo et Claude ne reçoit que du texte', async () => {
+  Deno.env.set('ANTHROPIC_BASE_URL', 'https://exemple.test');
+  Deno.env.set('GEMINI_API_KEY', 'AIza-test');
+  corpsGemini = [];
+  aiguilleGemini = () => geminiRepond(JSON.stringify([{ name: 'T-shirt noir', where: 'torse', box_2d: [200, 300, 500, 700], colors: [{ name: 'noir', hex: '#111111' }] }]));
+  try {
+    const { r, corps } = await avec(() => message(JSON.stringify({ pieces: [piece], note: '' })));
+    if (r.pieces.length !== 1) throw new Error(`pièces ${r.pieces.length}`);
+    if (corpsGemini.length !== 1) throw new Error(`appels Gemini ${corpsGemini.length}`);
+    const partiesGemini = ((corpsGemini[0].contents as { parts: { inline_data?: unknown }[] }[])[0]).parts;
+    if (!partiesGemini.some((p) => p.inline_data)) throw new Error("Gemini n'a pas reçu la photo");
+    const contenu = (corps[0].messages as { content: { type: string; text?: string }[] }[])[0].content;
+    if (contenu.some((c) => c.type === 'image')) throw new Error('Claude ne devait recevoir aucune image');
+    if (!contenu[0].text?.includes('T-shirt noir')) throw new Error("les observations n'arrivent pas à Claude");
+    if (!/relais/.test(String(corps[0].system))) throw new Error('la consigne du relais manque');
+  } finally {
+    Deno.env.delete('ANTHROPIC_BASE_URL');
+    Deno.env.delete('GEMINI_API_KEY');
+  }
+});
+
+Deno.test('relais : sans clé Google, message honnête et aucun appel à Claude', async () => {
+  Deno.env.set('ANTHROPIC_BASE_URL', 'https://exemple.test');
+  Deno.env.delete('GEMINI_API_KEY');
+  Deno.env.delete('GOOGLE_API_KEY');
+  let err: unknown;
+  try {
+    await avec(() => message(JSON.stringify({ pieces: [piece], note: '' })));
+  } catch (e) { err = e; } finally {
+    Deno.env.delete('ANTHROPIC_BASE_URL');
+  }
+  if (!(err instanceof Error) || !/pas encore prêt/.test(err.message)) throw new Error(`erreur inattendue : ${err}`);
+});
+
+Deno.test("image lue comme du texte : plus de « 0 pièce » trompeur, une erreur claire", async () => {
+  let err: { message?: string; detail?: string } | undefined;
+  try {
+    await avec(() => message(JSON.stringify({ pieces: [], note: 'Aucune photo.' }), 38_468));
+  } catch (e) { err = e as { message?: string; detail?: string }; }
+  if (!/pas encore prêt/.test(err?.message ?? '') || !/38468 jetons/.test(err?.detail ?? '')) throw new Error(`erreur inattendue : ${err?.message} / ${err?.detail}`);
 });
 
 Deno.test('le mode qui a marché est gardé : la photo suivante ne rejoue pas le mode raté', async () => {

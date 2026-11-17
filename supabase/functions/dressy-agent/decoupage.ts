@@ -14,6 +14,7 @@ import { decode, sniffMime } from './codec.ts';
 import { exifOrientation, orient } from './normalize.ts';
 import { cleanSpecks, cutFromMask, pickSegment, pixelBox } from './segment.ts';
 import { BLOCKING, runChecks, type Checks } from './checks.ts';
+import { accesGoogle, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Cand = { method: 'masque' | 'contraste'; cut: Raster; checks: Checks };
 
@@ -59,7 +60,11 @@ export async function decouper(
   const cands: Cand[] = [];
   let segmentation: Decoupe['segmentation'] = null;
 
-  if (!opts.sansMasque) try {
+  // Chez un intermédiaire, Gemini rend le cadre mais jamais le masque (essais du
+  // 17/11, 8 modèles, 23 à 60 s l'appel) : on passe directement au contraste.
+  // Une clé Google directe (GOOGLE_API_KEY) rend les masques ; `model` forcé (banc) les essaie quand même.
+  const sansMasque = opts.sansMasque || (!opts.model && accesGoogle().base !== GEMINI_OFFICIEL);
+  if (!sansMasque) try {
     let t = Date.now();
     const seg = await segment(photo, target, opts);
     ms.segmentation = Date.now() - t;

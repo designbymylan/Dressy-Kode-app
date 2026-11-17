@@ -19,7 +19,7 @@ import { Buffer } from 'node:buffer';
 import Anthropic, { APIError, APIConnectionTimeoutError } from '@anthropic-ai/sdk';
 import {
   MAX_PIECES, cleanTarget,
-  SURVEY_SYSTEM, SURVEY_SCHEMA, surveyUserText,
+  SURVEY_SYSTEM, SURVEY_SCHEMA, surveyUserText, RELAIS_SYSTEM, observationPrompt,
   type Target,
 } from './prompts.ts';
 import { parseSegments, type Segment } from './segment.ts';
@@ -346,19 +346,90 @@ export function lireJson(text: string): unknown {
   return undefined;
 }
 
+/**
+ * Une photo que le fournisseur n'a pas vue comme une image (17/11) : un
+ * intermédiaire peut passer l'image en texte (son base64 est alors compté
+ * comme du texte, soit ~0,34 jeton par octet) ; le modèle répond « aucune
+ * pièce », ce qui est une réponse valide, donc aucun repli ne se déclenche.
+ * Une vraie image coûte au plus ~1 600 jetons, quel que soit son poids : bien
+ * au-delà de 4 000 jetons de consigne + 2 500 par photo, c'est un texte.
+ */
+export function verifierImagesVues(usage: Usage, nbPhotos: number): void {
+  const lus = Number((usage as Record<string, unknown> | null)?.input_tokens ?? 0);
+  const plafond = 4_000 + 2_500 * Math.max(1, nbPhotos);
+  if (lus > plafond) {
+    throw new AgentError(SAY.notReady, `Claude a lu ${lus} jetons pour ${nbPhotos} photo(s) (plus de ${plafond}) : les images lui arrivent en texte, probablement par l'intermédiaire (ANTHROPIC_BASE_URL). Une clé Anthropic directe règle cela.`);
+  }
+}
+
+/**
+ * Claude reçoit-il les photos ? Oui chez Anthropic. Derrière un intermédiaire
+ * (ANTHROPIC_BASE_URL), non par défaut : il lit l'image comme du texte ou
+ * l'ignore (essais du 17/11), le relais prend alors le repérage. À remettre à
+ * `1` (CLAUDE_VOIT_LES_IMAGES) si l'intermédiaire change et qu'il les passe.
+ */
+export const claudeVoitLesImages = (): boolean => !anthropicViaIntermediaire() || env('CLAUDE_VOIT_LES_IMAGES') === '1';
+
+/**
+ * Le relais, première moitié : Gemini regarde les photos et rend ses
+ * observations (JSON, en texte). Même clé et même adresse que la découpe.
+ */
+export async function observer(input: { sources: Img[]; hint: string }): Promise<{ texte: string; usage: Usage; model: string }> {
+  const acces = accesGoogle();
+  if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
+  const model = env('GEMINI_VISION_MODEL') ?? 'gemini-3.5-flash';
+  const url = geminiUrl(model, 'generateContent', acces.base);
+  const parts = [
+    ...input.sources.map((s) => ({ inline_data: { mime_type: s.mime, data: b64(s.bytes) } })),
+    { text: observationPrompt({ hint: input.hint, photos: input.sources.length }) },
+  ];
+  const call = (thinking: boolean) => fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': acces.cle! },
+    signal: AbortSignal.timeout(60_000),
+    body: JSON.stringify({
+      contents: [{ parts }],
+      generationConfig: { responseMimeType: 'application/json', ...(thinking ? { thinkingConfig: { thinkingLevel: 'minimal' } } : {}) },
+    }),
+  });
+  let res: Response;
+  try {
+    res = await call(true);
+    // Un modèle qui refuse le niveau de réflexion : on reprend sans.
+    if (res.status === 400 && /think/i.test(await res.clone().text())) res = await call(false);
+  } catch (err) {
+    throw new AgentError(SAY.failed, `Gemini (observation) injoignable : ${err instanceof Error ? err.message : err}`);
+  }
+  if (!res.ok) throw httpError('Gemini (observation)', res.status, await res.text());
+  const body = await res.json();
+  const candidate = body?.candidates?.[0];
+  const blocked = body?.promptFeedback?.blockReason ?? (/SAFETY|PROHIBITED|BLOCK/.test(candidate?.finishReason ?? '') ? candidate.finishReason : null);
+  if (blocked) throw new AgentError(SAY.refused, `Gemini (observation) a refusé : ${blocked}`);
+  const texte = ((candidate?.content?.parts ?? []) as { text?: string; thought?: boolean }[])
+    .filter((p) => p.text && !p.thought).map((p) => p.text).join('').trim();
+  if (!texte) throw new AgentError(SAY.failed, 'Gemini (observation) : réponse vide');
+  return { texte, usage: body?.usageMetadata ?? null, model };
+}
+
 /** Le repérage des pièces d'une photo : un seul appel rapide, la découpe se fait ensuite pièce par pièce. */
 export async function survey(input: { sources: Img[]; hint: string; gender: string | null }): Promise<{ pieces: Target[]; note: string; usage: Usage }> {
+  const relais = !claudeVoitLesImages();
+  let observation = '';
+  if (relais) observation = (await observer(input)).texte;
   const { data, usage } = await askJson({
     model: MODELS.survey,
     effort: EFFORT.survey,
-    system: SURVEY_SYSTEM,
+    system: relais ? SURVEY_SYSTEM + RELAIS_SYSTEM : SURVEY_SYSTEM,
     schema: SURVEY_SCHEMA,
-    content: [...input.sources.map(imageBlock), { type: 'text', text: surveyUserText(input) }],
+    content: relais
+      ? [{ type: 'text', text: `Observations de ton collègue sur ${input.sources.length > 1 ? `les ${input.sources.length} photos` : 'la photo'} :\n${observation}\n\n${surveyUserText(input)}` }]
+      : [...input.sources.map(imageBlock), { type: 'text', text: surveyUserText(input) }],
     maxTokens: 8_000,
     valide: (d) => Array.isArray(d) || Array.isArray((d as { pieces?: unknown })?.pieces),
-    // Reprise : photos en 1568 px, au cas où l'image n'aurait pas passé.
-    reprise: () => [...input.sources.map((s) => imageBlock(alleger(s))), { type: 'text', text: surveyUserText(input) }],
+    // Reprise : photos en 1568 px, au cas où l'image n'aurait pas passé (inutile pour le relais, sans image).
+    reprise: relais ? undefined : () => [...input.sources.map((s) => imageBlock(alleger(s))), { type: 'text', text: surveyUserText(input) }],
   });
+  if (!relais) verifierImagesVues(usage, input.sources.length);
   // Une liste seule (sans l'objet { pieces, note }) vaut la liste des pièces.
   const o = (Array.isArray(data) ? { pieces: data } : data ?? {}) as { pieces?: unknown; note?: unknown };
   const pieces = (Array.isArray(o.pieces) ? o.pieces : [])
