@@ -11,7 +11,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { anthropicBase, anthropicViaIntermediaire, lireCle } from '../_shared/fournisseurs.ts';
 
-export const MODEL = Deno.env.get('KODE_MODEL')?.trim() || 'claude-opus-5';
+// Sonnet 5 depuis le 17/11 (décision de l'utilisateur, comparatif au banc : 4,20 de justesse contre 4,11 pour
+// Opus 5, 13 s contre 29 s, 0,033 $ contre 0,060 $ la réponse). `KODE_MODEL` le remplace.
+export const MODEL = Deno.env.get('KODE_MODEL')?.trim() || 'claude-sonnet-5';
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
