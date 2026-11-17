@@ -257,7 +257,7 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
   await store(job, target, rotate(d.best.cut, target.rotation ?? 0), 'photo', j, log);
 }
 
-const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail). Image 2 is the original photo: use it only for parts hidden or cut off in image 1.';
+const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail). Image 2 is the original photo: use it only for parts hidden or cut off in image 1, and even if the item lies sideways or upside down there, draw it upright as in image 1.';
 
 /** La pièce rangée (PNG transparent), posée sur le fond voulu ; `null` si elle manque. */
 async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | null> {
@@ -287,7 +287,7 @@ async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | nul
  * C'est le seul endroit où une image est générée, donc le seul qui prend une
  * génération au compteur.
  */
-async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { auto?: boolean } = {}) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   // « Image propre » (F3, 13/11) : la pièce déjà découpée passe en premier, posée
   // sur le fond voulu, car elle montre exactement quoi dessiner ; la photo
@@ -307,7 +307,11 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   // L'offre décide du modèle et de la taille : Lite en 1K pour le gratuit, 2K pour les abonnées.
   const { data: planData } = await db.rpc('space_plan', { target: job.space_id });
   const plan = typeof planData === 'string' ? planData : 'decouverte';
-  const { model, size } = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
+  const settings = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
+  // Le dessin automatique reste en 1K : la pièce finit sur un canevas de 1 024 px, et
+  // décoder un PNG de 2K (4 Mpx) demande plus de 200 Mo, soit la limite de la fonction.
+  const model = settings.model;
+  const size: '1K' | '2K' = opts.auto ? '1K' : settings.size;
 
   const photoHash = await sha256(sources[0].bytes);
   const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors, Boolean(decoupe)]));
@@ -378,6 +382,30 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   await store(job, target, cut, 'ai', j, log);
 }
 
+/**
+ * Le dessin automatique (17/11, demandé par l'utilisateur : les pièces doivent
+ * ressembler à celles de ses dessins d'octobre, propres, à l'endroit, sans fond).
+ * Après la découpe, la pièce rangée est redessinée à partir d'elle-même : c'est
+ * « Image propre », sans que la personne ait à la demander. Il prend une
+ * génération au compteur, donc il ne se fait ni en Découverte (4 générations
+ * offertes à vie, gardées pour le choix de la personne) ni sans génération
+ * restante : la pièce reste alors telle que découpée, sans message d'erreur.
+ */
+async function dessinAuto(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+  try {
+    const { data: planData } = await db.rpc('space_plan', { target: job.space_id });
+    if (typeof planData !== 'string' || planData === 'decouverte') return;
+    const { data: row } = await db.from('ai_jobs').select('garment_id').eq('id', job.id).maybeSingle();
+    if (!row?.garment_id) return;
+    await setJob(job, { garment_id: row.garment_id, clean: true });
+    await redraw(job, target, sources, log, { auto: true });
+  } catch (err) {
+    // La pièce découpée est déjà dans le dressing : on la garde, sans bruit.
+    log(`dessin automatique non fait : ${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}`);
+    await db.from('ai_jobs').update({ status: 'done', error: null, clean: false }).eq('id', job.id);
+  }
+}
+
 // ---------------------------------------------------------------- rangement
 
 const clip = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n) || null;
@@ -393,7 +421,8 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
 
   await setJob(job, { status: 'uploading' });
   t0 = Date.now();
-  const suffix = job.redo ? `-r${job.redo}` : '';
+  // Chemin propre au dessin (-d) : l'image remplace celle de la découpe, l'appli ne garde pas l'ancienne en cache.
+  const suffix = `${job.redo ? `-r${job.redo}` : ''}${job.clean ? '-d' : ''}`;
   const imagePath = `${job.space_id}/${job.id}${suffix}.png`;
   const thumbPath = `${job.space_id}/${job.id}${suffix}-vignette.png`;
   await Promise.all([
@@ -478,7 +507,10 @@ async function runOnce() {
     const sources = await loadSources(job);
     const target = job.target ?? await surveyPhoto(job, sources, log);
     if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log);
-    else await cutOut(job, target, sources, log);
+    else {
+      await cutOut(job, target, sources, log);
+      if (!job.redo) await dessinAuto(job, target, sources, log);
+    }
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
     // ni de nom de modèle. Le détail part dans les journaux de la fonction.

@@ -14,7 +14,7 @@
  */
 
 /** À changer quand la consigne de dessin change : l'ancien cache ne sert plus. */
-export const PROMPT_VERSION = 'dessin-3'; // 17/11 : consigne « catalogue » (13/11 : « Image propre » part de la pièce découpée)
+export const PROMPT_VERSION = 'dessin-4'; // 17/11 : pièce dessinée à l'endroit, dessin automatique (dessin-3 : consigne « catalogue »)
 
 export type Status = 'succes' | 'echec' | 'rejet';
 
