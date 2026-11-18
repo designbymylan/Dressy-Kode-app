@@ -33,7 +33,7 @@ import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
-import { decouper, ouvrir } from './decoupage.ts';
+import { decouper, fatal, ouvrir } from './decoupage.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
 import { cacheKey, drawWithQuota, imageSettings, price, tokenCost, type Ports } from './quota.ts';
@@ -97,6 +97,9 @@ async function setJob(job: Job, patch: Record<string, unknown>) {
 }
 
 // ---------------------------------------------------------------- mesures
+
+/** Le dessin d'arrivée (18/11) ; le secret DESSIN_PAR_DEFAUT=0 rend la découpe seule. */
+const DESSIN_PAR_DEFAUT = Deno.env.get('DESSIN_PAR_DEFAUT') !== '0';
 
 /** Prix estimés en dollars, réglables dans les secrets sans toucher au code. */
 // Tarifs publics du 13/11 (Nano Banana 2.1, Claude Sonnet 5) : ceux d'un
@@ -285,7 +288,7 @@ async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | nul
  * C'est le seul endroit où une image est générée, donc le seul qui prend une
  * génération au compteur.
  */
-async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { offert?: boolean } = {}) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   // « Image propre » (F3, 13/11) : la pièce déjà découpée passe en premier, posée
   // sur le fond voulu, car elle montre exactement quoi dessiner ; la photo
@@ -330,13 +333,15 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
       await upload('ai-generated', path, image);
       await db.from('generation_cache').upsert({ space_id: job.space_id, cache_key: k, image_path: path });
     },
-    reserve: async () => {
+    // Dessin d'arrivée (18/11) : offert, il ne prend rien au compteur de la
+    // personne ; son coût est noté à part (`note`, plus bas).
+    reserve: opts.offert ? async () => ({ ok: true as const, logId: '', plan }) : async () => {
       const { data, error } = await db.rpc('generation_reserve', { p_user: job.requested_by, p_space: job.space_id, p_job: job.id, p_model: model });
       if (error) throw new AgentError(SAY.failed, `réservation de la génération : ${error.message}`);
       const r = data as { ok: boolean; log_id?: string; plan: string };
       return r.ok ? { ok: true, logId: r.log_id!, plan: r.plan } : { ok: false, plan: r.plan };
     },
-    settle: async (logId, status, cost) => {
+    settle: opts.offert ? async () => undefined : async (logId, status, cost) => {
       const { error } = await db.rpc('generation_settle', { p_log: logId, p_status: status, p_cost: cost });
       if (error) throw new Error(error.message);
     },
@@ -356,6 +361,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     throw new AgentError(SAY.quota, `plus de génération (offre ${drawn.plan})`);
   }
   const img = drawn.image;
+  if (opts.offert && drawn.kind === 'drawn') await note(job, 'google', 'dessin', model, 'succes', false, size === '2K' ? COST.image2k : COST.image1k);
   j.ms.generation = Date.now() - t;
   j.usage.generation = usage;
   j.modele = model;
@@ -476,7 +482,19 @@ async function runOnce() {
     const sources = await loadSources(job);
     const target = job.target ?? await surveyPhoto(job, sources, log);
     if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log);
-    else await cutOut(job, target, sources, log);
+    else if (DESSIN_PAR_DEFAUT && !job.garment_id && !job.redo) {
+      // 18/11 : une pièce qui arrive est d'abord REDESSINÉE seule sur un fond uni
+      // puis détourée (c'est ce qui donnait des images nettes). La découpe dans la
+      // photo, qui garde la peau et le décor sans masque Google, ne sert plus que
+      // de repli quand le dessin échoue.
+      try {
+        await redraw(job, targetOf(job), sources, log, { offert: true });
+      } catch (err) {
+        if (fatal(err)) throw err;
+        log(`dessin impossible (${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}) : repli sur la découpe`);
+        await cutOut(job, target, sources, log);
+      }
+    } else await cutOut(job, target, sources, log);
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
     // ni de nom de modèle. Le détail part dans les journaux de la fonction.
