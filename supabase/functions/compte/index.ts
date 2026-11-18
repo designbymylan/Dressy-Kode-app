@@ -104,6 +104,7 @@ async function exporter(token: string): Promise<{ url: string }> {
     voyages: await lire(db.from('trips').select('*').eq('space_id', sid).order('starts_on'), 'voyages'),
     conversations_avec_kode: await lire(db.from('kode_messages').select('author, body, meta, archived, created_at').eq('space_id', sid).order('created_at'), 'conversations'),
     tenues_ecartees: await lire(db.from('outfit_feedback').select('garment_ids, reason, target_ids, created_at').eq('space_id', sid).order('created_at'), 'tenues écartées'),
+    notes_des_dessins: await lire(db.from('piece_ratings').select('garment_id, speed, quality, result, created_at, updated_at').eq('space_id', sid).order('created_at'), 'notes des dessins'),
     coeurs: await lire(db.from('likes').select('garment_id, outfit_id, created_at').eq('space_id', sid).order('created_at'), 'cœurs'),
     souvenirs_de_kodi: await lire(db.from('kodi_faits').select('origine, texte, created_at').eq('space_id', sid).order('created_at'), 'souvenirs de Kodi'),
     photos_confiees_a_kode: await lire(db.from('ai_jobs').select('id, status, user_input, source_paths, garment_id, created_at, updated_at').eq('space_id', sid).order('created_at'), 'photos confiées'),

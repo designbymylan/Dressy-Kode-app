@@ -187,6 +187,20 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Durée** : journal, 13 mois ; images en cache, 30 jours (fonction `menage`,
   RPC `purge_generation`) ; le tout part avec le compte.
 
+### 7 quater. Notes des dessins (18/11)
+
+- **Finalité** : mesurer, pendant la bêta, la vitesse, la qualité et le rendu
+  des dessins de pièces, pour améliorer le service.
+- **Base** : intérêt légitime (art. 6.1.f) ; la note est facultative et
+  donnée par un geste.
+- **Données** : trois notes de 1 à 5 par pièce dessinée (le temps, la
+  qualité, le rendu final). Aucun texte libre, aucune image.
+- **Tables** : `piece_ratings` ; moyennes dans la vue `piece_ratings_summary`
+  (fermée au client).
+- **Destinataires** : Supabase seulement. Kodi ne les lit pas.
+- **Durée** : avec la pièce (effacée avec elle) et avec le compte. Incluses
+  dans le téléchargement des données (`compte`, `notes_des_dessins`).
+
 ### 7 ter. Mesure de l'usage (12/11)
 
 - **Finalité** : savoir si l'app tient sa promesse, par trois chiffres

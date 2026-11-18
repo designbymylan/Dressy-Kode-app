@@ -740,6 +740,19 @@ demandé par l'utilisateur.** Décisions et état :
 - **Décision du 18/11 : le dessin revient par défaut, demandée par l'utilisateur.** Constat en base : toutes les découpes des 17 et 18/11 étaient faites par `contraste` (aucun masque derrière l'intermédiaire), donc gardaient peau, sol et décor, et les contrôles les validaient. Désormais une pièce qui arrive est d'abord **redessinée seule sur fond uni par Nano Banana puis détourée** (`redraw(..., { offert: true })`, `index.ts`) : **offert, sans prendre de génération au compteur** (coût noté par `generation_note`) ; la découpe dans la photo ne sert plus que de repli si le dessin échoue. « Image propre » et « Rendu incorrect » inchangés. `DESSIN_PAR_DEFAUT=0` (secret) rend la découpe seule. Coût : environ 0,03 $ (Lite 1K, Découverte) à 0,05 $ (2K) par pièce, à surveiller dans `generation_costs`. Une clé `GOOGLE_API_KEY` directe rendrait les vrais masques (à essayer ensuite).
 - **Fonction temporaire `banc-dessin`** (`supabase/functions/banc-dessin/`, déployée sans JWT, jeton à usage unique) : essais de consignes, de découpe et de « Claude voit-il la photo ». À supprimer depuis Supabase quand les essais sont finis.
 
+**Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
+le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
+« Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
+incorrect » et « Prêter ou donner à une amie » en sont retirés (leurs actions
+`cleanImage` et `reportPiece` restent dans le store et la base, sans entrée dans
+l'app ; l'écran Partager est toujours un décor sans serveur). **Noter le
+dessin** (`ui/Rating.tsx`, `state/notes.ts`) : trois notes de 1 à 5 (le temps,
+la qualité, le rendu final), une fois par pièce dessinée, modifiables ; table
+`piece_ratings` (migration `note_dessin`, **à appliquer au projet**), moyennes
+dans la vue `piece_ratings_summary`. Kodi ne les lit pas. Registre RGPD §7
+quater, export `notes_des_dessins`. Reste à décider : l'entrée « Partager »
+de l'en-tête de la fiche et « À une amie » (carte des pièces qui dorment).
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

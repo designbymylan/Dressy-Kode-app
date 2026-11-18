@@ -20,6 +20,8 @@ import { Sheet } from '../ui/Sheet';
 import { useScreen } from '../ui/screen';
 import { Ambient } from '../ui/Ambient';
 import { LabelEditor } from '../ui/LabelEditor';
+import { RatingSheet } from '../ui/Rating';
+import { moyenne } from '../state/notes';
 import type { Nav, Route } from '../navigation/types';
 
 /** Ce qui va avec une pièce : une règle simple et lisible, pas une boîte noire. */
@@ -115,6 +117,7 @@ export function PieceScreen() {
   const top = useStackTop();
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [rating, setRating] = useState(false);
   const piece = s.pieces.find((p) => p.id === params.id);
   const grow = useGrowFrom(params.from);
 
@@ -137,13 +140,9 @@ export function PieceScreen() {
   const { labels, values } = history(piece, s.journal, s.account === 'demo');
   const wornToday = piece.lastWorn === 0;
   const liked = s.coeurs.includes(piece.id);
-  // Seule une pièce découpée d'une photo du compte peut être reprise, deux fois au plus.
-  const reportable = s.account === 'connecte' && !!piece.image && (piece.reports ?? 0) < 2;
-  // « Image propre » : une génération. Connecté, seule une pièce venue d'une photo ; la démonstration le simule.
-  const cleanable = s.account !== 'connecte' || !!piece.image;
-  const left = s.gen;
-  const free = s.plan === 'decouverte';
-  const noGen = left !== null && left <= 0;
+  // Le dessin se note : connecté, seulement une pièce que Kodi a dessinée d'une photo ; la démonstration le simule.
+  const ratable = s.account !== 'connecte' || !!piece.image;
+  const note = s.notes[piece.id] ?? null;
 
   // La scène ne porte que la pièce, la plus grande possible ; le panneau d'infos est dessous (18/11).
   const art = Math.min(280, Math.round(width * 0.7));
@@ -264,34 +263,19 @@ export function PieceScreen() {
       <Sheet visible={menu} onClose={() => setMenu(false)} title="Cette pièce" testID="piece-menu">
         {/* La feuille du menu se referme d'abord : sur iPhone, deux modales ne s'ouvrent pas l'une sur l'autre. */}
         <Row icon="edit" title="Modifier l’étiquette" detail="Nom, couleur, matière, prix" testID="piece-edit" onPress={() => { setMenu(false); setTimeout(() => setEditing(true), 380); }} />
-        {cleanable && left !== null && (
-          noGen ? (
-            <>
-              {/* À zéro : la ligne est éteinte et dit pourquoi ; un seul chemin mène aux offres. */}
-              <Row icon="image" title="Image propre" detail={free ? 'Tu as utilisé tes générations offertes.' : 'Tes générations reviennent le 1er du mois.'} testID="piece-clean-off" />
-              {free && <Row icon="lock" title="Voir les offres" testID="piece-clean-offers" onPress={() => { setMenu(false); setTimeout(() => nav.navigate('Generations'), 380); }} />}
-            </>
-          ) : (
-            <Row
-              icon="image"
-              title="Image propre"
-              detail={s.creator ? 'Kodi redessine cette pièce sur fond net' : `Kodi redessine cette pièce sur fond net · ${left} ${free ? (left > 1 ? 'offertes' : 'offerte') : 'ce mois-ci'}`}
-              testID="piece-clean"
-              onPress={() => {
-                setMenu(false);
-                void a.cleanImage(piece.id).then((r) => {
-                  if (r === 'quota') nav.navigate('Generations');
-                });
-              }}
-            />
-          )
+        {ratable && (
+          <Row
+            icon="star"
+            title="Noter le dessin"
+            detail={note ? `Ta note : ${moyenne(note)} sur 5` : 'Le temps, la qualité, le rendu final'}
+            testID="piece-rate"
+            onPress={() => { setMenu(false); setTimeout(() => setRating(true), 380); }}
+          />
         )}
-        {reportable && (
-          <Row icon="edit" title="Rendu incorrect" detail="Kodi reprend la découpe de cette pièce" testID="piece-report" onPress={() => { setMenu(false); void a.reportPiece(piece.id); }} />
-        )}
-        <Row icon="share" title="Prêter ou donner à une amie" onPress={() => { setMenu(false); nav.navigate('Share', { id: piece.id }); }} />
         <Row icon="trash" title="Retirer du dressing" detail="Tu pourras annuler juste après" last onPress={() => { setMenu(false); nav.goBack(); a.removePiece(piece.id); }} testID="piece-remove" />
       </Sheet>
+
+      <RatingSheet visible={rating} onClose={() => setRating(false)} initial={note} onSave={(n) => { setRating(false); a.ratePiece(piece.id, n); }} />
 
       <LabelEditor piece={piece} visible={editing} onClose={() => setEditing(false)} onSave={(p) => { setEditing(false); a.updatePiece(p); }} />
     </View>

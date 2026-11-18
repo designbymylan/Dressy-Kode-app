@@ -21,6 +21,7 @@ import { isoOf, newId, offsetOf, type Iso, type RdvEvent, type Trip } from './pl
 import { isActive, type JobRow } from './jobs';
 import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './contexte';
 import { cleTenue, evite, garder, type Ecart, type Raison } from './ecarts';
+import type { NoteDessin } from './notes';
 
 export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
@@ -129,6 +130,8 @@ type State = {
   ecarts: Ecart[];
   /** Les pièces aimées (cœurs), par identifiant. */
   coeurs: string[];
+  /** Les notes données aux dessins de Kodi (18/11), par pièce. */
+  notes: Record<string, NoteDessin>;
   /** Ce que Kodi retient de la personne (avec son accord « Kodi apprend de mes choix »). */
   souvenirs: remote.Souvenir[];
   /** Date de l'accord « Kodi apprend de mes choix » ; null sans accord. */
@@ -186,6 +189,7 @@ const initial: State = {
   notifs: null,
   ecarts: [],
   coeurs: [],
+  notes: {},
   souvenirs: [],
   gouts: null,
   journal: {},
@@ -281,6 +285,7 @@ type Action =
   | { t: 'notifs'; choice: NotifChoice }
   | { t: 'ecart'; ecart: Ecart }
   | { t: 'coeur'; id: string; aime: boolean }
+  | { t: 'note'; id: string; note: NoteDessin | null }
   | { t: 'removeSouvenir'; id: string }
   | { t: 'gouts'; date: string | null }
   | { t: 'ask'; message: KodeMessage; free?: boolean }
@@ -342,6 +347,7 @@ function reducer(s: State, a: Action): State {
         notifs: acc.notifs ?? s.notifs,
         ecarts: acc.ecarts,
         coeurs: acc.coeurs,
+        notes: acc.notes,
         souvenirs: acc.souvenirs,
         gouts: acc.gouts,
         journal: acc.journal,
@@ -373,6 +379,7 @@ function reducer(s: State, a: Action): State {
         trips: acc.trips,
         ecarts: acc.ecarts,
         coeurs: acc.coeurs,
+        notes: acc.notes,
         souvenirs: acc.souvenirs,
         gouts: acc.gouts,
         journal: acc.journal,
@@ -449,6 +456,12 @@ function reducer(s: State, a: Action): State {
       return { ...s, ecarts: garder([a.ecart, ...s.ecarts]), wornToday: null };
     case 'coeur':
       return { ...s, coeurs: a.aime ? [a.id, ...s.coeurs.filter((x) => x !== a.id)] : s.coeurs.filter((x) => x !== a.id) };
+    case 'note': {
+      const notes = { ...s.notes };
+      if (a.note) notes[a.id] = a.note;
+      else delete notes[a.id];
+      return { ...s, notes };
+    }
     case 'removeSouvenir':
       return { ...s, souvenirs: s.souvenirs.filter((x) => x.id !== a.id) };
     case 'gouts':
@@ -574,7 +587,7 @@ function refreshDemo(pieces: Piece[]): Piece[] {
   return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
 }
 
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'creator', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'notes', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'creator', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -851,6 +864,24 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         const more = left.some((o) => !gone.has(cleTenue(o.pieces)));
         dispatch({ t: 'toast', text: more ? 'Noté. Kodi ne te la proposera plus.' : 'Noté. Ajoute une pièce ou deux : Kodi aura plus de choix.' });
         return more;
+      },
+      /**
+       * Les trois notes données au dessin d'une pièce (18/11). Elles s'affichent aussitôt ;
+       * si la base refuse, l'ancienne note revient et un message le dit.
+       */
+      ratePiece: (id: string, note: NoteDessin) => {
+        const avant = getState().notes[id] ?? null;
+        dispatch({ t: 'note', id, note });
+        dispatch({ t: 'toast', text: 'Merci pour ta note' });
+        const session = live();
+        if (session) {
+          sync(
+            remote.saveNote(session, id, note).catch((e: unknown) => {
+              dispatch({ t: 'note', id, note: avant });
+              throw e;
+            }),
+          );
+        }
       },
       /**
        * Un cœur sur une pièce : posé ou retiré, gardé dans « Mes choix » et

@@ -17,6 +17,7 @@ import type { KodeLink, KodeMessage } from './kode';
 import { JOB_SELECT, type JobRow, type Reveal } from './jobs';
 import { slotOf as momentOf, type Iso, type RdvEvent, type Setting, type Stake, type Trip, type TripPurpose } from './planning';
 import type { Ecart, Raison } from './ecarts';
+import type { NoteDessin } from './notes';
 
 export type PlanId = 'decouverte' | 'capsule' | 'atelier' | 'couture';
 export type Period = 'mois' | 'an';
@@ -40,6 +41,8 @@ export type Account = {
   ecarts: Ecart[];
   /** Les pièces aimées (cœurs), par identifiant, les plus récentes d'abord. */
   coeurs: string[];
+  /** Les notes données aux dessins de Kodi, par pièce. */
+  notes: Record<string, NoteDessin>;
   /** Ce que Kodi retient de la personne, avec son accord « Kodi apprend de mes choix ». */
   souvenirs: Souvenir[];
   /** Date de l'accord « Kodi apprend de mes choix » ; null sans accord. */
@@ -381,11 +384,12 @@ export async function loadAccount(): Promise<Account | null> {
     if (r.error) throw new Error(`${what} : ${r.error.message}`);
   }
   // Le journal, les tenues écartées et l'accord enrichissent l'app sans la bloquer : en cas d'échec, ils restent vides.
-  const [ecarts, journal, bodyConsent, coeurs, souvenirs, gouts] = await Promise.all([
+  const [ecarts, journal, bodyConsent, coeurs, notes, souvenirs, gouts] = await Promise.all([
     loadEcarts(spaceId),
     loadJournal(),
     loadConsent(spaceId, 'silhouette'),
     loadCoeurs(spaceId),
+    loadNotes(spaceId),
     loadSouvenirs(spaceId),
     loadConsent(spaceId, 'gouts'),
   ]);
@@ -449,6 +453,7 @@ export async function loadAccount(): Promise<Account | null> {
     notifs: notif === 'tout' || notif === 'planning' || notif === 'non' ? notif : null,
     ecarts,
     coeurs,
+    notes,
     souvenirs,
     gouts,
     journal,
@@ -676,6 +681,27 @@ async function loadCoeurs(spaceId: string): Promise<string[]> {
     return [];
   }
   return (r.data ?? []).map((x) => x.garment_id as string);
+}
+
+/** Les notes données aux dessins. En cas d'échec, la liste reste vide. */
+async function loadNotes(spaceId: string): Promise<Record<string, NoteDessin>> {
+  const r = await db().from('piece_ratings').select('garment_id, speed, quality, result').eq('space_id', spaceId);
+  if (r.error) {
+    console.warn('[supabase] notes des dessins :', r.error.message);
+    return {};
+  }
+  const out: Record<string, NoteDessin> = {};
+  for (const x of (r.data ?? []) as { garment_id: string; speed: number; quality: number; result: number }[]) out[x.garment_id] = { temps: x.speed, qualite: x.quality, rendu: x.result };
+  return out;
+}
+
+/** Les trois notes d'un dessin : une ligne par pièce, la nouvelle remplace l'ancienne. */
+export async function saveNote(session: Session, pieceId: string, n: NoteDessin) {
+  if (!isUuid(pieceId)) return;
+  check(
+    await db().from('piece_ratings').upsert({ garment_id: pieceId, space_id: session.spaceId, speed: n.temps, quality: n.qualite, result: n.rendu }, { onConflict: 'garment_id' }),
+    'note du dessin',
+  );
 }
 
 /** Un souvenir de Kodi : ce qu'il a retenu d'un cœur ou d'une tenue écartée. */
