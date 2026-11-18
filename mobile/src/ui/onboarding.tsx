@@ -11,7 +11,7 @@ import type { MeasureId, Silhouette } from '../state/profile';
 import { useTheme } from '../theme/ThemeProvider';
 import { glassSurface } from './Glass';
 import { motion } from '../theme/tokens';
-import { Garment, hangOf, type GarmentKind } from './Garment';
+import { Garment, hangOf } from './Garment';
 import { Icon } from './Icon';
 import { T } from './T';
 import { Tap, haptic } from './Tap';
@@ -216,9 +216,6 @@ export function MeasureFigure({ active, done, height = 190 }: { active: MeasureI
 
 /* ---- Cartes de style ---- */
 
-/** Une pièce d'illustration : son type, sa teinte, et une vraie photo quand on en a une (`photo:<clé>`). */
-export type StyleKind = [GarmentKind, string?, string?];
-
 /**
  * Une carte de style (18/11) : une vraie tenue, la personne détourée sans son
  * décor sur le gris studio, le nom du style et ses repères. Sans photo (style
@@ -281,11 +278,11 @@ export function ColorChoice({ name, hex, state, onPress, size = 52, width }: { n
 
 /* ---- Carte de choix large (rayon, mode d'analyse) ---- */
 
-export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; badge?: string; testID?: string }) {
+export function ChoiceCard({ title, note, on, onPress, art, artSize, badge, testID }: { title: string; note: string; on?: boolean; onPress: () => void; art?: ReactNode; artSize?: { width: number; height: number }; badge?: string; testID?: string }) {
   const { c, scheme } = useTheme();
   return (
     <Tap testID={testID} onPress={onPress} feedback="select" accessibilityRole="radio" accessibilityState={{ checked: !!on }} accessibilityLabel={`${title}. ${note}`} scaleTo={0.985} style={[{ flexDirection: 'row', alignItems: 'center', minHeight: 88, gap: 14, padding: 12, paddingRight: 16, borderRadius: 28 }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]}>
-      {art && <View className="items-center justify-center" style={{ width: 76, height: 76, borderRadius: 20, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
+      {art && <View className="items-center justify-center" style={{ width: artSize?.width ?? 76, height: artSize?.height ?? 76, borderRadius: 20, overflow: 'hidden', backgroundColor: c.stage }}>{art}</View>}
       <View style={{ flex: 1, gap: 3 }}>
         {badge && (
           <T v="kicker" tone="brass">
@@ -306,15 +303,17 @@ export function ChoiceCard({ title, note, on, onPress, art, badge, testID }: { t
   );
 }
 
-/** Trois pièces qui se chevauchent : l'art d'une carte de choix. */
-export function Trio({ kinds, size = 34 }: { kinds: StyleKind[]; size?: number }) {
-  const { scheme } = useTheme();
+/**
+ * De vraies tenues détourées côte à côte, celle du milieu devant : l'art d'une
+ * carte de rayon (18/11, à la place des dessins).
+ */
+export function Tenues({ sources, height }: { sources: ImageSourcePropType[]; height: number }) {
+  const w = Math.round(height * 0.42);
+  const front = sources.length === 3 ? 1 : -1;
   return (
-    <View className="flex-row items-end">
-      {kinds.map(([k, t, img], i) => (
-        <View key={i} style={{ marginLeft: i ? -size * 0.3 : 0 }}>
-          <Garment kind={k} tint={t} image={img} size={size} dark={scheme === 'dark'} />
-        </View>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', height }}>
+      {sources.map((s, i) => (
+        <Image key={i} source={s} resizeMode="contain" accessibilityIgnoresInvertColors style={{ width: w, height, marginLeft: i ? -Math.round(w * 0.22) : 0, zIndex: i === front ? 2 : 1 }} />
       ))}
     </View>
   );

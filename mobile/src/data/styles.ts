@@ -33,3 +33,15 @@ export function tirerTenues(names: string[], rayon: Rayon | null): Record<string
     }),
   );
 }
+
+/**
+ * Les vraies tenues qui montrent chaque rayon à l'écran « Tu t'habilles
+ * plutôt… » (18/11, à la place des dessins) : trois tenues femme, trois
+ * tenues homme, une de chaque pour « Un peu des deux ». Choisies pour se lire
+ * en petit (silhouettes nettes, couleurs variées).
+ */
+export const RAYON_TENUES: Record<Rayon, ImageSourcePropType[]> = {
+  femme: [require('../../assets/styles/femme/workwear-1.webp'), require('../../assets/styles/femme/old_money-2.webp'), require('../../assets/styles/femme/preppy-1.webp')],
+  homme: [require('../../assets/styles/homme/preppy-2.webp'), require('../../assets/styles/homme/old_money-2.webp'), require('../../assets/styles/homme/workwear-3.webp')],
+  mixte: [require('../../assets/styles/femme/preppy-2.webp'), require('../../assets/styles/homme/workwear-1.webp')],
+};

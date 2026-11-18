@@ -4,7 +4,6 @@
  * tous sont facultatifs, et la « précision de Kodi » montre ce que chaque
  * réponse apporte, sans jamais culpabiliser.
  */
-import type { GarmentKind } from '../ui/Garment';
 
 export type Silhouette = 'A' | 'V' | 'H' | 'X' | 'O' | 'inconnue';
 export type Rayon = 'femme' | 'homme' | 'mixte';
@@ -106,10 +105,11 @@ export const DEMO_PROFILE: Profile = {
   since: 'septembre',
 };
 
-export const RAYONS: { id: Rayon; label: string; note: string; kinds: [GarmentKind, string?][] }[] = [
-  { id: 'femme', label: 'Au rayon femme', note: 'Coupes et tailles femme', kinds: [['robe', '#B5603A'], ['jupe'], ['escarpins', '#D9B8A0']] },
-  { id: 'homme', label: 'Au rayon homme', note: 'Coupes et tailles homme', kinds: [['blazer'], ['pantalon', '#CDBB9C'], ['mocassins']] },
-  { id: 'mixte', label: 'Un peu des deux', note: 'Kodi pioche dans les deux', kinds: [['tshirt'], ['jean'], ['baskets']] },
+/** Les rayons ; chacun est montré par de vraies tenues (`RAYON_TENUES`, `data/styles.ts`). */
+export const RAYONS: { id: Rayon; label: string; note: string }[] = [
+  { id: 'femme', label: 'Au rayon femme', note: 'Coupes et tailles femme' },
+  { id: 'homme', label: 'Au rayon homme', note: 'Coupes et tailles homme' },
+  { id: 'mixte', label: 'Un peu des deux', note: 'Kodi pioche dans les deux' },
 ];
 
 export const AGES = ['15–17 ans', '18–24 ans', '25–34 ans', '35–44 ans', '45 ans et plus'];

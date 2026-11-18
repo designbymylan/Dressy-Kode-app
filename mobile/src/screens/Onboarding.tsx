@@ -31,8 +31,8 @@ import { Card, Ring } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Masthead } from '../ui/layout';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
-import { tirerTenues } from '../data/styles';
-import { ChoiceCard, ColorChoice, FirstRail, MeasureFigure, Ruler, StyleCard, Trio, IS_WEB, type ColorState } from '../ui/onboarding';
+import { RAYON_TENUES, tirerTenues } from '../data/styles';
+import { ChoiceCard, ColorChoice, FirstRail, MeasureFigure, Ruler, StyleCard, Tenues, IS_WEB, type ColorState } from '../ui/onboarding';
 import { useScreen } from '../ui/screen';
 import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, SignupTerms, validEmail } from '../ui/account';
 import { online, type Photo } from '../state/remote';
@@ -342,7 +342,8 @@ function RayonStep({ draft, set, next }: Ctx) {
             title={r.label}
             note={r.note}
             on={draft.rayon === r.id}
-            art={<Trio kinds={r.kinds} size={30} />}
+            art={<Tenues sources={RAYON_TENUES[r.id]} height={118} />}
+            artSize={{ width: 128, height: 132 }}
             onPress={() => {
               set({ rayon: r.id });
               setTimeout(next, 260);

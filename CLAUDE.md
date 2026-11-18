@@ -807,6 +807,11 @@ Preppy, Gorpcore, Streetwear (`STYLE_CARDS`, `state/profile.ts`).
   dans le rayon choisi ; « Un peu des deux » pioche dans les deux
   (`tirerTenues`, `data/styles.ts`). Carte : `StyleCard` (`ui/onboarding.tsx`),
   la tenue sur le gris studio, le nom et deux ou trois repères.
+- **Écran du rayon** (« Tu t'habilles plutôt… », demandé le même soir) : les
+  petits dessins de pièces (`Trio`, retiré) laissent place à de vraies tenues
+  détourées, trois femme, trois homme, une de chaque pour « Un peu des deux »
+  (`RAYON_TENUES`, `data/styles.ts` ; `Tenues`, `ui/onboarding.tsx`), dans
+  des cartes plus hautes (`ChoiceCard artSize`, 128 × 132).
 - **Données** : identifiants `slug` du nom (`y2k`, `old_money`…), les mêmes sur
   le site (`STYLES`, `web/src/lib/onboarding.ts`, encore avec des icônes). Un
   ancien style déjà enregistré reste lisible mais ne se choisit plus. Kodi
