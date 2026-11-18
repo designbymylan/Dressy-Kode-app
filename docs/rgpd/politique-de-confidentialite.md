@@ -1,6 +1,6 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.4 du 14 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.5 du 18 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
@@ -25,7 +25,7 @@ Nous n’avons pas de délégué à la protection des données. Pour toute quest
 - **Ton agenda et Kodi.** Tes rendez-vous, voyages, tenues prévues et conversations avec Kodi. Pour préparer tes tenues. Base : le contrat. Conversations gardées 12 mois (2 mois une fois archivées).
 - **Tes « Pas pour moi ».** Les tenues que tu écartes et leur raison. Pour ne plus te proposer ce qui ne te plaît pas. Base : le contrat. Gardées 6 mois.
 - **Ton abonnement.** Ton offre et ton historique de paiement. Pour te facturer. Base : le contrat et nos obligations comptables. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez le prestataire de paiement, qui garde les factures 10 ans comme la loi l’exige.
-- **Les rappels.** Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning. Rien ne part de nos serveurs. Base : ton accord, que tu changes dans Réglages.
+- **Les rappels et les notifications.** Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning : rien ne part de nos serveurs pour ceux-là. Avec « Oui, préviens-moi » ou « Seulement mon planning », nous t’envoyons aussi un message quand Kodi a fini de ranger ta photo (par exemple « 3 pièces sont dans ton dressing »). Pour cela, nous gardons un identifiant de ton téléphone, fourni par Expo et Apple et rattaché à ton compte. Le message passe par Expo et Apple, qui l’acheminent ; il peut citer le nom d’une pièce, tel qu’il figure sur sa fiche, jamais ton prénom ni ton e-mail. Base : ton accord, que tu changes dans Réglages : l’identifiant est alors effacé, comme quand tu te déconnectes, que tu supprimes ton compte ou que ton téléphone ne se connecte plus pendant 6 mois.
 - **La sécurité.** Des journaux techniques (erreurs, connexions) gardés quelques jours chez notre hébergeur. Pour faire fonctionner et protéger le service. Base : notre intérêt légitime.
 - **Des chiffres d’ensemble.** Pour savoir si Dresskode tient sa promesse, nous comptons combien de comptes portent une première tenue, reviennent le lendemain ou dans la semaine, et posent une question à Kodi. Ces chiffres se calculent sur nos serveurs, à partir de dates déjà gardées : création du compte, pièce ajoutée, port noté, question posée. Il n’en sort que des totaux, jamais ton nom, ton e-mail ni le contenu de ton dressing. Rien de nouveau n’est collecté, rien n’est gardé en plus, et rien ne part chez un prestataire de mesure. Base : notre intérêt légitime à améliorer le service. Tu peux t’y opposer en nous écrivant : ton compte sort alors du calcul.
 
@@ -49,7 +49,7 @@ Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne no
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
 
 Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.
 
@@ -57,7 +57,7 @@ La liste nominative de nos prestataires t’est envoyée sur simple demande. Per
 
 ## Hors de l’Union européenne
 
-Anthropic, Google, Stripe, Vercel et Expo traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).
+Anthropic, Google, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).
 
 Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.
 
@@ -69,6 +69,7 @@ Ces transferts sont encadrés par les clauses contractuelles types de la Commiss
 - **Les tenues écartées.** 6 mois.
 - **Les souvenirs de Kodi.** 12 mois, ou jusqu’à ce que tu les effaces ou retires ton accord.
 - **Les demandes de dessin.** 90 jours (la pièce dessinée reste dans ton dressing).
+- **L’identifiant de ton téléphone (notifications).** 6 mois sans que ton téléphone se connecte, ou jusqu’à ce que tu coupes les notifications ou te déconnectes.
 - **Les factures.** 10 ans, chez le prestataire de paiement, comme le code de commerce l’exige.
 
 ## Comment elles sont protégées

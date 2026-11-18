@@ -781,9 +781,11 @@ retirées aussi ; l'écran `Share` et sa route restent, sans entrée.
   l'accès) : `menage` v21 sans JWT, `compte` v22 avec. Le premier vrai passage de `menage`
   avec `purge_push_tokens` est celui de la nuit du 18 au 19/11 (3 h 41) : à contrôler
   dans ses journaux.
-- **Reste à faire avant de livrer l'app avec le push** : mettre la politique à jour
-  (`docs/rgpd/README.md`, jeton, Expo et Apple, 6 mois, avis), un compte Apple Developer
-  et une clé APNs (EAS) pour la production ; en Expo Go le push ne marche pas sur Android.
+- **Politique mise à jour le 18/11** (version 1.5, avis `politique-1.5`) : identifiant
+  d'appareil, Expo et Apple comme destinataires, 6 mois (`DUREES.appareils`).
+- **Reste à faire avant de livrer l'app avec le push** : Expo (Push) et Apple aux contrats
+  de sous-traitance (`docs/rgpd/README.md`), un compte Apple Developer et une clé APNs
+  (EAS) pour la production ; en Expo Go le push ne marche pas sur Android.
 - **Pas encore** : les relances (pièces qui dorment, saison, féries) ; à ne pas ajouter
   sans mesurer (`usage_funnel`) : une notification par jour au plus.
 

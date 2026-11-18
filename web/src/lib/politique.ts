@@ -6,7 +6,7 @@
 
 export type Section = { titre: string; texte?: string[]; liste?: { titre: string; texte: string }[] };
 
-export const POLITIQUE_VERSION = "Version 1.4 du 14 novembre 2026";
+export const POLITIQUE_VERSION = "Version 1.5 du 18 novembre 2026";
 
 export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null; directeur: string | null; mediateur: string | null } = {
   "nom": "Agence E-commerce Mylan Francois",
@@ -83,8 +83,8 @@ export const POLITIQUE: Section[] = [
         "texte": "Ton offre et ton historique de paiement. Pour te facturer. Base : le contrat et nos obligations comptables. Tes coordonnées bancaires ne passent jamais par nous : elles restent chez le prestataire de paiement, qui garde les factures 10 ans comme la loi l’exige."
       },
       {
-        "titre": "Les rappels",
-        "texte": "Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning. Rien ne part de nos serveurs. Base : ton accord, que tu changes dans Réglages."
+        "titre": "Les rappels et les notifications",
+        "texte": "Si tu les acceptes, ton téléphone programme lui-même les rappels de ton planning : rien ne part de nos serveurs pour ceux-là. Avec « Oui, préviens-moi » ou « Seulement mon planning », nous t’envoyons aussi un message quand Kodi a fini de ranger ta photo (par exemple « 3 pièces sont dans ton dressing »). Pour cela, nous gardons un identifiant de ton téléphone, fourni par Expo et Apple et rattaché à ton compte. Le message passe par Expo et Apple, qui l’acheminent ; il peut citer le nom d’une pièce, tel qu’il figure sur sa fiche, jamais ton prénom ni ton e-mail. Base : ton accord, que tu changes dans Réglages : l’identifiant est alors effacé, comme quand tu te déconnectes, que tu supprimes ton compte ou que ton téléphone ne se connecte plus pendant 6 mois."
       },
       {
         "titre": "La sécurité",
@@ -116,7 +116,7 @@ export const POLITIQUE: Section[] = [
   {
     "titre": "Qui reçoit tes données",
     "texte": [
-      "Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement) et Expo (distribution des mises à jour de l’app, États-Unis, sans aucune donnée de ton compte).",
+      "Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).",
       "Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.",
       "La liste nominative de nos prestataires t’est envoyée sur simple demande. Personne d’autre : aucune vente, aucun partage publicitaire."
     ]
@@ -124,7 +124,7 @@ export const POLITIQUE: Section[] = [
   {
     "titre": "Hors de l’Union européenne",
     "texte": [
-      "Anthropic, Google, Stripe, Vercel et Expo traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques) et la distribution des mises à jour de l’app (sans donnée de ton compte ni de ton dressing).",
+      "Anthropic, Google, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).",
       "Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis."
     ]
   },
@@ -154,6 +154,10 @@ export const POLITIQUE: Section[] = [
       {
         "titre": "Les demandes de dessin",
         "texte": "90 jours (la pièce dessinée reste dans ton dressing)."
+      },
+      {
+        "titre": "L’identifiant de ton téléphone (notifications)",
+        "texte": "6 mois sans que ton téléphone se connecte, ou jusqu’à ce que tu coupes les notifications ou te déconnectes."
       },
       {
         "titre": "Les factures",
@@ -414,6 +418,14 @@ export const CONDITIONS: Section[] = [
 export type Avis = { id: string; doc: 'politique' | 'conditions'; publie: string; effet: string; titre: string; texte: string };
 
 export const AVIS: Avis[] = [
+  {
+    "id": "politique-1.5",
+    "doc": "politique",
+    "publie": "2026-11-18",
+    "effet": "2026-11-18",
+    "titre": "Notre politique de confidentialité change",
+    "texte": "Si tu acceptes les notifications, nous t’écrivons quand Kodi a fini de ranger ta photo. Pour cela, nous gardons un identifiant de ton téléphone, six mois au plus."
+  },
   {
     "id": "conditions-1.3",
     "doc": "conditions",

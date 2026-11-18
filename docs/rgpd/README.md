@@ -54,13 +54,11 @@ case des 15 ans avec le lien vers la politique.
 
 ## À faire avant la sortie
 
-**Notifications push (18/11), à faire AVANT de livrer l'app qui enregistre le
-jeton** : écrire dans la politique (`legal.ts`, puis `node tools/politique.mjs`)
-le jeton d'appareil, Expo et Apple comme destinataires, la durée de 6 mois
-(`DUREES`), et publier l'avis correspondant (`AVIS`, date d'effet un mois
-après). Le registre (§8) est à jour ; la politique non, volontairement : c'est
-une décision de publication. Ajouter aussi Expo (Push) aux contrats de
-sous-traitance du point 2.
+**Notifications push (18/11)** : la politique est à jour (version 1.5 du 18/11 :
+identifiant d'appareil, Expo et Apple comme destinataires, 6 mois, avis
+`politique-1.5` en tête de l'accueil, `DUREES.appareils`). Reste : ajouter
+Expo (Push) et Apple aux contrats de sous-traitance du point 2, et à faire
+relire par le juriste avec le reste.
 
 Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
 
