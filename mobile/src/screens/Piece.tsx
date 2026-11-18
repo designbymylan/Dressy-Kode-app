@@ -145,8 +145,9 @@ export function PieceScreen() {
   const free = s.plan === 'decouverte';
   const noGen = left !== null && left <= 0;
 
-  const stageH = Math.min(440, Math.round(width * 1.1));
-  const art = Math.min(220, width * 0.56);
+  // La scène ne porte que la pièce, la plus grande possible ; le panneau d'infos est dessous (18/11).
+  const art = Math.min(280, Math.round(width * 0.7));
+  const stageH = Math.round(art * 1.25) + 44;
   const tag = wornToday ? `Porté${f.e} aujourd’hui` : piece.wears === 0 ? (isNew(piece) ? 'Nouveau' : `Jamais porté${f.e}`) : cat.short;
   const usage = [`${piece.wears} port${piece.wears > 1 ? 's' : ''}`, cpw ? `${cpw} par port` : null].filter(Boolean).join(' · ');
   const priceTxt = piece.price != null ? `${piece.price.toFixed(2).replace('.', ',').replace(',00', '')} €` : null;
@@ -156,32 +157,31 @@ export function PieceScreen() {
       <Ambient />
       <StackHeader title={piece.name} brand y={y} right={[{ icon: 'share', label: 'Partager à une amie', onPress: () => nav.navigate('Share', { id: piece.id }), testID: 'piece-share' }, { icon: 'more', label: 'Plus d’actions', onPress: () => setMenu(true), testID: 'piece-more' }]} />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
-        {/* La scène : la pièce sur gris studio, un panneau de verre posé dessus (05/10). */}
+        {/* La scène : la pièce seule sur gris studio ; le panneau de verre est posé dessous (18/11, il cachait la pièce). */}
         <View style={{ height: stageH, borderRadius: 28, backgroundColor: c.stage, overflow: 'hidden', alignItems: 'center' }}>
           {hangOf(piece.kind) !== 'none' && <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 22, height: 1.5, backgroundColor: c.rod }} />}
           <Animated.View ref={grow.ref} onLayout={grow.onLayout} style={[{ marginTop: 22 }, grow.style]}>
             <Garment kind={piece.kind} tint={piece.tint} image={piece.image} size={art} hanger={hangOf(piece.kind) !== 'none'} hangerColor={c.rod} dark={scheme === 'dark'} label={piece.name} />
           </Animated.View>
-          <View style={{ position: 'absolute', left: 10, right: 10, bottom: 10 }}>
-            <Glass radius={22} shadow={false}>
-              <View className="flex-row items-end" style={{ padding: 16, gap: 12 }}>
-                <View style={{ flex: 1, gap: 8 }}>
-                  <Tag label={tag} tone="glass" />
-                  <T v="title" accessibilityRole="header">
-                    {piece.name}
-                  </T>
-                  <T v="kicker" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
-                    {usage}
-                  </T>
-                </View>
-                <View className="flex-row items-center" style={{ gap: 8 }}>
-                  <HeartButton testID="piece-coeur" liked={liked} onToggle={() => a.coeur(piece.id)} name={piece.name} size={48} />
-                  <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={48} onPress={() => nav.navigate('Compose', { with: piece.id })} />
-                </View>
-              </View>
-            </Glass>
-          </View>
         </View>
+
+        <Glass radius={22} shadow={false}>
+          <View className="flex-row items-end" style={{ padding: 16, gap: 12 }}>
+            <View style={{ flex: 1, gap: 8 }}>
+              <Tag label={tag} tone="glass" />
+              <T v="title" accessibilityRole="header">
+                {piece.name}
+              </T>
+              <T v="kicker" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
+                {usage}
+              </T>
+            </View>
+            <View className="flex-row items-center" style={{ gap: 8 }}>
+              <HeartButton testID="piece-coeur" liked={liked} onToggle={() => a.coeur(piece.id)} name={piece.name} size={48} />
+              <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={48} onPress={() => nav.navigate('Compose', { with: piece.id })} />
+            </View>
+          </View>
+        </Glass>
 
         <View style={{ gap: 10 }}>
           <View className="flex-row items-center justify-between">
