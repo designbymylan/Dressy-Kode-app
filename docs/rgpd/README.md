@@ -56,9 +56,9 @@ case des 15 ans avec le lien vers la politique.
 
 **Notifications push (18/11)** : la politique est à jour (version 1.5 du 18/11 :
 identifiant d'appareil, Expo et Apple comme destinataires, 6 mois, avis
-`politique-1.5` en tête de l'accueil, `DUREES.appareils`). Reste : ajouter
-Expo (Push) et Apple aux contrats de sous-traitance du point 2, et à faire
-relire par le juriste avec le reste.
+`politique-1.5` en tête de l'accueil, `DUREES.appareils`). Reste : les contrats
+Expo (Push) et Apple, détaillés au point 2, et la relecture par le juriste
+avec le reste.
 
 Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
 
@@ -74,7 +74,20 @@ Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
    Puis `node tools/politique.mjs`. Tant qu'ils manquent, l'app et le site
    le disent.
 2. **Les contrats de sous-traitance (art. 28)** à accepter dans chaque
-   console : Supabase, Anthropic, Google (API Gemini), Stripe, Expo.
+   console : Supabase, Anthropic, Google (API Gemini), Stripe, Expo, Apple.
+   Pour les notifications push (18/11), deux points précis :
+   - **Expo** : il est déjà dans la liste pour les mises à jour de l'app (sans
+     donnée de compte). Avec le service Push, il reçoit en plus le jeton
+     d'appareil et le texte du message (« 3 pièces sont dans ton dressing »,
+     parfois le nom d'une pièce). Vérifier que son accord de traitement de
+     données (DPA, à accepter depuis le compte Expo) couvre bien Expo Push, et
+     pas seulement EAS Update.
+   - **Apple** : le service de notifications de l'iPhone (APNs) est couvert par
+     les conditions du programme Apple Developer, de toute façon nécessaires
+     pour l'App Store et pour la clé APNs. Les lire sous l'angle des données
+     (jeton d'appareil, texte du message) et garder une trace de la version
+     acceptée. Apple ne reçoit rien d'autre que ce que le message contient.
+   La politique les nomme déjà (version 1.5) : c'est le contrat qui manque.
 3. **Vérifier chez chaque prestataire ce que la politique promet** :
    aucune réutilisation pour entraîner des modèles, effacement sous 30 jours
    au plus. Points d'attention :
