@@ -748,10 +748,11 @@ incorrect » et « Prêter ou donner à une amie » en sont retirés (leurs acti
 l'app ; l'écran Partager est toujours un décor sans serveur). **Noter le
 dessin** (`ui/Rating.tsx`, `state/notes.ts`) : trois notes de 1 à 5 (le temps,
 la qualité, le rendu final), une fois par pièce dessinée, modifiables ; table
-`piece_ratings` (migration `note_dessin`, **à appliquer au projet**), moyennes
+`piece_ratings` (migration `note_dessin`, appliquée le 18/11, version `20261118171635`), moyennes
 dans la vue `piece_ratings_summary`. Kodi ne les lit pas. Registre RGPD §7
-quater, export `notes_des_dessins`. Reste à décider : l'entrée « Partager »
-de l'en-tête de la fiche et « À une amie » (carte des pièces qui dorment).
+quater, export `notes_des_dessins`. Les entrées « Partager » de la fiche
+(icône de l'en-tête, « À une amie » sur la carte des pièces qui dorment) sont
+retirées aussi ; l'écran `Share` et sa route restent, sans entrée.
 
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
