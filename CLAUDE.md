@@ -800,7 +800,9 @@ Preppy, Gorpcore, Streetwear (`STYLE_CARDS`, `state/profile.ts`).
   `tools/detour-styles.py` (rembg et BiRefNet portrait, sur la machine, sans
   service externe ; 8 Go de mémoire), en WebP dans `mobile/assets/styles/<rayon>/`,
   listées dans `data/stylePhotos.ts` (écrit par l'outil, jamais à la main).
-  Contrôler la planche qu'il écrit avant de garder un détourage.
+  Contrôler la planche qu'il écrit avant de garder un détourage. Le gothique
+  homme (`homme/gothique-1.webp`, selfie en boutique) a été retouché à la main
+  (vestes suspendues effacées) : relancer l'outil sur sa photo les ramènerait.
 - **Tirage** : à chaque passage sur l'écran, une tenue par style, au hasard,
   dans le rayon choisi ; « Un peu des deux » pioche dans les deux
   (`tirerTenues`, `data/styles.ts`). Carte : `StyleCard` (`ui/onboarding.tsx`),
