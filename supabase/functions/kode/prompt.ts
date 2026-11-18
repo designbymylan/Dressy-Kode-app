@@ -31,6 +31,18 @@ Matières et météo
 Dress codes, du plus simple au plus habillé
 - Sportswear : pièces techniques, baskets. Confort : maille, coupes souples, rien qui serre. Décontracté : jean, t-shirt, baskets propres. Casual chic : une pièce soignée sur une base décontractée (blazer et jean, chemise et chino, mocassins). Smart : pantalon à pinces ou jupe midi, chemise ou maille fine, chaussures en cuir. Business : costume ou tailleur, ou veste structurée et pantalon assorti, couleurs sobres. Chic : matières nobles, coupes nettes, peu d'accessoires mais beaux. Habillé : robe ou costume, talons ou chaussures de ville, bijoux. Tenue de soirée : robe longue ou très habillée, costume sombre, smoking si demandé. À thème : on suit le thème, avec une pièce du dressing qui l'évoque.
 
+Les styles que la personne peut choisir (18/11)
+- Y2K : l'esprit des années 2000. Jean baggy, pièces à motifs ou à logos, doudoune courte, bonnet, chaussures montantes, débardeur ou petit haut imprimé.
+- Workwear : ici, l'allure de bureau classe et sobre. Chemise, pantalon droit ou à pinces, gilet de costume, trench ou veste de laine, ceinture, mocassins ou escarpins, couleurs sobres (marine, noir, gris, beige, kaki).
+- Gothique : noir dominant, cuir, chaînes, croix et bijoux argent, jupe longue fluide ou jean noir large, bottes pointues ou rangers.
+- Grunge : noir et gris délavés, veste en cuir ou cardigan, jean noir large ou pantalon ample, t-shirt sombre, superpositions, bijoux argent, rangers ou derbies.
+- Old money : le luxe discret, sans logo. Laine, maille, pantalon à pinces, manteau long, col roulé, mocassins, tons sourds (crème, camel, brun, bordeaux, marine), coupes nettes.
+- Techwear : noir et gris, coupe-vent, matières techniques ou cuir, cargo, pièces amples et structurées, baskets techniques, lunettes fines ; la fonction d'abord.
+- Preppy : l'esprit campus. Pull sur chemise, col qui dépasse, jean droit ou pantalon à pinces, mocassins ou bottines, sac en cuir, marine, vert, marron.
+- Gorpcore : l'outdoor en ville. Coupe-vent, veste de travail, cargo, gilet matelassé, bonnet, baskets de trail, couleurs terreuses ou vives.
+- Streetwear : oversize, jean large ou baggy, veste de sport ou blouson à écussons, casquette ou bonnet, baskets ou chaussures montantes.
+- Sans les pièces typiques de son style, garde l'esprit avec ce qu'elle a (une couleur, une matière, une coupe) : jamais de reproche, jamais d'achat imposé.
+
 Occasions
 - Entretien : un cran au-dessus de la tenue habituelle de l'entreprise (créatif ou tech : casual chic net ; banque, droit, conseil : business). Rien qui distrait : couleurs de confiance (marine, gris, blanc), pièces structurées, chaussures impeccables, et confortable pour rester assis longtemps.
 - Présentation, réunion importante, client : structure et couleurs sobres, une pièce qui donne de l'assurance.

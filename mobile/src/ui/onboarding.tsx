@@ -3,7 +3,7 @@
  * mesures, cartes de style, couleurs aimées/évitées, premier portant.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { Image, Platform, ScrollView, View, type ImageSourcePropType, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import type { Piece } from '../data/wardrobe';
@@ -219,17 +219,17 @@ export function MeasureFigure({ active, done, height = 190 }: { active: MeasureI
 /** Une pièce d'illustration : son type, sa teinte, et une vraie photo quand on en a une (`photo:<clé>`). */
 export type StyleKind = [GarmentKind, string?, string?];
 
-export function StyleCard({ name, note, kinds, on, order, width, onPress }: { name: string; note: string; kinds: StyleKind[]; on: boolean; order: number; width: number; onPress: () => void }) {
+/**
+ * Une carte de style (18/11) : une vraie tenue, la personne détourée sans son
+ * décor sur le gris studio, le nom du style et ses repères. Sans photo (style
+ * pas encore fourni pour ce rayon), la scène reste vide et le nom suffit.
+ */
+export function StyleCard({ name, note, source, on, order, width, onPress }: { name: string; note: string; source: ImageSourcePropType | null; on: boolean; order: number; width: number; onPress: () => void }) {
   const { c, scheme } = useTheme();
-  const g = width * 0.36;
   return (
     <Tap testID={`style-${name}`} onPress={onPress} feedback="select" accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${name} : ${note}`} style={[{ width, borderRadius: 22, overflow: 'hidden' }, glassSurface(c, scheme), { borderWidth: on ? 2 : 1, borderColor: on ? c.ink : c['card-edge'] }]} scaleTo={0.97}>
-      <View className="flex-row items-end justify-center" style={{ height: width * 0.62, paddingBottom: 6, backgroundColor: c.stage }}>
-        {kinds.map(([k, t, img], i) => (
-          <View key={i} style={{ marginLeft: i ? -g * 0.34 : 0, transform: [{ rotate: `${(i - 1) * 5}deg` }, { translateY: i === 1 ? -6 : 0 }] }}>
-            <Garment kind={k} tint={t} image={img} size={g} dark={scheme === 'dark'} />
-          </View>
-        ))}
+      <View style={{ height: Math.round(width * 1.32), paddingTop: 12, backgroundColor: c.stage }}>
+        {source && <Image source={source} resizeMode="contain" accessibilityIgnoresInvertColors style={{ flex: 1, width: '100%' }} />}
         {on && (
           <View className="absolute bg-primary-bg items-center justify-center" style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: 12 }}>
             <T v="small" tone="primary-fg" style={{ ...F.s700 }}>

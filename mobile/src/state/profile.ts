@@ -5,7 +5,6 @@
  * réponse apporte, sans jamais culpabiliser.
  */
 import type { GarmentKind } from '../ui/Garment';
-import { photo } from '../data/photos';
 
 export type Silhouette = 'A' | 'V' | 'H' | 'X' | 'O' | 'inconnue';
 export type Rayon = 'femme' | 'homme' | 'mixte';
@@ -97,7 +96,7 @@ export const DEMO_PROFILE: Profile = {
   silhouetteSource: 'choix',
   measures: { taille: 70 },
   sizes: { haut: 'S', bas: '38', pointure: '38' },
-  styles: ['Minimal', 'Chic parisien'],
+  styles: ['Old money', 'Workwear'],
   love: ['Camel', 'Marine', 'Blanc'],
   avoid: ['Moutarde'],
   occasions: ['Bureau', 'Sorties', 'Événements'],
@@ -137,20 +136,22 @@ export function sizeOptions(rayon: Rayon | null) {
   return { haut: femme.haut, bas: ['34', '36', '38', '40', '42', '44', '46', '48', '50', '52'], pointure: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'] };
 }
 
-/** Les styles, chacun illustré par trois pièces originales. */
-export const STYLE_CARDS: { name: string; note: string; kinds: [GarmentKind, string?, string?][] }[] = [
-  { name: 'Minimal', note: 'Peu de pièces, des lignes nettes', kinds: [['tshirt'], ['pantalon'], ['baskets']] },
-  { name: 'Classique', note: 'Ce qui ne se démode pas', kinds: [['blazer'], ['chemise', '#F4F1EA'], ['mocassins']] },
-  { name: 'Chic parisien', note: 'Marinière, trench, sans effort', kinds: [['mariniere'], ['trench'], ['escarpins']] },
-  { name: 'Bohème', note: 'Fluide, chaud, un peu libre', kinds: [['robe', '#B5603A'], ['foulard'], ['bottines', '#6E4A32']] },
-  { name: 'Urbain', note: 'Pratique, pour la ville', kinds: [['veste', undefined, photo('blouson-court')], ['tshirt', undefined, photo('tshirt-ample')], ['jean', undefined, photo('jean-large')]] },
-  { name: 'Romantique', note: 'Doux, poudré, délicat', kinds: [['chemise', '#E3BFB7'], ['jupe', '#D9B8A0'], ['escarpins', '#D9B8A0']] },
-  { name: 'Sportswear chic', note: 'Le confort qui a de l’allure', kinds: [['debardeur'], ['pantalon', '#CDBB9C'], ['baskets']] },
-  { name: 'Vintage', note: 'Des pièces qui ont une histoire', kinds: [['cardigan', '#C9A13B'], ['jupe'], ['mocassins']] },
-  { name: 'Rock', note: 'Noir, net, un peu d’attitude', kinds: [['debardeur'], ['jean', '#26231F'], ['bottines']] },
-  { name: 'Preppy', note: 'Col, pull, jupe plissée', kinds: [['pull', '#8A3B3B'], ['jupe', '#2F3B52'], ['mocassins']] },
-  { name: 'Élégant', note: 'Pour les soirs qui comptent', kinds: [['robe', '#2F4A3C'], ['blazer'], ['escarpins']] },
-  { name: 'Audacieux', note: 'La couleur d’abord', kinds: [['robe', '#C9A13B'], ['foulard', '#8A3B3B'], ['escarpins', '#B5603A']] },
+/**
+ * Les neuf styles du questionnaire (18/11, demandés par l'utilisateur, à la
+ * place des douze d'avant). Chacun est montré par une vraie tenue, tirée au
+ * hasard parmi celles du rayon choisi (`tirerTenues`, `data/styles.ts`).
+ * L'identifiant gardé en base est `slug(name)` : `y2k`, `old_money`…
+ */
+export const STYLE_CARDS: { name: string; note: string }[] = [
+  { name: 'Y2K', note: 'Années 2000 : baggy, logos, motifs' },
+  { name: 'Workwear', note: 'Chemise, pantalon droit, sobre et net' },
+  { name: 'Gothique', note: 'Noir, cuir, chaînes, argent' },
+  { name: 'Grunge', note: 'Noir délavé, cuir, coupes amples' },
+  { name: 'Old money', note: 'Laine, tons sourds, coupes nettes' },
+  { name: 'Techwear', note: 'Noir, coupe-vent, cargo' },
+  { name: 'Preppy', note: 'Pull sur chemise, mocassins' },
+  { name: 'Gorpcore', note: 'Coupe-vent, cargo, baskets de trail' },
+  { name: 'Streetwear', note: 'Oversize, jean large, baskets' },
 ];
 
 /**

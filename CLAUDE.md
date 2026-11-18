@@ -789,6 +789,31 @@ retirées aussi ; l'écran `Share` et sa route restent, sans entrée.
 - **Pas encore** : les relances (pièces qui dorment, saison, féries) ; à ne pas ajouter
   sans mesurer (`usage_funnel`) : une notification par jour au plus.
 
+**Écran des styles (18/11), demandé par l'utilisateur** : les douze styles
+dessinés (Minimal, Classique, Chic parisien…) laissent place à neuf styles
+montrés par de vraies tenues : Y2K, Workwear (ici l'allure de bureau classe et
+sobre, pas le vêtement de chantier), Gothique, Grunge, Old money, Techwear,
+Preppy, Gorpcore, Streetwear (`STYLE_CARDS`, `state/profile.ts`).
+
+- **Photos** : dossier « Image style » du Drive de l'utilisateur (Style femme,
+  Style homme), la personne et sa tenue détourées sans le décor par
+  `tools/detour-styles.py` (rembg et BiRefNet portrait, sur la machine, sans
+  service externe ; 8 Go de mémoire), en WebP dans `mobile/assets/styles/<rayon>/`,
+  listées dans `data/stylePhotos.ts` (écrit par l'outil, jamais à la main).
+  Contrôler la planche qu'il écrit avant de garder un détourage.
+- **Tirage** : à chaque passage sur l'écran, une tenue par style, au hasard,
+  dans le rayon choisi ; « Un peu des deux » pioche dans les deux
+  (`tirerTenues`, `data/styles.ts`). Carte : `StyleCard` (`ui/onboarding.tsx`),
+  la tenue sur le gris studio, le nom et deux ou trois repères.
+- **Données** : identifiants `slug` du nom (`y2k`, `old_money`…), les mêmes sur
+  le site (`STYLES`, `web/src/lib/onboarding.ts`, encore avec des icônes). Un
+  ancien style déjà enregistré reste lisible mais ne se choisit plus. Kodi
+  connaît chaque style (`kode/prompt.ts`, « Les styles que la personne peut
+  choisir »).
+- **À régler avant la sortie** : les droits sur ces photos (prises sur les
+  réseaux sociaux, une porte un filigrane) et le droit à l'image des
+  personnes. Les remplacer par des photos sous licence ou commandées.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 

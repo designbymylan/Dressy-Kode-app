@@ -31,6 +31,7 @@ import { Card, Ring } from '../ui/bits';
 import { Icon, type IconName } from '../ui/Icon';
 import { Masthead } from '../ui/layout';
 import { SILHOUETTES, SilhouetteShape } from '../ui/SilhouetteShape';
+import { tirerTenues } from '../data/styles';
 import { ChoiceCard, ColorChoice, FirstRail, MeasureFigure, Ruler, StyleCard, Trio, IS_WEB, type ColorState } from '../ui/onboarding';
 import { useScreen } from '../ui/screen';
 import { AccountSheet, EmailField, FormError, PASSWORD_MIN, PasswordField, SignupTerms, validEmail } from '../ui/account';
@@ -611,6 +612,8 @@ function Tailles({ draft, set, next }: Ctx) {
 
 function Styles({ draft, set, next, W }: Ctx) {
   const [warn, setWarn] = useState(false);
+  // Une tenue par style, tirée à chaque passage sur l'écran, dans le rayon choisi.
+  const [tenues] = useState(() => tirerTenues(STYLE_CARDS.map((s) => s.name), draft.rayon));
   const w = (W - 12) / 2;
   const toggle = (name: string) => {
     const on = draft.styles.includes(name);
@@ -642,7 +645,7 @@ function Styles({ draft, set, next, W }: Ctx) {
     >
       <View className="flex-row flex-wrap" style={{ gap: 12 }}>
         {STYLE_CARDS.map((s) => (
-          <StyleCard key={s.name} name={s.name} note={s.note} kinds={s.kinds} width={w} on={draft.styles.includes(s.name)} order={draft.styles.indexOf(s.name) + 1} onPress={() => toggle(s.name)} />
+          <StyleCard key={s.name} name={s.name} note={s.note} source={tenues[s.name]} width={w} on={draft.styles.includes(s.name)} order={draft.styles.indexOf(s.name) + 1} onPress={() => toggle(s.name)} />
         ))}
       </View>
     </Frame>

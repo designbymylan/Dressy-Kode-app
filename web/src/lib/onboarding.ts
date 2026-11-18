@@ -132,16 +132,17 @@ export const GOALS: Option[] = [
   { id: 'tout', label: 'Un peu de tout', icon: ICONS.scintille, alone: true },
 ];
 
+/** Les neuf styles (18/11), les mêmes identifiants que l'app mobile (`slug` du nom). */
 export const STYLES: Option[] = [
-  { id: 'minimal', label: 'Minimal', icon: ICONS.carre },
-  { id: 'streetwear', label: 'Streetwear', icon: ICONS.basket },
-  { id: 'decontracte', label: 'Décontracté', icon: ICONS.tshirt },
-  { id: 'smart_casual', label: 'Smart casual', icon: ICONS.mallette },
+  { id: 'y2k', label: 'Y2K', icon: ICONS.scintille },
+  { id: 'workwear', label: 'Workwear', icon: ICONS.veste },
+  { id: 'gothique', label: 'Gothique', icon: ICONS.contraste },
+  { id: 'grunge', label: 'Grunge', icon: ICONS.chemise },
   { id: 'old_money', label: 'Old money', icon: ICONS.couronne },
-  { id: 'vintage', label: 'Vintage', icon: ICONS.retour },
-  { id: 'sportif', label: 'Sportif', icon: ICONS.course },
-  { id: 'chic', label: 'Chic', icon: ICONS.etoile },
-  { id: 'oversize', label: 'Oversize', icon: ICONS.oversize },
+  { id: 'techwear', label: 'Techwear', icon: ICONS.nuage },
+  { id: 'preppy', label: 'Preppy', icon: ICONS.polo },
+  { id: 'gorpcore', label: 'Gorpcore', icon: ICONS.doudoune },
+  { id: 'streetwear', label: 'Streetwear', icon: ICONS.basket },
 ];
 
 /**
