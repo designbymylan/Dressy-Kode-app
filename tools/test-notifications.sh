@@ -15,6 +15,6 @@ sh_ "$BIN/initdb -D $D/data -A trust >/dev/null && $BIN/pg_ctl -D $D/data -o '-p
 P=(psql -h "$D" -p 5446 -U postgres -v ON_ERROR_STOP=1 -q)
 "${P[@]}" -c "create database t" >/dev/null
 "${P[@]}" -d t -f supabase/tests/notifications_push.stub.sql
-"${P[@]}" -d t -f supabase/migrations/20261118190000_notifications_push.sql
+"${P[@]}" -d t -f supabase/migrations/20261118190717_notifications_push.sql
 "${P[@]}" -d t -f supabase/tests/notifications_push.test.sql 2>&1 | grep -E "NOTICE|ERROR|ECHEC" | sed 's/^psql:[^ ]* NOTICE:  //; s/^NOTICE:  //'
 echo "tout est bon"

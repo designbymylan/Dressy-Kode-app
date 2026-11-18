@@ -773,6 +773,11 @@ retirées aussi ; l'écran `Share` et sa route restent, sans entrée.
   App : `state/push.ts` (jeton suivi avec le choix, retiré à la sortie), bannière coupée
   app ouverte (le message de l'app le dit déjà), un toucher ouvre le dressing.
   Essai de la migration : `bash tools/test-notifications.sh` (base jetable).
+  **En production le 18/11** : migration appliquée (version `20261118190717`), `notifier`
+  déployée sans JWT et essayée (400 sur un identifiant invalide, « tâche introuvable » sur
+  un inconnu). **Reste à déployer par la CLI** : `menage` (retire les appareils de plus de
+  6 mois, via `purge_push_tokens`) et `compte` (l'export liste les appareils) ; la base est
+  prête, rien ne casse en attendant.
 - **Reste à faire avant de livrer l'app avec le push** : mettre la politique à jour
   (`docs/rgpd/README.md`, jeton, Expo et Apple, 6 mois, avis), un compte Apple Developer
   et une clé APNs (EAS) pour la production ; en Expo Go le push ne marche pas sur Android.
