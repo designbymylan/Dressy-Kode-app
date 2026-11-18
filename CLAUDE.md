@@ -775,9 +775,12 @@ retirées aussi ; l'écran `Share` et sa route restent, sans entrée.
   Essai de la migration : `bash tools/test-notifications.sh` (base jetable).
   **En production le 18/11** : migration appliquée (version `20261118190717`), `notifier`
   déployée sans JWT et essayée (400 sur un identifiant invalide, « tâche introuvable » sur
-  un inconnu). **Reste à déployer par la CLI** : `menage` (retire les appareils de plus de
-  6 mois, via `purge_push_tokens`) et `compte` (l'export liste les appareils) ; la base est
-  prête, rien ne casse en attendant.
+  un inconnu). `menage` (retire les appareils de plus de 6 mois, via `purge_push_tokens`)
+  et `compte` (l'export liste les appareils) sont déployées aussi, par la CLI
+  (`npx supabase@latest functions deploy <fonction> --use-api --yes`, le proxy fournit
+  l'accès) : `menage` v21 sans JWT, `compte` v22 avec. Le premier vrai passage de `menage`
+  avec `purge_push_tokens` est celui de la nuit du 18 au 19/11 (3 h 41) : à contrôler
+  dans ses journaux.
 - **Reste à faire avant de livrer l'app avec le push** : mettre la politique à jour
   (`docs/rgpd/README.md`, jeton, Expo et Apple, 6 mois, avis), un compte Apple Developer
   et une clé APNs (EAS) pour la production ; en Expo Go le push ne marche pas sur Android.
