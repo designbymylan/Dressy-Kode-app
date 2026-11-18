@@ -392,6 +392,11 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
  * restante : la pièce reste alors telle que découpée, sans message d'erreur.
  */
 async function dessinAuto(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+  // Éteint par défaut (essai du 17/11) : derrière l'intermédiaire, Nano Banana met 39 s
+  // pour une image sans référence et plus de 90 s avec la pièce en référence (délai
+  // dépassé), ce qui retardait chaque pièce de près de 2 minutes pour rien.
+  // DESSIN_AUTO=1 le rallume (clé Google directe, ou intermédiaire plus rapide).
+  if (Deno.env.get('DESSIN_AUTO')?.trim() !== '1') return;
   try {
     const { data: planData } = await db.rpc('space_plan', { target: job.space_id });
     if (typeof planData !== 'string' || planData === 'decouverte') return;
