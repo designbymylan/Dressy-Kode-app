@@ -887,6 +887,19 @@ export async function saveNotifs(session: Session, choix: NotifChoice) {
   check(await db().from('settings').update({ notifications: { choix } }).eq('space_id', session.spaceId), 'notifications');
 }
 
+/**
+ * Notifications push (18/11) : le jeton de cet appareil, enregistré après un
+ * « oui » aux notifications, retiré après un « non » ou à la sortie. La table
+ * est fermée au client : tout passe par ces deux fonctions de la base.
+ */
+export async function registerPushToken(token: string, platform: 'ios' | 'android') {
+  check(await db().rpc('register_push_token', { p_token: token, p_platform: platform }), 'notifications');
+}
+
+export async function unregisterPushToken(token: string) {
+  check(await db().rpc('unregister_push_token', { p_token: token }), 'notifications');
+}
+
 /* ---- Kodi et paiement : les Edge Functions ---- */
 
 /** Le message d'erreur qu'une fonction renvoie (elles écrivent pour la personne), ou un message par défaut. */

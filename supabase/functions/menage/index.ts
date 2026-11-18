@@ -9,6 +9,7 @@
  *   mois) ; toutes, douze mois ;
  * - demandes de dessin terminées ou en échec : 90 jours (la pièce dessinée
  *   reste dans le dressing) ;
+ * - appareils des notifications (jetons push) : six mois sans les voir ;
  * - journal des générations (mesures de la bêta) : 13 mois ; images en cache
  *   des générations : 30 jours (comme les photos dont elles viennent) ; une
  *   génération restée « en cours » plus d'une heure est rendue.
@@ -63,7 +64,9 @@ Deno.serve(async () => {
     const anciennes = await compter(admin.from('kode_messages').delete({ count: 'exact' }).lt('created_at', ilYa(366)), 'conversations');
     const demandes = await compter(admin.from('ai_jobs').delete({ count: 'exact' }).in('status', ['done', 'failed']).lt('updated_at', ilYa(90)), 'demandes de dessin');
     const { generations, cache } = await ranger();
-    const bilan = { fichiers, messages: archives + anciennes, demandes, generations, cache };
+    const { data: appareils, error: errAppareils } = await admin.rpc('purge_push_tokens', { older: '180 days' });
+    if (errAppareils) throw new Error(`appareils des notifications : ${errAppareils.message}`);
+    const bilan = { fichiers, messages: archives + anciennes, demandes, generations, cache, appareils: Number(appareils ?? 0) };
     console.log('[menage]', JSON.stringify(bilan));
     return Response.json({ ok: true, ...bilan });
   } catch (e) {

@@ -16,6 +16,7 @@ import { derniereTenue, kodeReply, reponseGratuite, VARIANTE_LIBELLES, type Kode
 import { todayOutfits } from './outfits';
 import { DEMO_PROFILE, EMPTY_PROFILE, type Profile } from './profile';
 import * as remote from './remote';
+import { accorderJeton } from './push';
 import type { Account, NotifChoice, PlanId, Period, Photo, Planned, Session } from './remote';
 import { isoOf, newId, offsetOf, type Iso, type RdvEvent, type Trip } from './planning';
 import { isActive, type JobRow } from './jobs';
@@ -737,6 +738,8 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
       },
 
       logout: async () => {
+        // Cet appareil ne reçoit plus les notifications de ce compte (avant la sortie : il faut encore la session).
+        if (getState().session) await accorderJeton(false);
         if (getState().session) await remote.signOut();
         await forget();
         dispatch({ t: 'restart' });

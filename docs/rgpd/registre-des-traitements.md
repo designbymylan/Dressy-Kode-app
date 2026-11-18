@@ -28,6 +28,7 @@ jamais dans l'app ni dans le code ; jeton revalidé côté serveur par
 | Google (API Gemini) | IA : découpe et dessin des pièces (plus aucun souvenir de Kodi depuis le 13/11) | États-Unis |
 | Stripe | Paiement, factures | États-Unis et Union européenne |
 | Expo (EAS Update) | Distribution des mises à jour de l'app, sans donnée de compte | États-Unis |
+| Expo (Push) et Apple (APNs) | Acheminement des notifications « tes pièces sont prêtes » : jeton d'appareil, titre et texte du message (18/11) | États-Unis |
 
 Les transferts vers les États-Unis reposent sur le cadre de protection des
 données entre l'UE et les États-Unis quand le prestataire y adhère, sinon
@@ -223,15 +224,29 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Durée** : rien n'est stocké ; les chiffres se recalculent à chaque
   lecture et suivent les durées des données d'origine.
 
-## 8. Rappels
+## 8. Rappels et notifications
 
 - **Finalité** : rappeler la tenue du matin, le planning, le bilan du
-  dimanche.
+  dimanche, un rendez-vous ou un soir sans tenue prévue (rappels locaux) ;
+  prévenir, app fermée, que Kodi a fini de ranger une photo (push).
 - **Base** : consentement (choix « tout », « seulement le planning » ou
-  « non », modifiable dans Réglages).
-- **Données** : aucune côté serveur. Les rappels sont programmés par le
-  téléphone lui-même (`expo-notifications`, notifications locales).
-- **Durée** : sans objet.
+  « non », modifiable dans Réglages, plus la fenêtre d'autorisation de
+  l'iPhone, qui ne s'ouvre qu'après un « oui »).
+- **Données, rappels locaux** : aucune côté serveur. Ils sont programmés par
+  le téléphone lui-même (`expo-notifications`, notifications locales).
+- **Données, push (18/11)** : le jeton d'appareil du service Expo Push (table
+  `push_tokens`, fermée au client : `user_id`, jeton, plateforme, date de
+  dernière vue). Le message (« 3 pièces sont dans ton dressing ») ne contient
+  ni prénom ni e-mail ; il peut citer le nom d'une pièce, que la personne a
+  elle-même validé dans sa fiche. Envoyé par la fonction `notifier`, une seule
+  fois par photo, et seulement avec le choix « tout » ou « seulement le
+  planning ». Le jeton est retiré avec un « non », à la sortie du compte, quand
+  Expo dit que l'app est désinstallée (`DeviceNotRegistered`) et avec le
+  compte (cascade).
+- **Destinataires** : Expo (service Push) et Apple (APNs), qui acheminent le
+  message ; aucun autre.
+- **Durée** : le jeton est renouvelé à chaque lancement ; un appareil qu'on
+  n'a pas vu depuis 6 mois perd son jeton (`menage`, `purge_push_tokens`).
 
 ## 9. Données du jour
 

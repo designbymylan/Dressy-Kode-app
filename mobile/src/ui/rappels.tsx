@@ -13,8 +13,8 @@ import { ChoiceCard } from './onboarding';
 import { Icon, type IconName } from './Icon';
 
 export const NOTIF_OPTIONS: { id: NotifChoice; title: string; note: string; icon: IconName }[] = [
-  { id: 'tout', title: 'Oui, préviens-moi', note: 'La veille de tes rendez-vous et de tes tenues prévues, et ta tenue chaque matin.', icon: 'bell' },
-  { id: 'planning', title: 'Seulement mon planning', note: 'La veille d’une tenue prévue ou d’un rendez-vous, et avant un départ.', icon: 'calendar' },
+  { id: 'tout', title: 'Oui, préviens-moi', note: 'Ta tenue chaque matin, la veille de tes rendez-vous, et quand tes pièces sont prêtes.', icon: 'bell' },
+  { id: 'planning', title: 'Seulement mon planning', note: 'La veille d’une tenue ou d’un rendez-vous, avant un départ, et quand tes pièces sont prêtes.', icon: 'calendar' },
   { id: 'non', title: 'Non merci', note: 'Rien ne s’affiche. Tu pourras changer d’avis dans les Réglages.', icon: 'close' },
 ];
 

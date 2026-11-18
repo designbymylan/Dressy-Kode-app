@@ -754,6 +754,31 @@ quater, export `notes_des_dessins`. Les entrées « Partager » de la fiche
 (icône de l'en-tête, « À une amie » sur la carte des pièces qui dorment) sont
 retirées aussi ; l'écran `Share` et sa route restent, sans entrée.
 
+**Notifications (18/11), demandées par l'utilisateur** : rappeler et prévenir, sans spammer.
+
+- **Rappels locaux** (`state/rappels.ts`, toujours sur le téléphone, aucun serveur) :
+  en plus de l'existant, « Dans deux jours : <rendez-vous> » quand il n'a pas de
+  tenue (choix « planning »), et, avec « tout », un seul coup de pouce du soir
+  « Rien de prévu pour demain » (20 h, jamais un soir où un autre rappel part déjà,
+  jamais sous trois pièces) qui demande aussi « tu l'as portée ? » si la tenue du
+  jour n'est pas notée ; le bilan du dimanche demande si un événement arrive quand
+  la semaine suivante est vide. Reprogrammés à chaque changement d'état.
+- **Push « tes pièces sont prêtes »** (service **Expo Push**, accordé le 18/11, gratuit,
+  sans clé : `EXPO_ACCESS_TOKEN` est facultatif). Migration `notifications_push` : table
+  `push_tokens` (fermée au client, `register_push_token` / `unregister_push_token`),
+  `ai_jobs.notified_at`, déclencheur `ai_jobs_notify` qui réveille la fonction
+  `notifier` (sans JWT, comme l'agent) à la fin de chaque tâche. Elle prévient **une
+  fois par photo**, quand plus aucune pièce n'est en cours, avec « tout » ou « planning »
+  seulement. Texte dans `notifier/composer.ts` (`node supabase/functions/notifier/composer.test.ts`).
+  App : `state/push.ts` (jeton suivi avec le choix, retiré à la sortie), bannière coupée
+  app ouverte (le message de l'app le dit déjà), un toucher ouvre le dressing.
+  Essai de la migration : `bash tools/test-notifications.sh` (base jetable).
+- **Reste à faire avant de livrer l'app avec le push** : mettre la politique à jour
+  (`docs/rgpd/README.md`, jeton, Expo et Apple, 6 mois, avis), un compte Apple Developer
+  et une clé APNs (EAS) pour la production ; en Expo Go le push ne marche pas sur Android.
+- **Pas encore** : les relances (pièces qui dorment, saison, féries) ; à ne pas ajouter
+  sans mesurer (`usage_funnel`) : une notification par jour au plus.
+
 **Audit du 07/11, demandé par l'utilisateur** (rapport complet dans la
 conversation) :
 
