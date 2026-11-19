@@ -246,5 +246,30 @@ do $$ begin
   raise notice 'ok    la liste des administrateurs est fermée au client';
 end $$;
 
+-- ------------------------------------------------------------ accès offert
+-- Les droits du créateur, sans être administrateur (migration 20261119180336_acces_offerts).
+insert into auth.users values ('00000000-0000-0000-0000-0000000000e1', 'offert@example.com');
+insert into public.profiles values ('00000000-0000-0000-0000-0000000000e1');
+insert into public.spaces values ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000e1');
+insert into public.space_members values ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000e1');
+select pg_temp.ok('accès offert : limité avant', public.space_plan('00000000-0000-0000-0000-0000000000f1') = 'decouverte');
+insert into public.acces_offerts (user_id, motif) values ('00000000-0000-0000-0000-0000000000e1', 'essai');
+select pg_temp.ok('accès offert : son offre est « createur »', public.space_plan('00000000-0000-0000-0000-0000000000f1') = 'createur');
+select pg_temp.ok('accès offert : aucune limite de pièces', public.piece_limit('00000000-0000-0000-0000-0000000000f1') is null);
+select pg_temp.ok('accès offert : des générations, sans compteur gratuit',
+  (select plan = 'createur' and remaining > 100000 from public.generation_sync('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-0000000000f1')));
+select pg_temp.ok('accès offert : pas administrateur', not public.space_is_creator('00000000-0000-0000-0000-0000000000f1'));
+do $$ begin
+  set local role authenticated;
+  begin
+    perform 1 from public.acces_offerts;
+    raise exception 'ECHEC : la liste des accès offerts ne doit pas être lisible par le client';
+  exception when insufficient_privilege then null; end;
+  reset role;
+  raise notice 'ok    la liste des accès offerts est fermée au client';
+end $$;
+delete from public.acces_offerts where user_id = '00000000-0000-0000-0000-0000000000e1';
+select pg_temp.ok('accès offert : retiré, l''offre redevient normale', public.space_plan('00000000-0000-0000-0000-0000000000f1') = 'decouverte');
+
 -- Le suivi de la bêta se calcule.
 select pg_temp.ok('suivi : les vues répondent', (select count(*) >= 0 from public.generation_costs) and (select gratuites >= 1 from public.generation_free_funnel));

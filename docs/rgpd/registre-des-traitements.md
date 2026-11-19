@@ -166,7 +166,9 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   prestataire, historique des paiements. Les coordonnées bancaires ne
   passent jamais par Dresskode.
 - **Tables** : `subscriptions`, `billing_customers`, `place_packs` (packs de
-  places achetés, 31/10).
+  places achetés, 31/10), `acces_offerts` (19/11 : comptes à qui l'éditeur
+  offre un accès sans limite, identifiant, motif et date ; fermée au client,
+  effacée avec le compte).
 - **Destinataires** : Supabase ; Stripe.
 - **Durée** : tant que le compte existe ; factures, 10 ans chez Stripe.
 

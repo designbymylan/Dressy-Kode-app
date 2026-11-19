@@ -418,6 +418,8 @@ le travail de Kodi, rien de plus.
 
 **Compte créateur (01/11), demandé par l'utilisateur** : `designbymylan@gmail.com` est le seul administrateur (table `admins`, fermée au client). Son offre se nomme `createur` (`space_plan`) : pièces, Kodi et générations sans limite, aucun écran d'abonnement. Il sert à tous les essais. Migration `compte_createur`.
 
+**Accès offerts (19/11), demandé par l'utilisateur** : un compte peut recevoir les droits du compte créateur (offre `createur` : pièces, Kodi et générations sans limite, aucun écran d'abonnement) **sans devenir administrateur** : table `acces_offerts` (fermée au client), lue par `space_acces_offert()` dans `space_plan()` (migration `acces_offerts`, appliquée le 19/11, version `20261119180336`). `admins` reste le seul compte de l'utilisateur (état des services d'IA, sortie de `usage_funnel`) ; un accès offert compte dans la mesure d'usage. Premier accès donné le 19/11 (l'adresse reste en base, pas dans le dépôt). Le compte se crée par une invitation (`generate_link`, type `invite`) : faute de service d'e-mail, le lien `https://dresskode-app.vercel.app/auth/callback?token_hash=<hashed_token>&type=invite&next=/mot-de-passe/nouveau` est transmis à la main ; il expire au bout d'une heure (`mailer_otp_exp`). Retirer l'accès : `delete from acces_offerts where user_id = …`. Tests : `npm run test:quotas`.
+
 **Décisions du 08/11, juridique et paiement, demandées par l'utilisateur :**
 
 - **Éditeur** : Mylan Francois, entrepreneur individuel, sous le nom commercial « Agence E-commerce Mylan Francois » (INPI). Dresskode appartient à cette agence ; c'est dit dans les conditions et la politique. Source : `mobile/src/data/legal.ts`.
