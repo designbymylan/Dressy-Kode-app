@@ -746,9 +746,20 @@ ne répondent plus chez l'intermédiaire (clés valides, modèle listé, mais
 chaque appel pend jusqu'au délai) : **toutes** les photos échouaient au
 repérage, pas seulement la sienne. Correctifs (`steps.ts`, `index.ts`) :
 
-- **Repérage** sur `gemini-3.6-flash` (21 s au banc), **secours**
-  `gemini-3.5-flash-lite` (12 s) pris si le premier ne répond pas en 45 s
-  (`GEMINI_VISION_MODEL`, `GEMINI_VISION_MODEL_SECOURS`).
+- **Repérage en chaîne de relais** (`modelesDeVision`, `surveyGemini`,
+  demandé par l'utilisateur : « ne pas s'appuyer sur un seul modèle ») : le
+  premier part ; sans réponse en 20 s (`REPERAGE_RELAIS_MS`), le suivant part
+  **en parallèle**, et ainsi de suite ; la première réponse lisible gagne, les
+  autres appels sont coupés ; une erreur lance le suivant aussitôt. Chaîne
+  par défaut (`RELAIS_VISION_DEFAUT`, remplaçable par `GEMINI_VISION_MODELS`) :
+  3.5-flash-lite, 3.5-flash, 3.1-flash-lite-preview, 3.6-flash, 3.8-flash.
+  Banc du 19/11 (21 h 17, une tenue portée, 9 modèles en parallèle) :
+  3.5-flash-lite 15 s et 5 pièces (le sac en plus), 3.1-flash-lite-preview
+  15 s, 3.5-flash 18 s, 3.8-flash 35 s (4 pièces chacun) ; 3.6-flash,
+  4-hydrogen, 4-neon, 4-carbon pendent ; 3.1-pro-preview refusé (400). Une
+  heure plus tôt, 3.6-flash répondait et 3.5-flash pendait : la
+  disponibilité chez l'intermédiaire change d'une heure à l'autre. Refaire le
+  banc (`sonde`, `vision`) avant de changer l'ordre.
 - **Panne passagère** (délai, réseau, 5xx, 429 : `AgentError.passager`) : la
   tâche repart en file au lieu d'échouer, trois passages au plus
   (`REPRISES_PASSAGERES`). Le réveil est immédiat (déclencheur

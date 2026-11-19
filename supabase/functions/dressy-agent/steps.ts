@@ -72,7 +72,7 @@ const effort = (name: string, fallback: Effort): Effort => {
  * séparée par des virgules) remplace la chaîne ; `GEMINI_VISION_MODEL` la
  * précède. Ordre : banc du 19/11 (voir CLAUDE.md, « Panne du repérage »).
  */
-export const RELAIS_VISION_DEFAUT = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite-preview', 'gemini-3.5-flash'];
+export const RELAIS_VISION_DEFAUT = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite-preview', 'gemini-3.6-flash', 'gemini-3.8-flash'];
 export function modelesDeVision(): string[] {
   const liste = (env('GEMINI_VISION_MODELS')?.split(',').map((m) => m.trim()).filter(Boolean)) ?? RELAIS_VISION_DEFAUT;
   const premier = env('GEMINI_VISION_MODEL');
