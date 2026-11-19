@@ -185,16 +185,24 @@ export function Reassure({ items }: { items: { icon: IconName; text: string }[] 
   );
 }
 
-/** Le fondu sous le bouton fixe : la page passe dessous sans se couper net. */
-export function BottomFade({ height = 130 }: { height?: number }) {
+/**
+ * Le fondu sous le bouton fixe : la page passe dessous sans se couper net.
+ * `solid` (19/11) : la hauteur, depuis le bas, qui doit rester pleine. Le bloc
+ * fixe de la boutique (case et bouton) est plus haut qu'un bouton seul : sans
+ * elle, le texte de la case se posait sur les packs qui défilaient dessous.
+ */
+export function BottomFade({ height = 130, solid }: { height?: number; solid?: number }) {
   const { c } = useTheme();
+  const FONDU = 64;
+  const h = solid ? solid + FONDU : height;
+  const plein = solid ? FONDU / h : 0.55;
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height }}>
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: h }}>
       <Svg width="100%" height="100%">
         <Defs>
           <LinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={c.paper} stopOpacity={0} />
-            <Stop offset="0.55" stopColor={c.paper} stopOpacity={1} />
+            <Stop offset={plein} stopColor={c.paper} stopOpacity={1} />
           </LinearGradient>
         </Defs>
         <Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" />

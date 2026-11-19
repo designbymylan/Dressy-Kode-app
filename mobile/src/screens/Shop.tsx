@@ -36,6 +36,10 @@ export function Shop() {
   const [pick, setPick] = useState<PlacePackId>('moyen');
   // Des places ajoutées, le droit de rétractation tombe : la case le dit avant tout paiement (08/11).
   const [accept, setAccept] = useState(false);
+  // La hauteur du bloc fixe du bas (case et bouton), mesurée : le fondu la couvre en plein,
+  // et la page peut défiler jusqu'au-dessus, quelle que soit la taille du texte.
+  const [pied, setPied] = useState(0);
+  const piedPlein = insets.bottom + 16 + pied + 12;
   const chosen = PLACE_PACKS.find((p) => p.id === pick) ?? PLACE_PACKS[0];
   // Le petit pack sert d'étalon : trois petits valent plus qu'un moyen, l'économie se lit au prix barré.
   const petit = PLACE_PACKS[0];
@@ -55,7 +59,7 @@ export function Shop() {
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-shop">
       <Ambient />
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 50, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + (limit === null ? 120 : 230), gap: 12 }}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingTop: insets.top + 50, paddingHorizontal: space.gutter, paddingBottom: limit === null ? insets.bottom + 120 : Math.max(insets.bottom + 230, piedPlein + 24), gap: 12 }}>
         <Scribble variant={1} />
         <Promise title={`Plus de place,\ndès ${price(petit.cents)}`} lead="Des places en plus pour ton dressing" note="Un achat unique : les places s’ajoutent à ton offre et restent." />
 
@@ -112,9 +116,9 @@ export function Shop() {
 
       <ScrollEdge y={y} />
       <CloseButton />
-      <BottomFade />
+      <BottomFade solid={limit !== null && pied ? piedPlein : undefined} />
       {limit !== null && (
-        <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16, gap: 10 }}>
+        <View onLayout={(e) => setPied(Math.ceil(e.nativeEvent.layout.height))} style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 16, gap: 10 }}>
           <Accord testID="shop-accept" checked={accept} onChange={setAccept}>
             Je demande l’ajout immédiat de mes places. Une fois ajoutées, je renonce à mon droit de rétractation.
           </Accord>
