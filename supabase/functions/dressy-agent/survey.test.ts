@@ -5,7 +5,7 @@
  * réponse enrobée, option refusée (400), image perdue. L'API est simulée.
  */
 import jpeg from 'jpeg-js';
-import { survey, _oublierMode } from './steps.ts';
+import { survey, passager, _oublierMode } from './steps.ts';
 
 Deno.env.set('ANTHROPIC_API_KEY', 'sk-ant-test');
 // Depuis le 17/11, le repérage est confié à Gemini par défaut : les tests de Claude le demandent.
@@ -191,4 +191,19 @@ Deno.test('Gemini seul : deux réponses illisibles, échec honnête', async () =
     await avecGemini(() => geminiRepond('Aucune idée.'));
   } catch (e) { err = e as { message?: string; detail?: string }; }
   if (!/pas pu finir/.test(err?.message ?? '') || !/illisible/.test(err?.detail ?? '')) throw new Error(`erreur inattendue : ${err?.message} / ${err?.detail}`);
+});
+
+Deno.test('Gemini seul : panne passagère (503) au premier appel, retenté une fois et réussi', async () => {
+  const { r, corpsGemini } = await avecGemini((n) => n === 1
+    ? new Response('{"error":{"code":503,"message":"overloaded"}}', { status: 503 })
+    : geminiRepond(JSON.stringify({ pieces: [piece], note: '' })));
+  if (r.pieces.length !== 1 || corpsGemini.length !== 2) throw new Error(`pièces ${r.pieces.length}, appels ${corpsGemini.length}`);
+});
+
+Deno.test('Gemini seul : panne qui dure, erreur marquée passagère (la tâche repart en file)', async () => {
+  let err: unknown;
+  try {
+    await avecGemini(() => new Response('{"error":{"code":503}}', { status: 503 }));
+  } catch (e) { err = e; }
+  if (!passager(err)) throw new Error(`erreur non passagère : ${(err as Error)?.message}`);
 });

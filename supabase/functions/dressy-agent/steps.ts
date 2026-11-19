@@ -32,10 +32,18 @@ type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
 /** Erreur dont `message` peut être montré dans le dressing ; `detail` reste dans les journaux. */
 export class AgentError extends Error {
-  constructor(message: string, readonly detail?: string) {
+  /**
+   * `passager` : une panne du fournisseur qui a des chances de passer seule
+   * (délai dépassé, réseau, 5xx, 429). La tâche est alors remise en file et
+   * retentée au passage suivant, au lieu d'échouer (19/11, voir `runOnce`).
+   */
+  constructor(message: string, readonly detail?: string, readonly passager = false) {
     super(message);
   }
 }
+
+/** Une panne passagère du fournisseur (voir `AgentError.passager`). */
+export const passager = (err: unknown): boolean => err instanceof AgentError && err.passager;
 
 /** Les messages que la personne peut lire. Aucun ne nomme un modèle ni un fournisseur. */
 export const SAY = {
@@ -109,8 +117,9 @@ const b64 = (u: Uint8Array) => Buffer.from(u).toString('base64');
 function httpError(who: string, status: number, text: string): AgentError {
   const detail = `${who} ${status} : ${text.replace(/\s+/g, ' ').slice(0, 300)}`;
   if (status === 401 || status === 403) return new AgentError(SAY.notReady, detail);
-  if (status === 429 || status === 529 || /credit|quota|billing/i.test(text)) return new AgentError(SAY.busy, detail);
-  return new AgentError(SAY.failed, detail);
+  if (status === 429 || status === 529) return new AgentError(SAY.busy, detail, true);
+  if (/credit|quota|billing/i.test(text)) return new AgentError(SAY.busy, detail);
+  return new AgentError(SAY.failed, detail, status >= 500);
 }
 
 // ---------------------------------------------------------------- Nano Banana
@@ -163,7 +172,7 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
     }
   } catch (err) {
     if (err instanceof AgentError) throw err;
-    throw new AgentError(SAY.failed, `Nano Banana injoignable : ${err instanceof Error ? err.message : err}`);
+    throw new AgentError(SAY.failed, `Nano Banana injoignable : ${err instanceof Error ? err.message : err}`, true);
   }
   if (!res.ok) throw httpError('Nano Banana', res.status, await res.text());
 
@@ -386,25 +395,40 @@ async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: stri
     ...input.sources.map((s) => ({ inline_data: { mime_type: s.mime, data: b64(s.bytes) } })),
     { text: input.texte },
   ];
+  // 19/11 : un repérage tient d'habitude en 17 à 26 s. Un appel resté pendu
+  // (80 s sans réponse, compte de Laurette) faisait échouer la photo : on coupe
+  // à 50 s et on retente une fois, puis la tâche est remise en file (`passager`).
   const call = (thinking: boolean) => fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': acces.cle! },
-    signal: AbortSignal.timeout(80_000),
+    signal: AbortSignal.timeout(50_000),
     body: JSON.stringify({
       ...(input.systeme ? { systemInstruction: { parts: [{ text: input.systeme }] } } : {}),
       contents: [{ parts }],
       generationConfig: { responseMimeType: 'application/json', ...(thinking ? { thinkingConfig: { thinkingLevel: 'minimal' } } : {}) },
     }),
   });
+  const appel = async (): Promise<Response> => {
+    let res: Response;
+    try {
+      res = await call(true);
+      // Un modèle qui refuse le niveau de réflexion : on reprend sans.
+      if (res.status === 400 && /think/i.test(await res.clone().text())) res = await call(false);
+    } catch (err) {
+      throw new AgentError(SAY.failed, `Gemini (vision) injoignable : ${err instanceof Error ? err.message : err}`, true);
+    }
+    if (!res.ok) throw httpError('Gemini (vision)', res.status, await res.text());
+    return res;
+  };
   let res: Response;
   try {
-    res = await call(true);
-    // Un modèle qui refuse le niveau de réflexion : on reprend sans.
-    if (res.status === 400 && /think/i.test(await res.clone().text())) res = await call(false);
+    res = await appel();
   } catch (err) {
-    throw new AgentError(SAY.failed, `Gemini (vision) injoignable : ${err instanceof Error ? err.message : err}`);
+    if (!passager(err)) throw err;
+    console.warn(`Gemini (vision) : nouvel essai après ${err instanceof AgentError ? err.detail : err}`);
+    await new Promise((r) => setTimeout(r, 2_000));
+    res = await appel();
   }
-  if (!res.ok) throw httpError('Gemini (vision)', res.status, await res.text());
   const body = await res.json();
   const candidate = body?.candidates?.[0];
   const blocked = body?.promptFeedback?.blockReason ?? (/SAFETY|PROHIBITED|BLOCK/.test(candidate?.finishReason ?? '') ? candidate.finishReason : null);
@@ -539,7 +563,7 @@ export async function segment(
     }
   } catch (err) {
     if (err instanceof AgentError) throw err;
-    throw new AgentError(SAY.failed, `Gemini (découpe) injoignable : ${err instanceof Error ? err.message : err}`);
+    throw new AgentError(SAY.failed, `Gemini (découpe) injoignable : ${err instanceof Error ? err.message : err}`, true);
   }
   if (!res.ok) throw httpError('Gemini (découpe)', res.status, await res.text());
 

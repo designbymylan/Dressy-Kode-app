@@ -32,7 +32,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
-import { survey, generate, checkSetup, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
+import { survey, generate, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { decouper, fatal, ouvrir } from './decoupage.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
@@ -459,6 +459,9 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
 
 // ---------------------------------------------------------------- passage
 
+/** Passages accordés à une pièce dont le fournisseur a eu une panne passagère. */
+const REPRISES_PASSAGERES = 3;
+
 async function runOnce() {
   const started = Date.now();
   const { data, error } = await db.rpc('claim_ai_job');
@@ -500,6 +503,15 @@ async function runOnce() {
     // ni de nom de modèle. Le détail part dans les journaux de la fonction.
     const message = err instanceof AgentError ? err.message : SAY.failed;
     const detail = err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : String(err);
+    // 19/11 : une panne passagère du fournisseur (délai, réseau, 5xx, 429) ne
+    // fait plus échouer la pièce. La tâche repart en file, sans message
+    // d'erreur ; le ménage de chaque minute (`ai_jobs_sweep`) la réveille une
+    // à deux minutes plus tard. Trois passages au plus, puis l'échec.
+    if (passager(err) && job.runs < REPRISES_PASSAGERES) {
+      log(`panne passagère, remise en file (passage ${job.runs}/${REPRISES_PASSAGERES}) : ${detail}`);
+      await db.from('ai_jobs').update({ status: 'queued', error: null }).eq('id', job.id);
+      return;
+    }
     log(`échec : ${detail}`);
     // Une reprise ratée laisse la pièce telle qu'elle était : seule la tâche garde la trace.
     await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false }).eq('id', job.id);
