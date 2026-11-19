@@ -760,6 +760,17 @@ repérage, pas seulement la sienne. Correctifs (`steps.ts`, `index.ts`) :
   heure plus tôt, 3.6-flash répondait et 3.5-flash pendait : la
   disponibilité chez l'intermédiaire change d'une heure à l'autre. Refaire le
   banc (`sonde`, `vision`) avant de changer l'ordre.
+- **Dessin en chaîne de relais** (`course`, `dessiner`, `modelesDeDessin`,
+  même outil que le repérage) : le modèle de l'offre d'abord, puis
+  `RELAIS_DESSIN_DEFAUT` (nano-banana-2.1, 3.1-flash-image, 3-pro-image,
+  remplaçable par `GEMINI_IMAGE_MODELS`). Le relais part après 40 s
+  (`DESSIN_RELAIS_MS`) : un dessin coûte environ 10 fois un repérage, on n'en
+  double pas un qui avance. 75 s au plus par appel. Une seule génération est
+  prise au compteur, quel que soit le nombre de relais ; le modèle qui a
+  dessiné est noté (`generation_log`, journal de la pièce). Banc du 19/11
+  (un pull à logo, 1K, en parallèle) : nano-banana-2.1 et 3.1-flash-image
+  30 s, 3-pro-image 47 s, les trois fidèles (texte et logo justes), 0,17 $.
+  Tests : `deno test -A dessin.test.ts`.
 - **Panne passagère** (délai, réseau, 5xx, 429 : `AgentError.passager`) : la
   tâche repart en file au lieu d'échouer, trois passages au plus
   (`REPRISES_PASSAGERES`). Le réveil est immédiat (déclencheur
