@@ -771,14 +771,29 @@ repérage, pas seulement la sienne. Correctifs (`steps.ts`, `index.ts`) :
   (un pull à logo, 1K, en parallèle) : nano-banana-2.1 et 3.1-flash-image
   30 s, 3-pro-image 47 s, les trois fidèles (texte et logo justes), 0,17 $.
   Tests : `deno test -A dessin.test.ts`.
+- **Kodi en chaîne de relais** (`kode/claude.ts`, `modelesDeKodi`) : Sonnet 5
+  (`MODEL`) d'abord ; sans réponse en 25 s (`KODE_RELAIS_MS`), Opus 5.5 part
+  en parallèle, puis Sonnet 5.5 et Opus 5 (`RELAIS_KODI_DEFAUT`, remplaçable
+  par `KODE_MODELS`) ; Haiku 5.5 écarté (3 échecs sur 10 au comparatif du
+  17/11). Un appel qui nomme son modèle (le banc) n'a pas de relais. Le
+  modèle qui a répondu est gardé dans `kode_messages.meta.model`. La course
+  est un seul module, `_shared/relais.ts`, partagé avec l'agent photo.
+  Essai du 19/11 au banc (scénario Q1, sans juge) : les quatre modèles
+  répondent chez l'intermédiaire ; ce soir-là il était lent (Sonnet 5.5
+  14 s, Opus 5.5 54 s, Sonnet 5 98 s et Opus 5 112 s pour la réponse
+  complète, relance du contrôle comprise ; la chaîne 46 s). Quand
+  l'intermédiaire est lent, le relais part souvent : une question peut
+  alors coûter deux réponses (0,012 $ + 0,025 $). Tests : `deno test -A
+  claude.test.ts`.
 - **Panne passagère** (délai, réseau, 5xx, 429 : `AgentError.passager`) : la
   tâche repart en file au lieu d'échouer, trois passages au plus
   (`REPRISES_PASSAGERES`). Le réveil est immédiat (déclencheur
   `ai_jobs_wake_on_requeue`), donc les trois passages s'enchaînent.
 - **Banc** : `sonde` accepte `vision: [modèles]` et `reperage: false` pour
   essayer chaque modèle de repérage sur une image de test.
-- Une clé Google directe (`GOOGLE_API_KEY`) sortirait le repérage de
-  l'intermédiaire, qui reste le point fragile.
+- Une clé Google directe (`GOOGLE_API_KEY`) et une clé Anthropic directe
+  sortiraient l'IA de l'intermédiaire, qui reste le point fragile : s'il tombe
+  en entier, toutes les chaînes tombent avec lui.
 
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
