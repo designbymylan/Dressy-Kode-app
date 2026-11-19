@@ -13,7 +13,7 @@
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
  * avec l'essai.
  */
-import { survey, segment, generate, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
+import { survey, surveyGemini, segment, generate, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { fitOnCanvas } from './normalize.ts';
 import { downscale } from './cutout.ts';
@@ -93,7 +93,8 @@ async function essaiDecoupe(b: Banc, p: Record<string, unknown>): Promise<Rendu>
 type Sonde = { nom: string; ok: boolean; ms: number; detail: string; donnees?: unknown };
 
 /**
- * Paramètres : { photo, decoupe?: ['modele:reflexion', …], dessin?: modèle d'image (coûte une image), vecteurs?: boolean }
+ * Paramètres : { photo, vision?: [modèles de repérage essayés un à un], reperage?: false (s'arrête là),
+ *   decoupe?: ['modele:reflexion', …], dessin?: modèle d'image (coûte une image), vecteurs?: boolean }
  */
 async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   const out: Sonde[] = [];
@@ -111,6 +112,14 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   };
 
   const img = await b.lire(String(p.photo ?? ''));
+  // `vision: ['gemini-3.6-flash', …]` (19/11) : chaque modèle de repérage, seul, sans secours.
+  for (const model of (p.vision as string[] | undefined) ?? []) {
+    await essai(`vision ${model}`, async () => {
+      const r = await surveyGemini({ sources: [img], hint: '', gender: null }, [model]);
+      return { ok: r.pieces.length > 0, detail: `${r.pieces.length} pièce(s) : ${r.pieces.map((x) => x.name).join(', ')}`, cout: coutRepere(r.usage) };
+    });
+  }
+  if (p.reperage === false) return { result: { intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() }, modeles: MODELS, sondes: out }, cost };
   let cible: Awaited<ReturnType<typeof survey>>['pieces'][number] | null = null;
   await essai(`reperage ${fournisseurDuReperage() === 'gemini' ? MODELS.vision : MODELS.survey}`, async () => {
     const r = await survey({ sources: [img], hint: '', gender: null });

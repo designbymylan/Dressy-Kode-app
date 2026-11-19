@@ -193,11 +193,12 @@ Deno.test('Gemini seul : deux réponses illisibles, échec honnête', async () =
   if (!/pas pu finir/.test(err?.message ?? '') || !/illisible/.test(err?.detail ?? '')) throw new Error(`erreur inattendue : ${err?.message} / ${err?.detail}`);
 });
 
-Deno.test('Gemini seul : panne passagère (503) au premier appel, retenté une fois et réussi', async () => {
+Deno.test('Gemini seul : le modèle de repérage ne répond pas (503), le secours prend le relais', async () => {
   const { r, corpsGemini } = await avecGemini((n) => n === 1
     ? new Response('{"error":{"code":503,"message":"overloaded"}}', { status: 503 })
     : geminiRepond(JSON.stringify({ pieces: [piece], note: '' })));
   if (r.pieces.length !== 1 || corpsGemini.length !== 2) throw new Error(`pièces ${r.pieces.length}, appels ${corpsGemini.length}`);
+  if (r.modele !== 'gemini-3.6-flash') throw new Error(`modèle du secours : ${r.modele}`);
 });
 
 Deno.test('Gemini seul : panne qui dure, erreur marquée passagère (la tâche repart en file)', async () => {
