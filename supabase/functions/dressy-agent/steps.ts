@@ -24,6 +24,7 @@ import {
 } from './prompts.ts';
 import { parseSegments, type Segment } from './segment.ts';
 import { alleger, sniffMime } from './codec.ts';
+import { course as courseRelais } from '../_shared/relais.ts';
 import { accesGoogle, anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
@@ -80,55 +81,6 @@ export function modelesDeVision(): string[] {
 }
 /** Le délai avant de lancer le relais suivant, en parallèle (20 s par défaut). */
 const relaisMs = (): number => Math.max(5_000, Number(env('REPERAGE_RELAIS_MS') ?? 20_000) || 20_000);
-
-/**
- * Une course de relais (19/11) : le premier modèle part ; sans réponse après
- * `delai`, le suivant part EN MÊME TEMPS, et ainsi de suite. La première
- * réussite gagne et les appels en cours sont coupés (`signal`). Une erreur
- * lance le suivant aussitôt. Tout tombe : une panne passagère parmi les
- * erreurs est rendue en priorité (la tâche repartira en file).
- */
-export function course<T>(
-  quoi: string,
-  modeles: string[],
-  essai: (model: string, signal: AbortSignal) => Promise<T>,
-  delai: number,
-): Promise<T> {
-  const arret = new AbortController();
-  return new Promise((resolve, reject) => {
-    const erreurs: unknown[] = [];
-    let suivant = 0;
-    let enCours = 0;
-    let fini = false;
-    let minuterie: ReturnType<typeof setTimeout> | undefined;
-    const finir = () => { fini = true; clearTimeout(minuterie); arret.abort(); };
-    const lancer = () => {
-      if (fini || suivant >= modeles.length) return;
-      const model = modeles[suivant++];
-      enCours++;
-      clearTimeout(minuterie);
-      if (suivant < modeles.length) minuterie = setTimeout(() => {
-        console.warn(`${quoi} : ${model} n'a pas répondu en ${delai} ms, relais ${modeles[suivant]} lancé en parallèle`);
-        lancer();
-      }, delai);
-      essai(model, arret.signal).then((r) => {
-        if (fini) return;
-        finir();
-        resolve(r);
-      }, (err) => {
-        enCours--;
-        if (fini) return;
-        erreurs.push(err);
-        console.warn(`${quoi} : ${model} en échec (${err instanceof AgentError ? err.detail ?? err.message : err})`);
-        if (suivant < modeles.length) return lancer();
-        if (enCours > 0) return;
-        finir();
-        reject(erreurs.find(passager) ?? erreurs[0]);
-      });
-    };
-    lancer();
-  });
-}
 
 /**
  * La chaîne de relais du dessin (19/11) : le modèle de l'offre d'abord
@@ -292,6 +244,11 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
 /** Le dessin par la chaîne de relais (`modelesDeDessin`) ; le modèle qui a dessiné est rendu. */
 export const dessiner = (prompt: string, sources: Img[], opts: { model: string; size?: '1K' | '2K'; search?: boolean }, delai = relaisDessinMs()) =>
   course('dessin', modelesDeDessin(opts.model), (model, signal) => generate(prompt, sources, { ...opts, model, signal }), delai);
+
+/** La course partagée (`_shared/relais.ts`) ; une panne passagère est rendue en priorité (la tâche repart en file). */
+function course<T>(quoi: string, modeles: string[], essai: (model: string, signal: AbortSignal) => Promise<T>, delai: number): Promise<T> {
+  return courseRelais(quoi, modeles, essai, delai, passager);
+}
 
 // ---------------------------------------------------------------- Claude
 

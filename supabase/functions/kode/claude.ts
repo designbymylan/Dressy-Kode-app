@@ -10,10 +10,25 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { anthropicBase, anthropicViaIntermediaire, lireCle } from '../_shared/fournisseurs.ts';
+import { course, listeDeModeles } from '../_shared/relais.ts';
 
 // Sonnet 5 depuis le 17/11 (décision de l'utilisateur, comparatif au banc : 4,20 de justesse contre 4,11 pour
 // Opus 5, 13 s contre 29 s, 0,033 $ contre 0,060 $ la réponse). `KODE_MODEL` le remplace.
 export const MODEL = Deno.env.get('KODE_MODEL')?.trim() || 'claude-sonnet-5';
+
+/**
+ * La chaîne de relais de Kodi (19/11, demandée par l'utilisateur après la
+ * panne du repérage) : `MODEL` d'abord ; sans réponse en `KODE_RELAIS_MS`
+ * (25 s, une réponse prend 13 à 17 s), le suivant part en parallèle ; la
+ * première réponse gagne. Ordre tiré du comparatif du 17/11 : Opus 5.5 (4,40
+ * de justesse, 17 s), Sonnet 5.5, Opus 5. Haiku 5.5 écarté (3 échecs sur 10).
+ * `KODE_MODELS` remplace la liste. Un appel qui nomme son modèle (le banc)
+ * n'a pas de relais : il mesure ce modèle-là.
+ */
+export const RELAIS_KODI_DEFAUT = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-5'];
+export const modelesDeKodi = (): string[] =>
+  [...new Set([MODEL, ...listeDeModeles(Deno.env.get('KODE_MODELS')?.trim() || undefined, RELAIS_KODI_DEFAUT)])].slice(0, 4);
+const relaisMs = (): number => Math.max(8_000, Number(Deno.env.get('KODE_RELAIS_MS') ?? 25_000) || 25_000);
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
@@ -61,6 +76,8 @@ export type Appel = {
   timeout?: number;
   retries?: number;
   maxTokens?: number;
+  /** Délai avant le relais suivant (essais). */
+  relais?: number;
 };
 
 const anthropic = (apiKey: string, timeout: number, retries: number) =>
@@ -95,13 +112,18 @@ const estJson = (t: string) => {
  * casse le format malgré tout, il est coupé jusqu'au prochain démarrage et
  * la question repart sans lui.
  */
-export async function askClaude(system: string, context: string, turns: Turn[], schema: Schema, opts: Appel = {}): Promise<Reponse> {
+export function askClaude(system: string, context: string, turns: Turn[], schema: Schema, opts: Appel = {}): Promise<Reponse> {
   const apiKey = lireCle('ANTHROPIC_API_KEY');
   if (!apiKey) {
     console.error('ANTHROPIC_API_KEY absent des secrets Supabase');
-    throw new KodeError('Kodi n’est pas encore disponible. Réessaie un peu plus tard.', 503);
+    return Promise.reject(new KodeError('Kodi n’est pas encore disponible. Réessaie un peu plus tard.', 503));
   }
-  const model = opts.model ?? MODEL;
+  const modeles = opts.model ? [opts.model] : modelesDeKodi();
+  return course('Kodi', modeles, (model, signal) => askUnModele(apiKey, model, signal, system, context, turns, schema, opts), opts.relais ?? relaisMs());
+}
+
+/** Un maillon de la chaîne : un modèle, coupé par `signal` quand un autre a déjà répondu. */
+async function askUnModele(apiKey: string, model: string, signal: AbortSignal, system: string, context: string, turns: Turn[], schema: Schema, opts: Appel): Promise<Reponse> {
   const c = anthropic(apiKey, opts.timeout ?? 60_000, opts.retries ?? 1);
   // Derrière un intermédiaire (essai du 17/11) : le format JSON strict est ignoré en silence et la
   // réponse arrive en bloc de code. Le schéma passe alors dans la consigne, l'effort reste réglé,
@@ -118,7 +140,7 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
     messages: turns,
     output_config: dansLaConsigne ? { effort } : { effort, format: { type: 'json_schema' as const, schema } },
   };
-  const standard = async () => (await c.messages.create(body)) as unknown as Reponse;
+  const standard = async () => (await c.messages.create(body, { signal })) as unknown as Reponse;
   // Sans le format strict (intermédiaire), 1 réponse sur 20 environ est un JSON invalide (essai du 17/11,
   // 2 sur 40) : on redemande une fois avant d'échouer.
   const standardLisible = async () => {
@@ -132,7 +154,7 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
   // Si les filtres du modèle refusent la question, l'API la rejoue sur le
   // modèle de repli recommandé au lieu de la perdre.
   const avecLeRepli = async () =>
-    (await c.beta.messages.create({ ...body, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' })) as unknown as Reponse;
+    (await c.beta.messages.create({ ...body, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, { signal })) as unknown as Reponse;
 
   const repli = avecRepli(model) && !repliRefuse && !anthropicViaIntermediaire();
   try {
@@ -156,6 +178,8 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
     }
     return res;
   } catch (err) {
+    // Coupé parce qu'un autre relais a répondu : rien à dire.
+    if (signal.aborted) throw err;
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
       console.error('Claude refuse la clé :', err.message);
       throw new KodeError('Kodi n’est pas disponible pour le moment. Réessaie un peu plus tard.', 503);
@@ -168,7 +192,7 @@ export async function askClaude(system: string, context: string, turns: Turn[], 
     }
     if (err instanceof Anthropic.APIError) {
       // Un crédit épuisé arrive ici (400) : le détail part dans les journaux.
-      console.error(`Claude ${err.status} :`, err.message);
+      console.error(`Claude ${model} ${err.status} :`, err.message);
       throw new KodeError('Kodi n’a pas pu répondre. Réessaie dans un moment.', 502);
     }
     throw err;

@@ -4,7 +4,7 @@
  * La lecture de la réponse de Kodi derrière un intermédiaire (17/11) : le format
  * JSON strict est ignoré, la réponse arrive en bloc de code ou entourée de texte.
  */
-import { lireJson, readJson, formatDansLaConsigne, askClaude, KodeError, type Reponse } from './claude.ts';
+import { lireJson, readJson, formatDansLaConsigne, askClaude, KodeError, MODEL, RELAIS_KODI_DEFAUT, modelesDeKodi, type Reponse } from './claude.ts';
 
 const reponse = (text: string, stop = 'end_turn'): Reponse => ({
   model: 'claude-opus-5', stop_reason: stop, content: [{ type: 'text', text }], usage: {} as Reponse['usage'],
@@ -83,4 +83,62 @@ Deno.test('JSON invalide deux fois : deux appels au plus, puis l’erreur honnê
   let err: unknown;
   try { readJson(res); } catch (e) { err = e; }
   if (vus.length !== 2 || !(err instanceof KodeError)) throw new Error(`appels ${vus.length}`);
+});
+
+// ---------------------------------------------------------------- chaîne de relais (19/11)
+
+const reponseDe = (model: string) => new Response(JSON.stringify({
+  id: 'msg_1', type: 'message', role: 'assistant', model, stop_reason: 'end_turn', stop_sequence: null,
+  content: [{ type: 'text', text: '{"reponse":"ok"}' }], usage: { input_tokens: 10, output_tokens: 10 },
+}), { status: 200, headers: { 'content-type': 'application/json' } });
+
+async function avecChaine(aiguille: (model: string, init?: RequestInit) => Response | Promise<Response>, opts: { model?: string } = {}) {
+  Deno.env.set('ANTHROPIC_API_KEY', 'sk-test');
+  const vus: string[] = [];
+  const avant = globalThis.fetch;
+  globalThis.fetch = ((_u: unknown, init?: RequestInit) => {
+    const model = JSON.parse(String(init?.body)).model;
+    vus.push(model);
+    return Promise.resolve(aiguille(model, init));
+  }) as typeof fetch;
+  try {
+    const res = await askClaude('Consigne.', 'Contexte.', [{ role: 'user', content: 'Salut' }], { type: 'object', required: ['reponse'] }, { relais: 50, retries: 0, ...opts });
+    return { res, vus };
+  } finally {
+    globalThis.fetch = avant;
+  }
+}
+const pend = (init?: RequestInit) => new Promise<Response>((_res, rej) => init?.signal?.addEventListener('abort', () => rej(new DOMException('abandon', 'AbortError'))));
+
+Deno.test('Kodi : le modèle principal pend, le relais part en parallèle et répond', async () => {
+  const { res, vus } = await avecChaine((model, init) => model === MODEL ? pend(init) : reponseDe(model));
+  if (res.model !== RELAIS_KODI_DEFAUT[0] || vus[0] !== MODEL) throw new Error(`servi par ${res.model}, appels ${vus.join(', ')}`);
+});
+
+Deno.test('Kodi : le modèle principal tombe (529), le relais part aussitôt', async () => {
+  const { res } = await avecChaine((model) => model === MODEL ? new Response('{"type":"error","error":{"type":"overloaded_error","message":"surchargé"}}', { status: 529 }) : reponseDe(model));
+  if (res.model !== RELAIS_KODI_DEFAUT[0]) throw new Error(`servi par ${res.model}`);
+});
+
+Deno.test('Kodi : toute la chaîne tombe, un message lisible (KodeError)', async () => {
+  let err: unknown;
+  try {
+    await avecChaine(() => new Response('{"type":"error","error":{"type":"api_error","message":"panne"}}', { status: 500 }));
+  } catch (e) { err = e; }
+  if (!(err instanceof KodeError)) throw new Error(`erreur inattendue : ${err}`);
+});
+
+Deno.test('Kodi : un appel qui nomme son modèle (le banc) n’a pas de relais', async () => {
+  let err: unknown;
+  let vus: string[] = [];
+  try {
+    await avecChaine((model) => { vus.push(model); return new Response('{"type":"error","error":{"type":"api_error","message":"panne"}}', { status: 500 }); }, { model: 'claude-opus-5-5' });
+  } catch (e) { err = e; }
+  vus = [...new Set(vus)];
+  if (!(err instanceof KodeError) || vus.join() !== 'claude-opus-5-5') throw new Error(`modèles appelés : ${vus.join(', ')}`);
+});
+
+Deno.test('Kodi : la chaîne commence par le modèle principal, sans doublon', () => {
+  const c = modelesDeKodi();
+  if (c[0] !== MODEL || new Set(c).size !== c.length || c.length < 3) throw new Error(c.join(', '));
 });
