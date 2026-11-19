@@ -740,6 +740,24 @@ demandé par l'utilisateur.** Décisions et état :
 - **Décision du 18/11 : le dessin revient par défaut, demandée par l'utilisateur.** Constat en base : toutes les découpes des 17 et 18/11 étaient faites par `contraste` (aucun masque derrière l'intermédiaire), donc gardaient peau, sol et décor, et les contrôles les validaient. Désormais une pièce qui arrive est d'abord **redessinée seule sur fond uni par Nano Banana puis détourée** (`redraw(..., { offert: true })`, `index.ts`) : **offert, sans prendre de génération au compteur** (coût noté par `generation_note`) ; la découpe dans la photo ne sert plus que de repli si le dessin échoue. « Image propre » et « Rendu incorrect » inchangés. `DESSIN_PAR_DEFAUT=0` (secret) rend la découpe seule. Coût : environ 0,03 $ (Lite 1K, Découverte) à 0,05 $ (2K) par pièce, à surveiller dans `generation_costs`. Une clé `GOOGLE_API_KEY` directe rendrait les vrais masques (à essayer ensuite).
 - **Fonction temporaire `banc-dessin`** (`supabase/functions/banc-dessin/`, déployée sans JWT, jeton à usage unique) : essais de consignes, de découpe et de « Claude voit-il la photo ». À supprimer depuis Supabase quand les essais sont finis.
 
+**Panne du repérage (19/11), signalée par l'utilisateur sur le compte de
+Laurette** : depuis le 18/11 après-midi, `gemini-3.5-flash` (et 3.7-flash)
+ne répondent plus chez l'intermédiaire (clés valides, modèle listé, mais
+chaque appel pend jusqu'au délai) : **toutes** les photos échouaient au
+repérage, pas seulement la sienne. Correctifs (`steps.ts`, `index.ts`) :
+
+- **Repérage** sur `gemini-3.6-flash` (21 s au banc), **secours**
+  `gemini-3.5-flash-lite` (12 s) pris si le premier ne répond pas en 45 s
+  (`GEMINI_VISION_MODEL`, `GEMINI_VISION_MODEL_SECOURS`).
+- **Panne passagère** (délai, réseau, 5xx, 429 : `AgentError.passager`) : la
+  tâche repart en file au lieu d'échouer, trois passages au plus
+  (`REPRISES_PASSAGERES`). Le réveil est immédiat (déclencheur
+  `ai_jobs_wake_on_requeue`), donc les trois passages s'enchaînent.
+- **Banc** : `sonde` accepte `vision: [modèles]` et `reperage: false` pour
+  essayer chaque modèle de repérage sur une image de test.
+- Une clé Google directe (`GOOGLE_API_KEY`) sortirait le repérage de
+  l'intermédiaire, qui reste le point fragile.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu

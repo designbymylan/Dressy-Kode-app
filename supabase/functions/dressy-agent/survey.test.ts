@@ -198,7 +198,7 @@ Deno.test('Gemini seul : le modèle de repérage ne répond pas (503), le secour
     ? new Response('{"error":{"code":503,"message":"overloaded"}}', { status: 503 })
     : geminiRepond(JSON.stringify({ pieces: [piece], note: '' })));
   if (r.pieces.length !== 1 || corpsGemini.length !== 2) throw new Error(`pièces ${r.pieces.length}, appels ${corpsGemini.length}`);
-  if (r.modele !== 'gemini-3.6-flash') throw new Error(`modèle du secours : ${r.modele}`);
+  if (r.modele !== 'gemini-3.5-flash-lite') throw new Error(`modèle du secours : ${r.modele}`);
 });
 
 Deno.test('Gemini seul : panne qui dure, erreur marquée passagère (la tâche repart en file)', async () => {

@@ -67,11 +67,12 @@ export const MODELS = {
   // l'image ne dépend plus de lui puisque la pièce est découpée dans la photo.
   survey: env('CLAUDE_SURVEY_MODEL') ?? 'claude-sonnet-5',
   // Le repérage par Gemini seul (17/11) : voit les photos par un intermédiaire, ce que Claude ne fait pas.
-  vision: env('GEMINI_VISION_MODEL') ?? 'gemini-3.5-flash',
-  // Le secours du repérage (19/11) : pris quand le premier ne répond pas
-  // (délai, 5xx, 429). Le 18/11, gemini-3.5-flash s'est mis à pendre chez
-  // l'intermédiaire et chaque photo échouait.
-  visionSecours: env('GEMINI_VISION_MODEL_SECOURS') ?? 'gemini-3.6-flash',
+  // 19/11 : gemini-3.5-flash (et 3.7-flash) pendent chez l'intermédiaire
+  // depuis le 18/11 après-midi, chaque photo échouait. Banc du 19/11 sur une
+  // image de test : 3.6-flash répond en 21 s, 3.5-flash-lite en 12 s.
+  vision: env('GEMINI_VISION_MODEL') ?? 'gemini-3.6-flash',
+  // Le secours, pris quand le premier ne répond pas (délai, 5xx, 429).
+  visionSecours: env('GEMINI_VISION_MODEL_SECOURS') ?? 'gemini-3.5-flash-lite',
   segment: env('GEMINI_SEGMENT_MODEL') ?? 'gemini-2.5-flash',
   segmentStrong: env('GEMINI_SEGMENT_MODEL_STRONG') ?? 'gemini-2.5-pro',
   // Le modèle complet en 2K pour les abonnées, en 1K pour le gratuit (quota.ts).
