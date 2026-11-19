@@ -62,17 +62,33 @@ const effort = (name: string, fallback: Effort): Effort => {
   return v && ['low', 'medium', 'high', 'xhigh', 'max'].includes(v) ? v as Effort : fallback;
 };
 
+/**
+ * La chaîne de relais du repérage (19/11). Le 18/11, gemini-3.5-flash (puis
+ * 3.7-flash) s'est mis à pendre chez l'intermédiaire : un seul modèle, et
+ * toutes les photos échouaient. Le repérage part sur le premier ; s'il n'a
+ * pas répondu après `REPERAGE_RELAIS_MS`, le suivant part EN MÊME TEMPS, et
+ * ainsi de suite ; la première réponse lisible gagne, les autres sont coupées.
+ * Une erreur fait partir le suivant aussitôt. `GEMINI_VISION_MODELS` (liste
+ * séparée par des virgules) remplace la chaîne ; `GEMINI_VISION_MODEL` la
+ * précède. Ordre : banc du 19/11 (voir CLAUDE.md, « Panne du repérage »).
+ */
+export const RELAIS_VISION_DEFAUT = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite-preview', 'gemini-3.5-flash'];
+export function modelesDeVision(): string[] {
+  const liste = (env('GEMINI_VISION_MODELS')?.split(',').map((m) => m.trim()).filter(Boolean)) ?? RELAIS_VISION_DEFAUT;
+  const premier = env('GEMINI_VISION_MODEL');
+  return [...new Set(premier ? [premier, ...liste] : liste)].slice(0, 5);
+}
+/** Le délai avant de lancer le relais suivant, en parallèle (20 s par défaut). */
+const relaisMs = (): number => Math.max(5_000, Number(env('REPERAGE_RELAIS_MS') ?? 20_000) || 20_000);
+
 export const MODELS = {
   // Sonnet 5 en effort bas : le repérage doit être rapide, la qualité de
   // l'image ne dépend plus de lui puisque la pièce est découpée dans la photo.
   survey: env('CLAUDE_SURVEY_MODEL') ?? 'claude-sonnet-5',
   // Le repérage par Gemini seul (17/11) : voit les photos par un intermédiaire, ce que Claude ne fait pas.
-  // 19/11 : gemini-3.5-flash (et 3.7-flash) pendent chez l'intermédiaire
-  // depuis le 18/11 après-midi, chaque photo échouait. Banc du 19/11 sur une
-  // image de test : 3.6-flash répond en 21 s, 3.5-flash-lite en 12 s.
-  vision: env('GEMINI_VISION_MODEL') ?? 'gemini-3.6-flash',
-  // Le secours, pris quand le premier ne répond pas (délai, 5xx, 429).
-  visionSecours: env('GEMINI_VISION_MODEL_SECOURS') ?? 'gemini-3.5-flash-lite',
+  // Le repérage passe par une chaîne de relais (19/11, `modelesDeVision`) :
+  // `vision` est le premier maillon, gardé pour le banc et les journaux.
+  vision: modelesDeVision()[0],
   segment: env('GEMINI_SEGMENT_MODEL') ?? 'gemini-2.5-flash',
   segmentStrong: env('GEMINI_SEGMENT_MODEL_STRONG') ?? 'gemini-2.5-pro',
   // Le modèle complet en 2K pour les abonnées, en 1K pour le gratuit (quota.ts).
@@ -391,7 +407,7 @@ export const claudeVoitLesImages = (): boolean => !anthropicViaIntermediaire() |
  * réflexion minimal. Même clé et même adresse que la découpe. Sert au relais
  * (observations) et au repérage par Gemini seul.
  */
-async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: string; model?: string }): Promise<{ texte: string; usage: Usage; model: string }> {
+async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: string; model?: string; signal?: AbortSignal }): Promise<{ texte: string; usage: Usage; model: string }> {
   const acces = accesGoogle();
   if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
   const model = input.model ?? MODELS.vision;
@@ -400,13 +416,13 @@ async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: stri
     ...input.sources.map((s) => ({ inline_data: { mime_type: s.mime, data: b64(s.bytes) } })),
     { text: input.texte },
   ];
-  // 19/11 : un repérage tient d'habitude en 17 à 26 s. Un appel resté pendu
-  // (80 s sans réponse) faisait échouer la photo : on coupe à 45 s, le
-  // repérage passe au modèle de secours, puis la tâche repart en file (`passager`).
+  // 19/11 : un repérage tient d'habitude en 12 à 26 s. Un appel resté pendu
+  // (80 s sans réponse) faisait échouer la photo : on coupe à 45 s (ou plus
+  // tôt quand un relais a déjà répondu, `input.signal`).
   const call = (thinking: boolean) => fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': acces.cle! },
-    signal: AbortSignal.timeout(45_000),
+    signal: input.signal ? AbortSignal.any([AbortSignal.timeout(45_000), input.signal]) : AbortSignal.timeout(45_000),
     body: JSON.stringify({
       ...(input.systeme ? { systemInstruction: { parts: [{ text: input.systeme }] } } : {}),
       contents: [{ parts }],
@@ -452,33 +468,63 @@ const jetonsGemini = (u: Usage): Usage => {
  * types et saisons que le relais Gemini puis Claude, trois fois moins cher et
  * deux fois plus rapide. Une réponse illisible est redemandée une fois.
  */
-export async function surveyGemini(
+export function surveyGemini(
   input: { sources: Img[]; hint: string; gender: string | null },
-  modeles: string[] = [...new Set([MODELS.vision, MODELS.visionSecours])],
+  modeles: string[] = modelesDeVision(),
+  opts: { relais?: number } = {},
 ): Promise<SurveyResult> {
   const systeme = `${SURVEY_SYSTEM}\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(SURVEY_SCHEMA)}`;
   const valide = (d: unknown) => Array.isArray(d) || Array.isArray((d as { pieces?: unknown })?.pieces);
-  let panne: unknown;
-  for (const [i, model] of modeles.entries()) {
+  const course = new AbortController();
+  const delai = opts.relais ?? relaisMs();
+
+  // Un maillon : un modèle, une réponse illisible redemandée une fois.
+  const essai = async (model: string): Promise<SurveyResult> => {
     let dernier = '';
-    try {
-      for (let essai = 0; essai < 2; essai++) {
-        const r = await geminiVoit({ sources: input.sources, texte: surveyUserText(input), systeme, model });
-        const data = lireJson(r.texte);
-        if (data !== undefined && valide(data)) return lireSurvey(data, jetonsGemini(r.usage), 'google', r.model);
-        dernier = r.texte.replace(/\s+/g, ' ').slice(0, 160);
-      }
-    } catch (err) {
-      // Un modèle qui ne répond pas : on passe au secours. Toute autre erreur
-      // (clé refusée, photo refusée) vaudrait aussi pour lui : on s'arrête.
-      if (!passager(err)) throw err;
-      panne = err;
-      if (i < modeles.length - 1) console.warn(`repérage : ${model} ne répond pas (${err instanceof AgentError ? err.detail : err}), passage à ${modeles[i + 1]}`);
-      continue;
+    for (let fois = 0; fois < 2; fois++) {
+      const r = await geminiVoit({ sources: input.sources, texte: surveyUserText(input), systeme, model, signal: course.signal });
+      const data = lireJson(r.texte);
+      if (data !== undefined && valide(data)) return lireSurvey(data, jetonsGemini(r.usage), 'google', r.model);
+      dernier = r.texte.replace(/\s+/g, ' ').slice(0, 160);
     }
     throw new AgentError(SAY.failed, `Gemini ${model} : JSON illisible (${dernier})`);
-  }
-  throw panne;
+  };
+
+  return new Promise((resolve, reject) => {
+    const erreurs: unknown[] = [];
+    let suivant = 0;
+    let enCours = 0;
+    let fini = false;
+    let minuterie: ReturnType<typeof setTimeout> | undefined;
+    const finir = () => { fini = true; clearTimeout(minuterie); course.abort(); };
+    const lancer = () => {
+      if (fini || suivant >= modeles.length) return;
+      const model = modeles[suivant++];
+      enCours++;
+      clearTimeout(minuterie);
+      // Pas de réponse dans le délai : le relais suivant part en parallèle.
+      if (suivant < modeles.length) minuterie = setTimeout(() => {
+        console.warn(`repérage : ${model} n'a pas répondu en ${delai} ms, relais ${modeles[suivant]} lancé en parallèle`);
+        lancer();
+      }, delai);
+      essai(model).then((r) => {
+        if (fini) return;
+        finir();
+        resolve(r);
+      }, (err) => {
+        enCours--;
+        if (fini) return;
+        erreurs.push(err);
+        console.warn(`repérage : ${model} en échec (${err instanceof AgentError ? err.detail ?? err.message : err})`);
+        if (suivant < modeles.length) return lancer();
+        if (enCours > 0) return;
+        finir();
+        // Une panne passagère parmi les échecs : la tâche repartira en file.
+        reject(erreurs.find(passager) ?? erreurs[0]);
+      });
+    };
+    lancer();
+  });
 }
 
 type SurveyResult = { pieces: Target[]; note: string; usage: Usage; fournisseur: 'google' | 'anthropic'; modele: string };

@@ -5,7 +5,7 @@
  * réponse enrobée, option refusée (400), image perdue. L'API est simulée.
  */
 import jpeg from 'jpeg-js';
-import { survey, passager, _oublierMode } from './steps.ts';
+import { survey, surveyGemini, passager, _oublierMode, RELAIS_VISION_DEFAUT } from './steps.ts';
 
 Deno.env.set('ANTHROPIC_API_KEY', 'sk-ant-test');
 // Depuis le 17/11, le repérage est confié à Gemini par défaut : les tests de Claude le demandent.
@@ -23,14 +23,14 @@ const photo = { bytes: new Uint8Array(jpeg.encode({ data: new Uint8Array(w * h *
 // Le client du SDK garde le fetch qu'il voit à sa création : un seul faux fetch, aiguillé par test.
 let aiguille: (body: Record<string, unknown>) => Response = () => message('');
 let corps: Record<string, unknown>[] = [];
-let aiguilleGemini: (body: Record<string, unknown>) => Response = () => geminiRepond('[]');
+let aiguilleGemini: (body: Record<string, unknown>, url: string, init?: RequestInit) => Response | Promise<Response> = () => geminiRepond('[]');
 let corpsGemini: Record<string, unknown>[] = [];
 globalThis.fetch = ((u: unknown, init?: RequestInit) => {
   const b = JSON.parse(String(init?.body));
   // Gemini (observation du relais) : même faux fetch, une autre réponse.
   if (String(u).includes(':generateContent')) {
     corpsGemini.push(b);
-    return Promise.resolve(aiguilleGemini(b));
+    return Promise.resolve(aiguilleGemini(b, String(u), init));
   }
   corps.push(b);
   return Promise.resolve(aiguille(b));
@@ -193,18 +193,40 @@ Deno.test('Gemini seul : deux réponses illisibles, échec honnête', async () =
   if (!/pas pu finir/.test(err?.message ?? '') || !/illisible/.test(err?.detail ?? '')) throw new Error(`erreur inattendue : ${err?.message} / ${err?.detail}`);
 });
 
-Deno.test('Gemini seul : le modèle de repérage ne répond pas (503), le secours prend le relais', async () => {
+Deno.test('Gemini seul : le premier modèle tombe (503), le relais suivant part aussitôt', async () => {
   const { r, corpsGemini } = await avecGemini((n) => n === 1
     ? new Response('{"error":{"code":503,"message":"overloaded"}}', { status: 503 })
     : geminiRepond(JSON.stringify({ pieces: [piece], note: '' })));
   if (r.pieces.length !== 1 || corpsGemini.length !== 2) throw new Error(`pièces ${r.pieces.length}, appels ${corpsGemini.length}`);
-  if (r.modele !== 'gemini-3.5-flash-lite') throw new Error(`modèle du secours : ${r.modele}`);
+  if (r.modele !== RELAIS_VISION_DEFAUT[1]) throw new Error(`relais : ${r.modele}`);
 });
 
-Deno.test('Gemini seul : panne qui dure, erreur marquée passagère (la tâche repart en file)', async () => {
+Deno.test('Gemini seul : toute la chaîne tombe, erreur marquée passagère (la tâche repart en file)', async () => {
   let err: unknown;
   try {
     await avecGemini(() => new Response('{"error":{"code":503}}', { status: 503 }));
   } catch (e) { err = e; }
   if (!passager(err)) throw new Error(`erreur non passagère : ${(err as Error)?.message}`);
+});
+
+Deno.test('Gemini seul : le premier modèle pend, le relais part en parallèle et gagne, le premier est coupé', async () => {
+  Deno.env.set('GEMINI_API_KEY', 'AIza-test');
+  corpsGemini = [];
+  let coupe = false;
+  aiguilleGemini = (_b, url, init) => url.includes('modele-lent')
+    ? new Promise((_res, rej) => init?.signal?.addEventListener('abort', () => { coupe = true; rej(new DOMException('abandon', 'AbortError')); }))
+    : geminiRepond(JSON.stringify({ pieces: [piece], note: '' }));
+  try {
+    const t = Date.now();
+    const r = await surveyGemini({ sources: [photo], hint: '', gender: null }, ['modele-lent', 'modele-rapide'], { relais: 50 });
+    if (r.modele !== 'modele-rapide' || r.pieces.length !== 1) throw new Error(`gagnant ${r.modele}`);
+    if (Date.now() - t > 2_000) throw new Error('le relais a attendu la fin du premier');
+    if (!coupe) throw new Error("le modèle lent n'a pas été coupé");
+  } finally {
+    Deno.env.delete('GEMINI_API_KEY');
+  }
+});
+
+Deno.test('Gemini seul : la chaîne par défaut a plusieurs relais, sans doublon', () => {
+  if (RELAIS_VISION_DEFAUT.length < 3 || new Set(RELAIS_VISION_DEFAUT).size !== RELAIS_VISION_DEFAUT.length) throw new Error('chaîne trop courte ou en double');
 });

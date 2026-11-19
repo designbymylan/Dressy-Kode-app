@@ -112,13 +112,13 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   };
 
   const img = await b.lire(String(p.photo ?? ''));
-  // `vision: ['gemini-3.6-flash', …]` (19/11) : chaque modèle de repérage, seul, sans secours.
-  for (const model of (p.vision as string[] | undefined) ?? []) {
-    await essai(`vision ${model}`, async () => {
+  // `vision: ['gemini-3.6-flash', …]` (19/11) : chaque modèle de repérage, seul, sans relais.
+  // En parallèle : chaque modèle a ses 45 s, le banc tient dans la durée d'un passage.
+  await Promise.all(((p.vision as string[] | undefined) ?? []).map((model) =>
+    essai(`vision ${model}`, async () => {
       const r = await surveyGemini({ sources: [img], hint: '', gender: null }, [model]);
-      return { ok: r.pieces.length > 0, detail: `${r.pieces.length} pièce(s) : ${r.pieces.map((x) => x.name).join(', ')}`, cout: coutRepere(r.usage) };
-    });
-  }
+      return { ok: r.pieces.length > 0, detail: `${r.pieces.length} pièce(s) : ${r.pieces.map((x) => `${x.name} (${x.kind ?? '?'}, ${x.hex?.join('/') ?? ''})`).join(', ')}`, cout: coutRepere(r.usage) };
+    })));
   if (p.reperage === false) return { result: { intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() }, modeles: MODELS, sondes: out }, cost };
   let cible: Awaited<ReturnType<typeof survey>>['pieces'][number] | null = null;
   await essai(`reperage ${fournisseurDuReperage() === 'gemini' ? MODELS.vision : MODELS.survey}`, async () => {
