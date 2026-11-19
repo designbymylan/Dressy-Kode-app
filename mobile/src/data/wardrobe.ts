@@ -118,6 +118,13 @@ export const PIECES: Piece[] = [
 export type Found = { kind: GarmentKind; tint: string; name: string; category: CategoryId; color: string; material: string; season: Season; backdrop: string };
 
 /** La galerie simulée du téléphone : douze photos de vêtements, chacune « reconnue ». */
+/**
+ * Le portant d'exemple du questionnaire (19/11, à la place des cintres vides
+ * dessinés) : les vraies pièces photographiées, en alternant clair et foncé.
+ * Elles illustrent l'étape, jamais elles n'entrent dans un espace utilisateur.
+ */
+export const PORTANT_EXEMPLE: Piece[] = ['m6', 'h6', 'h8', 'b2', 'h13', 'h12', 'm7'].map((id) => PIECES.find((x) => x.id === id)).filter((x): x is Piece => !!x);
+
 export const GALLERY: Found[] = [
   { kind: 'tshirt', tint: '#F5F3EE', name: 'T-shirt blanc', category: 'hauts', color: 'Blanc', material: 'Coton', season: 'toute l’année', backdrop: '#CFC7BC' },
   { kind: 'jean', tint: '#3E5A86', name: 'Jean brut', category: 'bas', color: 'Brut', material: 'Denim', season: 'toute l’année', backdrop: '#D8D2C8' },

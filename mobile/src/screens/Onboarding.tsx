@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { CAMERA_BLOCKED, cameraAccess, shootBurst } from '../lib/camera';
-import { COLOR_CHOICES } from '../data/wardrobe';
+import { COLOR_CHOICES, PORTANT_EXEMPLE } from '../data/wardrobe';
 import { AGES, CITIES, EMPTY_PROFILE, OCCASIONS, RAYONS, STYLE_CARDS, precision, sizeOptions, type MeasureId, type Profile, type Silhouette } from '../state/profile';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
@@ -825,8 +825,11 @@ function Pieces({ draft, photos, setPhotos, next, W }: Ctx) {
         </>
       }
     >
-      <View style={{ marginHorizontal: -space.gutter }}>
-        <FirstRail pieces={[]} slots={5} size={74} />
+      <View style={{ marginHorizontal: -space.gutter, gap: 8 }}>
+        <T v="label" tone="ink2" style={{ paddingHorizontal: space.gutter }}>
+          Exemple de portant
+        </T>
+        <FirstRail pieces={PORTANT_EXEMPLE} slots={5} size={84} />
       </View>
       <T v="caption" tone="ink2" accessibilityLiveRegion="polite">
         {n

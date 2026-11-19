@@ -812,6 +812,11 @@ Preppy, Gorpcore, Streetwear (`STYLE_CARDS`, `state/profile.ts`).
   détourées, trois femme, trois homme, une de chaque pour « Un peu des deux »
   (`RAYON_TENUES`, `data/styles.ts` ; `Tenues`, `ui/onboarding.tsx`), dans
   des cartes plus hautes (`ChoiceCard artSize`, 128 × 132).
+- **Premier portant du questionnaire** (19/11) : les cintres vides dessinés
+  laissent place à un « Exemple de portant », les sept vraies pièces
+  photographiées (`PORTANT_EXEMPLE`, `data/wardrobe.ts`), plus grandes (84).
+  Elles illustrent l'étape et n'entrent jamais dans un espace ; le dressing
+  vide d'un compte garde ses cintres vides (règle du 03/10).
 - **Données** : identifiants `slug` du nom (`y2k`, `old_money`…), les mêmes sur
   le site (`STYLES`, `web/src/lib/onboarding.ts`, encore avec des icônes). Un
   ancien style déjà enregistré reste lisible mais ne se choisit plus. Kodi
