@@ -81,6 +81,69 @@ export function modelesDeVision(): string[] {
 /** Le délai avant de lancer le relais suivant, en parallèle (20 s par défaut). */
 const relaisMs = (): number => Math.max(5_000, Number(env('REPERAGE_RELAIS_MS') ?? 20_000) || 20_000);
 
+/**
+ * Une course de relais (19/11) : le premier modèle part ; sans réponse après
+ * `delai`, le suivant part EN MÊME TEMPS, et ainsi de suite. La première
+ * réussite gagne et les appels en cours sont coupés (`signal`). Une erreur
+ * lance le suivant aussitôt. Tout tombe : une panne passagère parmi les
+ * erreurs est rendue en priorité (la tâche repartira en file).
+ */
+export function course<T>(
+  quoi: string,
+  modeles: string[],
+  essai: (model: string, signal: AbortSignal) => Promise<T>,
+  delai: number,
+): Promise<T> {
+  const arret = new AbortController();
+  return new Promise((resolve, reject) => {
+    const erreurs: unknown[] = [];
+    let suivant = 0;
+    let enCours = 0;
+    let fini = false;
+    let minuterie: ReturnType<typeof setTimeout> | undefined;
+    const finir = () => { fini = true; clearTimeout(minuterie); arret.abort(); };
+    const lancer = () => {
+      if (fini || suivant >= modeles.length) return;
+      const model = modeles[suivant++];
+      enCours++;
+      clearTimeout(minuterie);
+      if (suivant < modeles.length) minuterie = setTimeout(() => {
+        console.warn(`${quoi} : ${model} n'a pas répondu en ${delai} ms, relais ${modeles[suivant]} lancé en parallèle`);
+        lancer();
+      }, delai);
+      essai(model, arret.signal).then((r) => {
+        if (fini) return;
+        finir();
+        resolve(r);
+      }, (err) => {
+        enCours--;
+        if (fini) return;
+        erreurs.push(err);
+        console.warn(`${quoi} : ${model} en échec (${err instanceof AgentError ? err.detail ?? err.message : err})`);
+        if (suivant < modeles.length) return lancer();
+        if (enCours > 0) return;
+        finir();
+        reject(erreurs.find(passager) ?? erreurs[0]);
+      });
+    };
+    lancer();
+  });
+}
+
+/**
+ * La chaîne de relais du dessin (19/11) : le modèle de l'offre d'abord
+ * (`MODELS.gemini` ou `MODELS.geminiLite`), puis ceux-ci. `GEMINI_IMAGE_MODELS`
+ * remplace la liste. Le relais part après `DESSIN_RELAIS_MS` (40 s par
+ * défaut) : un dessin coûte 10 fois un repérage, on n'en double pas un qui
+ * avance normalement (28 s mesurées en 2K).
+ */
+export const RELAIS_DESSIN_DEFAUT = ['gemini-nano-banana-2.1', 'gemini-3.1-flash-image', 'gemini-3-pro-image'];
+export function modelesDeDessin(premier: string): string[] {
+  const liste = (env('GEMINI_IMAGE_MODELS')?.split(',').map((m) => m.trim()).filter(Boolean)) ?? RELAIS_DESSIN_DEFAUT;
+  return [...new Set([premier, ...liste])].slice(0, 4);
+}
+export const relaisDessinMs = (): number => Math.max(10_000, Number(env('DESSIN_RELAIS_MS') ?? 40_000) || 40_000);
+
 export const MODELS = {
   // Sonnet 5 en effort bas : le repérage doit être rapide, la qualité de
   // l'image ne dépend plus de lui puisque la pièce est découpée dans la photo.
@@ -145,7 +208,7 @@ function httpError(who: string, status: number, text: string): AgentError {
 
 // ---------------------------------------------------------------- Nano Banana
 
-export async function generate(prompt: string, sources: Img[], opts: { search?: boolean; model?: string; size?: '1K' | '2K' } = {}): Promise<Img & { usage: Usage; searched: boolean }> {
+export async function generate(prompt: string, sources: Img[], opts: { search?: boolean; model?: string; size?: '1K' | '2K'; signal?: AbortSignal } = {}): Promise<Img & { usage: Usage; searched: boolean; model: string }> {
   const key = secret('GEMINI_API_KEY');
   const model = opts.model ?? MODELS.gemini;
   const url = geminiUrl(model);
@@ -163,7 +226,8 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
     fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      signal: AbortSignal.timeout(90_000),
+      // 75 s par appel (28 s mesurées en 2K) ; coupé plus tôt quand un relais a gagné.
+      signal: opts.signal ? AbortSignal.any([AbortSignal.timeout(75_000), opts.signal]) : AbortSignal.timeout(75_000),
       body: JSON.stringify({ contents: [{ parts }], generationConfig, ...(withSearch ? { tools: search } : {}) }),
     });
 
@@ -193,9 +257,9 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
     }
   } catch (err) {
     if (err instanceof AgentError) throw err;
-    throw new AgentError(SAY.failed, `Nano Banana injoignable : ${err instanceof Error ? err.message : err}`, true);
+    throw new AgentError(SAY.failed, `Nano Banana ${model} injoignable : ${err instanceof Error ? err.message : err}`, true);
   }
-  if (!res.ok) throw httpError('Nano Banana', res.status, await res.text());
+  if (!res.ok) throw httpError(`Nano Banana ${model}`, res.status, await res.text());
 
   const body = await res.json();
   const candidate = body?.candidates?.[0];
@@ -222,8 +286,12 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
   const mime = sniffMime(bytes) ?? last.inlineData.mimeType ?? 'image/png';
   const grounding = candidate?.groundingMetadata;
   const usage = { ...(body.usageMetadata ?? {}), recherche: grounding ? { requetes: grounding.webSearchQueries ?? grounding.imageSearchQueries ?? [] } : null };
-  return { bytes, mime, usage, searched };
+  return { bytes, mime, usage, searched, model };
 }
+
+/** Le dessin par la chaîne de relais (`modelesDeDessin`) ; le modèle qui a dessiné est rendu. */
+export const dessiner = (prompt: string, sources: Img[], opts: { model: string; size?: '1K' | '2K'; search?: boolean }, delai = relaisDessinMs()) =>
+  course('dessin', modelesDeDessin(opts.model), (model, signal) => generate(prompt, sources, { ...opts, model, signal }), delai);
 
 // ---------------------------------------------------------------- Claude
 
@@ -475,56 +543,18 @@ export function surveyGemini(
 ): Promise<SurveyResult> {
   const systeme = `${SURVEY_SYSTEM}\n\nFORMAT DE RÉPONSE : réponds UNIQUEMENT par un objet JSON valide, sans phrase avant ni après et sans bloc de code, qui respecte ce schéma JSON :\n${JSON.stringify(SURVEY_SCHEMA)}`;
   const valide = (d: unknown) => Array.isArray(d) || Array.isArray((d as { pieces?: unknown })?.pieces);
-  const course = new AbortController();
-  const delai = opts.relais ?? relaisMs();
-
   // Un maillon : un modèle, une réponse illisible redemandée une fois.
-  const essai = async (model: string): Promise<SurveyResult> => {
+  const essai = async (model: string, signal: AbortSignal): Promise<SurveyResult> => {
     let dernier = '';
     for (let fois = 0; fois < 2; fois++) {
-      const r = await geminiVoit({ sources: input.sources, texte: surveyUserText(input), systeme, model, signal: course.signal });
+      const r = await geminiVoit({ sources: input.sources, texte: surveyUserText(input), systeme, model, signal });
       const data = lireJson(r.texte);
       if (data !== undefined && valide(data)) return lireSurvey(data, jetonsGemini(r.usage), 'google', r.model);
       dernier = r.texte.replace(/\s+/g, ' ').slice(0, 160);
     }
     throw new AgentError(SAY.failed, `Gemini ${model} : JSON illisible (${dernier})`);
   };
-
-  return new Promise((resolve, reject) => {
-    const erreurs: unknown[] = [];
-    let suivant = 0;
-    let enCours = 0;
-    let fini = false;
-    let minuterie: ReturnType<typeof setTimeout> | undefined;
-    const finir = () => { fini = true; clearTimeout(minuterie); course.abort(); };
-    const lancer = () => {
-      if (fini || suivant >= modeles.length) return;
-      const model = modeles[suivant++];
-      enCours++;
-      clearTimeout(minuterie);
-      // Pas de réponse dans le délai : le relais suivant part en parallèle.
-      if (suivant < modeles.length) minuterie = setTimeout(() => {
-        console.warn(`repérage : ${model} n'a pas répondu en ${delai} ms, relais ${modeles[suivant]} lancé en parallèle`);
-        lancer();
-      }, delai);
-      essai(model).then((r) => {
-        if (fini) return;
-        finir();
-        resolve(r);
-      }, (err) => {
-        enCours--;
-        if (fini) return;
-        erreurs.push(err);
-        console.warn(`repérage : ${model} en échec (${err instanceof AgentError ? err.detail ?? err.message : err})`);
-        if (suivant < modeles.length) return lancer();
-        if (enCours > 0) return;
-        finir();
-        // Une panne passagère parmi les échecs : la tâche repartira en file.
-        reject(erreurs.find(passager) ?? erreurs[0]);
-      });
-    };
-    lancer();
-  });
+  return course('repérage', modeles, essai, opts.relais ?? relaisMs());
 }
 
 type SurveyResult = { pieces: Target[]; note: string; usage: Usage; fournisseur: 'google' | 'anthropic'; modele: string };

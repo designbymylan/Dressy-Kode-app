@@ -32,7 +32,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
-import { survey, generate, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
+import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { decouper, fatal, ouvrir } from './decoupage.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
@@ -318,6 +318,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
 
   let t = Date.now();
   let usage: unknown = null;
+  let dessinePar = model;
   const ports: Ports<Img> = {
     cacheGet: async (k) => {
       const { data } = await db.from('generation_cache').select('image_path').eq('space_id', job.space_id).eq('cache_key', k).maybeSingle();
@@ -347,8 +348,10 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     },
     noteCacheHit: () => note(job, 'google', 'dessin', model, 'succes', true, 0),
     call: async () => {
-      const img = await generate(prompt, references, { model, size });
+      // Chaîne de relais (19/11) : le modèle de l'offre d'abord, d'autres s'il ne répond pas.
+      const img = await dessiner(prompt, references, { model, size });
       usage = img.usage;
+      dessinePar = img.model;
       return { bytes: img.bytes, mime: img.mime };
     },
     isRejection: (e) => e instanceof AgentError && e.message === SAY.refused,
@@ -361,11 +364,11 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     throw new AgentError(SAY.quota, `plus de génération (offre ${drawn.plan})`);
   }
   const img = drawn.image;
-  if (opts.offert && drawn.kind === 'drawn') await note(job, 'google', 'dessin', model, 'succes', false, size === '2K' ? COST.image2k : COST.image1k);
+  if (opts.offert && drawn.kind === 'drawn') await note(job, 'google', 'dessin', dessinePar, 'succes', false, size === '2K' ? COST.image2k : COST.image1k);
   j.ms.generation = Date.now() - t;
   j.usage.generation = usage;
-  j.modele = model;
-  log(`Nano Banana (${size}${drawn.kind === 'cache' ? ', depuis le cache' : ''}) → ${Math.round(img.bytes.length / 1024)} Ko en ${j.ms.generation} ms`);
+  j.modele = dessinePar;
+  log(`Nano Banana ${dessinePar} (${size}${drawn.kind === 'cache' ? ', depuis le cache' : ''}) → ${Math.round(img.bytes.length / 1024)} Ko en ${j.ms.generation} ms`);
 
   await setJob(job, { status: 'cutout' });
   t = Date.now();

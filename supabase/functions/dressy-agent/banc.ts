@@ -94,7 +94,8 @@ type Sonde = { nom: string; ok: boolean; ms: number; detail: string; donnees?: u
 
 /**
  * Paramètres : { photo, vision?: [modèles de repérage essayés un à un], reperage?: false (s'arrête là),
- *   decoupe?: ['modele:reflexion', …], dessin?: modèle d'image (coûte une image), vecteurs?: boolean }
+ *   decoupe?: ['modele:reflexion', …], dessin?: modèle d'image (coûte une image),
+ *   dessins?: [modèles d'image, en parallèle], vecteurs?: boolean }
  */
 async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   const out: Sonde[] = [];
@@ -119,6 +120,15 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
       const r = await surveyGemini({ sources: [img], hint: '', gender: null }, [model]);
       return { ok: r.pieces.length > 0, detail: `${r.pieces.length} pièce(s) : ${r.pieces.map((x) => `${x.name} (${x.kind ?? '?'}, ${x.hex?.join('/') ?? ''})`).join(', ')}`, cout: coutRepere(r.usage) };
     })));
+  // `dessins: [modèles]` (19/11) : chaque modèle d'image, seul, en parallèle (une image chacun).
+  const dessins = [...(typeof p.dessin === 'string' ? [p.dessin] : []), ...((p.dessins as string[] | undefined) ?? [])];
+  await Promise.all(dessins.map((dessin) =>
+    essai(`dessin ${dessin}`, async () => {
+      const r = await generate('Reproduce only the main garment from this photo, flat lay, centred, on a plain pure white background.', [img], { model: dessin, size: '1K' });
+      const url = await b.ranger(`dessin-${dessin}.${r.mime === 'image/png' ? 'png' : 'jpg'}`, r.bytes, r.mime);
+      return { ok: r.bytes.length > 10_000, detail: `${Math.round(r.bytes.length / 1024)} Ko, ${r.mime}`, donnees: { url, usage: r.usage }, cout: coutImage(dessin) };
+    })));
+
   if (p.reperage === false) return { result: { intermediaire: { claude: anthropicViaIntermediaire(), gemini: geminiViaIntermediaire() }, modeles: MODELS, sondes: out }, cost };
   let cible: Awaited<ReturnType<typeof survey>>['pieces'][number] | null = null;
   await essai(`reperage ${fournisseurDuReperage() === 'gemini' ? MODELS.vision : MODELS.survey}`, async () => {
@@ -153,15 +163,6 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
         };
       });
     }
-  }
-
-  const dessin = typeof p.dessin === 'string' ? p.dessin : null;
-  if (dessin) {
-    await essai(`dessin ${dessin}`, async () => {
-      const r = await generate('Reproduce only the main garment from this photo, flat lay, centred, on a plain pure white background.', [img], { model: dessin, size: '1K' });
-      const url = await b.ranger(`dessin-${dessin}.${r.mime === 'image/png' ? 'png' : 'jpg'}`, r.bytes, r.mime);
-      return { ok: r.bytes.length > 10_000, detail: `${Math.round(r.bytes.length / 1024)} Ko, ${r.mime}`, donnees: { url, usage: r.usage }, cout: coutImage(dessin) };
-    });
   }
 
   if (p.vecteurs !== false) {
