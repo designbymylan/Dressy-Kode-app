@@ -9,46 +9,29 @@
  */
 
 import { chromaOf, tilt } from './cutout.ts';
+import { CATEGORIES as TAXO, COULEURS, IDS } from '../_shared/taxonomy.ts';
 
-export const CATEGORIES = ['hauts', 'bas', 'robes', 'vestes', 'chaussures', 'sacs', 'bijoux', 'accessoires'] as const;
-export type Category = (typeof CATEGORIES)[number];
+// Les listes viennent de la taxonomie fermée (source unique, 20/11) : ne pas
+// les redéfinir ici.
+export const CATEGORIES = IDS.categories;
+export type Category = string;
 
-// Même liste que COLOURS dans web/src/lib/onboarding.ts : les couleurs d'une
-// pièce et celles du profil doivent pouvoir se comparer.
-export const COLOUR_IDS = [
-  'noir', 'anthracite', 'gris', 'blanc', 'creme', 'beige', 'camel', 'marron', 'bordeaux', 'rouge',
-  'orange', 'moutarde', 'jaune', 'olive', 'vert', 'marine', 'bleu', 'ciel', 'violet', 'rose',
-  'dore', 'argente',
-] as const;
+// Mêmes identifiants que les couleurs du profil : une pièce et le profil se comparent.
+export const COLOUR_IDS = IDS.couleurs;
 
 /** Teintes de référence des couleurs, pour choisir un fond qui ne s'y confond pas. */
-export const COLOUR_RGB: Record<(typeof COLOUR_IDS)[number], [number, number, number]> = {
-  noir: [13, 13, 14], anthracite: [63, 63, 68], gris: [140, 140, 144], blanc: [255, 255, 255],
-  creme: [240, 233, 220], beige: [217, 201, 174], camel: [176, 131, 63], marron: [92, 67, 39],
-  bordeaux: [107, 31, 46], rouge: [178, 43, 39], orange: [210, 96, 26], moutarde: [201, 153, 43],
-  jaune: [232, 195, 58], olive: [90, 99, 64], vert: [47, 107, 72], marine: [38, 51, 77],
-  bleu: [74, 118, 168], ciel: [168, 200, 224], violet: [107, 78, 140], rose: [217, 149, 159],
-  dore: [201, 165, 92], argente: [191, 195, 201],
-};
+export const COLOUR_RGB: Record<string, [number, number, number]> = Object.fromEntries(
+  COULEURS.map((c) => [c.id, [1, 3, 5].map((i) => parseInt(c.hex.slice(i, i + 2), 16)) as [number, number, number]]),
+);
 
-// Types de pièce par catégorie : mêmes identifiants que web/src/lib/wardrobe.ts
-// (colonne garments.kind, minuscules sans séparateur).
-export const KINDS: Record<Category, readonly string[]> = {
-  hauts: ['tshirt', 'chemise', 'blouse', 'polo', 'pull', 'sweat', 'capuche', 'debardeur', 'top'],
-  bas: ['jean', 'pantalon', 'chino', 'jupe', 'jupeculotte', 'short', 'legging'],
-  robes: ['robe', 'combinaison', 'salopette'],
-  vestes: ['veste', 'blazer', 'manteau', 'trench', 'doudoune', 'gilet'],
-  chaussures: ['baskets', 'bottines', 'bottes', 'escarpins', 'sandales', 'mules', 'mocassins', 'derbies', 'ballerines'],
-  sacs: ['sacamain', 'bandouliere', 'pochette', 'cabas', 'sacados'],
-  bijoux: ['collier', 'boucles', 'bracelet', 'bague', 'montre', 'broche'],
-  accessoires: ['ceinture', 'bandeau', 'pince', 'foulard', 'echarpe', 'chapeau', 'casquette', 'bonnet', 'lunettes', 'gants'],
-};
-const ALL_KINDS = [...new Set(Object.values(KINDS).flat())];
+// Types de pièce par catégorie (colonne garments.kind).
+export const KINDS: Record<string, readonly string[]> = Object.fromEntries(TAXO.map((c) => [c.id, c.types.map((k) => k.id)]));
+const ALL_KINDS = IDS.types;
 
 // La fiche de style d'une pièce (F5, 13/11) : ce que Kodi doit savoir de son
 // allure pour composer juste (volumes, motifs, niveau d'habillage, saison).
-export const MOTIFS = ['uni', 'rayures', 'carreaux', 'imprime', 'fleuri', 'pois', 'logo', 'graphique', 'texture'] as const;
-export const COUPES = ['ajustee', 'droite', 'ample', 'oversize', 'evasee', 'sans_objet'] as const;
+export const MOTIFS = IDS.motifs;
+export const COUPES = IDS.coupes;
 export const SAISONS = ['toute_annee', 'mi_saison', 'hiver', 'ete'] as const;
 const KINDS_TEXT = Object.entries(KINDS).map(([c, ks]) => `${c} → ${ks.join(', ')}`).join(' ; ');
 
