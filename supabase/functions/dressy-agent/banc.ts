@@ -11,12 +11,17 @@
  *   contraste seul pour comparer. Les
  *   pièces découpées sont rangées dans le bucket `banc`, avec un lien signé.
  *
+ * - `decoupe` avec `pieces` (20/11) : SAM 3 seul, sur des pièces dont l'essai
+ *   donne le cadre, sans repérage : pour essayer la découpe même quand le
+ *   repérage est en panne.
+ *
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
  * avec l'essai.
  */
 import { survey, surveyGemini, segment, generate, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { SAM_PRIX } from './fal.ts';
+import type { Category, Target } from './prompts.ts';
 import { fitOnCanvas } from './normalize.ts';
 import { downscale } from './cutout.ts';
 import { decode, encodePng } from './codec.ts';
@@ -93,6 +98,35 @@ async function essaiDecoupe(b: Banc, p: Record<string, unknown>): Promise<Rendu>
     result: { photo, taille: `${raster.width}×${raster.height}`, ms: { decodage, reperage }, reperees: rep.pieces.map((x) => x.name), lignes },
     cost,
   };
+}
+
+/**
+ * Paramètres : { photo, pieces: [{ nom, categorie, type?, cadre: [x, y, l, h] en fractions, hex? }] }.
+ * Les pièces se découpent en parallèle (un appel à SAM 3 chacune).
+ */
+async function essaiSam(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
+  const photo = String(p.photo ?? '');
+  const img = await b.lire(photo);
+  const raster = ouvrir(img);
+  const pieces = ((p.pieces as Record<string, unknown>[] | undefined) ?? []).slice(0, 6);
+  let cost = 0;
+  const lignes = await Promise.all(pieces.map(async (x, i) => {
+    const hex = typeof x.hex === 'string' ? [x.hex] : [];
+    const cible: Target = {
+      name: String(x.nom ?? `pièce ${i + 1}`), category: String(x.categorie ?? 'hauts') as Category, kind: typeof x.type === 'string' ? x.type : null,
+      colors: [], hex, material: '', where: '', box: Array.isArray(x.cadre) ? x.cadre as [number, number, number, number] : null, description: '', prompt: '',
+    };
+    const t = Date.now();
+    try {
+      const d = await decouper(img, raster, cible, { strong: false, sam: true }, b.log);
+      if (d.sam?.zone) cost += SAM_PRIX;
+      const url = d.best ? await b.ranger(`${slug(photo)}-${i}-sam.png`, encodePng(downscale(fitOnCanvas(d.best.cut), 512)), 'image/png') : null;
+      return { piece: cible.name, ms: Date.now() - t, sam: d.sam, ok: d.best?.checks.ok ?? false, echecs: d.best?.checks.failed ?? null, valeurs: d.best?.checks.values ?? null, essais: d.essais, url };
+    } catch (e) {
+      return { piece: cible.name, ms: Date.now() - t, erreur: court(e) };
+    }
+  }));
+  return { result: { photo, taille: `${raster.width}×${raster.height}`, lignes }, cost };
 }
 
 type Sonde = { nom: string; ok: boolean; ms: number; detail: string; donnees?: unknown };
@@ -183,4 +217,5 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
 /** La vérification des clés et des modèles (`?verifier`), pour le banc depuis qu'elle est réservée au compte créateur. */
 const verifier = async (): Promise<Rendu> => ({ result: await checkSetup(), cost: 0 });
 
-export const MODES_AGENT: Modes = { sonde: sondes, decoupe: essaiDecoupe, verifier };
+// `decoupe` avec `pieces` (cadres donnés) : SAM 3 seul, sans repérage (essaiSam).
+export const MODES_AGENT: Modes = { sonde: sondes, decoupe: (b, p) => (Array.isArray(p.pieces) ? essaiSam(b, p) : essaiDecoupe(b, p)), verifier };
