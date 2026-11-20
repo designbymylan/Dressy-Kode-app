@@ -26,7 +26,7 @@ import { fitOnCanvas } from './normalize.ts';
 import { cutoutBackground, downscale, surFond } from './cutout.ts';
 import { cleanSpecks } from './segment.ts';
 import { runChecks } from './checks.ts';
-import { backdropFor, consigneDessin, garmentRgbs, isMetal } from './prompts.ts';
+import { backdropFor, consigneDessin, consigneGrille, garmentRgbs, isMetal } from './prompts.ts';
 import { decode, encodePng } from './codec.ts';
 import { vectoriser } from '../_shared/embeddings.ts';
 import { geminiViaIntermediaire, anthropicViaIntermediaire } from '../_shared/fournisseurs.ts';
@@ -154,6 +154,44 @@ async function essaiSam(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   return { result: { photo, taille: `${raster.width}×${raster.height}`, lignes }, cost };
 }
 
+/**
+ * Paramètres : { photo, grille: [{ nom, categorie, type?, hex?, description?, decoupe: fichier PNG }], taille?: '1K' | '2K' }.
+ * Quatre pièces au plus, déjà découpées (images de test), posées en grille
+ * 2 × 2 sur un fond commun ; un seul dessin pour toutes. Le dessin brut est
+ * rangé tel quel (aucun décodage : le temps de calcul est compté), le
+ * partage en cases et le détourage se font hors de la fonction.
+ */
+async function essaiGrille(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
+  const photo = String(p.photo ?? '');
+  const img = await b.lire(photo);
+  const items = ((p.grille as Record<string, unknown>[] | undefined) ?? []).slice(0, 4);
+  const cibles: Target[] = items.map((x, i) => ({
+    name: String(x.nom ?? `pièce ${i + 1}`), category: String(x.categorie ?? 'hauts') as Category, kind: typeof x.type === 'string' ? x.type : null,
+    colors: [], hex: typeof x.hex === 'string' ? [x.hex] : [], material: '', where: '', box: null, description: String(x.description ?? ''), prompt: '',
+  }));
+  const fond = backdropFor(cibles.flatMap((c) => c.colors), cibles.flatMap((c) => c.hex ?? []), cibles.some(isMetal));
+  const cote = 512;
+  const grille = surFond({ width: cote * 2, height: cote * 2, data: new Uint8Array(cote * cote * 16) }, fond);
+  for (const [i, x] of items.entries()) {
+    const decoupe = await b.lire(String(x.decoupe ?? ''));
+    const r0 = decode(decoupe.bytes, 'image/png');
+    const r = surFond(r0.width > cote ? downscale(r0, cote) : r0, fond);
+    const ox = (i % 2) * cote + Math.floor((cote - r.width) / 2), oy = Math.floor(i / 2) * cote + Math.floor((cote - r.height) / 2);
+    for (let y = 0; y < r.height; y++) grille.data.set(r.data.subarray(y * r.width * 4, (y + 1) * r.width * 4), ((oy + y) * cote * 2 + ox) * 4);
+  }
+  const ref = encodePng(grille);
+  const urlRef = await b.ranger(`grille-${slug(photo)}-reference.png`, ref, 'image/png');
+  const taille = p.taille === '1K' ? '1K' : '2K';
+  const consigne = consigneGrille(cibles);
+  const t = Date.now();
+  const r = await dessiner(consigne, [{ bytes: ref, mime: 'image/png' }, img], { model: MODELS.gemini, size: taille });
+  const url = await b.ranger(`grille-${slug(photo)}.${r.mime === 'image/png' ? 'png' : 'jpg'}`, r.bytes, r.mime);
+  return {
+    result: { photo, fond, taille, modele: r.model, ms: Date.now() - t, url, urlRef, pieces: cibles.map((c) => c.name), consigne },
+    cost: taille === '2K' ? 0.05 : coutImage(r.model),
+  };
+}
+
 type Sonde = { nom: string; ok: boolean; ms: number; detail: string; donnees?: unknown };
 
 /**
@@ -243,4 +281,8 @@ async function sondes(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
 const verifier = async (): Promise<Rendu> => ({ result: await checkSetup(), cost: 0 });
 
 // `decoupe` avec `pieces` (cadres donnés) : SAM 3 seul, sans repérage (essaiSam).
-export const MODES_AGENT: Modes = { sonde: sondes, decoupe: (b, p) => (Array.isArray(p.pieces) ? essaiSam(b, p) : essaiDecoupe(b, p)), verifier };
+export const MODES_AGENT: Modes = {
+  sonde: sondes,
+  decoupe: (b, p) => (Array.isArray(p.grille) ? essaiGrille(b, p) : Array.isArray(p.pieces) ? essaiSam(b, p) : essaiDecoupe(b, p)),
+  verifier,
+};

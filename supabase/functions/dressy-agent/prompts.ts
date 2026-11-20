@@ -440,3 +440,27 @@ export function consigneDessin(t: Target, avecDecoupe: boolean): string {
     backdropClause(t.colors, t.hex, isMetal(t)),
   ].filter(Boolean).join('\n\n');
 }
+
+/** Les cases d'une grille de quatre pièces, dans l'ordre de lecture. */
+export const CASES_GRILLE = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
+
+/**
+ * La consigne d'un dessin de quatre pièces en une image (20/11, essai) : la
+ * référence est une grille 2 × 2 des pièces découpées sur un fond commun, et
+ * le dessin garde exactement la même grille, une photo produit par case. Un
+ * seul appel pour quatre pièces : le coût par pièce est divisé par trois
+ * environ (une image 2K contre quatre images 1K).
+ */
+export function consigneGrille(ts: Target[]): string {
+  const colors = ts.flatMap((t) => t.colors);
+  const hex = ts.flatMap((t) => t.hex ?? []);
+  const vides = 4 - ts.length;
+  const lignes = ts.map((t, i) => `- ${CASES_GRILLE[i]} cell: "${t.name}"${t.description ? ` (${t.description})` : ''}, ${poseDuDessin(t.category)}${t.hex?.length ? `; exact colours of the real item: ${t.hex.join(', ')}` : ''}.`);
+  return [
+    "Image 1 is a 2 x 2 grid: each cell holds one item cut out of the person's photo (image 2). Produce ONE square image with exactly the same 2 x 2 layout, each cell becoming a photorealistic premium e-commerce catalogue product photo of the exact item it holds:",
+    lignes.join('\n'),
+    vides > 0 ? `The other ${vides > 1 ? `${vides} cells stay` : 'cell stays'} completely empty: backdrop only.` : '',
+    'Each item is centred in its own cell, with a generous margin, and never crosses into another cell. Reproduce every item exactly: same cut, proportions, colours, wash, patterns, texture and every visible detail; logos, stripes and lettering stay exactly as they are, same shape, count, colour and place. Use image 2 only for parts hidden or cut off in image 1. Soft even studio lighting, true-to-life colours and fabric texture, casting no shadow. No grid lines, borders, labels, added text, person, visible mannequin, hanger or hand.',
+    backdropClause(colors, hex, ts.some(isMetal)),
+  ].filter(Boolean).join('\n\n');
+}
