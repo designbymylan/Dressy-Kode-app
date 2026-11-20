@@ -10,8 +10,8 @@ Spec du 20/11 (« Spec · Pipeline d'ajout de vêtements (Dresskode) »), mise e
 | 2. Base | Fait, en production (migration `20261120224423_pipeline_ajout`, additive). État de traitement, photo d'origine, colonnes tenues par le serveur, « Tout ajouter », Realtime, Storage (le client n'écrit que `original.jpg`), journal `garment_runs`, vue `pipeline_indicateurs`. 36 essais sur base jetable. | `bash tools/test-pipeline.sh` |
 | 3. Banc | Premier passage fait (ci-dessous). Reste : 20 photos prises au téléphone, chez soi. | `tools/banc-pipeline.*` |
 | 4. `process-garment` | Fait, déployé (ajout pur : l'app et le site ne l'appellent pas encore). 42 essais sans réseau. | `supabase/functions/process-garment/`, `npm run test:pipeline` (web) |
-| 5. Client | En cours sur la branche, derrière `PIPELINE_AJOUT` (faux). | `mobile/src/state/ajout.ts` |
-| 6. Interface | À faire (capture guidée, caméra à cadre, états, fiche, « Tout ajouter »). | |
+| 5. Client | Fait sur la branche, derrière `PIPELINE_AJOUT` (faux) : photo préparée sur l'appareil (1024 px, JPEG 85, refus sous 600 px), envoi, ligne « processing », appel, suivi Realtime (relu toutes les 4 s en filet), « Réessayer », « Reprendre la photo ». | `mobile/src/state/ajout.ts`, `web/src/lib/ajout.ts` |
+| 6. Interface | Faite sur la branche : aide à la capture, caméra à cadre guide (app), galerie jusqu'à 20 photos, tuiles par état, fiche par sélecteurs, « À confirmer », « Tout ajouter ». Types et construction vérifiés ; **pas encore essayée sur un vrai compte ni un vrai iPhone**. | `mobile/src/screens/Ajout.tsx`, `mobile/src/ui/{CameraCadre,fiche}.tsx`, `web/src/components/AjoutPieces.tsx` |
 | 7. Suivi | Journal et vue en place ; mesure finale en 4G à faire sur un vrai iPhone. | `select * from pipeline_indicateurs;` |
 
 Écarts assumés avec la spec, et pourquoi :
@@ -53,5 +53,6 @@ Ce que le banc montre :
 
 1. **20 photos prises au téléphone**, chez soi, en suivant l'aide à la capture : c'est le vrai banc (critère : 18 sur 20 prêtes sans reprise). `node tools/banc-pipeline.mjs` accepte d'autres photos (déposées dans le compartiment `banc`).
 2. **Politique de confidentialité** : la photo d'origine est gardée tant que la pièce existe (spec), alors que la politique promet l'effacement des photos sous 30 jours. Nouvelle version, avis, registre, avant la bascule. Même chose pour le texte de permission « photos » de l'app.
-3. **Kodi et le moteur de tenues** ne doivent lire que les pièces ajoutées (`added_at` posé, `pipeline_status = 'ready'`).
+3. **Kodi, le dressing de l'app et du site** ne lisent plus que les pièces ajoutées (`added_at`), sur la branche ; redéployer `kode` à la bascule.
+5. **Bascule** : `PIPELINE_AJOUT = true` dans `mobile/src/state/ajout.ts` et `web/src/lib/ajout.ts`, essai de bout en bout sur un vrai compte (app en Expo Go, site en Preview), mesure en 4G, puis main.
 4. **Contraintes de la taxonomie** sur `kind` et `colors` (l'app actuelle écrit encore ses types d'illustration) : nouvelle migration, une fois l'app basculée.

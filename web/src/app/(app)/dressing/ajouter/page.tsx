@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getViewer } from '@/lib/space';
 import { ManualForm, PhotoForm } from '@/components/AddGarmentForms';
+import { AjoutPieces } from '@/components/AjoutPieces';
+import { PIPELINE_AJOUT } from '@/lib/ajout';
 import { Screen, Title, Card } from '@/components/ui';
 
 export default async function Ajouter() {
@@ -15,8 +17,8 @@ export default async function Ajouter() {
       </Title>
 
       <Card i={1}>
-        <h2 className="section-title" style={{ justifyContent: 'center' }}>Kodi la prend en photo</h2>
-        <PhotoForm spaceId={viewer.spaceId} />
+        <h2 className="section-title" style={{ justifyContent: 'center' }}>{PIPELINE_AJOUT ? 'Une photo, une pièce' : 'Kodi la prend en photo'}</h2>
+        {PIPELINE_AJOUT ? <AjoutPieces spaceId={viewer.spaceId} /> : <PhotoForm spaceId={viewer.spaceId} />}
       </Card>
 
       <Card i={2}>
