@@ -18,12 +18,15 @@
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
  * avec l'essai.
  */
-import { survey, surveyGemini, segment, generate, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
+import { survey, surveyGemini, segment, generate, dessiner, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
 import { SAM_PRIX } from './fal.ts';
 import type { Category, Target } from './prompts.ts';
 import { fitOnCanvas } from './normalize.ts';
-import { downscale } from './cutout.ts';
+import { cutoutBackground, downscale, surFond } from './cutout.ts';
+import { cleanSpecks } from './segment.ts';
+import { runChecks } from './checks.ts';
+import { backdropFor, consigneDessin, garmentRgbs, isMetal } from './prompts.ts';
 import { decode, encodePng } from './codec.ts';
 import { vectoriser } from '../_shared/embeddings.ts';
 import { geminiViaIntermediaire, anthropicViaIntermediaire } from '../_shared/fournisseurs.ts';
@@ -101,8 +104,12 @@ async function essaiDecoupe(b: Banc, p: Record<string, unknown>): Promise<Rendu>
 }
 
 /**
- * Paramètres : { photo, pieces: [{ nom, categorie, type?, cadre: [x, y, l, h] en fractions, hex? }] }.
- * Les pièces se découpent en parallèle (un appel à SAM 3 chacune).
+ * Paramètres : { photo, pieces: [{ nom, categorie, type?, cadre: [x, y, l, h] en fractions, hex? }], dessin?: true }.
+ * Les pièces se découpent en parallèle (un appel à SAM 3 chacune). Avec
+ * `dessin` : la pièce découpée part au dessin « catalogue », exactement comme
+ * en production (consigneDessin, la découpe sur son fond en image 1, la photo
+ * en image 2), puis est détourée. Une pièce par essai : découpe et dessin
+ * dans le même passage coûtent presque tout le temps de calcul permis.
  */
 async function essaiSam(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
   const photo = String(p.photo ?? '');
@@ -120,8 +127,26 @@ async function essaiSam(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
     try {
       const d = await decouper(img, raster, cible, { strong: false, sam: true }, b.log);
       if (d.sam?.zone) cost += SAM_PRIX;
-      const url = d.best ? await b.ranger(`${slug(photo)}-${i}-sam.png`, encodePng(downscale(fitOnCanvas(d.best.cut), 512)), 'image/png') : null;
-      return { piece: cible.name, ms: Date.now() - t, sam: d.sam, ok: d.best?.checks.ok ?? false, echecs: d.best?.checks.failed ?? null, valeurs: d.best?.checks.values ?? null, essais: d.essais, url };
+      const carre = d.best ? fitOnCanvas(d.best.cut) : null;
+      const url = carre ? await b.ranger(`${slug(photo)}-${i}-sam.png`, encodePng(downscale(carre, 512)), 'image/png') : null;
+      let dessin: Record<string, unknown> | null = null;
+      if (p.dessin === true && carre) {
+        const td = Date.now();
+        try {
+          const fond = backdropFor(cible.colors, cible.hex, isMetal(cible));
+          const ref = { bytes: encodePng(surFond(carre, fond)), mime: 'image/png' };
+          const r = await dessiner(consigneDessin(cible, true), [ref, img], { model: MODELS.gemini, size: '1K' });
+          cost += coutImage(r.model);
+          const brut = decode(r.bytes, r.mime);
+          const { cut, oneShare } = cleanSpecks(cutoutBackground(brut.width > 2000 ? downscale(brut, 1800) : brut, { garment: garmentRgbs(cible.colors, cible.hex) }));
+          const checks = runChecks(cut, oneShare, cible.hex?.[0] ?? null);
+          const urlDessin = await b.ranger(`${slug(photo)}-${i}-dessin.png`, encodePng(downscale(fitOnCanvas(cut), 512)), 'image/png');
+          dessin = { modele: r.model, ms: Date.now() - td, fond, ok: checks.ok, echecs: checks.failed, url: urlDessin };
+        } catch (e) {
+          dessin = { ms: Date.now() - td, erreur: court(e) };
+        }
+      }
+      return { piece: cible.name, ms: Date.now() - t, sam: d.sam, ok: d.best?.checks.ok ?? false, echecs: d.best?.checks.failed ?? null, valeurs: d.best?.checks.values ?? null, essais: d.essais, url, dessin };
     } catch (e) {
       return { piece: cible.name, ms: Date.now() - t, erreur: court(e) };
     }

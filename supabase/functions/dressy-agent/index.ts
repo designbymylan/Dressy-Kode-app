@@ -32,14 +32,14 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
-import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
+import { backdropFor, consigneDessin, garmentRgbs, isMetal, type Target } from './prompts.ts';
 import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { cleFal, decouper, fatal, ouvrir } from './decoupage.ts';
 import { SAM_MODELE, SAM_PRIX } from './fal.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
 import { cacheKey, drawWithQuota, imageSettings, price, tokenCost, type Ports } from './quota.ts';
-import { cutoutBackground, downscale, type Raster } from './cutout.ts';
+import { cutoutBackground, downscale, surFond, type Raster } from './cutout.ts';
 import { decode, encodePng, sniffMime } from './codec.ts';
 import { CUTOUT } from './config.ts';
 import { dominantColour } from './color.ts';
@@ -280,25 +280,13 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
   await store(job, target, d.best.cut, 'photo', j, log);
 }
 
-const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail). Image 2 is the original photo: use it only for parts hidden or cut off in image 1.';
-
 /** La pièce rangée (PNG transparent), posée sur le fond voulu ; `null` si elle manque. */
 async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | null> {
   try {
     const { data } = await db.from('garments').select('image_path').eq('id', garmentId).maybeSingle();
     if (!data?.image_path) return null;
     const png = await download('garments', data.image_path as string);
-    const r = decode(png.bytes, 'image/png');
-    const [br, bg, bb] = [1, 3, 5].map((i) => parseInt(fond.slice(i, i + 2), 16));
-    const out = new Uint8Array(r.data.length);
-    for (let i = 0; i < r.data.length; i += 4) {
-      const a = r.data[i + 3] / 255;
-      out[i] = Math.round(r.data[i] * a + br * (1 - a));
-      out[i + 1] = Math.round(r.data[i + 1] * a + bg * (1 - a));
-      out[i + 2] = Math.round(r.data[i + 2] * a + bb * (1 - a));
-      out[i + 3] = 255;
-    }
-    return { bytes: encodePng({ width: r.width, height: r.height, data: out }), mime: 'image/png' };
+    return { bytes: encodePng(surFond(decode(png.bytes, 'image/png'), fond)), mime: 'image/png' };
   } catch {
     return null;
   }
@@ -319,13 +307,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   const fond = backdropFor(target.colors, target.hex, isMetal(target));
   const decoupe = job.clean && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
   const references = decoupe ? [decoupe, ...sources] : sources;
-  const prompt = [
-    stripClauses(target.prompt),
-    decoupe ? REFERENCES_CLAUSE : '',
-    colourClause(target),
-    isolationClause(target),
-    backdropClause(target.colors, target.hex, isMetal(target)),
-  ].filter(Boolean).join('\n\n');
+  const prompt = consigneDessin(target, Boolean(decoupe));
 
   // L'offre décide du modèle et de la taille : Lite en 1K pour le gratuit, 2K pour les abonnées.
   const { data: planData } = await db.rpc('space_plan', { target: job.space_id });

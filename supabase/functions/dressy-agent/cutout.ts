@@ -365,3 +365,17 @@ export function downscale(r: Raster, maxSide: number): Raster {
   }
   return { width: tw, height: th, data: out };
 }
+
+/** Une pièce détourée posée sur un fond uni (« #RRGGBB ») : la référence donnée au dessin. */
+export function surFond(r: Raster, fond: string): Raster {
+  const [br, bg, bb] = [1, 3, 5].map((i) => parseInt(fond.slice(i, i + 2), 16));
+  const out = new Uint8Array(r.data.length);
+  for (let i = 0; i < r.data.length; i += 4) {
+    const a = r.data[i + 3] / 255;
+    out[i] = Math.round(r.data[i] * a + br * (1 - a));
+    out[i + 1] = Math.round(r.data[i + 1] * a + bg * (1 - a));
+    out[i + 2] = Math.round(r.data[i + 2] * a + bb * (1 - a));
+    out[i + 3] = 255;
+  }
+  return { width: r.width, height: r.height, data: out };
+}

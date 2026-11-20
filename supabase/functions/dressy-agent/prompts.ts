@@ -234,19 +234,33 @@ const keepHex = (v: unknown) => (Array.isArray(v) ? v : [])
   .slice(0, 3);
 
 /** La consigne de repli du générateur, bâtie par gabarit à partir de la fiche (jamais écrite à la main). */
+/**
+ * La pose de la pièce sur le dessin, d'après le modèle de rendu donné par
+ * l'utilisateur le 20/11 (planches de vestes, chemises, pulls, bas, robes,
+ * chaussures et sacs) : le vêtement du haut du corps comme porté par un
+ * mannequin invisible, de face, repassé, manches le long du corps ; les bas à
+ * plat, de face ; les chaussures par paire, de trois quarts.
+ */
+export function poseDuDessin(category: Category): string {
+  switch (category) {
+    case 'chaussures': return 'the pair side by side, three-quarter front view, both shoes fully visible';
+    case 'sacs': return 'standing upright, seen straight from the front, handles or strap neatly arranged';
+    case 'bijoux': return 'laid flat, seen from above, sharp down to the finest detail (links, clasp, stones)';
+    case 'accessoires': return 'seen from the front, neatly arranged, as in a product photo';
+    case 'bas': return 'seen straight from the front, laid flat and neatly pressed, legs or hem straight and symmetrical';
+    default: return 'on an invisible mannequin (ghost mannequin), seen straight from the front, with natural volume, neatly pressed and symmetrical, sleeves hanging down along the sides, collar and front closed as worn';
+  }
+}
+
 export function fallbackPrompt(t: Pick<Target, 'name' | 'category' | 'where' | 'description' | 'hex'>): string {
-  const shape = t.category === 'chaussures'
-    ? 'the pair, three-quarter view'
-    : t.category === 'sacs' ? 'standing upright, seen from the front'
-      : t.category === 'bijoux' ? 'laid flat, seen from above, sharp down to the finest detail (links, clasp, stones)'
-        : 'laid perfectly flat, seen from the front, symmetrical, wrinkle-free';
+  const shape = poseDuDessin(t.category);
   return [
     `Reproduce ONLY this item from the reference photo: "${t.name}"${t.where ? `, location in the photo: "${t.where}"` : ''}. Ignore the person and every other item.`,
     t.description ? `What it is: ${t.description}` : '',
     'Reproduce it exactly: same cut, proportions, colours, wash, patterns, texture and every visible detail (buttons, stitching, pockets). Logos, stripes and lettering that are part of the item stay exactly as they are: same shape, count, colour and place.',
     // Consigne « catalogue » retenue le 17/11 sur le comparatif du banc (A manuelle, B agent, C catalogue).
     // Sans ombre : une ombre douce se confond avec le fond et fait échouer le détourage.
-    `Photorealistic e-commerce catalogue packshot, ${shape}, whole item centred with a small margin, soft even studio lighting that casts no shadow. The item alone: no person, mannequin, hanger, hand, other item, added text or watermark.`,
+    `Photorealistic premium e-commerce catalogue product photo, ${shape}. Whole item centred with a small margin, soft even studio lighting, true-to-life colours and fabric texture, casting no shadow. The item alone: no person, no visible mannequin, hanger, hand, other item, added text or watermark.`,
   ].filter(Boolean).join('\n\n');
 }
 
@@ -406,4 +420,23 @@ export function colourClause(t: Pick<Target, 'hex'>): string {
   if (!t.hex?.length) return '';
   const [main, ...rest] = t.hex;
   return `Exact colours of the real item, measured on the photo and corrected for its lighting: ${main} (main colour)${rest.length ? `, ${rest.join(', ')}` : ''}. Match these hues, saturation and lightness; do not brighten, darken, desaturate or wash them out.`;
+}
+
+/** Les images de référence quand la pièce découpée accompagne la photo. */
+export const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail, logos and lettering). Image 2 is the original photo: use it only for parts hidden or cut off in image 1, and to understand the fabric.';
+
+/**
+ * La consigne complète du dessin d'une pièce, la même pour l'agent et pour son
+ * banc. Depuis le 20/11, la pose vient toujours de `fallbackPrompt` (le rendu
+ * « catalogue ») : le repérage par Gemini n'écrit plus de consigne, et une
+ * consigne ancienne garderait l'ancienne pose.
+ */
+export function consigneDessin(t: Target, avecDecoupe: boolean): string {
+  return [
+    fallbackPrompt(t),
+    avecDecoupe ? REFERENCES_CLAUSE : '',
+    colourClause(t),
+    isolationClause(t),
+    backdropClause(t.colors, t.hex, isMetal(t)),
+  ].filter(Boolean).join('\n\n');
 }
