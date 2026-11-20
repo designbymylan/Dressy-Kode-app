@@ -23,6 +23,8 @@ function charger(): Promise<unknown> {
 export async function encoderWebp(r: Raster, qualite: number): Promise<Uint8Array> {
   await charger();
   const data = new Uint8ClampedArray(r.data.buffer, r.data.byteOffset, r.data.byteLength);
-  const sortie = await encode({ data, width: r.width, height: r.height, colorSpace: 'srgb' } as ImageData, { quality: qualite, alpha_quality: 100 });
+  // Méthode 2 (sur 0 à 6) : deux fois plus rapide que la méthode par défaut (4), pour un fichier
+  // à peine plus lourd ; le temps de calcul de la fonction est compté (banc du 21/11).
+  const sortie = await encode({ data, width: r.width, height: r.height, colorSpace: 'srgb' } as ImageData, { quality: qualite, alpha_quality: 100, method: 2 });
   return new Uint8Array(sortie);
 }

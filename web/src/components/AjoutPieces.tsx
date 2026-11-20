@@ -22,7 +22,13 @@ const CONSEILS = [
   'La pièce entière dans le cadre',
 ];
 const GUIDE = 'dk_guide_capture';
-const EN_MEME_TEMPS = 3;
+/**
+ * Deux pièces en traitement à la fois, au plus : au-delà, le serveur dépassait
+ * son temps de calcul et perdait tout le lot (banc du 21/11). Une place se
+ * libère quand la pièce n'est plus « Traitement… » (30 s au plus).
+ */
+const EN_MEME_TEMPS = 2;
+const LIBERATION_MS = 30_000;
 
 function Puce({ on, onClick, children, dot }: { on: boolean; onClick: () => void; children: string; dot?: string }) {
   return (
@@ -96,6 +102,8 @@ export function AjoutPieces({ spaceId }: { spaceId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [maintenant, setMaintenant] = useState(() => Date.now());
   const file = useRef<(() => Promise<void>)[]>([]);
+  // Les pièces en traitement qui tiennent une place de la file : libérées quand elles changent d'état.
+  const attentes = useRef(new Map<string, () => void>());
   const actifs = useRef(0);
   const reprise = useRef<string | null>(null);
   const entreeReprise = useRef<HTMLInputElement>(null);
@@ -111,7 +119,10 @@ export function AjoutPieces({ spaceId }: { spaceId: string }) {
   const fusionner = useCallback((lues: Omit<PieceAjout, 'locale'>[]) => {
     setPieces((avant) => {
       const parId = new Map(avant.map((p) => [p.id, p]));
-      for (const l of lues) parId.set(l.id, { ...l, locale: parId.get(l.id)?.locale ?? null });
+      for (const l of lues) {
+        parId.set(l.id, { ...l, locale: parId.get(l.id)?.locale ?? null });
+        if (l.statut !== 'processing') attentes.current.get(l.id)?.();
+      }
       return [...parId.values()];
     });
   }, []);
@@ -156,6 +167,14 @@ export function AjoutPieces({ spaceId }: { spaceId: string }) {
       const r = await envoyer(sb, spaceId, prete, debut);
       setPieces((p) => p.map((x) => (x.id !== cle ? x : r.ok ? { ...x, id: r.id, statut: 'processing', depuis: Date.now() } : { ...x, statut: 'failed', raison: 'envoi' })));
       if (!r.ok && r.message !== MESSAGES.envoi) setMessage(r.message);
+      // La place reste prise tant que la pièce se traite (voir EN_MEME_TEMPS).
+      if (r.ok) {
+        await new Promise<void>((libre) => {
+          const fin = () => { attentes.current.delete(r.id); libre(); };
+          attentes.current.set(r.id, fin);
+          setTimeout(fin, LIBERATION_MS);
+        });
+      }
     });
     pomper();
   };

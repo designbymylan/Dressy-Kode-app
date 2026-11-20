@@ -43,7 +43,7 @@ grant select, insert, update, delete on public.garments to authenticated, servic
 grant select on public.categories to authenticated;
 
 -- Storage
-create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text not null, name text not null, unique (bucket_id, name));
+create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text not null, name text not null, created_at timestamptz not null default now(), unique (bucket_id, name));
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
 alter table storage.objects enable row level security;
 grant select, insert, update, delete on storage.objects to authenticated, service_role;

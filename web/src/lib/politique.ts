@@ -6,7 +6,7 @@
 
 export type Section = { titre: string; texte?: string[]; liste?: { titre: string; texte: string }[] };
 
-export const POLITIQUE_VERSION = "Version 1.6 du 20 novembre 2026";
+export const POLITIQUE_VERSION = "Version 1.7 du 21 novembre 2026";
 
 export const EDITEUR: { nom: string; forme: string | null; adresse: string | null; siren: string | null; contact: string | null; directeur: string | null; mediateur: string | null } = {
   "nom": "Agence E-commerce Mylan Francois",
@@ -56,7 +56,11 @@ export const POLITIQUE: Section[] = [
       },
       {
         "titre": "Ton dressing",
-        "texte": "Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires."
+        "texte": "La photo de chaque pièce (réduite, sans les informations de ton téléphone comme le lieu), la pièce détourée qu’on en tire (ou redessinée, si tu demandes une image propre), ses étiquettes, son prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. La photo d’une pièce est gardée tant que la pièce est dans ton dressing, pour pouvoir la retraiter sans te la redemander ; elle est effacée 30 jours après que tu retires la pièce, et au plus tard le lendemain si tu la supprimes. Les autres photos que tu confies à Kodi sont effacées 30 jours après l’envoi."
+      },
+      {
+        "titre": "L’ajout de tes pièces",
+        "texte": "Pour chaque photo traitée : la durée de chaque étape, le résultat (pièce prête, photo à reprendre), le coût estimé et, si tu corriges la fiche, le fait qu’elle a été corrigée. Jamais la photo ni son contenu. Pour mesurer la rapidité et la justesse du service. Base : notre intérêt légitime. Gardé 12 mois."
       },
       {
         "titre": "Ton style",
@@ -107,7 +111,7 @@ export const POLITIQUE: Section[] = [
     "titre": "Kodi est une intelligence artificielle",
     "texte": [
       "Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison, leur matière, leur coupe, leurs détails et les notes que tu as écrites dessus), ton profil de style, ton agenda des deux semaines à venir, les pièces portées ces sept derniers jours, tes tenues écartées, la météo du jour, tes cœurs et tes souvenirs les plus récents ; ta silhouette, ta taille, tes tailles habituelles et la taille de tes pièces si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.",
-      "Pour ranger tes pièces, les photos que tu confies sont analysées par Google (Gemini, États-Unis), qui repère chaque pièce, puis chaque pièce est découpée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Google (Gemini) redessine ensuite la pièce en photo produit, à partir de la découpe et de ta photo ; c’est aussi lui qui la redessine quand tu demandes une image propre.",
+      "Pour ranger une pièce, sa photo est lue par Google (Gemini, États-Unis) ou par Anthropic (Claude, États-Unis), qui en tirent le type, les couleurs, la matière et les saisons, parmi une liste fixe ; la pièce est détourée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Rien n’est redessiné : l’image de ta pièce, ce sont les pixels de ta photo. Google (Gemini) ne redessine une pièce que si tu demandes une image propre.",
       "Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.",
       "Kodi peut se tromper : ses tenues sont des idées, jamais des décisions qui t’engagent. Kodi ne prend aucune décision automatisée qui produise un effet juridique ou comparable à ton égard (art. 22 du RGPD) : ce que Kodi te propose ne vaut que si tu le valides.",
       "Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne note pas d’information de santé dans tes rendez-vous, dans les notes de tes pièces ni dans tes questions à Kodi."
@@ -116,7 +120,7 @@ export const POLITIQUE: Section[] = [
   {
     "titre": "Qui reçoit tes données",
     "texte": [
-      "Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (repérage des pièces sur tes photos et dessin des pièces, États-Unis), fal (découpe des pièces dans tes photos, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).",
+      "Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi et lecture des pièces sur tes photos, États-Unis), Google (lecture des pièces sur tes photos et dessin d’une image propre à ta demande, États-Unis), fal (détourage des pièces dans tes photos, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).",
       "Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.",
       "La liste nominative de nos prestataires t’est envoyée sur simple demande. Personne d’autre : aucune vente, aucun partage publicitaire."
     ]
@@ -124,7 +128,7 @@ export const POLITIQUE: Section[] = [
   {
     "titre": "Hors de l’Union européenne",
     "texte": [
-      "Anthropic, Google, fal, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le repérage et la découpe des pièces sur tes photos, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).",
+      "Anthropic, Google, fal, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, la lecture et le détourage des pièces sur tes photos, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).",
       "Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis."
     ]
   },
@@ -136,8 +140,16 @@ export const POLITIQUE: Section[] = [
         "texte": "Tant que ton compte existe. Supprimé, tout est effacé de nos bases aussitôt ; les copies de sauvegarde disparaissent au plus tard 30 jours après."
       },
       {
-        "titre": "Les photos confiées à Kodi",
+        "titre": "La photo d’une pièce",
+        "texte": "Tant que la pièce est dans ton dressing ; 30 jours après que tu la retires, et au plus tard le lendemain si tu la supprimes."
+      },
+      {
+        "titre": "Les autres photos confiées à Kodi",
         "texte": "30 jours après l’envoi."
+      },
+      {
+        "titre": "Le journal de l’ajout de tes pièces",
+        "texte": "12 mois."
       },
       {
         "titre": "Les conversations avec Kodi",
@@ -418,6 +430,14 @@ export const CONDITIONS: Section[] = [
 export type Avis = { id: string; doc: 'politique' | 'conditions'; publie: string; effet: string; titre: string; texte: string };
 
 export const AVIS: Avis[] = [
+  {
+    "id": "politique-1.7",
+    "doc": "politique",
+    "publie": "2026-11-21",
+    "effet": "2026-11-21",
+    "titre": "Notre politique de confidentialité change",
+    "texte": "Une photo, une pièce : ta pièce est maintenant détourée dans ta photo, sans être redessinée. Pour la reprendre sans te redemander la photo, nous gardons ta photo, réduite, tant que la pièce est dans ton dressing."
+  },
   {
     "id": "politique-1.6",
     "doc": "politique",

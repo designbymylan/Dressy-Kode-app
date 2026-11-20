@@ -11,6 +11,8 @@ import type { Raster } from '../dressy-agent/cutout.ts';
 import type { Etiquettes } from '../_shared/taxonomy.ts';
 import type { Resultat as ResultatEtiquetage } from './etiquetage.ts';
 import { analyser, etirer, opaciteDe, type Analyse } from './masque.ts';
+import { epurer } from './epuration.ts';
+import { SAM_KIND } from '../dressy-agent/sam.ts';
 import { couleurMediane, decouper, reduire } from './normaliser.ts';
 import { decider, type RaisonReprise } from './qualite.ts';
 import { ETIQUETAGE, SEUILS, SORTIE } from './reglages.ts';
@@ -23,6 +25,11 @@ export type Ports = {
   detourer(jpeg: Uint8Array): Promise<{ png: Uint8Array; essais: number; erreurs: string[] }>;
   /** L'étiquetage complet (un nouvel essai compris), sur la même photo. */
   etiqueter(): Promise<ResultatEtiquetage>;
+  /**
+   * Facultatif : les masques de SAM 3 pour un type de pièce (« jacket »…),
+   * pour l'épuration (ne garder que la pièce). Absent : pas d'épuration.
+   */
+  segmenter?(jpeg: Uint8Array, prompt: string): Promise<{ png: Uint8Array; score: number | null }[]>;
   maintenant(): number;
 };
 
@@ -34,6 +41,9 @@ export type Mesures = {
   essais_etiquetage: number;
   cout_etiquetage_usd: number;
   modele_etiquetage: string | null;
+  /** L'épuration : appliquée ou non, et pourquoi (journal). */
+  epuration: { prompt: string; appliquee: boolean; raison?: string; part?: number; masques?: number } | null;
+  epuration_ms: number | null;
   erreurs: string[];
 };
 
@@ -68,7 +78,8 @@ function borne(p: Promise<ResultatEtiquetage>, ms: number): Promise<ResultatEtiq
 export async function traiter(original: Uint8Array, ports: Ports, opts: { plafondEtiquetageMs?: number } = {}): Promise<Sortie> {
   const mesures: Mesures = {
     detourage_ms: null, etiquetage_ms: null, controle_ms: null,
-    essais_detourage: 0, essais_etiquetage: 0, cout_etiquetage_usd: 0, modele_etiquetage: null, erreurs: [],
+    essais_detourage: 0, essais_etiquetage: 0, cout_etiquetage_usd: 0, modele_etiquetage: null,
+    epuration: null, epuration_ms: null, erreurs: [],
   };
   const t0 = ports.maintenant();
 
@@ -111,12 +122,37 @@ export async function traiter(original: Uint8Array, ports: Ports, opts: { plafon
   const tc = ports.maintenant();
   try {
     const rendu = ports.decoderPng(png);
-    const alpha = etirer(opaciteDe(rendu), rendu.width, rendu.height, photo.width, photo.height);
-    const { analyse, propre } = analyser({ largeur: photo.width, hauteur: photo.height, alpha }, SEUILS);
+    let alpha = etirer(opaciteDe(rendu), rendu.width, rendu.height, photo.width, photo.height);
     // Le calcul local seulement : l'attente de l'étiquetage est comptée à part.
     const avant = ports.maintenant() - tc;
     const etiquettes = (await etiquetage).etiquettes;
+
+    // L'épuration : ne garder que la pièce (sans cintre, boîte, patère), guidée par son type.
+    if (ports.segmenter) {
+      const te = ports.maintenant();
+      const prompt = (etiquettes && SAM_KIND[etiquettes.type]) || 'clothing';
+      try {
+        const bruts = await ports.segmenter(original, prompt);
+        // Gardés à leur taille (512 px) : la zone s'y calcule, sans agrandir chaque masque.
+        const masques = bruts.map((b) => {
+          const r = ports.decoderPng(b.png);
+          return { alpha: opaciteDe(r), largeur: r.width, hauteur: r.height, score: b.score };
+        });
+        const e = epurer(alpha, masques, photo.width, photo.height);
+        if (e.appliquee) alpha = e.alpha;
+        mesures.epuration = e.appliquee
+          ? { prompt, appliquee: true, part: Math.round(e.part * 1000) / 1000, masques: e.masques }
+          : { prompt, appliquee: false, raison: e.raison, ...(e.part !== undefined ? { part: Math.round(e.part * 1000) / 1000 } : {}), masques: e.masques };
+      } catch (err) {
+        // SAM en panne : la pièce garde son détourage, rien n'échoue pour autant.
+        mesures.epuration = { prompt, appliquee: false, raison: 'erreur' };
+        mesures.erreurs.push(`épuration : ${err instanceof Error ? err.message : err}`);
+      }
+      mesures.epuration_ms = ports.maintenant() - te;
+    }
+
     const t1 = ports.maintenant();
+    const { analyse, propre } = analyser({ largeur: photo.width, hauteur: photo.height, alpha }, SEUILS);
     const decision = decider(analyse, etiquettes);
     if (decision.statut === 'needs_retake') {
       mesures.controle_ms = avant + (ports.maintenant() - t1);

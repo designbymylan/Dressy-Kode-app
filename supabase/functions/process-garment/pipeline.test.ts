@@ -13,6 +13,7 @@ import { analyser, etirer, opaciteDe } from './masque.ts';
 import { couleurMediane, decouper } from './normaliser.ts';
 import { traiter, type Ports } from './pipeline.ts';
 import { decider, MESSAGES } from './qualite.ts';
+import { epurer } from './epuration.ts';
 
 let echecs = 0;
 function check(nom: string, obtenu: unknown, attendu: unknown) {
@@ -199,6 +200,48 @@ const original = new Uint8Array([0xff, 0xd8, 0xff]);
 
 // ---- décision : la paire ne sauve pas deux pièces différentes vues par le modèle
 check('paire vue comme plusieurs pièces : refusée', decider({ bord: 0, couverture: 0.3, plusGros: 0.5, deuxPlusGros: 1, morceaux: 2, boite: { x: 0, y: 0, w: 1, h: 1 } }, { ...ETIQ, type: 'baskets', categorie: 'chaussures', piece_unique: false } as never), { statut: 'needs_retake', raison: 'multiple_items' });
+
+// ---- épuration : ne garder que la pièce (21/11)
+{
+  // Détourage : la pièce (200 × 180) posée sur une boîte (200 × 50 dessous) ; SAM ne voit que la pièce.
+  const detour = opaciteDe(masqueGris([[100, 60, 200, 180], [100, 240, 200, 50]]));
+  const piece = opaciteDe(masqueGris([[100, 60, 200, 180]]));
+  const sam = (alpha: Uint8Array, score: number) => ({ alpha, largeur: W, hauteur: H, score });
+  const e = epurer(detour, [sam(piece, 0.9)], W, H);
+  check('épuration : la boîte disparaît', e.appliquee && e.alpha[260 * W + 200], 0);
+  check('épuration : la pièce reste, bord du détourage compris', e.appliquee && e.alpha[150 * W + 200], 255);
+  // Au contact de la pièce, l'élargissement de sécurité (6 px pour 1024, ici 2) garde une bande de la boîte.
+  check('épuration : part gardée (la pièce et 2 px de boîte au contact)', e.appliquee && Math.round(e.part * 100), 79);
+  const faible = epurer(detour, [sam(piece, 0.1)], W, H);
+  check('masque de SAM peu sûr : rien n’est retiré', [faible.appliquee, !faible.appliquee && faible.raison], [false, 'aucun_masque']);
+  const ailleurs = epurer(detour, [sam(opaciteDe(masqueGris([[0, 0, 60, 60]])), 0.9)], W, H);
+  check('masque de SAM hors du détourage : ignoré', ailleurs.appliquee, false);
+  const manche = epurer(detour, [sam(opaciteDe(masqueGris([[100, 60, 30, 30]])), 0.9)], W, H);
+  check('SAM ne voit qu’un morceau : le détourage reste', [manche.appliquee, !manche.appliquee && manche.raison], [false, 'trop_peu']);
+  const paire = epurer(opaciteDe(masqueGris([[20, 60, 150, 180], [230, 60, 150, 180], [20, 250, 360, 40]])),
+    [sam(opaciteDe(masqueGris([[20, 60, 150, 180]])), 0.8), sam(opaciteDe(masqueGris([[230, 60, 150, 180]])), 0.7)], W, H);
+  check('paire : les deux chaussures gardées, le support retiré', paire.appliquee && [paire.alpha[150 * W + 90], paire.alpha[150 * W + 300], paire.alpha[270 * W + 200]], [255, 255, 0]);
+
+  const demi = epurer(detour, [{ alpha: opaciteDe(masqueGris([[50, 30, 100, 90]], 200, 150)), largeur: 200, hauteur: 150, score: 0.9 }], W, H);
+  check('masque de SAM à demi-taille : même résultat', demi.appliquee && [demi.alpha[260 * W + 200], demi.alpha[150 * W + 200]], [0, 255]);
+
+  // Dans le pipeline : avec SAM, la boîte part ; SAM en panne, la pièce passe quand même.
+  const avecBoite = masqueGris([[100, 60, 200, 180], [100, 240, 200, 50]]);
+  const pngSam = new Uint8Array([7]);
+  const prompts: string[] = [];
+  const ports = fauxPorts({ masque: avecBoite });
+  const decodeur = ports.decoderPng;
+  const s1 = await traiter(original, {
+    ...ports,
+    decoderPng: (b) => (b === pngSam ? masqueGris([[100, 60, 200, 180]]) : decodeur(b)),
+    segmenter: async (_j, prompt) => { prompts.push(prompt); return [{ png: pngSam, score: 0.9 }]; },
+  });
+  check('pipeline : SAM interrogé avec le type de la pièce', prompts, ['sweater']);
+  check('pipeline : la boîte ne fait plus partie de la pièce (2 px au contact)', s1.statut === 'ready' && [s1.largeur, s1.hauteur], [216, 198]);
+  check('pipeline : épuration journalisée', s1.mesures.epuration?.appliquee, true);
+  const s2 = await traiter(original, { ...fauxPorts({ masque: avecBoite }), segmenter: async () => { throw new Error('SAM 3 injoignable'); } });
+  check('pipeline : SAM en panne, la pièce passe avec son détourage', [s2.statut, s2.mesures.epuration?.raison], ['ready', 'erreur']);
+}
 
 if (echecs) {
   console.error(`\n${echecs} échec(s)`);

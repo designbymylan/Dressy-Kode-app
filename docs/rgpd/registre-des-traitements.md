@@ -87,6 +87,37 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   terminées, 90 jours ; pièces, tant qu'elles restent dans le dressing
   (fonction `menage`, chaque nuit).
 
+### 2 bis. Pipeline d'ajout « une photo, une pièce » (21/11, à la bascule)
+
+Remplace le parcours ci-dessus pour l'ajout d'une pièce quand
+`PIPELINE_AJOUT` passe à vrai (politique 1.7, avis `politique-1.7`). État et
+banc : `docs/pipeline-ajout.md`.
+
+- **Finalité** : détourer la pièce dans sa photo (aucun dessin) et remplir sa
+  fiche avec une liste fixe de valeurs ; pouvoir la retraiter sans redemander
+  la photo.
+- **Base** : exécution du contrat (journal : intérêt légitime).
+- **Données** : la photo d'une pièce, réduite sur l'appareil (1024 px, JPEG
+  85, sans métadonnées) ; le détourage et la vignette ; la fiche (catégorie,
+  type, couleurs, matière, motif, coupe, saisons, habillage, confiance) ;
+  journal `garment_runs` (durées par étape, résultat, coût estimé, fiche
+  corrigée ou non ; jamais la photo).
+- **Fichiers** : seau `garments`, `<espace>/<pièce>/original.jpg`,
+  `cutout.webp`, `thumb.webp` ; seul `original.jpg` est écrit par le client.
+- **Destinataires** : Supabase ; fal (BiRefNet : la photo entière, un masque
+  revient ; SAM 3 : la photo en 512 px et le type de la pièce, des masques
+  reviennent ; `X-Fal-Store-IO: 0`) ; Google (Gemini, lecture de la fiche)
+  ou Anthropic (Claude Haiku 5.5, la même lecture, quand une clé directe est
+  posée). Aucun modèle génératif.
+- **Durée** : photo d'origine, tant que la pièce est dans le dressing, 30 jours
+  après son retrait, au plus tard le lendemain si elle est supprimée ;
+  détourage et vignette, comme la pièce ; journal, 12 mois (`menage`,
+  `expired_files`, migration `menage_pieces`).
+- **Analyse d'impact** : la photo part chez l'IA comme avant ; ce qui change est
+  la durée de conservation de la photo (gardée avec la pièce au lieu de 30
+  jours). Mesure : réduction et retrait des métadonnées sur l'appareil, conseil
+  d'éviter le visage, effacement automatique au retrait.
+
 ## 3. Profil de style, tenues et Kode
 
 - **Finalité** : proposer des tenues à son goût, adaptées à la météo et aux

@@ -18,11 +18,13 @@
  * Aucun modèle génératif n'est appelé ici. Interrupteur : AI_ENABLED=false.
  */
 import { createClient } from '@supabase/supabase-js';
-import { decode, sniffMime } from '../dressy-agent/codec.ts';
+import { decode, encodeJpeg, sniffMime } from '../dressy-agent/codec.ts';
+import { downscale } from '../dressy-agent/cutout.ts';
 import { lireCle } from '../_shared/fournisseurs.ts';
 import { lancerBanc, type Banc, type Rendu } from '../_shared/banc.ts';
 import { libelle, MATIERES, nomDeLaPiece, saisonResumee, type Etiquettes } from '../_shared/taxonomy.ts';
 import { DETOUREURS, detourer, estDetoureur, type IdDetoureur } from './detoureurs.ts';
+import { octetsDuMasque, SAM_PRIX, segmenterSam } from '../dressy-agent/fal.ts';
 import { etiqueter } from './etiquetage.ts';
 import { appelPour, etiqueteur } from './modeles.ts';
 import { traiter, type Ports, type Sortie } from './pipeline.ts';
@@ -65,9 +67,24 @@ const cleFal = (): string | undefined => lireCle('FAL_KEY');
 
 const prixDetourage = (id: IdDetoureur) => price(Deno.env.get(`COST_${id.toUpperCase()}_USD`), DETOUREURS[id].prix);
 
+/** L'épuration par SAM 3 (21/11) : active par défaut, EPURATION=0 (secret) la coupe. */
+const epurationActive = () => Deno.env.get('EPURATION')?.trim() !== '0';
+const prixSam = () => price(Deno.env.get('COST_SAM_USD'), SAM_PRIX);
+
 /** Les ports réels du pipeline : décodeurs, encodeur WebP, fal.ai, modèle d'étiquetage. */
-function ports(original: Uint8Array, id: IdDetoureur, qui: 'claude' | 'gemini'): Ports {
+function ports(original: Uint8Array, id: IdDetoureur, qui: 'claude' | 'gemini', epuration = epurationActive()): Ports {
   return {
+    ...(epuration ? {
+      segmenter: async (jpeg: Uint8Array, prompt: string) => {
+        const cle = cleFal();
+        if (!cle) throw new Error('FAL_KEY absente des secrets');
+        // SAM ne fait que délimiter la zone de la pièce (le bord fin vient du détourage) : 512 px
+        // suffisent, et ses masques pèsent quatre fois moins à décoder (mémoire et temps de calcul).
+        const petite = encodeJpeg(downscale(decode(jpeg, 'image/jpeg'), 512), 85);
+        const r = await segmenterSam({ bytes: petite, mime: 'image/jpeg' }, prompt, { cle, delaiMs: 10_000, maxMasques: 3 });
+        return await Promise.all(r.masques.map(async (m) => ({ png: await octetsDuMasque(m.source), score: m.score })));
+      },
+    } : {}),
     decoderJpeg: (b) => decode(b, 'image/jpeg'),
     decoderPng: (b) => decode(b, sniffMime(b) ?? 'image/png'),
     encoderWebp,
@@ -127,6 +144,8 @@ function ligneDuJournal(s: Sortie, base: Record<string, unknown>) {
       morceaux: analyse?.morceaux ?? null,
       deux_plus_gros: analyse?.deuxPlusGros ?? null,
       bord: analyse ? Math.round(analyse.bord * 1000) / 1000 : null,
+      epuration: m.epuration,
+      epuration_ms: m.epuration_ms,
       erreurs: m.erreurs.slice(0, 6).map((e) => e.slice(0, 200)),
     },
   };
@@ -171,7 +190,8 @@ async function traiterPiece(p: Piece, envoiMs: number | null, tentative: number)
       }).eq('id', p.id);
       if (e) throw new Error(`écriture de l'état : ${e.message}`);
     }
-    const cout = (s.mesures.essais_detourage ? prixDetourage(id) * s.mesures.essais_detourage : 0) + s.mesures.cout_etiquetage_usd;
+    const cout = (s.mesures.essais_detourage ? prixDetourage(id) * s.mesures.essais_detourage : 0) + s.mesures.cout_etiquetage_usd
+      + (s.mesures.epuration ? prixSam() : 0);
     await journal({
       ...ligneDuJournal(s, base), telechargement_ms: telechargementMs, ecriture_ms: Date.now() - te,
       total_ms: Date.now() - t0, cout_usd: Math.round(cout * 1e6) / 1e6,
@@ -222,9 +242,10 @@ async function modePipeline(b: Banc, params: Record<string, unknown>): Promise<R
   let cout = 0;
   for (const id of ids) {
     const t0 = Date.now();
-    const s = await traiter(bytes, ports(bytes, id, qui));
+    const s = await traiter(bytes, ports(bytes, id, qui, params.epuration === false ? false : epurationActive()));
     const total = Date.now() - t0;
-    const c = (s.mesures.essais_detourage ? prixDetourage(id) * s.mesures.essais_detourage : 0) + s.mesures.cout_etiquetage_usd;
+    const c = (s.mesures.essais_detourage ? prixDetourage(id) * s.mesures.essais_detourage : 0) + s.mesures.cout_etiquetage_usd
+      + (s.mesures.epuration ? prixSam() : 0);
     cout += c;
     const liens = s.statut === 'ready'
       ? { cutout: await b.ranger(`${nom}-${id}.webp`, s.cutout, 'image/webp'), thumb: await b.ranger(`${nom}-${id}-thumb.webp`, s.thumb, 'image/webp') }

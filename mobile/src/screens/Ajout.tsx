@@ -40,8 +40,13 @@ const CONSEILS: { icon: IconName; texte: string }[] = [
   { icon: 'camera', texte: 'La pièce entière dans le cadre' },
 ];
 
-/** Trois photos préparées et envoyées à la fois : les autres attendent leur tour. */
-const EN_MEME_TEMPS = 3;
+/**
+ * Deux pièces en traitement à la fois, au plus : au-delà, le serveur dépassait
+ * son temps de calcul et perdait tout le lot (banc du 21/11). Une place se
+ * libère quand la pièce n'est plus « Traitement… » (30 s au plus).
+ */
+const EN_MEME_TEMPS = 2;
+const LIBERATION_MS = 30_000;
 
 export function Ajout() {
   const { s, a } = useStore();
@@ -60,13 +65,18 @@ export function Ajout() {
   const [ajout, setAjout] = useState(false);
   const [maintenant, setMaintenant] = useState(Date.now());
   const file = useRef<(() => Promise<void>)[]>([]);
+  // Les pièces en traitement qui tiennent une place de la file : libérées quand elles changent d'état.
+  const attentes = useRef(new Map<string, () => void>());
   const actifs = useRef(0);
   const tuile = (width - space.gutter * 2 - 12) / 2;
 
   const fusionner = useCallback((lues: Omit<PieceAjout, 'locale'>[]) => {
     setPieces((avant) => {
       const parId = new Map(avant.map((p) => [p.id, p]));
-      for (const l of lues) parId.set(l.id, { ...l, locale: parId.get(l.id)?.locale ?? null });
+      for (const l of lues) {
+        parId.set(l.id, { ...l, locale: parId.get(l.id)?.locale ?? null });
+        if (l.statut !== 'processing') attentes.current.get(l.id)?.();
+      }
       return [...parId.values()];
     });
   }, []);
@@ -115,6 +125,14 @@ export function Ajout() {
       setPieces((p) => p.map((x) => (x.id !== cle ? x
         : r.ok ? { ...x, id: r.id, statut: 'processing', depuis: Date.now() }
         : { ...x, statut: 'failed', raison: 'envoi' })));
+      // La place reste prise tant que la pièce se traite (voir EN_MEME_TEMPS).
+      if (r.ok) {
+        await new Promise<void>((libre) => {
+          const fin = () => { attentes.current.delete(r.id); libre(); };
+          attentes.current.set(r.id, fin);
+          setTimeout(fin, LIBERATION_MS);
+        });
+      }
     });
     pomper();
   };

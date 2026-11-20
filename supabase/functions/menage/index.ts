@@ -10,6 +10,9 @@
  * - demandes de dessin terminées ou en échec : 90 jours (la pièce dessinée
  *   reste dans le dressing) ;
  * - appareils des notifications (jetons push) : six mois sans les voir ;
+ * - pipeline d'ajout (21/11) : fichiers d'une pièce supprimée (le lendemain),
+ *   photo d'origine d'une pièce retirée du dressing (30 jours après), par
+ *   `expired_files` ; journal `garment_runs` : 12 mois ;
  * - journal des générations (mesures de la bêta) : 13 mois ; images en cache
  *   des générations : 30 jours (comme les photos dont elles viennent) ; une
  *   génération restée « en cours » plus d'une heure est rendue.
@@ -63,10 +66,11 @@ Deno.serve(async () => {
     const archives = await compter(admin.from('kode_messages').delete({ count: 'exact' }).eq('archived', true).lt('created_at', ilYa(61)), 'conversations archivées');
     const anciennes = await compter(admin.from('kode_messages').delete({ count: 'exact' }).lt('created_at', ilYa(366)), 'conversations');
     const demandes = await compter(admin.from('ai_jobs').delete({ count: 'exact' }).in('status', ['done', 'failed']).lt('updated_at', ilYa(90)), 'demandes de dessin');
+    const ajouts = await compter(admin.from('garment_runs').delete({ count: 'exact' }).lt('created_at', ilYa(366)), 'journal des ajouts');
     const { generations, cache } = await ranger();
     const { data: appareils, error: errAppareils } = await admin.rpc('purge_push_tokens', { older: '180 days' });
     if (errAppareils) throw new Error(`appareils des notifications : ${errAppareils.message}`);
-    const bilan = { fichiers, messages: archives + anciennes, demandes, generations, cache, appareils: Number(appareils ?? 0) };
+    const bilan = { fichiers, messages: archives + anciennes, demandes, ajouts, generations, cache, appareils: Number(appareils ?? 0) };
     console.log('[menage]', JSON.stringify(bilan));
     return Response.json({ ok: true, ...bilan });
   } catch (e) {
