@@ -912,8 +912,9 @@ l'utilisateur.**
   face au lieu d'une vraie photo produit ; des bouts d'une pièce débordent
   dans la case voisine ; un trait de séparation est parfois dessiné ; un seul
   appel raté touche quatre pièces. En 2K chez fal (0,12 $ l'image), le prix
-  par pièce rejoint celui du dessin pièce par pièce. Décision en attente de
-  l'utilisateur ; recommandation : garder un dessin par pièce.
+  par pièce rejoint celui du dessin pièce par pièce. **Décision de
+  l'utilisateur (20/11) : on garde un dessin par pièce.** L'outil de la
+  grille reste au banc pour un nouvel essai (2K, clé Google directe).
 
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
