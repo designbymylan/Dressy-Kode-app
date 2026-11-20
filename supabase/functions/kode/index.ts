@@ -592,11 +592,19 @@ async function plan(token: string, input: PlanInput) {
   }
 }
 
+/**
+ * L'interrupteur général (20/11) : AI_ENABLED=false coupe tout appel à
+ * l'IA. Kodi répond 503 ; l'app et le site passent alors en « version
+ * simple » (le moteur de tenues, sans IA), comme sur une panne.
+ */
+const IA_ACTIVE = (Deno.env.get('AI_ENABLED') ?? '').trim().toLowerCase() !== 'false';
+
 Deno.serve(async (req) => {
   if (req.method === 'GET') {
-    return Response.json({ kode: MODEL, cle: Boolean(lireCle('ANTHROPIC_API_KEY')) });
+    return Response.json({ kode: MODEL, cle: Boolean(lireCle('ANTHROPIC_API_KEY')), ia: IA_ACTIVE });
   }
   if (req.method !== 'POST') return new Response('Méthode non prise en charge', { status: 405 });
+  if (!IA_ACTIVE) return Response.json({ error: 'Kodi se repose un instant. Réessaie un peu plus tard.', code: 'ia_coupee' }, { status: 503 });
 
   const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) return Response.json({ error: 'Connexion nécessaire.' }, { status: 401 });

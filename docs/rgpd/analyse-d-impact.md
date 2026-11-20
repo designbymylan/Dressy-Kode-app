@@ -83,6 +83,14 @@ niveaux ci-dessous sont ceux qui restent, mesures en place.
   décision de l'utilisateur : passer aux clés directes d'Anthropic et de
   Google, et retirer les adresses de l'intermédiaire. Tant que ce n'est pas
   fait, ce risque reste **important**.
+  **20/11, fal (découpe SAM 3)** : un prestataire de plus reçoit des zones
+  de photos. Mesures : seule la zone autour de la pièce part (pas la photo
+  entière, sauf reprise), sans métadonnées, sans identifiant de la personne ;
+  requête non gardée dans l'historique de fal (`X-Fal-Store-IO: 0`, 90 jours
+  par défaut sinon) ; masques rendus dans la réponse (`sync_mode`), tout
+  fichier passé par leur CDN effacé après une heure. Reste : leurs
+  conditions (pas d'entraînement), leur contrat de sous-traitance et leur
+  adhésion au cadre UE et États-Unis (`README.md`, points 2 à 4).
 - **Gravité** : importante. **Vraisemblance** : limitée une fois ces
   vérifications faites, importante sinon.
 

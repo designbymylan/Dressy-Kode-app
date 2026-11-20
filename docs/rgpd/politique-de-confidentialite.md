@@ -1,6 +1,6 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.5 du 18 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.6 du 20 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
@@ -39,7 +39,7 @@ Tout le reste est facultatif : prénom, ville, silhouette, mesures, âge, photo 
 
 Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison, leur matière, leur coupe, leurs détails et les notes que tu as écrites dessus), ton profil de style, ton agenda des deux semaines à venir, les pièces portées ces sept derniers jours, tes tenues écartées, la météo du jour, tes cœurs et tes souvenirs les plus récents ; ta silhouette, ta taille, tes tailles habituelles et la taille de tes pièces si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
 
-Pour dessiner tes pièces, les photos que tu confies sont analysées par Anthropic (États-Unis), puis découpées et redessinées par Google (Gemini, États-Unis).
+Pour ranger tes pièces, les photos que tu confies sont analysées par Google (Gemini, États-Unis), qui repère chaque pièce, puis chaque pièce est découpée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Si tu demandes une image propre, Google (Gemini) redessine la pièce.
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
@@ -49,7 +49,7 @@ Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne no
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (dessin et détourage des pièces, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (repérage des pièces sur tes photos et image propre, États-Unis), fal (découpe des pièces dans tes photos, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
 
 Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.
 
@@ -57,7 +57,7 @@ La liste nominative de nos prestataires t’est envoyée sur simple demande. Per
 
 ## Hors de l’Union européenne
 
-Anthropic, Google, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).
+Anthropic, Google, fal, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le repérage et la découpe des pièces sur tes photos, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).
 
 Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.
 

@@ -795,6 +795,50 @@ repérage, pas seulement la sienne. Correctifs (`steps.ts`, `index.ts`) :
   sortiraient l'IA de l'intermédiaire, qui reste le point fragile : s'il tombe
   en entier, toutes les chaînes tombent avec lui.
 
+**Détourage par SAM 3 (20/11), demandé par l'utilisateur** (plan « Dresskode,
+plan technique complet », décisions 1 et 2 : détourage par défaut, génération
+en option ; aucune boucle IA automatique). Il remplace « le dessin revient par
+défaut » du 18/11. Constat en base avant le changement : 100 s et plus par
+pièce (le dessin pendait chez l'intermédiaire puis retombait sur le contraste,
+qui garde peau et décor).
+
+- **Découpe** : `sam.ts` (consigne anglaise par type, `SAM_KIND` ; zone de la
+  photo autour du cadre du repérage, +25 % ; choix des masques ; une paire
+  réunit ses masques) et `fal.ts` (l'appel, sans dépendance). Un seul appel à
+  `fal-ai/sam-3/image` par pièce (0,005 $, prix public du 20/11), les trois
+  masques les plus probables départagés par les contrôles automatiques (calcul
+  local). Rien d'utilisable : contraste, sans autre appel d'IA. Clé refusée :
+  la pièce échoue (`SAY.notReady`) ; panne passagère : la tâche repart en file.
+- **Actif dès que le secret `FAL_KEY` est posé** dans Supabase. Sans lui,
+  l'ancien chemin du 18/11 reste (dessin d'arrivée offert).
+  `DESSIN_PAR_DEFAUT=1` force le dessin, `=0` la découpe ; `COST_SAM_USD` règle
+  le prix noté.
+- **Données** : `X-Fal-Store-IO: 0` (la requête n'est pas gardée dans
+  l'historique de fal, 90 jours sinon), `sync_mode` (masques dans la réponse),
+  fichiers éventuels de leur CDN effacés après une heure. Politique 1.6 (avis
+  `politique-1.6`), registre, analyse d'impact ; le contrat de fal reste à
+  accepter (`docs/rgpd/README.md`, point 2).
+- **Mesures** : chaque appel noté dans `generation_log` (fournisseur `fal`,
+  type `segmentation` ; migration `decoupe_sam3`) ; journal de la pièce
+  (`ai_jobs.cutout.sam` : consigne, masques, confiances, choix).
+- **Mode Studio** : « Image propre » revient dans le menu de la fiche pièce
+  (mobile, comme avant le 18/11 ; le site l'avait gardée). Quotas inchangés
+  (brief v6).
+- **Interrupteur `AI_ENABLED=false`** (secret) : `dressy-agent` ne prend plus
+  aucune tâche (les photos attendent en file) et `kode` répond 503 (l'app et le
+  site passent en version simple).
+- **Banc** : mode `decoupe` avec `modeles: ['sam', …]`. Tests :
+  `node supabase/functions/dressy-agent/sam.test.ts` (dans `npm run test:agent`).
+  Deno n'est pas installé dans les conteneurs : `npm i deno` dans un dossier de
+  travail donne `deno check`.
+- **Pas repris du plan, et pourquoi** : Vercel, OpenRouter, sharp et zod (le
+  pipeline vit dans les Edge Functions, sans dépendance d'image) ; le schéma
+  SQL du plan (`ai_jobs`, `generation_log`, `generation_reserve` et
+  `generation_settle` font déjà la file, les coûts et les quotas, échecs non
+  décomptés) ; le tagging par Claude (le repérage par Gemini rend déjà type,
+  couleurs, teintes, saison et fiche) ; le canevas 4:5 (les vignettes de l'app
+  sont carrées).
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu

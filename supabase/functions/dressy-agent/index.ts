@@ -7,20 +7,21 @@
  *   photo confiée → Sonnet 5 repère TOUTES les pièces (ou celles que la
  *     personne a nommées) ; la tâche garde la première et crée une tâche fille
  *     par pièce en plus, que d'autres passages traitent en parallèle ;
- *   pièce → Gemini segmente la pièce (un masque, pas une image) et elle est
- *     DÉCOUPÉE dans la photo : ses pixels, ses couleurs, ses marquages sont
- *     ceux de la personne, rien n'est redessiné ;
+ *   pièce → SAM 3 (fal.ai, 20/11) rend le masque de la pièce (un masque, pas
+ *     une image) et elle est DÉCOUPÉE dans la photo : ses pixels, ses
+ *     couleurs, ses marquages sont ceux de la personne, rien n'est redessiné ;
+ *     un seul appel, 0,005 $ ;
  *     → contrôles automatiques (couverture, une seule pièce, bord net, taille,
  *       couleur dominante) ; sinon repli sur un détourage par contraste ;
  *     → mise au format fixe (canevas carré, marges, pièce centrée), vignette,
  *       rangement dans le dressing.
  *
- * « Rendu incorrect » (fiche pièce) remet la tâche en file : 1re fois, la
- * découpe reprend avec le modèle le plus fort ; 2e fois, Nano Banana redessine
- * la pièce. « Image propre » (fiche pièce) la redessine aussi, à la demande.
- * Ce sont les seuls cas de génération d'image, et chacun prend une génération
- * au compteur de la personne (quota.ts, migration quotas_generation) : rendue
- * si le dessin échoue, jamais prise si l'image est déjà en cache.
+ * Le dessin (Nano Banana) n'est plus le chemin par défaut depuis le 20/11 :
+ * c'est le « mode Studio », à la demande (« Image propre », fiche pièce), ou
+ * la 2e reprise d'un « rendu incorrect ». Chacun prend une génération au
+ * compteur de la personne (quota.ts, migration quotas_generation) : rendue si
+ * le dessin échoue, jamais prise si l'image est déjà en cache. Sans clé
+ * fal.ai, l'ancien chemin du 18/11 (dessin d'arrivée offert) reste en place.
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
  * ce qui a déjà été fait (repérage).
@@ -33,7 +34,8 @@ import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
-import { decouper, fatal, ouvrir } from './decoupage.ts';
+import { cleFal, decouper, fatal, ouvrir } from './decoupage.ts';
+import { SAM_MODELE, SAM_PRIX } from './fal.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
 import { cacheKey, drawWithQuota, imageSettings, price, tokenCost, type Ports } from './quota.ts';
@@ -98,8 +100,19 @@ async function setJob(job: Job, patch: Record<string, unknown>) {
 
 // ---------------------------------------------------------------- mesures
 
-/** Le dessin d'arrivée (18/11) ; le secret DESSIN_PAR_DEFAUT=0 rend la découpe seule. */
-const DESSIN_PAR_DEFAUT = Deno.env.get('DESSIN_PAR_DEFAUT') !== '0';
+/**
+ * Le dessin d'arrivée (18/11) ne sert plus que sans clé fal.ai (20/11) : avec
+ * elle, une pièce qui arrive est découpée par SAM 3, et le dessin attend
+ * qu'on le demande. Le secret DESSIN_PAR_DEFAUT force l'un (1) ou l'autre (0).
+ */
+const DESSIN_PAR_DEFAUT = Deno.env.get('DESSIN_PAR_DEFAUT') === '1' || (Deno.env.get('DESSIN_PAR_DEFAUT') !== '0' && !cleFal());
+
+/**
+ * L'interrupteur général (20/11) : AI_ENABLED=false coupe tout appel aux
+ * fournisseurs d'IA. Les photos restent en file, intactes, et repartent dès
+ * qu'il est rallumé (ou retiré).
+ */
+const IA_ACTIVE = (Deno.env.get('AI_ENABLED') ?? '').trim().toLowerCase() !== 'false';
 
 /** Prix estimés en dollars, réglables dans les secrets sans toucher au code. */
 // Tarifs publics du 13/11 (Nano Banana 2.1, Claude Sonnet 5) : ceux d'un
@@ -109,10 +122,11 @@ const COST = {
   image2k: price(Deno.env.get('COST_IMAGE_2K_USD'), 0.05),
   claude: { in: price(Deno.env.get('COST_CLAUDE_IN_PER_M_USD'), 2), out: price(Deno.env.get('COST_CLAUDE_OUT_PER_M_USD'), 10) },
   gemini: { in: price(Deno.env.get('COST_GEMINI_IN_PER_M_USD'), 0.3), out: price(Deno.env.get('COST_GEMINI_OUT_PER_M_USD'), 2.5) },
+  sam: price(Deno.env.get('COST_SAM_USD'), SAM_PRIX),
 };
 
 /** Note un appel qui ne prend rien au compteur (repérage, segmentation, image en cache). Jamais bloquant. */
-async function note(job: Job, provider: 'google' | 'anthropic', kind: 'dessin' | 'segmentation' | 'reperage', model: string, status: 'succes' | 'echec', cacheHit: boolean, costUsd: number) {
+async function note(job: Job, provider: 'google' | 'anthropic' | 'fal', kind: 'dessin' | 'segmentation' | 'reperage', model: string, status: 'succes' | 'echec', cacheHit: boolean, costUsd: number) {
   try {
     const { error } = await db.rpc('generation_note', {
       p_user: job.requested_by, p_space: job.space_id, p_job: job.id, p_provider: provider, p_kind: kind,
@@ -227,13 +241,15 @@ type Journal = {
   reflexion?: string;
   controles?: Checks;
   essais?: { methode: string; echecs: string[] }[];
+  /** L'appel à SAM 3 (consigne, masques rendus, choix), depuis le 20/11. */
+  sam?: unknown;
   ms: Record<string, number>;
   usage: Record<string, unknown>;
 };
 
 /** Découpe la pièce dans la photo (decoupage.ts), puis la range. */
 async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
-  await setJob(job, { status: 'cutout', image_model: MODELS.segment });
+  await setJob(job, { status: 'cutout', image_model: cleFal() ? SAM_MODELE : MODELS.segment });
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   const photo = sources[0];
 
@@ -241,8 +257,14 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
   const raster = ouvrir(photo);
   j.ms.decodage = Date.now() - t;
 
-  const d = await decouper(photo, raster, target, { strong: job.redo >= 1 }, log);
+  const d = await decouper(photo, raster, target, { strong: job.redo >= 1, relancerSiPanne: job.runs < REPRISES_PASSAGERES }, log);
   Object.assign(j.ms, d.ms);
+  if (d.sam) {
+    j.sam = d.sam;
+    j.modele = d.sam.model;
+    // Payé dès que SAM 3 a répondu, masque utilisable ou non.
+    await note(job, 'fal', 'segmentation', d.sam.model, d.sam.masques ? 'succes' : 'echec', false, d.sam.zone ? COST.sam : 0);
+  }
   if (d.segmentation) {
     j.usage.segmentation = d.segmentation.usage;
     j.modele = d.segmentation.model;
@@ -474,6 +496,10 @@ const DESSIN_BUDGET_MS = Math.max(30_000, Number(Deno.env.get('DESSIN_BUDGET_MS'
 const REPRISES_PASSAGERES = 3;
 
 async function runOnce() {
+  if (!IA_ACTIVE) {
+    console.log('AI_ENABLED=false : aucune tâche prise, les photos attendent en file');
+    return;
+  }
   const started = Date.now();
   const { data, error } = await db.rpc('claim_ai_job');
   if (error) throw new Error(`prise de tâche : ${error.message}`);
@@ -500,6 +526,7 @@ async function runOnce() {
     const limite = started + DESSIN_BUDGET_MS;
     if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log, { limite });
     else if (DESSIN_PAR_DEFAUT && !job.garment_id && !job.redo) {
+      // Sans clé fal.ai seulement depuis le 20/11 (voir DESSIN_PAR_DEFAUT).
       // 18/11 : une pièce qui arrive est d'abord REDESSINÉE seule sur un fond uni
       // puis détourée (c'est ce qui donnait des images nettes). La découpe dans la
       // photo, qui garde la peau et le décor sans masque Google, ne sert plus que
@@ -553,7 +580,10 @@ Deno.serve(async (req) => {
   }
   if (req.method === 'GET') {
     const keys = Object.fromEntries(KEYS.map((k) => [k, Boolean(Deno.env.get(k))]));
-    return Response.json({ agent: 'dressy-agent', gabarit: CUTOUT.version, models: MODELS, effort: EFFORT, keys });
+    return Response.json({
+      agent: 'dressy-agent', gabarit: CUTOUT.version, models: MODELS, effort: EFFORT, keys,
+      ia: IA_ACTIVE, decoupe: cleFal() ? SAM_MODELE : 'gemini ou contraste', dessin_par_defaut: DESSIN_PAR_DEFAUT,
+    });
   }
   if (req.method !== 'POST') return new Response('Méthode non prise en charge', { status: 405 });
 

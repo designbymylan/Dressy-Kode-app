@@ -7,7 +7,8 @@
  *   générée (`imageConfig`), les vecteurs de la mémoire de Kodi ;
  * - `decoupe` (F1) : une photo de test, le vrai repérage, puis la vraie
  *   découpe (decoupage.ts) de chaque pièce avec plusieurs modèles de
- *   segmentation, et le détourage par contraste seul pour comparer. Les
+ *   segmentation (`sam` pour SAM 3 seul, 20/11), et le détourage par
+ *   contraste seul pour comparer. Les
  *   pièces découpées sont rangées dans le bucket `banc`, avec un lien signé.
  *
  * Jamais une photo d'utilisateur : seulement des images de test envoyées
@@ -15,6 +16,7 @@
  */
 import { survey, surveyGemini, segment, generate, checkSetup, fournisseurDuReperage, MODELS, AgentError, type Reflexion } from './steps.ts';
 import { decouper, ouvrir } from './decoupage.ts';
+import { SAM_PRIX } from './fal.ts';
 import { fitOnCanvas } from './normalize.ts';
 import { downscale } from './cutout.ts';
 import { decode, encodePng } from './codec.ts';
@@ -45,7 +47,7 @@ const court = (e: unknown) =>
 const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 /**
- * Paramètres : { photo, indice?, modeles: ['gemini-3.6-flash:minimal', …],
+ * Paramètres : { photo, indice?, modeles: ['sam', 'gemini-3.6-flash:minimal', …],
  *   contraste?: boolean (vrai par défaut), max_pieces?: number (2) }
  */
 async function essaiDecoupe(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
@@ -69,14 +71,17 @@ async function essaiDecoupe(b: Banc, p: Record<string, unknown>): Promise<Rendu>
     for (const [model, thinking] of essais) {
       const nom = model ?? 'contraste';
       try {
-        const d = await decouper(img, raster, piece, { strong: false, model: model ?? undefined, thinking, sansMasque: !model }, b.log);
+        const d = model === 'sam'
+          ? await decouper(img, raster, piece, { strong: false, sam: true }, b.log)
+          : await decouper(img, raster, piece, { strong: false, model: model ?? undefined, thinking, sansMasque: !model, sam: false }, b.log);
         if (d.segmentation) cost += coutGemini(d.segmentation.usage);
+        if (d.sam?.zone) cost += SAM_PRIX;
         const url = d.best
           ? await b.ranger(`${slug(photo)}-${i}-${slug(nom)}.png`, encodePng(downscale(fitOnCanvas(d.best.cut), 384)), 'image/png')
           : null;
         lignes.push({
           piece: piece.name, kind: piece.kind, hex: piece.hex, modele: nom, reflexion: d.segmentation?.reflexion ?? null,
-          masque: d.segmentation?.masque ?? false, methode: d.best?.method ?? null, ok: d.best?.checks.ok ?? false,
+          masque: d.segmentation?.masque ?? false, sam: d.sam, methode: d.best?.method ?? null, ok: d.best?.checks.ok ?? false,
           echecs: d.best?.checks.failed ?? null, valeurs: d.best?.checks.values ?? null, essais: d.essais, ms: d.ms, url,
         });
       } catch (e) {

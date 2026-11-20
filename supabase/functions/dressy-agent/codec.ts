@@ -26,6 +26,11 @@ export function decode(bytes: Uint8Array, mime: string): Raster {
   throw new Error(`format d'image non géré : ${mime}`);
 }
 
+/** Une zone de photo en JPEG, pour l'envoyer au détourage (SAM 3) sans alpha ni poids inutile. */
+export function encodeJpeg(r: Raster, quality = 90): Uint8Array {
+  return new Uint8Array(jpeg.encode({ data: r.data, width: r.width, height: r.height }, quality).data);
+}
+
 export function encodePng(r: Raster): Uint8Array {
   const png = new PNG({ width: r.width, height: r.height });
   png.data.set(r.data);

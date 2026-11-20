@@ -54,6 +54,10 @@ case des 15 ans avec le lien vers la politique.
 
 ## À faire avant la sortie
 
+**Découpe par fal (20/11)** : la politique est à jour (version 1.6 du 20/11,
+avis `politique-1.6`) ; le registre et l'analyse d'impact aussi. Reste le
+contrat de fal (point 2).
+
 **Notifications push (18/11)** : la politique est à jour (version 1.5 du 18/11 :
 identifiant d'appareil, Expo et Apple comme destinataires, 6 mois, avis
 `politique-1.5` en tête de l'accueil, `DUREES.appareils`). Reste : les contrats
@@ -74,7 +78,14 @@ Ce qui ne peut pas venir du code, dans l'ordre où cela bloque :
    Puis `node tools/politique.mjs`. Tant qu'ils manquent, l'app et le site
    le disent.
 2. **Les contrats de sous-traitance (art. 28)** à accepter dans chaque
-   console : Supabase, Anthropic, Google (API Gemini), Stripe, Expo, Apple.
+   console : Supabase, Anthropic, Google (API Gemini), fal (fal.ai, depuis
+   le 20/11), Stripe, Expo, Apple.
+   - **fal** (découpe des pièces, 20/11) : il reçoit la zone de la photo
+     autour de chaque pièce. Accepter son accord de traitement des données
+     (DPA), vérifier qu'il n'entraîne aucun modèle sur les requêtes de l'API,
+     et, si besoin d'aller plus loin que `X-Fal-Store-IO: 0`, demander la
+     rétention nulle (ZDR) à son équipe commerciale. La politique le nomme
+     (version 1.6).
    Pour les notifications push (18/11), deux points précis :
    - **Expo** : il est déjà dans la liste pour les mises à jour de l'app (sans
      donnée de compte). Avec le service Push, il reçoit en plus le jeton

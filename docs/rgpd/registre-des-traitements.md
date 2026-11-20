@@ -25,7 +25,8 @@ jamais dans l'app ni dans le code ; jeton revalidé côté serveur par
 | --- | --- | --- |
 | Supabase | Base de données, authentification, fichiers, fonctions serveur | Union européenne (Irlande) |
 | Anthropic | IA : repérage des pièces sur les photos, réponses et tenues de Kode, recherche du modèle d'une pièce | États-Unis |
-| Google (API Gemini) | IA : découpe et dessin des pièces (plus aucun souvenir de Kodi depuis le 13/11) | États-Unis |
+| Google (API Gemini) | IA : repérage des pièces sur les photos (depuis le 17/11), dessin d'une pièce à la demande (« Image propre ») ; plus aucun souvenir de Kodi depuis le 13/11 | États-Unis |
+| fal (fal.ai, Features & Labels Inc.) | IA : découpe de chaque pièce dans sa photo (SAM 3, un masque par pièce), depuis le 20/11, dès que la clé `FAL_KEY` est posée. Requête non gardée dans l'historique (`X-Fal-Store-IO: 0`), fichiers éventuels effacés après une heure | États-Unis |
 | Stripe | Paiement, factures | États-Unis et Union européenne |
 | Expo (EAS Update) | Distribution des mises à jour de l'app, sans donnée de compte | États-Unis |
 | Expo (Push) et Apple (APNs) | Acheminement des notifications « tes pièces sont prêtes » : jeton d'appareil, titre et texte du message (18/11) | États-Unis |
@@ -74,10 +75,13 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
 - **Tables et fichiers** : `ai_jobs` (dont le journal de découpe : méthode,
   contrôles, durées, jetons), `ai_images`, `garments`, `garment_reports`,
   `categories` ; seaux `uploads`, `ai-generated`, `garments`.
-- **Destinataires** : Supabase ; Anthropic (repérage des pièces sur la
-  photo) ; Google (masque de découpe de chaque pièce, calculé sur la photo ;
-  après deux signalements « rendu incorrect » seulement, dessin de la pièce
-  à partir de la photo et d'une consigne).
+- **Destinataires** : Supabase ; Google (repérage des pièces sur la photo,
+  depuis le 17/11 ; dessin d'une pièce seulement sur « Image propre » ou
+  après deux signalements « rendu incorrect ») ; fal (depuis le 20/11 :
+  découpe de chaque pièce, la zone de la photo autour de la pièce est
+  envoyée, un masque revient ; rien n'est gardé dans l'historique de fal,
+  `X-Fal-Store-IO: 0`). Anthropic ne reçoit plus les photos depuis le 17/11
+  (sauf si le secret `SURVEY_PROVIDER=claude` est posé).
 - **Durée** : photos confiées, 30 jours après l'envoi ; demandes de dessin
   terminées, 90 jours ; pièces, tant qu'elles restent dans le dressing
   (fonction `menage`, chaque nuit).
