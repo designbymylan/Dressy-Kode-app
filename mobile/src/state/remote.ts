@@ -248,11 +248,15 @@ async function withImages(rows: GarmentRow[], stats: StatRow[]): Promise<Piece[]
   return rows.map((g) => toPiece(g, byGarment.get(g.id), signed.get(g.thumb_path ?? g.image_path ?? '')));
 }
 
-/** Les pièces seules, relues après l'arrivée de celles que Kodi a dessinées. */
+/**
+ * Les pièces seules, relues après l'arrivée de celles que Kodi a dessinées.
+ * Seulement celles ajoutées au dressing (« Tout ajouter », pipeline du 20/11) :
+ * une pièce en cours ou en revue n'y est pas encore.
+ */
 export async function loadPieces(spaceId: string): Promise<Piece[]> {
   const sb = db();
   const [garments, stats] = await Promise.all([
-    sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').order('created_at', { ascending: false }),
+    sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').not('added_at', 'is', null).order('created_at', { ascending: false }),
     sb.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),
   ]);
   if (garments.error) throw new Error(`pièces : ${garments.error.message}`);
@@ -359,7 +363,7 @@ export async function loadAccount(): Promise<Account | null> {
     sb.from('style_profile').select('gender, styles, colours, avoid_colours, occasions').eq('space_id', spaceId).single(),
     sb.from('silhouettes').select('shape, shape_source, height_cm, weight_kg, measurements, usual_sizes').eq('space_id', spaceId).single(),
     sb.from('settings').select('city, agenda_linked, notifications').eq('space_id', spaceId).single(),
-    sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').order('created_at', { ascending: false }),
+    sb.from('garments').select(GARMENT_SELECT).eq('space_id', spaceId).neq('status', 'archived').not('added_at', 'is', null).order('created_at', { ascending: false }),
     sb.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),
     sb.from('subscriptions').select('plan, period, status').eq('space_id', spaceId).in('status', ['active', 'trialing', 'past_due']),
     sb.rpc('kode_usage', { target: spaceId }),

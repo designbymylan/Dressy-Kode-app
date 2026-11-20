@@ -124,7 +124,7 @@ export async function loadAgenda(supabase: Db, viewer: Viewer, raw: { jour?: str
       .gte('ends_on', today)
       .order('starts_on')
       .limit(10),
-    supabase.from('garments').select('category_id').eq('status', 'active'),
+    supabase.from('garments').select('category_id').eq('status', 'active').not('added_at', 'is', null),
     loadContexte(supabase),
   ]);
 

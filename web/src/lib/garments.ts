@@ -38,6 +38,8 @@ export async function loadPieces(supabase: Supabase): Promise<Piece[]> {
     .from('garments')
     .select('id, name, category_id, kind, colors, image_path, thumb_path, created_at, brand, size, fit, material, season, reports')
     .eq('status', 'active')
+    // Seulement les pièces ajoutées (« Tout ajouter », pipeline du 20/11).
+    .not('added_at', 'is', null)
     .order('created_at', { ascending: false });
 
   const rows = data ?? [];
