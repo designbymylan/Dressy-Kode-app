@@ -831,6 +831,22 @@ qui garde peau et décor).
   `node supabase/functions/dressy-agent/sam.test.ts` (dans `npm run test:agent`).
   Deno n'est pas installé dans les conteneurs : `npm i deno` dans un dossier de
   travail donne `deno check`.
+- **Essais du 20/11 au banc, en production** (photos de test du dossier
+  « Image inspiration outfit », jamais une photo d'utilisatrice) : 7 pièces
+  sur 8 découpées avec leur cadre (veste, jean, pull à logo, short, sabots,
+  casquette, baskets), 0,5 à 2,6 s par pièce ; le t-shirt à moitié caché sous
+  une veste n'est pas trouvé. Parcours complet (repérage puis découpe) :
+  6 pièces repérées en 6 s, 0,5 s de découpe par pièce, contrôles bons. Limite
+  attendue : ce qu'un bras, un sac ou un collier cache laisse un manque (c'est
+  le rôle d'« Image propre », ou d'un futur éditeur de retouche). **Temps de
+  calcul** : un passage qui découpe quatre pièces d'affilée a été coupé
+  (« CPU Time exceeded ») ; en production chaque pièce a son passage
+  (environ 0,9 s de calcul mesurée en local), et l'envoi à SAM 3 est ramené
+  à 1 024 px. Ne pas enchaîner plus de deux pièces par essai de banc.
+- **Panne du 20/11 (secrets)** : en ajoutant la clé fal, `GEMINI_API_KEY`,
+  `GEMINI_BASE_URL` et `ANTHROPIC_BASE_URL` avaient été retirés (Kodi refusé,
+  repérage impossible), puis remis par l'utilisateur. Le code lit les noms
+  exacts des secrets : un nom avec espaces ou points n'est pas lu.
 - **Pas repris du plan, et pourquoi** : Vercel, OpenRouter, sharp et zod (le
   pipeline vit dans les Edge Functions, sans dépendance d'image) ; le schéma
   SQL du plan (`ai_jobs`, `generation_log`, `generation_reserve` et
