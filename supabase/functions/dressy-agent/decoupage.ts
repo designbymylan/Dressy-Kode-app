@@ -42,13 +42,21 @@ export const cleFal = (): string | undefined => lireCle('FAL_KEY');
 
 const bloque = (c: Cand) => c.checks.failed.some((f) => BLOCKING.includes(f));
 
-/** Au-delà, la zone est réduite avant l'envoi : SAM 3 travaille vers 1 000 px, le masque est étiré ensuite. */
-const COTE_SAM = 1536;
+/**
+ * Au-delà, la zone est réduite avant l'envoi : SAM 3 travaille vers 1 000 px,
+ * le masque est étiré ensuite sur la zone à pleine résolution. Plus petit,
+ * c'est aussi moins de calcul (encodage, décodage du masque) : la fonction a
+ * un temps de calcul compté (« CPU Time exceeded » au banc du 20/11).
+ */
+const COTE_SAM = 1024;
 
 /**
- * SAM 3 sur la zone de la pièce : un appel, puis les trois masques les plus
- * probables découpés et contrôlés, jusqu'au premier qui passe tous les
- * contrôles. Les pixels viennent de la photo à pleine résolution.
+ * SAM 3 sur la zone de la pièce : un appel, puis les masques les plus
+ * probables découpés et contrôlés dans l'ordre, jusqu'au premier utilisable
+ * (aucun contrôle bloquant). Une couleur un peu loin de celle relevée au
+ * repérage ne fait pas essayer le suivant : la lumière la décale souvent, et
+ * chaque essai coûte du temps de calcul. Les pixels viennent de la photo à
+ * pleine résolution.
  */
 async function parSam(raster: Raster, target: Target, strong: boolean, cle: string, log: (m: string) => void): Promise<{ cands: Cand[]; info: InfoSam; ms: Record<string, number> }> {
   const ms: Record<string, number> = {};
@@ -82,8 +90,7 @@ async function parSam(raster: Raster, target: Target, strong: boolean, cle: stri
     const { cut, oneShare } = cleanSpecks(cutFromMask(region, masque, [0, 0, 1, 1], { x: 0, y: 0, w: region.width, h: region.height }));
     const cand: Cand = { method: 'sam', cut, checks: runChecks(cut, oneShare, expected) };
     cands.push(cand);
-    if (!info.choix && !bloque(cand)) info.choix = c;
-    if (cand.checks.ok) {
+    if (!bloque(cand)) {
       info.choix = c;
       break;
     }
