@@ -54,5 +54,5 @@ Ce que le banc montre :
 1. **20 photos prises au téléphone**, chez soi, en suivant l'aide à la capture : c'est le vrai banc (critère : 18 sur 20 prêtes sans reprise). `node tools/banc-pipeline.mjs` accepte d'autres photos (déposées dans le compartiment `banc`).
 2. **Politique de confidentialité** : la photo d'origine est gardée tant que la pièce existe (spec), alors que la politique promet l'effacement des photos sous 30 jours. Nouvelle version, avis, registre, avant la bascule. Même chose pour le texte de permission « photos » de l'app.
 3. **Kodi, le dressing de l'app et du site** ne lisent plus que les pièces ajoutées (`added_at`), sur la branche ; redéployer `kode` à la bascule.
-5. **Bascule** : `PIPELINE_AJOUT = true` dans `mobile/src/state/ajout.ts` et `web/src/lib/ajout.ts`, essai de bout en bout sur un vrai compte (app en Expo Go, site en Preview), mesure en 4G, puis main.
 4. **Contraintes de la taxonomie** sur `kind` et `colors` (l'app actuelle écrit encore ses types d'illustration) : nouvelle migration, une fois l'app basculée.
+5. **Bascule** : `PIPELINE_AJOUT = true` dans `mobile/src/state/ajout.ts` et `web/src/lib/ajout.ts`, essai de bout en bout sur un vrai compte (app en Expo Go, site en Preview), mesure en 4G, puis main.
