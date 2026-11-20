@@ -11,10 +11,11 @@
     "test:agent": "node ../supabase/functions/dressy-agent/agent.test.ts && node ../supabase/functions/dressy-agent/decoupe.test.ts && node ../supabase/functions/dressy-agent/quota.test.ts && node ../supabase/functions/dressy-agent/sam.test.ts",
     "test:kode": "node ../supabase/functions/kode/kode.test.ts",
     "test:tenues": "node src/lib/outfits.test.ts",
-    "test": "npm run test:agent && npm run test:kode && npm run test:tenues && npm run test:billing && npm run test:donnees -- --hors-ligne",
+    "test": "npm run test:agent && npm run test:pipeline && npm run test:kode && npm run test:tenues && npm run test:billing && npm run test:donnees -- --hors-ligne",
     "test:billing": "node ../supabase/functions/_shared/billing.test.ts && node ../supabase/functions/_shared/limites.test.ts",
     "test:quotas": "bash ../tools/test-quotas.sh",
-    "test:donnees": "node ../supabase/functions/_shared/donnees/donnees.test.ts"
+    "test:donnees": "node ../supabase/functions/_shared/donnees/donnees.test.ts",
+    "test:pipeline": "node ../supabase/functions/_shared/taxonomy.test.ts && node ../supabase/functions/process-garment/pipeline.test.ts && node ../tools/taxonomie.mjs --verifier"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
