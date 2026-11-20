@@ -102,7 +102,14 @@ export function JobList({ initial }: { initial: JobView[] }) {
       const prev = latest.current;
       const before = new Map(prev.map((p) => [p.id, p]));
       // Rangées sous nos yeux : elles étaient là, pas encore finies.
-      const arrived = rows.filter((r) => r.status === 'done' && before.has(r.id) && before.get(r.id)!.status !== 'done');
+      // Rangées sous nos yeux : elles étaient là, pas encore finies. Depuis le 20/11, une
+      // pièce découpée est rangée avant d'être redessinée (la tâche repart aussitôt pour
+      // le dessin) : elle compte comme arrivée dès qu'elle a sa pièce, sans attendre la fin.
+      const arrived = rows.filter((r) => {
+        const b = before.get(r.id);
+        if (!b) return false;
+        return (r.status === 'done' && b.status !== 'done') || (!!r.garment_id && !b.garment_id);
+      });
 
       setJobs(rows.map((r) => ({
         ...r,

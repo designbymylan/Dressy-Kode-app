@@ -16,12 +16,19 @@
  *     → mise au format fixe (canevas carré, marges, pièce centrée), vignette,
  *       rangement dans le dressing.
  *
- * Le dessin (Nano Banana) n'est plus le chemin par défaut depuis le 20/11 :
- * c'est le « mode Studio », à la demande (« Image propre », fiche pièce), ou
- * la 2e reprise d'un « rendu incorrect ». Chacun prend une génération au
- * compteur de la personne (quota.ts, migration quotas_generation) : rendue si
- * le dessin échoue, jamais prise si l'image est déjà en cache. Sans clé
- * fal.ai, l'ancien chemin du 18/11 (dessin d'arrivée offert) reste en place.
+ * Puis, le même soir (20/11, rendu « catalogue » demandé par l'utilisateur) :
+ * la pièce découpée est rangée TOUT DE SUITE (la personne la voit en 10 à
+ * 20 s), et la tâche repart aussitôt pour un second passage (`dessin_auto`) :
+ * Nano Banana la redessine en photo produit (mannequin invisible, de face),
+ * la découpe servant de référence exacte, et l'image est remplacée. Offert,
+ * rien au compteur ; s'il échoue, la découpe reste, sans message d'erreur.
+ * Deux passages, aussi, pour le temps de calcul compté de la fonction.
+ *
+ * À la demande : « Image propre » (fiche pièce) ou la 2e reprise d'un « rendu
+ * incorrect » redessinent la pièce ; chacun prend une génération au compteur
+ * de la personne (quota.ts, migration quotas_generation) : rendue si le
+ * dessin échoue, jamais prise si l'image est déjà en cache. Sans clé fal.ai,
+ * l'ancien chemin du 18/11 (dessin d'arrivée offert) reste en place.
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
  * ce qui a déjà été fait (repérage).
@@ -70,6 +77,8 @@ type Job = {
   redo: number;
   /** « Image propre » demandée : la pièce est redessinée (une génération). */
   clean: boolean;
+  /** Second passage automatique (20/11) : le dessin catalogue après la découpe, offert. */
+  dessin_auto: boolean;
 };
 
 type Details = { brand?: string; size?: string; fit?: string; material?: string; note?: string };
@@ -106,6 +115,12 @@ async function setJob(job: Job, patch: Record<string, unknown>) {
  * qu'on le demande. Le secret DESSIN_PAR_DEFAUT force l'un (1) ou l'autre (0).
  */
 const DESSIN_PAR_DEFAUT = Deno.env.get('DESSIN_PAR_DEFAUT') === '1' || (Deno.env.get('DESSIN_PAR_DEFAUT') !== '0' && !cleFal());
+
+/**
+ * Le dessin catalogue après la découpe (20/11) : actif avec la découpe par
+ * SAM 3 ; le secret DESSIN_APRES_DECOUPE=0 garde la découpe seule.
+ */
+const DESSIN_APRES_DECOUPE = !DESSIN_PAR_DEFAUT && Deno.env.get('DESSIN_APRES_DECOUPE') !== '0';
 
 /**
  * L'interrupteur général (20/11) : AI_ENABLED=false coupe tout appel aux
@@ -300,12 +315,14 @@ async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | nul
  */
 async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { offert?: boolean; limite?: number } = {}) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
+  // Le journal de la découpe (SAM 3) reste lisible après le dessin qui la remplace.
+  if (job.cutout && 'sam' in job.cutout) j.sam = (job.cutout as { sam?: unknown }).sam;
   // « Image propre » (F3, 13/11) : la pièce déjà découpée passe en premier, posée
   // sur le fond voulu, car elle montre exactement quoi dessiner ; la photo
   // d'origine suit pour les détails cachés. Après deux « rendu incorrect », la
   // découpe est jugée fausse : la photo seule, comme avant.
   const fond = backdropFor(target.colors, target.hex, isMetal(target));
-  const decoupe = job.clean && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
+  const decoupe = (job.clean || job.dessin_auto) && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
   const references = decoupe ? [decoupe, ...sources] : sources;
   const prompt = consigneDessin(target, Boolean(decoupe));
 
@@ -404,7 +421,9 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
 
   await setJob(job, { status: 'uploading' });
   t0 = Date.now();
-  const suffix = job.redo ? `-r${job.redo}` : '';
+  // Une image remplacée (reprise, image propre, dessin après la découpe) prend
+  // un nouveau nom : l'app et le site ne gardent jamais l'ancienne en cache.
+  const suffix = job.garment_id ? `-${Date.now().toString(36)}` : job.redo ? `-r${job.redo}` : '';
   const imagePath = `${job.space_id}/${job.id}${suffix}.png`;
   const thumbPath = `${job.space_id}/${job.id}${suffix}-vignette.png`;
   await Promise.all([
@@ -460,7 +479,7 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
     }
   }
 
-  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j, clean: false });
+  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j, clean: false, dessin_auto: false });
   log(`rangée dans le dressing : ${t.name} (${j.methode}, ${Object.entries(j.ms).map(([k, v]) => `${k} ${v} ms`).join(', ')})`);
 }
 
@@ -495,7 +514,7 @@ async function runOnce() {
     const missing = KEYS.filter((k) => !Deno.env.get(k));
     if (missing.length) throw new AgentError(SAY.notReady, `${missing.join(', ')} absente(s) des secrets Supabase`);
 
-    if (job.garment_id && !job.redo && !job.clean) {
+    if (job.garment_id && !job.redo && !job.clean && !job.dessin_auto) {
       await setJob(job, { status: 'done', error: null });
       return;
     }
@@ -506,7 +525,11 @@ async function runOnce() {
     // 20/11 : le dessin a un budget de temps, pour qu'il échoue proprement (et
     // laisse la place au repli) avant que la fonction soit tuée par sa durée maximale.
     const limite = started + DESSIN_BUDGET_MS;
-    if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log, { limite });
+    const arrivee = !job.garment_id && !job.redo && !job.clean;
+    if (job.dessin_auto && job.garment_id) {
+      // Second passage (20/11) : le dessin catalogue remplace la découpe déjà rangée.
+      await redraw(job, targetOf(job), sources, log, { offert: true, limite });
+    } else if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log, { limite });
     else if (DESSIN_PAR_DEFAUT && !job.garment_id && !job.redo) {
       // Sans clé fal.ai seulement depuis le 20/11 (voir DESSIN_PAR_DEFAUT).
       // 18/11 : une pièce qui arrive est d'abord REDESSINÉE seule sur un fond uni
@@ -520,7 +543,14 @@ async function runOnce() {
         log(`dessin impossible (${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}) : repli sur la découpe`);
         await cutOut(job, target, sources, log);
       }
-    } else await cutOut(job, target, sources, log);
+    } else {
+      await cutOut(job, target, sources, log);
+      if (arrivee && DESSIN_APRES_DECOUPE) {
+        // La pièce est rangée (la personne la voit déjà) ; le dessin suit dans un autre passage.
+        await setJob(job, { status: 'queued', dessin_auto: true });
+        log('découpe rangée, dessin catalogue remis en file');
+      }
+    }
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
     // ni de nom de modèle. Le détail part dans les journaux de la fonction.
@@ -536,6 +566,11 @@ async function runOnce() {
       return;
     }
     log(`échec : ${detail}`);
+    if (job.dessin_auto && job.garment_id) {
+      // Le dessin après la découpe a échoué : la découpe reste, sans message pour la personne.
+      await db.from('ai_jobs').update({ status: 'done', error: null, dessin_auto: false }).eq('id', job.id);
+      return;
+    }
     // Une reprise ratée laisse la pièce telle qu'elle était : seule la tâche garde la trace.
     await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false }).eq('id', job.id);
   }
@@ -564,7 +599,7 @@ Deno.serve(async (req) => {
     const keys = Object.fromEntries(KEYS.map((k) => [k, Boolean(Deno.env.get(k))]));
     return Response.json({
       agent: 'dressy-agent', gabarit: CUTOUT.version, models: MODELS, effort: EFFORT, keys,
-      ia: IA_ACTIVE, decoupe: cleFal() ? SAM_MODELE : 'gemini ou contraste', dessin_par_defaut: DESSIN_PAR_DEFAUT,
+      ia: IA_ACTIVE, decoupe: cleFal() ? SAM_MODELE : 'gemini ou contraste', dessin_par_defaut: DESSIN_PAR_DEFAUT, dessin_apres_decoupe: DESSIN_APRES_DECOUPE,
     });
   }
   if (req.method !== 'POST') return new Response('Méthode non prise en charge', { status: 405 });

@@ -25,7 +25,7 @@ jamais dans l'app ni dans le code ; jeton revalidé côté serveur par
 | --- | --- | --- |
 | Supabase | Base de données, authentification, fichiers, fonctions serveur | Union européenne (Irlande) |
 | Anthropic | IA : repérage des pièces sur les photos, réponses et tenues de Kode, recherche du modèle d'une pièce | États-Unis |
-| Google (API Gemini) | IA : repérage des pièces sur les photos (depuis le 17/11), dessin d'une pièce à la demande (« Image propre ») ; plus aucun souvenir de Kodi depuis le 13/11 | États-Unis |
+| Google (API Gemini) | IA : repérage des pièces sur les photos (depuis le 17/11), dessin de chaque pièce en photo produit après sa découpe (20/11) et « Image propre » ; plus aucun souvenir de Kodi depuis le 13/11 | États-Unis |
 | fal (fal.ai, Features & Labels Inc.) | IA : découpe de chaque pièce dans sa photo (SAM 3, un masque par pièce), depuis le 20/11, dès que la clé `FAL_KEY` est posée. Requête non gardée dans l'historique (`X-Fal-Store-IO: 0`), fichiers éventuels effacés après une heure | États-Unis |
 | Stripe | Paiement, factures | États-Unis et Union européenne |
 | Expo (EAS Update) | Distribution des mises à jour de l'app, sans donnée de compte | États-Unis |
@@ -76,8 +76,9 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   contrôles, durées, jetons), `ai_images`, `garments`, `garment_reports`,
   `categories` ; seaux `uploads`, `ai-generated`, `garments`.
 - **Destinataires** : Supabase ; Google (repérage des pièces sur la photo,
-  depuis le 17/11 ; dessin d'une pièce seulement sur « Image propre » ou
-  après deux signalements « rendu incorrect ») ; fal (depuis le 20/11 :
+  depuis le 17/11 ; dessin de chaque pièce en photo produit après sa
+  découpe, depuis le 20/11 au soir, à partir de la pièce découpée et de la
+  photo ; « Image propre » et « rendu incorrect ») ; fal (depuis le 20/11 :
   découpe de chaque pièce, la zone de la photo autour de la pièce est
   envoyée, un masque revient ; rien n'est gardé dans l'historique de fal,
   `X-Fal-Store-IO: 0`). Anthropic ne reçoit plus les photos depuis le 17/11

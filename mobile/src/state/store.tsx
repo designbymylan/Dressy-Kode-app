@@ -1287,7 +1287,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const timer = setInterval(() => {
       if (AppState.currentState !== 'active' || Date.now() - lastJobsRead < 3000) return;
       const paths = [...new Set(ref.current.jobs.filter(isActive).map((j) => j.source_paths[0]))];
-      remote.readJobs(paths).then((jobs) => dispatch({ t: 'jobs', jobs })).catch(() => undefined);
+      remote.readJobs(paths).then((jobs) => {
+        dispatch({ t: 'jobs', jobs });
+        // 20/11 : une pièce découpée est rangée avant que Kodi ait fini de la redessiner
+        // (la tâche repart aussitôt pour le dessin) : elle se montre tout de suite.
+        const known = new Set(ref.current.pieces.map((p) => p.id));
+        if (jobs.some((j) => j.garment_id && !known.has(j.garment_id))) a.refreshPieces();
+      }).catch(() => undefined);
     }, 4000);
     return () => {
       clearInterval(timer);

@@ -855,6 +855,43 @@ qui garde peau et décor).
   couleurs, teintes, saison et fiche) ; le canevas 4:5 (les vignettes de l'app
   sont carrées).
 
+**Rendu catalogue, découpe puis dessin (20/11 au soir), demandé par
+l'utilisateur** sur ses planches de modèle (vestes, chemises, pulls, bas,
+robes, chaussures, sacs en photo produit, comme Whering) : « je veux que le
+rendu soit exactement comme ça », avec une attente plus courte. Une découpe
+seule ne peut pas donner ce rendu (bras, plis, parties cachées) : il faut un
+dessin. Il complète la décision SAM 3 du même jour, sans la remplacer.
+
+- **Deux passages** (`index.ts`) : la pièce est découpée par SAM 3 et rangée
+  tout de suite (visible 10 à 20 s après l'envoi), puis la même tâche repart
+  (`ai_jobs.dessin_auto`, migration `dessin_apres_decoupe`) : Nano Banana la
+  redessine en photo produit, **la découpe en image 1** (la pièce exacte) et
+  la photo en image 2, puis l'image est remplacée (nouveau nom de fichier,
+  jamais d'ancienne image en cache). Offert, rien au compteur ; s'il échoue, la
+  découpe reste, sans message. Une seule notification (déclencheur
+  `ai_jobs_notify_on_retry` sans `dessin_auto`). Deux passages, aussi, pour le
+  temps de calcul compté de la fonction. `DESSIN_APRES_DECOUPE=0` (secret)
+  garde la découpe seule.
+- **Pose** (`poseDuDessin`, `fallbackPrompt`, `consigneDessin` dans
+  `prompts.ts`, partagés avec le banc) : hauts, vestes et robes sur mannequin
+  invisible, de face, repassés, manches le long du corps ; bas à plat, de
+  face ; chaussures par paire, de trois quarts ; sacs de face. Toujours sans
+  ombre (le détourage par chrominance en a besoin) ; `PROMPT_VERSION`
+  `dessin-4`.
+- **App et site** : le dressing se relit dès qu'une tâche reçoit sa pièce
+  (`store.tsx`, `JobList.tsx`), pas seulement quand tout est fini.
+- **Banc du 20/11** (photos de test) : pull à inscription, veste, jean,
+  baskets, sabots : rendu conforme au modèle, inscription exacte ; 19 à 22 s
+  par dessin, 55 à 61 s quand le premier modèle de l'intermédiaire cale et
+  que le relais part ; 0,039 $ par pièce (0,072 $ avec relais). Les baskets
+  dont la photo ne montrait que le bout sont reconstituées : plausible, en
+  partie inventé. **Plusieurs pièces traitées dans un même passage dépassent
+  le temps de calcul** : une pièce par passage, en production comme au banc.
+- **Coût** : environ 0,045 $ par pièce (repérage, découpe, dessin), soit
+  environ 0,70 $ pour les 15 pièces de Découverte et 3,60 $ pour 80 pièces.
+- **Politique 1.6 corrigée le jour même** (avis lu par personne) : la pièce
+  est redessinée par Google à partir de la découpe.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
