@@ -51,7 +51,7 @@ export function OutfitCard({ outfit, children, assemble }: { outfit: OutfitView;
                   alt=""
                   style={{
                     maxWidth: '100%', maxHeight: '100%', objectFit: 'contain',
-                    filter: 'drop-shadow(0 6px 10px rgba(0,0,0,.14))',
+                    filter: 'var(--piece-shadow)',
                   }}
                 />
               ) : (

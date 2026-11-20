@@ -9,7 +9,8 @@ import type { Piece } from '@/lib/garments';
  */
 export function PieceArt({ piece, size = 56 }: { piece: Pick<Piece, 'url' | 'category_id' | 'kind' | 'colors'>; size?: number }) {
   if (piece.url) {
-    return <img src={piece.url} alt="" loading="lazy" draggable={false} />;
+    // L'ombre douce (20/11) seulement à partir d'une taille où elle se lit ; sur une miniature, elle salirait.
+    return <img src={piece.url} alt="" loading="lazy" draggable={false} className={size >= 56 ? 'piece-img' : undefined} />;
   }
   const tint = piece.colors[0] ? colourHex(piece.colors[0]) : null;
   return (

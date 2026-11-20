@@ -6,7 +6,7 @@
  * même coupe dans une autre couleur.
  */
 import { memo, useMemo, useState } from 'react';
-import { Image, View } from 'react-native';
+import { Image, Platform, View, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { photoSource } from '../data/photos';
 
@@ -285,6 +285,23 @@ function hangerOf(mode: Kind['hang'], hc: string): Drawn[] {
   return [];
 }
 
+/**
+ * L'ombre douce sous une pièce détourée (20/11, demandée par l'utilisateur sur
+ * ses planches de photos produit), à l'échelle de la vignette. Sur iPhone,
+ * une vue sans fond fait suivre à l'ombre la silhouette de l'image ; elle est
+ * figée en image (`shouldRasterizeIOS`) pour ne rien coûter au défilement.
+ * Sur l'aperçu web, un `drop-shadow` CSS fait la même chose. La couleur de
+ * l'ombre ne suit pas le thème (toujours noire), seule son intensité.
+ */
+function ombreDouce(size: number, dark: boolean): ViewStyle {
+  const dy = Math.max(1, Math.round(size * 0.03));
+  const flou = Math.max(1.5, Math.round(size * 0.035 * 10) / 10);
+  const force = dark ? 0.5 : 0.16;
+  if (Platform.OS === 'ios') return { shadowColor: '#000000', shadowOpacity: force, shadowRadius: flou, shadowOffset: { width: 0, height: dy } };
+  if (Platform.OS === 'web') return { filter: `drop-shadow(0px ${dy}px ${flou}px rgba(0,0,0,${force}))` } as ViewStyle;
+  return {};
+}
+
 function GarmentBase({ kind, size = 120, tint, hanger = false, hangerColor = '#9C7A48', dark = false, label, image }: Props) {
   const paths = useMemo(() => build(kind, tint, hanger, hangerColor, dark), [kind, tint, hanger, hangerColor, dark]);
   // Vignette expirée ou hors connexion : l'illustration prend le relais, sans trou.
@@ -296,13 +313,15 @@ function GarmentBase({ kind, size = 120, tint, hanger = false, hangerColor = '#9
     const drawn = mode === 'clip' ? [...hangerOf(mode, hangerColor), CLIP_JAWS(hangerColor)] : hangerOf(mode, hangerColor);
     return (
       <View style={{ width: size, height: h }} accessible accessibilityRole="image" accessibilityLabel={label ?? KINDS[kind].label}>
-        <Image
-          source={photoSource(image) ?? { uri: image }}
-          onError={() => setBroken(image)}
-          resizeMode="contain"
-          // Taille écrite en clair : une photo rangée avec l'app porte ses propres dimensions, qui l'emporteraient sinon.
-          style={{ position: 'absolute', left: 0, bottom: 0, width: size, height: h - top }}
-        />
+        <View style={[{ position: 'absolute', left: 0, bottom: 0, width: size, height: h - top }, ombreDouce(size, dark)]} shouldRasterizeIOS>
+          <Image
+            source={photoSource(image) ?? { uri: image }}
+            onError={() => setBroken(image)}
+            resizeMode="contain"
+            // Taille écrite en clair : une photo rangée avec l'app porte ses propres dimensions, qui l'emporteraient sinon.
+            style={{ width: size, height: h - top }}
+          />
+        </View>
         {drawn.length > 0 && (
           <Svg width={size} height={h} viewBox="0 0 120 150" style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
             {drawn.map((p, i) => (
