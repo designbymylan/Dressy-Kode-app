@@ -12,7 +12,7 @@ import { segment, AgentError, SAY, type Img, type Reflexion, type Usage } from '
 import { cutoutBackground, crop, downscale, type Raster } from './cutout.ts';
 import { decode, sniffMime } from './codec.ts';
 import { exifOrientation, orient } from './normalize.ts';
-import { cleanSpecks, cutFromMask, pickSegment, pixelBox } from './segment.ts';
+import { cleanSpecks, cutFromMask, pickSegment, pixelBox, recadrer } from './segment.ts';
 import { BLOCKING, runChecks, type Checks } from './checks.ts';
 import { accesGoogle, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 

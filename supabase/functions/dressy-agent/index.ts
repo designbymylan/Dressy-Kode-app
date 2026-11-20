@@ -34,6 +34,7 @@ import { MAX_RUNS } from './decide.ts';
 import { backdropClause, backdropFor, colourClause, garmentRgbs, isMetal, isolationClause, stripClauses, type Target } from './prompts.ts';
 import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
 import { decouper, fatal, ouvrir } from './decoupage.ts';
+import { recadrer } from './segment.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
 import { cacheKey, drawWithQuota, imageSettings, price, tokenCost, type Ports } from './quota.ts';
@@ -68,6 +69,9 @@ type Job = {
   redo: number;
   /** « Image propre » demandée : la pièce est redessinée (une génération). */
   clean: boolean;
+  /** 20/11 : la pièce est rangée en photo recadrée, faute de dessin ; un passage la redessinera. */
+  a_redessiner: boolean;
+  redessiner_depuis: string | null;
 };
 
 type Details = { brand?: string; size?: string; fit?: string; material?: string; note?: string };
@@ -231,8 +235,14 @@ type Journal = {
   usage: Record<string, unknown>;
 };
 
-/** Découpe la pièce dans la photo (decoupage.ts), puis la range. */
-async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+/**
+ * Découpe la pièce dans la photo (decoupage.ts), puis la range. Avec
+ * `provisoire` (le dessin a échoué), une découpe par contraste n'est jamais
+ * rangée comme une pièce finie : elle garde le tapis, le sol ou la peau et les
+ * contrôles la valident. Seul un vrai masque est gardé ; sinon la photo
+ * recadrée est rangée et marquée « à redessiner ».
+ */
+async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { provisoire?: boolean } = {}) {
   await setJob(job, { status: 'cutout', image_model: MODELS.segment });
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   const photo = sources[0];
@@ -251,6 +261,12 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
     await note(job, 'google', 'segmentation', d.segmentation.model, 'succes', false, tokenCost(gu.promptTokenCount, gu.candidatesTokenCount, COST.gemini));
   }
   j.essais = d.essais;
+  if (opts.provisoire && d.best?.method !== 'masque') {
+    j.methode = 'photo-recadree';
+    log('dessin impossible et pas de masque : photo recadrée rangée, à redessiner');
+    await store(job, target, recadrer(raster, target), 'photo', j, log, { provisoire: true });
+    return;
+  }
   if (!d.best) throw new AgentError(SAY.failed, `aucun détourage exploitable (${j.essais.map((e) => `${e.methode}: ${e.echecs.join('+') || 'ok'}`).join(' ; ')})`);
 
   j.methode = d.best.method;
@@ -390,17 +406,19 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
 const clip = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n) || null;
 
 /** Met la pièce au format fixe, l'envoie, puis la crée dans le dressing (ou remplace son image). */
-async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j: Journal, log: (m: string) => void) {
+async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j: Journal, log: (m: string) => void, opts: { provisoire?: boolean } = {}) {
   let t0 = Date.now();
   if (job.cutout?.reperage) j.usage.reperage = job.cutout.reperage;
-  const dominant = dominantColour(cut);
+  // Une photo recadrée garde son décor : sa teinte dominante serait celle du tapis.
+  const dominant = opts.provisoire ? null : dominantColour(cut);
   const full = fitOnCanvas(cut);
   const [png, thumb] = [encodePng(full), encodePng(downscale(full, CUTOUT.thumb))];
   j.ms.format = Date.now() - t0;
 
   await setJob(job, { status: 'uploading' });
   t0 = Date.now();
-  const suffix = job.redo ? `-r${job.redo}` : '';
+  // Le dessin qui remplace une photo provisoire prend un autre chemin : l'app ne garde pas l'ancienne image en cache.
+  const suffix = job.redo ? `-r${job.redo}` : job.a_redessiner ? '-d' : '';
   const imagePath = `${job.space_id}/${job.id}${suffix}.png`;
   const thumbPath = `${job.space_id}/${job.id}${suffix}-vignette.png`;
   await Promise.all([
@@ -456,7 +474,7 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
     }
   }
 
-  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j, clean: false });
+  await setJob(job, { status: 'done', garment_id: garmentId, error: null, cutout: j, clean: false, a_redessiner: Boolean(opts.provisoire), ...(opts.provisoire && !job.redessiner_depuis ? { redessiner_depuis: new Date().toISOString() } : {}) });
   log(`rangée dans le dressing : ${t.name} (${j.methode}, ${Object.entries(j.ms).map(([k, v]) => `${k} ${v} ms`).join(', ')})`);
 }
 
@@ -487,6 +505,19 @@ async function runOnce() {
     const missing = KEYS.filter((k) => !Deno.env.get(k));
     if (missing.length) throw new AgentError(SAY.notReady, `${missing.join(', ')} absente(s) des secrets Supabase`);
 
+    // 20/11 : une pièce rangée en photo recadrée (le dessin avait échoué) est
+    // redessinée, offerte. Un échec la laisse telle quelle, sans message : le
+    // prochain passage (`ai_jobs_redessiner`, toutes les dix minutes) réessaie.
+    if (job.garment_id && job.a_redessiner && !job.redo && !job.clean) {
+      const limite = started + DESSIN_BUDGET_MS;
+      try {
+        await redraw(job, targetOf(job), await loadSources(job), log, { offert: true, limite });
+      } catch (err) {
+        log(`nouveau dessin impossible, la pièce reste en photo : ${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}`);
+        await setJob(job, { status: 'done', error: null });
+      }
+      return;
+    }
     if (job.garment_id && !job.redo && !job.clean) {
       await setJob(job, { status: 'done', error: null });
       return;
@@ -509,7 +540,7 @@ async function runOnce() {
       } catch (err) {
         if (fatal(err)) throw err;
         log(`dessin impossible (${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}) : repli sur la découpe`);
-        await cutOut(job, target, sources, log);
+        await cutOut(job, target, sources, log, { provisoire: true });
       }
     } else await cutOut(job, target, sources, log);
   } catch (err) {

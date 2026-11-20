@@ -9,7 +9,7 @@
  * sur le cadre et on lit la probabilité comme une opacité douce : le bord de
  * la pièce est anticrénelé sans autre traitement.
  */
-import type { Raster } from './cutout.ts';
+import { crop, type Raster } from './cutout.ts';
 import { CUTOUT } from './config.ts';
 
 export type Segment = {
@@ -72,6 +72,17 @@ export function pixelBox(box: readonly number[], w: number, h: number, pad = CUT
   const x1 = Math.min(w, Math.ceil((box[0] + box[2]) * w + px - e));
   const y1 = Math.min(h, Math.ceil((box[1] + box[3]) * h + py - e));
   return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
+}
+
+/**
+ * La photo recadrée sur la pièce (cadre du repérage et petite marge), sans
+ * aucun détourage : l'image provisoire d'une pièce dont le dessin a échoué
+ * (20/11). Mieux vaut une photo honnête qu'une découpe par contraste qui garde
+ * le tapis et le sol et se montre comme une pièce finie.
+ */
+export function recadrer(raster: Raster, target: { box?: readonly number[] | null }): Raster {
+  if (!target.box) return raster;
+  return crop(raster, pixelBox(target.box, raster.width, raster.height, 0.08));
 }
 
 /**

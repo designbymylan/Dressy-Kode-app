@@ -10,7 +10,7 @@ import { contentBox } from './cutout.ts';
 import { CUTOUT } from './config.ts';
 import { deltaE2000, dominantColour } from './color.ts';
 import { exifOrientation, fitOnCanvas, orient } from './normalize.ts';
-import { cleanSpecks, cutFromMask, overlap, parseSegments, pickSegment, pixelBox } from './segment.ts';
+import { cleanSpecks, cutFromMask, overlap, parseSegments, pickSegment, pixelBox, recadrer } from './segment.ts';
 import { runChecks } from './checks.ts';
 import { lab } from './prompts.ts';
 
@@ -210,6 +210,21 @@ const o6 = orient(tourne, 6);
 check('orientation 6 : dimensions échangées', [o6.width, o6.height], [2, 3]);
 check('orientation 6 : le coin haut-gauche passe en haut-droite', Array.from(o6.data.subarray((0 * 2 + 1) * 4, (0 * 2 + 1) * 4 + 4)), [255, 0, 0, 255]);
 check('orientation 1 : inchangée', orient(tourne, 1), tourne);
+
+// ---------------------------------------------------------------- photo provisoire (20/11)
+// Le dessin a échoué : la pièce est rangée en photo recadrée, jamais détourée par contraste.
+
+{
+  const photo = solid(100, 100, [200, 180, 40, 255]);
+  const r = recadrer(photo, { box: [0.25, 0.25, 0.5, 0.5] });
+  check('recadrer : le cadre repéré plus 8 % de marge de chaque côté', [r.width, r.height], [58, 58]);
+  let transparents = 0;
+  for (let i = 3; i < r.data.length; i += 4) if (r.data[i] !== 255) transparents++;
+  check('recadrer : aucun pixel détouré', transparents, 0);
+  check('recadrer : sans cadre, la photo entière', recadrer(photo, {}) === photo, true);
+  const bord = recadrer(photo, { box: [0, 0, 1, 1] });
+  check('recadrer : un cadre qui déborde reste dans la photo', [bord.width, bord.height], [100, 100]);
+}
 
 console.log(fails === 0 ? '\nTOUT PASSE' : `\n${fails} ÉCHEC(S)`);
 process.exit(fails ? 1 : 0);

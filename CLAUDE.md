@@ -795,6 +795,25 @@ repérage, pas seulement la sienne. Correctifs (`steps.ts`, `index.ts`) :
   sortiraient l'IA de l'intermédiaire, qui reste le point fragile : s'il tombe
   en entier, toutes les chaînes tombent avec lui.
 
+**Dessin impossible : photo recadrée puis redessinée (20/11), demandé par
+l'utilisateur** : le 20/11, les trois modèles d'image pendaient chez
+l'intermédiaire (« Signal timed out » après 100 s) et toutes les pièces
+tombaient sur la découpe par contraste, qui garde le tapis, le sol ou la peau
+et passe les contrôles (cardigan jaune sur son tapis). Désormais, quand le
+dessin d'arrivée échoue, `cutOut(..., { provisoire: true })` ne range jamais
+une découpe par contraste : seul un vrai masque est gardé, sinon la **photo
+recadrée sur le cadre repéré** (`recadrer`, `segment.ts`), sans détourage, et
+la tâche est marquée `a_redessiner` (migration `dessin_a_refaire`). La fonction
+`ai_jobs_redessiner` (pg_cron, toutes les dix minutes) remet en file trois
+pièces au plus, offertes, pendant 48 h ; le dessin remplace l'image (chemin
+`-d`). Un nouvel essai ne prévient jamais (les déclencheurs de notification
+l'ignorent, `redessin_essai_at`). Le rattrapage de la migration marque les
+pièces déjà rangées par contraste depuis le 17/11. L'app ne dit pas encore
+qu'une pièce attend son dessin (la disposition ne bouge pas sans décision).
+Essai SQL : `bash tools/test-dessin-a-refaire.sh`. **À appliquer** : la
+migration, puis `dressy-agent` déployée. Reste le vrai remède : une clé Google
+directe, sans `GEMINI_BASE_URL`.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
