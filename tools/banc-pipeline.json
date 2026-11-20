@@ -1,0 +1,25 @@
+{
+  "_": "Banc du pipeline d'ajout (spec du 20/11, étape 3). Photos libres d'Unsplash (licence Unsplash), jamais une photo d'utilisatrice. « attendu » : ready pour une pièce seule, needs_retake pour un piège. À compléter par 20 photos prises au téléphone, chez soi, avant la mesure finale.",
+  "photos": [
+    { "nom": "jean-fond-blanc", "unsplash": "9yoXrG6Er_g", "url": "https://images.unsplash.com/photo-1714143136372-ddaf8b606da7", "cas": "jean à plat, fond blanc", "attendu": "ready" },
+    { "nom": "tshirt-blanc-sable", "unsplash": "b09YYPi7NR4", "url": "https://images.unsplash.com/photo-1648483098902-7af8f711498f", "cas": "blanc sur fond clair (sable)", "attendu": "ready" },
+    { "nom": "tshirt-jaune-imprime", "unsplash": "esbGLitu5a8", "url": "https://images.unsplash.com/photo-1696086152504-4843b2106ab4", "cas": "imprimé, à plat", "attendu": "ready" },
+    { "nom": "baskets-sur-boite", "unsplash": "dwKiHoqqxk8", "url": "https://images.unsplash.com/photo-1560769629-975ec94e6a86", "cas": "paire posée sur une boîte", "attendu": "ready" },
+    { "nom": "baskets-grises-fond-sombre", "unsplash": "v13tnV6D9lw", "url": "https://images.unsplash.com/photo-1542219550-37153d387c27", "cas": "paire, fond sombre", "attendu": "ready" },
+    { "nom": "baskets-blanches-fond-sombre", "unsplash": "ksrsdzqxCPg", "url": "https://images.unsplash.com/photo-1656164753657-8ff832063a71", "cas": "blanc sur fond sombre", "attendu": "ready" },
+    { "nom": "montantes-marron", "unsplash": "YQbJLyY0hFU", "url": "https://images.unsplash.com/photo-1556048219-bb6978360b84", "cas": "paire de travers", "attendu": "ready" },
+    { "nom": "robe-dentelle-cintre", "unsplash": "B_P6nONZk58", "url": "https://images.unsplash.com/photo-1591221662157-6f62de5508eb", "cas": "blanc sur mur clair, cintre", "attendu": "ready" },
+    { "nom": "chemise-blanche-cintre", "unsplash": "sYLP-Hitwkk", "url": "https://images.unsplash.com/photo-1605450081927-6b40c11c661f", "cas": "blanc sur fond sombre, cintre", "attendu": "ready" },
+    { "nom": "top-noir-penderie", "unsplash": "cp-VMJ-mdKs", "url": "https://images.unsplash.com/photo-1519554318711-aaf73ece6ff9", "cas": "noir sur fond clair, penderie", "attendu": "ready" },
+    { "nom": "sac-noir-lit", "unsplash": "CtOA9wbFAdQ", "url": "https://images.unsplash.com/photo-1614179689702-355944cd0918", "cas": "sac sur un lit froissé", "attendu": "ready" },
+    { "nom": "sac-gris-fond-blanc", "unsplash": "J4DnKxz_3sA", "url": "https://images.unsplash.com/photo-1605733513597-a8f8341084e6", "cas": "sac, fond blanc", "attendu": "ready" },
+    { "nom": "sac-noir-fond-jaune", "unsplash": "lnbuoKz2GlM", "url": "https://images.unsplash.com/photo-1705909237050-7a7625b47fac", "cas": "fond coloré", "attendu": "ready" },
+    { "nom": "blouson-cuir-tissu-blanc", "unsplash": "nsRBbE6-YLs", "url": "https://images.unsplash.com/photo-1551028719-00167b16eac5", "cas": "noir sur tissu blanc froissé", "attendu": "ready" },
+    { "nom": "blouson-cuir-lit-sombre", "unsplash": "YehJ089r0uY", "url": "https://images.unsplash.com/photo-1727515546577-f7d82a47b51d", "cas": "noir sur fond sombre, sur un lit", "attendu": "ready" },
+    { "nom": "blouson-marron-patere", "unsplash": "3OFBcQQTN64", "url": "https://images.unsplash.com/photo-1623854156816-4c4fc355ffc7", "cas": "suspendu à une patère", "attendu": "ready" },
+    { "nom": "tshirts-noirs-cintre", "unsplash": "XsP4kDfzeb4", "url": "https://images.unsplash.com/photo-1696086152513-c74dc1d4b135", "cas": "noir, cintre en bois", "attendu": "ready" },
+    { "nom": "piege-tenue-sur-lit", "unsplash": "DOYASc77qmw", "url": "https://images.unsplash.com/photo-1632469188022-b5db09a70fbc", "cas": "plusieurs pièces (chaussures, chapeau, pull)", "attendu": "needs_retake" },
+    { "nom": "piege-pile-de-jeans", "unsplash": "aWLTXw6kbDw", "url": "https://images.unsplash.com/photo-1637069585336-827b298fe84a", "cas": "pile de jeans", "attendu": "needs_retake" },
+    { "nom": "piege-chemise-lunettes", "unsplash": "4khDsX0IQ98", "url": "https://images.unsplash.com/photo-1761896898277-5141377f2a12", "cas": "chemise, lunettes et mocassins", "attendu": "needs_retake" }
+  ]
+}
