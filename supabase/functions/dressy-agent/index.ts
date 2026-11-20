@@ -288,7 +288,7 @@ async function pieceDecoupee(garmentId: string, fond: string): Promise<Img | nul
  * C'est le seul endroit où une image est générée, donc le seul qui prend une
  * génération au compteur.
  */
-async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { offert?: boolean } = {}) {
+async function redraw(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { offert?: boolean; limite?: number } = {}) {
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   // « Image propre » (F3, 13/11) : la pièce déjà découpée passe en premier, posée
   // sur le fond voulu, car elle montre exactement quoi dessiner ; la photo
@@ -349,7 +349,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     noteCacheHit: () => note(job, 'google', 'dessin', model, 'succes', true, 0),
     call: async () => {
       // Chaîne de relais (19/11) : le modèle de l'offre d'abord, d'autres s'il ne répond pas.
-      const img = await dessiner(prompt, references, { model, size });
+      const img = await dessiner(prompt, references, { model, size, limite: opts.limite });
       usage = img.usage;
       dessinePar = img.model;
       return { bytes: img.bytes, mime: img.mime };
@@ -462,6 +462,14 @@ async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j
 
 // ---------------------------------------------------------------- passage
 
+/**
+ * Le temps que le dessin peut prendre depuis le début du passage (20/11). La
+ * fonction est tuée vers 150 s : le 20/11, trois modèles d'image qui pendaient
+ * (75 s chacun) ont fait mourir quatre passages de suite sans repli. Le reste
+ * (environ 45 s) est pour la découpe de secours. `DESSIN_BUDGET_MS` le règle.
+ */
+const DESSIN_BUDGET_MS = Math.max(30_000, Number(Deno.env.get('DESSIN_BUDGET_MS') ?? 100_000) || 100_000);
+
 /** Passages accordés à une pièce dont le fournisseur a eu une panne passagère. */
 const REPRISES_PASSAGERES = 3;
 
@@ -487,14 +495,17 @@ async function runOnce() {
 
     const sources = await loadSources(job);
     const target = job.target ?? await surveyPhoto(job, sources, log);
-    if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log);
+    // 20/11 : le dessin a un budget de temps, pour qu'il échoue proprement (et
+    // laisse la place au repli) avant que la fonction soit tuée par sa durée maximale.
+    const limite = started + DESSIN_BUDGET_MS;
+    if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log, { limite });
     else if (DESSIN_PAR_DEFAUT && !job.garment_id && !job.redo) {
       // 18/11 : une pièce qui arrive est d'abord REDESSINÉE seule sur un fond uni
       // puis détourée (c'est ce qui donnait des images nettes). La découpe dans la
       // photo, qui garde la peau et le décor sans masque Google, ne sert plus que
       // de repli quand le dessin échoue.
       try {
-        await redraw(job, targetOf(job), sources, log, { offert: true });
+        await redraw(job, targetOf(job), sources, log, { offert: true, limite });
       } catch (err) {
         if (fatal(err)) throw err;
         log(`dessin impossible (${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}) : repli sur la découpe`);

@@ -241,9 +241,18 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
   return { bytes, mime, usage, searched, model };
 }
 
-/** Le dessin par la chaîne de relais (`modelesDeDessin`) ; le modèle qui a dessiné est rendu. */
-export const dessiner = (prompt: string, sources: Img[], opts: { model: string; size?: '1K' | '2K'; search?: boolean }, delai = relaisDessinMs()) =>
-  course('dessin', modelesDeDessin(opts.model), (model, signal) => generate(prompt, sources, { ...opts, model, signal }), delai);
+/**
+ * Le dessin par la chaîne de relais (`modelesDeDessin`) ; le modèle qui a dessiné est rendu.
+ * `limite` (20/11) : l'heure (ms) à laquelle tout appel en cours est coupé. Sans
+ * elle, trois modèles qui pendent (75 s chacun) dépassent la durée maximale de la
+ * fonction : le passage est tué sans qu'aucune erreur soit attrapée, donc sans
+ * repli sur la découpe, et la tâche repart cinq minutes plus tard, en boucle.
+ */
+export const dessiner = (prompt: string, sources: Img[], opts: { model: string; size?: '1K' | '2K'; search?: boolean; limite?: number }, delai = relaisDessinMs()) => {
+  const { limite, ...reste } = opts;
+  const budget = limite ? AbortSignal.timeout(Math.max(1_000, limite - Date.now())) : null;
+  return course('dessin', modelesDeDessin(opts.model), (model, signal) => generate(prompt, sources, { ...reste, model, signal: budget ? AbortSignal.any([signal, budget]) : signal }), delai);
+};
 
 /** La course partagée (`_shared/relais.ts`) ; une panne passagère est rendue en priorité (la tâche repart en file). */
 function course<T>(quoi: string, modeles: string[], essai: (model: string, signal: AbortSignal) => Promise<T>, delai: number): Promise<T> {

@@ -54,6 +54,20 @@ Deno.test('dessin : toute la chaîne tombe, erreur passagère (la tâche repart 
   if (!passager(err)) throw new Error(`erreur non passagère : ${(err as Error)?.message}`);
 });
 
+Deno.test('dessin : tous les modèles pendent, la limite coupe tout et rend une erreur passagère', async () => {
+  appels.length = 0;
+  let coupes = 0;
+  aiguille = (_url, init) => new Promise((_res, rej) => init?.signal?.addEventListener('abort', () => { coupes++; rej(new DOMException('abandon', 'AbortError')); }));
+  const debut = Date.now();
+  let err: unknown;
+  try {
+    await dessiner('Dessine la pièce.', [photo], { model: 'modele-offre', limite: Date.now() + 1_200 }, 300);
+  } catch (e) { err = e; }
+  if (!passager(err)) throw new Error(`erreur non passagère : ${(err as Error)?.message}`);
+  if (Date.now() - debut > 5_000) throw new Error(`trop long : ${Date.now() - debut} ms`);
+  if (coupes < 3) throw new Error(`${coupes} appel(s) coupé(s) sur 3`);
+});
+
 Deno.test('dessin : la chaîne commence par le modèle de l’offre, sans doublon', () => {
   const c = modelesDeDessin(RELAIS_DESSIN_DEFAUT[1]);
   if (c[0] !== RELAIS_DESSIN_DEFAUT[1] || new Set(c).size !== c.length || c.length < 3) throw new Error(c.join(', '));
