@@ -106,6 +106,9 @@ const original = new Uint8Array([0xff, 0xd8, 0xff]);
   check('poussières : un seul morceau', [analyse.morceaux, analyse.plusGros], [1, 1]);
   check('poussières effacées', propre.alpha[11 * W + 11], 0);
   check('cadre sans les poussières', analyse.boite, { x: 100, y: 60, w: 200, h: 180 });
+  check('pièce loin des bords : bord 0', analyse.bord, 0);
+  const coupee = analyser({ largeur: W, hauteur: H, alpha: opaciteDe(masqueGris([[100, 150, 200, 150]])) }).analyse;
+  check('pièce coupée en bas : moitié du bord bas', coupee.bord, 0.5);
 }
 
 // ---- masque : canal lu et taille
@@ -195,7 +198,7 @@ const original = new Uint8Array([0xff, 0xd8, 0xff]);
 }
 
 // ---- décision : la paire ne sauve pas deux pièces différentes vues par le modèle
-check('paire vue comme plusieurs pièces : refusée', decider({ couverture: 0.3, plusGros: 0.5, deuxPlusGros: 1, morceaux: 2, boite: { x: 0, y: 0, w: 1, h: 1 } }, { ...ETIQ, type: 'baskets', categorie: 'chaussures', piece_unique: false } as never), { statut: 'needs_retake', raison: 'multiple_items' });
+check('paire vue comme plusieurs pièces : refusée', decider({ bord: 0, couverture: 0.3, plusGros: 0.5, deuxPlusGros: 1, morceaux: 2, boite: { x: 0, y: 0, w: 1, h: 1 } }, { ...ETIQ, type: 'baskets', categorie: 'chaussures', piece_unique: false } as never), { statut: 'needs_retake', raison: 'multiple_items' });
 
 if (echecs) {
   console.error(`\n${echecs} échec(s)`);

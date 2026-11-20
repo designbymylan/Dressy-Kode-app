@@ -21,6 +21,13 @@ export type Analyse = {
   morceaux: number;
   /** Le cadre des morceaux gardés, ou null si le masque est vide. */
   boite: Boite | null;
+  /**
+   * La plus grande part d'un bord de la photo couverte par la pièce (0 : elle
+   * ne touche aucun bord). Une pièce coupée par le cadre touche un bord sur une
+   * bonne longueur. Mesurée et journalisée, pas encore décisive : à calibrer
+   * sur de vraies photos (banc du 20/11 : un top coupé en bas de la photo).
+   */
+  bord: number;
 };
 
 /**
@@ -138,8 +145,22 @@ export function analyser(m: Masque, seuils: { opaque: number; poussiere: number 
     if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
 
+  // Part de chaque bord (bande de 2 px) couverte par les morceaux gardés.
+  const couvert = (i: number) => (alpha[i] >= seuils.opaque ? 1 : 0);
+  let haut = 0, bas = 0, gauche = 0, droite = 0;
+  for (let x = 0; x < w; x++) {
+    haut += Math.max(couvert(x), couvert(w + x));
+    bas += Math.max(couvert((h - 1) * w + x), couvert((h - 2) * w + x));
+  }
+  for (let y = 0; y < h; y++) {
+    gauche += Math.max(couvert(y * w), couvert(y * w + 1));
+    droite += Math.max(couvert(y * w + w - 1), couvert(y * w + w - 2));
+  }
+  const bord = Math.max(haut / w, bas / w, gauche / h, droite / h);
+
   return {
     analyse: {
+      bord,
       couverture: opaques / n,
       plusGros: totalGarde ? gardes[0].t / totalGarde : 0,
       deuxPlusGros: totalGarde ? (gardes[0].t + (gardes[1]?.t ?? 0)) / totalGarde : 0,

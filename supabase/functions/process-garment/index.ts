@@ -126,6 +126,7 @@ function ligneDuJournal(s: Sortie, base: Record<string, unknown>) {
       modele_etiquetage: m.modele_etiquetage,
       morceaux: analyse?.morceaux ?? null,
       deux_plus_gros: analyse?.deuxPlusGros ?? null,
+      bord: analyse ? Math.round(analyse.bord * 1000) / 1000 : null,
       erreurs: m.erreurs.slice(0, 6).map((e) => e.slice(0, 200)),
     },
   };

@@ -916,6 +916,48 @@ l'utilisateur.**
   l'utilisateur (20/11) : on garde un dessin par pièce.** L'outil de la
   grille reste au banc pour un nouvel essai (2K, clé Google directe).
 
+**Pipeline d'ajout de vêtements (spec du 20/11, nuit), demandé par
+l'utilisateur** (« Spec · Pipeline d'ajout de vêtements ») : une photo = une
+pièce, détourée et étiquetée en moins de 10 s, **sans aucune génération
+d'image**. Il remplacera « une photo, toutes ses pièces » et le dessin
+d'arrivée **à la bascule, après le banc et sur validation de l'utilisateur**
+(app et site derrière `PIPELINE_AJOUT`, `mobile/src/state/ajout.ts`). État,
+banc et écarts : `docs/pipeline-ajout.md`. Arbitrages de l'utilisateur (20/11) :
+
+- **Taxonomie** : `supabase/functions/_shared/taxonomy.ts`, source unique (schéma
+  du modèle, validation, contraintes SQL, copies `mobile/src/data/taxonomy.ts` et
+  `web/src/lib/taxonomy.ts` par `node tools/taxonomie.mjs`, jamais à la main). On
+  garde les listes en place, en français (pas celles de la spec) ; matières
+  fermées et saisons en tableau ajoutées. Le nom d'une pièce se tire de la fiche
+  (`nomDeLaPiece`, accordé). L'agent lit ses listes là ; un test vérifie le site et l'app.
+- **« Image propre » reste** à la demande (les offres vendent des générations) ;
+  le pipeline d'ajout n'appelle aucun modèle génératif.
+- **Dépendances accordées** : `@jsquash/webp` 1.5.0 (WebP, .wasm embarqué dans
+  `process-garment/vendor/`) et `expo-camera` (caméra à cadre guide).
+- **Base** : migration `pipeline_ajout` (20261120224423, additive, appliquée par
+  l'API d'administration à la demande de l'utilisateur : la confirmation de
+  l'outil Supabase ne s'affichait pas). `pipeline_status` (processing, ready,
+  needs_retake, failed), `fail_reason`, `original_path` (gardée tant que la pièce
+  existe), `added_at` (« Tout ajouter »), colonnes tenues par le serveur
+  (déclencheur `garments_pipeline`), Realtime sur `garments`, Storage (le client
+  n'écrit que `original.jpg`), journal `garment_runs`, vue `pipeline_indicateurs`.
+  Essais : `bash tools/test-pipeline.sh`.
+- **Fonction `process-garment`** (déployée sans JWT de plateforme, elle vérifie
+  elle-même le jeton) : détourage BiRefNet chez fal.ai (masque seul, appliqué à
+  nos pixels) et étiquetage (Gemini Flash-Lite par l'intermédiaire, Claude Haiku
+  5.5 dès qu'une clé Anthropic directe est posée) en parallèle, un contrôle
+  qualité, cutout WebP recadré + 4 %, vignette 256. Réglages : `reglages.ts`
+  (`PIPELINE_VERSION`). Essais : `npm run test:pipeline` (web).
+- **Banc du 20/11** (20 photos Unsplash) : BiRefNet choisi (même qualité que
+  Bria, 2 fois plus rapide, 6 fois moins cher) ; 4,2 s de médiane et 6,1 s au p95
+  côté serveur, l'étiquetage par l'intermédiaire fait l'attente ; 0,003 $ par
+  pièce ; aucun échec ; photos à plusieurs pièces toutes refusées. Limite : ce qui
+  est posé avec la pièce (boîte, patère, cintre) reste dans l'image. Un appel du
+  banc = un détoureur (deux dans le même appel faisaient tomber les instances).
+- **Avant la bascule** : banc de 20 photos prises au téléphone, politique de
+  confidentialité (photo d'origine gardée, au lieu de 30 jours), Kodi et tenues
+  limités aux pièces ajoutées, contraintes de taxonomie sur `kind` et `colors`.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
