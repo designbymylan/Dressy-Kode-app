@@ -892,6 +892,29 @@ dessin. Il complète la décision SAM 3 du même jour, sans la remplacer.
 - **Politique 1.6 corrigée le jour même** (avis lu par personne) : la pièce
   est redessinée par Google à partir de la découpe.
 
+**Ombre douce et essai de la grille de 4 (20/11 au soir), demandés par
+l'utilisateur.**
+
+- **Ombre douce sous chaque pièce**, comme sur ses planches de photos
+  produit : site, jeton `--piece-shadow` (`globals.css`, clair et sombre) sur
+  la grille du dressing et la fiche (`PieceArt`, à partir de 56 px), la tenue
+  du jour, Ta semaine et les cartes de tenues ; mobile, `ombreDouce`
+  (`ui/Garment.tsx`) : sur iPhone l'ombre suit la silhouette de l'image
+  détourée (vue sans fond, `shouldRasterizeIOS`), sur l'aperçu web un
+  `drop-shadow`. Vérifié dans un navigateur, clair et sombre ; à voir sur
+  un vrai iPhone.
+- **Grille de 4 (un dessin pour quatre pièces), essayée au banc, pas mise en
+  production** : `consigneGrille` (`prompts.ts`) et le mode `decoupe` avec
+  `grille` (`banc.ts`). Essai sur deux photos de test (7 pièces, 2 appels) :
+  inscriptions justes, disposition respectée, environ 0,01 $ par pièce au lieu
+  de 0,039 $. Mais l'intermédiaire rend du 1K même quand on demande du 2K
+  (cases de 512 px, deux fois moins nettes) ; les chaussures sont recopiées de
+  face au lieu d'une vraie photo produit ; des bouts d'une pièce débordent
+  dans la case voisine ; un trait de séparation est parfois dessiné ; un seul
+  appel raté touche quatre pièces. En 2K chez fal (0,12 $ l'image), le prix
+  par pièce rejoint celui du dessin pièce par pièce. Décision en attente de
+  l'utilisateur ; recommandation : garder un dessin par pièce.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
