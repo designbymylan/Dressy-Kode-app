@@ -192,9 +192,29 @@ async function traiterPiece(p: Piece, envoiMs: number | null, tentative: number)
  * les dressings. Une photo par essai : le temps de calcul de la fonction est compté.
  *   params : { photo: "nom.jpg", detoureurs?: ["birefnet", "bria"], etiqueteur?: "gemini" | "claude" }
  */
+/**
+ * Une photo de test publique (Unsplash, licence libre), préparée comme l'app
+ * prépare la sienne : 1024 px au plus, JPEG 85 (le service d'images d'Unsplash
+ * fait la réduction). Seul ce domaine est accepté.
+ */
+async function photoDeTest(url: string): Promise<Uint8Array> {
+  const u = new URL(url);
+  if (u.protocol !== 'https:' || u.hostname !== 'images.unsplash.com') throw new Error('photo de test : seul images.unsplash.com est accepté');
+  u.searchParams.set('fm', 'jpg');
+  u.searchParams.set('q', '85');
+  u.searchParams.set('w', '1024');
+  u.searchParams.set('h', '1024');
+  u.searchParams.set('fit', 'max');
+  const r = await fetch(u, { signal: AbortSignal.timeout(20_000) });
+  if (!r.ok) throw new Error(`photo de test : ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+}
+
 async function modePipeline(b: Banc, params: Record<string, unknown>): Promise<Rendu> {
   const nom = String(params.photo ?? '');
-  const { bytes } = await b.lire(nom);
+  const bytes = typeof params.url === 'string' ? await photoDeTest(params.url) : (await b.lire(nom)).bytes;
+  // L'entrée telle que traitée, pour la planche de contrôle.
+  const entree = await b.ranger(`${nom}-entree.jpg`, bytes, 'image/jpeg');
   const ids = (Array.isArray(params.detoureurs) ? params.detoureurs : ['birefnet']).filter(estDetoureur);
   const qui = params.etiqueteur === 'claude' || params.etiqueteur === 'gemini' ? params.etiqueteur : etiqueteur();
   const resultats: Record<string, unknown>[] = [];
@@ -218,7 +238,7 @@ async function modePipeline(b: Banc, params: Record<string, unknown>): Promise<R
     });
     b.log(`${nom} / ${id} : ${s.statut} en ${total} ms`);
   }
-  return { result: { photo: nom, etiqueteur: qui, resultats }, cost: cout };
+  return { result: { photo: nom, etiqueteur: qui, entree, resultats }, cost: cout };
 }
 
 // ---------------------------------------------------------------- appel
