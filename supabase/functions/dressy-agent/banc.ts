@@ -135,13 +135,18 @@ async function essaiSam(b: Banc, p: Record<string, unknown>): Promise<Rendu> {
         try {
           const fond = backdropFor(cible.colors, cible.hex, isMetal(cible));
           const ref = { bytes: encodePng(surFond(carre, fond)), mime: 'image/png' };
-          const r = await dessiner(consigneDessin(cible, true), [ref, img], { model: MODELS.gemini, size: '1K' });
-          cost += coutImage(r.model);
+          const taille = p.taille === '2K' ? '2K' : '1K';
+          const r = await dessiner(consigneDessin(cible, true), [ref, img], { model: MODELS.gemini, size: taille });
+          cost += taille === '2K' ? 0.05 : coutImage(r.model);
+          // Le dessin brut est rangé tel quel (taille en pixels lue dans l'en-tête PNG, sans décodage) pour comparer 1K et 2K.
+          const dv = new DataView(r.bytes.buffer, r.bytes.byteOffset, r.bytes.byteLength);
+          const pixels = r.mime === 'image/png' ? `${dv.getUint32(16)}×${dv.getUint32(20)}` : null;
+          const urlBrut = await b.ranger(`${slug(photo)}-${i}-${taille}-brut.${r.mime === 'image/png' ? 'png' : 'jpg'}`, r.bytes, r.mime);
           const brut = decode(r.bytes, r.mime);
           const { cut, oneShare } = cleanSpecks(cutoutBackground(brut.width > 2000 ? downscale(brut, 1800) : brut, { garment: garmentRgbs(cible.colors, cible.hex) }));
           const checks = runChecks(cut, oneShare, cible.hex?.[0] ?? null);
-          const urlDessin = await b.ranger(`${slug(photo)}-${i}-dessin.png`, encodePng(downscale(fitOnCanvas(cut), 512)), 'image/png');
-          dessin = { modele: r.model, ms: Date.now() - td, fond, ok: checks.ok, echecs: checks.failed, url: urlDessin };
+          const urlDessin = await b.ranger(`${slug(photo)}-${i}-${taille}-dessin.png`, encodePng(downscale(fitOnCanvas(cut), 512)), 'image/png');
+          dessin = { modele: r.model, taille, pixels, octets: r.bytes.length, ms: Date.now() - td, fond, ok: checks.ok, echecs: checks.failed, url: urlDessin, urlBrut };
         } catch (e) {
           dessin = { ms: Date.now() - td, erreur: court(e) };
         }
