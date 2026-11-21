@@ -5,7 +5,7 @@
  * réponse enrobée, option refusée (400), image perdue. L'API est simulée.
  */
 import jpeg from 'jpeg-js';
-import { survey, surveyGemini, passager, _oublierMode, RELAIS_VISION_DEFAUT } from './steps.ts';
+import { survey, surveyGemini, passager, _oublierMode, RELAIS_VISION_DEFAUT, modelesDeVision } from './steps.ts';
 
 Deno.env.set('ANTHROPIC_API_KEY', 'sk-ant-test');
 // Depuis le 17/11, le repérage est confié à Gemini par défaut : les tests de Claude le demandent.
@@ -25,8 +25,15 @@ let aiguille: (body: Record<string, unknown>) => Response = () => message('');
 let corps: Record<string, unknown>[] = [];
 let aiguilleGemini: (body: Record<string, unknown>, url: string, init?: RequestInit) => Response | Promise<Response> = () => geminiRepond('[]');
 let corpsGemini: Record<string, unknown>[] = [];
+let aiguilleFal: (body: Record<string, unknown>, init?: RequestInit) => Response | Promise<Response> = () => new Response('{}', { status: 500 });
+let corpsFal: Record<string, unknown>[] = [];
 globalThis.fetch = ((u: unknown, init?: RequestInit) => {
   const b = JSON.parse(String(init?.body));
+  // fal.ai (repérage, 21/11).
+  if (String(u).includes('fal.run/openrouter/router/vision')) {
+    corpsFal.push(b);
+    return Promise.resolve(aiguilleFal(b, init));
+  }
   // Gemini (observation du relais) : même faux fetch, une autre réponse.
   if (String(u).includes(':generateContent')) {
     corpsGemini.push(b);
@@ -229,4 +236,48 @@ Deno.test('Gemini seul : le premier modèle pend, le relais part en parallèle e
 
 Deno.test('Gemini seul : la chaîne par défaut a plusieurs relais, sans doublon', () => {
   if (RELAIS_VISION_DEFAUT.length < 3 || new Set(RELAIS_VISION_DEFAUT).size !== RELAIS_VISION_DEFAUT.length) throw new Error('chaîne trop courte ou en double');
+});
+
+// ---------------------------------------------------------------- repérage chez fal.ai (21/11)
+
+const falRepond = (texte: string) => new Response(JSON.stringify({ output: texte, usage: { prompt_tokens: 2900, completion_tokens: 150, cost: 0.001 } }), { status: 200, headers: { 'content-type': 'application/json' } });
+
+async function avecFal(reponse: (n: number) => Response | Promise<Response>, gemini?: (n: number) => Response) {
+  Deno.env.set('FAL_KEY', 'fal-test');
+  Deno.env.set('GEMINI_API_KEY', 'AIza-test');
+  corpsFal = [];
+  corpsGemini = [];
+  aiguilleFal = () => reponse(corpsFal.length);
+  aiguilleGemini = () => (gemini ?? (() => geminiRepond(JSON.stringify({ pieces: [piece], note: '' }))))(corpsGemini.length);
+  try {
+    return { r: await surveyGemini({ sources: [photo], hint: '', gender: null }), corpsFal, corpsGemini };
+  } finally {
+    Deno.env.delete('FAL_KEY');
+    Deno.env.delete('GEMINI_API_KEY');
+  }
+}
+
+Deno.test('fal : avec la clé, le repérage part chez fal en premier (image en data URI, schéma dans la consigne)', async () => {
+  const { r, corpsFal, corpsGemini } = await avecFal(() => falRepond('```json\n' + JSON.stringify({ pieces: [piece], note: '' }) + '\n```'));
+  if (r.pieces.length !== 1 || !r.modele.startsWith('fal:')) throw new Error(`pièces ${r.pieces.length}, modèle ${r.modele}`);
+  if (corpsGemini.length !== 0) throw new Error("l'intermédiaire a été appelé alors que fal répondait");
+  const b = corpsFal[0] as { image_urls?: string[]; system_prompt?: string; model?: string };
+  if (!b.image_urls?.[0]?.startsWith('data:image/jpeg;base64,') || !/schéma JSON/.test(b.system_prompt ?? '') || b.model !== 'google/gemini-2.5-flash') throw new Error('requête fal mal formée');
+  if ((r.usage as { input_tokens: number }).input_tokens !== 2900) throw new Error('jetons non repris');
+});
+
+Deno.test('fal : sans clé fal, la chaîne reste celle de l\'intermédiaire', () => {
+  Deno.env.delete('FAL_KEY');
+  if (modelesDeVision()[0] !== RELAIS_VISION_DEFAUT[0]) throw new Error('fal en tête sans clé');
+});
+
+Deno.test('fal : 429 chez fal, le relais de l\'intermédiaire part aussitôt', async () => {
+  const { r, corpsFal, corpsGemini } = await avecFal(() => new Response('{"detail":"busy"}', { status: 429 }));
+  if (r.pieces.length !== 1 || corpsFal.length < 1 || corpsGemini.length !== 1) throw new Error(`pièces ${r.pieces.length}, fal ${corpsFal.length}, gemini ${corpsGemini.length}`);
+  if (r.modele.startsWith('fal:')) throw new Error(`relais attendu : ${r.modele}`);
+});
+
+Deno.test('fal : clé refusée (401), erreur claire et relais', async () => {
+  const { r } = await avecFal(() => new Response('{"detail":"Unauthorized"}', { status: 401 }));
+  if (r.pieces.length !== 1) throw new Error('le relais devait répondre');
 });

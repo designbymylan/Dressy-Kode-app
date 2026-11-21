@@ -25,7 +25,7 @@ import {
 import { parseSegments, type Segment } from './segment.ts';
 import { alleger, sniffMime } from './codec.ts';
 import { course as courseRelais } from '../_shared/relais.ts';
-import { dessinerFal, DESSIN_FAL_DEFAUT, FalError } from './fal.ts';
+import { dessinerFal, voirFal, DESSIN_FAL_DEFAUT, REPERAGE_FAL_DEFAUT, FalError } from './fal.ts';
 import { accesGoogle, anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
@@ -75,10 +75,23 @@ const effort = (name: string, fallback: Effort): Effort => {
  * précède. Ordre : banc du 19/11 (voir CLAUDE.md, « Panne du repérage »).
  */
 export const RELAIS_VISION_DEFAUT = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite-preview', 'gemini-3.6-flash', 'gemini-3.8-flash'];
+/**
+ * 21/11, demandé par l'utilisateur : avec la clé fal.ai, le repérage passe
+ * d'abord par fal (un Gemini, `voirFal`), comme la découpe et le dessin ; les
+ * modèles de l'intermédiaire ne sont plus que des relais. `REPERAGE_FAL`
+ * choisit le modèle de fal (`google/gemini-2.5-flash` par défaut), `0` rend la
+ * première place à l'intermédiaire.
+ */
+export function modeleVisionFal(): string | null {
+  const choix = env('REPERAGE_FAL');
+  if (choix === '0' || !readKey('FAL_KEY')) return null;
+  return FAL + (choix && choix !== '1' ? choix : REPERAGE_FAL_DEFAUT);
+}
 export function modelesDeVision(): string[] {
   const liste = (env('GEMINI_VISION_MODELS')?.split(',').map((m) => m.trim()).filter(Boolean)) ?? RELAIS_VISION_DEFAUT;
   const premier = env('GEMINI_VISION_MODEL');
-  return [...new Set(premier ? [premier, ...liste] : liste)].slice(0, 5);
+  const fal = modeleVisionFal();
+  return [...new Set([...(fal ? [fal] : []), ...(premier ? [premier, ...liste] : liste)])].slice(0, 5);
 }
 /** Le délai avant de lancer le relais suivant, en parallèle (20 s par défaut). */
 const relaisMs = (): number => Math.max(5_000, Number(env('REPERAGE_RELAIS_MS') ?? 20_000) || 20_000);
@@ -474,6 +487,8 @@ export const claudeVoitLesImages = (): boolean => !anthropicViaIntermediaire() |
  * (observations) et au repérage par Gemini seul.
  */
 async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: string; model?: string; signal?: AbortSignal }): Promise<{ texte: string; usage: Usage; model: string }> {
+  // Repérage chez fal.ai (21/11) : un modèle `fal:<identifiant>`.
+  if (input.model?.startsWith(FAL)) return voirParFal({ ...input, model: input.model });
   const acces = accesGoogle();
   if (!acces.cle) throw new AgentError(SAY.notReady, `${acces.nomCle} absente des secrets Supabase`);
   const model = input.model ?? MODELS.vision;
@@ -516,6 +531,21 @@ async function geminiVoit(input: { sources: Img[]; texte: string; systeme?: stri
     .filter((p) => p.text && !p.thought).map((p) => p.text).join('').trim();
   if (!texte) throw new AgentError(SAY.failed, 'Gemini (vision) : réponse vide');
   return { texte, usage: body?.usageMetadata ?? null, model };
+}
+
+/** Le repérage chez fal.ai (`voirFal`), rendu sous la forme d'un appel Gemini direct (jetons compris). */
+async function voirParFal(input: { sources: Img[]; texte: string; systeme?: string; model: string; signal?: AbortSignal }): Promise<{ texte: string; usage: Usage; model: string }> {
+  const cle = readKey('FAL_KEY');
+  if (!cle) throw new AgentError(SAY.notReady, 'FAL_KEY absente des secrets Supabase');
+  try {
+    const r = await voirFal({ cle, modele: input.model.slice(FAL.length), texte: input.texte, systeme: input.systeme, images: input.sources, signal: input.signal });
+    return { texte: r.texte, usage: { promptTokenCount: r.usage?.prompt_tokens ?? 0, candidatesTokenCount: r.usage?.completion_tokens ?? 0 }, model: input.model };
+  } catch (err) {
+    if (!(err instanceof FalError)) throw err;
+    if (err.status === 401 || err.status === 403) throw new AgentError(SAY.notReady, `fal.ai refuse la clé : ${err.message}`);
+    if (err.status === 429) throw new AgentError(SAY.busy, err.message, true);
+    throw new AgentError(SAY.failed, err.message, err.passager);
+  }
 }
 
 /** Le relais, première moitié : Gemini regarde les photos et rend ses observations (JSON, en texte). */

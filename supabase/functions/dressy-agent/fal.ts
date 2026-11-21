@@ -124,6 +124,72 @@ export async function segmenterSam(
 }
 
 /**
+ * Le repérage chez fal.ai (21/11, demandé par l'utilisateur) : un modèle de
+ * vision (Gemini par défaut) qui regarde la photo et répond en texte, par le
+ * routeur `openrouter/router/vision`. Même compte, même clé et mêmes garanties
+ * que SAM 3 et le dessin : requête non gardée (`X-Fal-Store-IO: 0`). Ce routeur
+ * n'a pas de sortie JSON stricte : le schéma passe dans la consigne et la
+ * réponse est lue avec tolérance (`lireJson`). Le secret `REPERAGE_FAL` choisit
+ * le modèle, ou `0` pour ne plus passer par fal.
+ */
+export const VISION_FAL = 'openrouter/router/vision';
+export const REPERAGE_FAL_DEFAUT = 'google/gemini-2.5-flash';
+
+export async function voirFal(opts: {
+  cle: string;
+  modele: string;
+  texte: string;
+  systeme?: string;
+  images: { bytes: Uint8Array; mime: string }[];
+  signal?: AbortSignal;
+  fetch?: typeof fetch;
+  delaiMs?: number;
+}): Promise<{ texte: string; ms: number; usage: { prompt_tokens: number; completion_tokens: number } | null }> {
+  const f = opts.fetch ?? fetch;
+  const t = Date.now();
+  const delai = AbortSignal.timeout(opts.delaiMs ?? 45_000);
+  let res: Response;
+  try {
+    res = await f(`https://fal.run/${VISION_FAL}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Key ${opts.cle}`,
+        'Content-Type': 'application/json',
+        'X-Fal-Store-IO': '0',
+        'X-Fal-Object-Lifecycle-Preference': JSON.stringify({ expiration_duration_seconds: 3600 }),
+      },
+      body: JSON.stringify({
+        model: opts.modele,
+        prompt: opts.texte,
+        ...(opts.systeme ? { system_prompt: opts.systeme } : {}),
+        image_urls: opts.images.map((i) => `data:${i.mime};base64,${b64(i.bytes)}`),
+        reasoning: false,
+        // Un repérage doit donner la même fiche pour la même photo : peu de hasard.
+        temperature: 0.2,
+        max_tokens: 8000,
+      }),
+      signal: opts.signal ? AbortSignal.any([delai, opts.signal]) : delai,
+    });
+  } catch (err) {
+    throw new FalError(`repérage fal ${opts.modele} injoignable : ${err instanceof Error ? err.message : err}`, null, true);
+  }
+  const texte = await res.text();
+  if (!res.ok) {
+    throw new FalError(`repérage fal ${opts.modele} ${res.status} : ${texte.replace(/\s+/g, ' ').slice(0, 300)}`, res.status, res.status === 429 || res.status >= 500);
+  }
+  let json: { output?: unknown; usage?: { prompt_tokens?: number; completion_tokens?: number } | null };
+  try {
+    json = JSON.parse(texte);
+  } catch {
+    throw new FalError(`repérage fal ${opts.modele} : réponse illisible (${texte.slice(0, 120)})`, res.status, true);
+  }
+  const sortie = typeof json.output === 'string' ? json.output.trim() : '';
+  if (!sortie) throw new FalError(`repérage fal ${opts.modele} : réponse vide`, 200, true);
+  const u = json.usage;
+  return { texte: sortie, ms: Date.now() - t, usage: u ? { prompt_tokens: u.prompt_tokens ?? 0, completion_tokens: u.completion_tokens ?? 0 } : null };
+}
+
+/**
  * Le dessin chez fal.ai (21/11) : le même Nano Banana 2.1, par un autre accès
  * que l'intermédiaire, qui répondait 429 (« service occupé ») à tous les
  * modèles d'image le 21/11 au matin. Mêmes garanties que SAM 3 : requête non

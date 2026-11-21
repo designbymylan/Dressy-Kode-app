@@ -956,6 +956,27 @@ compte, et on reste à 2 pièces à la fois). Politique 1.6 précisée (fal
 transmet aussi le dessin à Google), sans nouvelle version : ni nouveau
 destinataire ni nouvelle finalité. Tests : `deno test -A dessin.test.ts`.
 
+**Repérage par fal.ai et dessin en 1K (21/11), demandés par l'utilisateur** :
+la chaîne est maintenant repérage, découpe SAM 3, dessin, tout chez fal.ai
+(clé `FAL_KEY`), l'intermédiaire ne servant plus que de relais.
+
+- **Repérage** (`voirFal`, `fal.ts` ; `modeleVisionFal`, `voirParFal`,
+  `steps.ts`) : routeur `openrouter/router/vision`, modèle
+  `google/gemini-2.5-flash` par défaut (secret `REPERAGE_FAL` pour un autre,
+  `0` pour rendre la première place à l'intermédiaire). Pas de sortie JSON
+  stricte : le schéma passe dans la consigne, température 0,2. Les modèles de
+  l'intermédiaire restent derrière en relais (même course que le dessin).
+  **Jamais essayé en vrai** (pas de clé dans le conteneur de dev) : à mesurer
+  au banc (`sonde`, `vision: ['fal:google/gemini-2.5-flash']`) avant de
+  conclure sur la vitesse et la fidélité des fiches. L'appel synchrone
+  `fal.run/openrouter/router/vision` n'est pas documenté (seule la file
+  `queue.fal.run` l'est) ; s'il échoue, le relais prend la suite sans bruit.
+- **Dessin toujours en 1K** : fal rend un vrai 2K (3,9 Mo) dont le décodage et
+  le détourage dépassaient le temps de calcul (« CPU Time exceeded » juste après
+  le dessin) ; la pièce restait en simple découpe, en silence, après six
+  passages. Le canevas final fait 1 024 px : le 2K n'apportait rien à l'écran.
+  Le détourage réduit aussi à 1 280 px tout dessin de plus de 1 500 px.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
