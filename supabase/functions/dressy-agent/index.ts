@@ -258,12 +258,14 @@ type Journal = {
   essais?: { methode: string; echecs: string[] }[];
   /** L'appel à SAM 3 (consigne, masques rendus, choix), depuis le 20/11. */
   sam?: unknown;
+  /** La découpe gardée en réserve, hors du dressing, en attendant le dessin (21/11). */
+  decoupe?: string;
   ms: Record<string, number>;
   usage: Record<string, unknown>;
 };
 
 /** Découpe la pièce dans la photo (decoupage.ts), puis la range. */
-async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { enReserve?: boolean } = {}) {
   await setJob(job, { status: 'cutout', image_model: cleFal() ? SAM_MODELE : MODELS.segment });
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   const photo = sources[0];
@@ -292,7 +294,36 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
 
   j.methode = d.best.method;
   j.controles = d.best.checks;
+  if (opts.enReserve) {
+    await garderDecoupe(job, d.best.cut, j, log);
+    return;
+  }
   await store(job, target, d.best.cut, 'photo', j, log);
+}
+
+/**
+ * Règle du 21/11, demandée par l'utilisateur : tant que la pièce n'est pas
+ * dessinée, elle n'entre pas dans le dressing. La découpe attend dans le
+ * compartiment privé `ai-generated` (hors de `garments`), la tâche repart pour
+ * le dessin qui la prend en image 1 ; la pièce n'est créée qu'avec son dessin.
+ */
+async function garderDecoupe(job: Job, cut: Raster, j: Journal, log: (m: string) => void) {
+  if (job.cutout?.reperage) j.usage.reperage = job.cutout.reperage;
+  const path = `${job.space_id}/${job.id}-decoupe.png`;
+  await upload('ai-generated', path, { bytes: encodePng(fitOnCanvas(cut)), mime: 'image/png' });
+  j.decoupe = path;
+  await setJob(job, { status: 'queued', dessin_auto: true, cutout: j });
+  log('découpe gardée en réserve, la pièce entre au dressing avec son dessin');
+}
+
+/** La découpe en réserve, posée sur le fond voulu ; `null` si elle manque. */
+async function decoupeEnReserve(path: string, fond: string): Promise<Img | null> {
+  try {
+    const png = await download('ai-generated', path);
+    return { bytes: encodePng(surFond(decode(png.bytes, 'image/png'), fond)), mime: 'image/png' };
+  } catch {
+    return null;
+  }
 }
 
 /** La pièce rangée (PNG transparent), posée sur le fond voulu ; `null` si elle manque. */
@@ -322,7 +353,10 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   // d'origine suit pour les détails cachés. Après deux « rendu incorrect », la
   // découpe est jugée fausse : la photo seule, comme avant.
   const fond = backdropFor(target.colors, target.hex, isMetal(target));
-  const decoupe = (job.clean || job.dessin_auto) && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
+  const reserve = job.dessin_auto && !job.garment_id ? (job.cutout as { decoupe?: string } | null)?.decoupe ?? null : null;
+  const decoupe = reserve
+    ? await decoupeEnReserve(reserve, fond)
+    : (job.clean || job.dessin_auto) && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
   const references = decoupe ? [decoupe, ...sources] : sources;
   const prompt = consigneDessin(target, Boolean(decoupe));
 
@@ -409,6 +443,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   j.controles = checks;
   if (checks.failed.some((f) => BLOCKING.includes(f))) throw new AgentError(SAY.failed, `dessin inexploitable (${checks.failed.join(', ')})`);
   await store(job, target, cut, 'ai', j, log);
+  if (reserve) await db.storage.from('ai-generated').remove([reserve]).catch(() => undefined);
 }
 
 // ---------------------------------------------------------------- rangement
@@ -541,8 +576,9 @@ async function runOnce() {
     // laisse la place au repli) avant que la fonction soit tuée par sa durée maximale.
     const limite = started + DESSIN_BUDGET_MS;
     const arrivee = !job.garment_id && !job.redo && !job.clean;
-    if (job.dessin_auto && job.garment_id) {
-      // Second passage (20/11) : le dessin catalogue remplace la découpe déjà rangée.
+    if (job.dessin_auto) {
+      // Second passage (20/11) : le dessin catalogue. Depuis le 21/11 la pièce n'existe
+      // pas encore : elle est créée avec son dessin (la découpe attend en réserve).
       await redraw(job, targetOf(job), sources, log, { offert: true, limite });
     } else if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log, { limite });
     else if (DESSIN_PAR_DEFAUT && !job.garment_id && !job.redo) {
@@ -560,7 +596,7 @@ async function runOnce() {
       }
     } else {
       try {
-        await cutOut(job, target, sources, log);
+        await cutOut(job, target, sources, log, { enReserve: arrivee && DESSIN_APRES_DECOUPE });
       } catch (err) {
         // 21/11 : une pièce fine ou petite (ceinture, bijou) sans masque exploitable
         // échouait et disparaissait du dressing. Elle est dessinée d'après la photo
@@ -570,11 +606,6 @@ async function runOnce() {
         log(`${(err as AgentError).detail} : dessin d'après la photo`);
         await redraw(job, targetOf(job), sources, log, { offert: true, limite });
         return;
-      }
-      if (arrivee && DESSIN_APRES_DECOUPE) {
-        // La pièce est rangée (la personne la voit déjà) ; le dessin suit dans un autre passage.
-        await setJob(job, { status: 'queued', dessin_auto: true });
-        log('découpe rangée, dessin catalogue remis en file');
       }
     }
   } catch (err) {
@@ -592,7 +623,7 @@ async function runOnce() {
     // Sans changer la base : la tâche reste « generating » (l'app dit que Kodi
     // dessine) et le ménage de chaque minute (`ai_jobs_sweep`) la remet en file
     // quatre minutes après `claimed_at`, qu'on place donc à l'heure voulue.
-    if (job.dessin_auto && job.garment_id && passager(err) && job.runs < MAX_RUNS) {
+    if (job.dessin_auto && passager(err) && job.runs < MAX_RUNS) {
       const attente = ATTENTES_DESSIN_MIN[Math.min(job.runs, ATTENTES_DESSIN_MIN.length) - 1] ?? 10;
       log(`dessin en panne passagère, nouvel essai dans ${attente} min (passage ${job.runs}/${MAX_RUNS}) : ${detail}`);
       const reprise = Date.now() + (attente - SWEEP_MIN) * 60_000;
@@ -605,13 +636,12 @@ async function runOnce() {
       return;
     }
     log(`échec : ${detail}`);
-    if (job.dessin_auto && job.garment_id) {
-      // Le dessin après la découpe a échoué : la découpe reste, sans message pour la personne.
-      await db.from('ai_jobs').update({ status: 'done', error: null, dessin_auto: false }).eq('id', job.id);
-      return;
-    }
+    // 21/11 : un dessin qui échoue pour de bon n'envoie plus la découpe dans l'app :
+    // la pièce échoue (message honnête, la personne peut réessayer ou la ranger à la main).
+    const reserve = (job.cutout as { decoupe?: string } | null)?.decoupe;
+    if (job.dessin_auto && !job.garment_id && reserve) await db.storage.from('ai-generated').remove([reserve]).catch(() => undefined);
     // Une reprise ratée laisse la pièce telle qu'elle était : seule la tâche garde la trace.
-    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false }).eq('id', job.id);
+    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false, dessin_auto: false }).eq('id', job.id);
   }
 }
 

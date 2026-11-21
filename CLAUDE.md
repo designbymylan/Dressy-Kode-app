@@ -977,6 +977,19 @@ la chaîne est maintenant repérage, découpe SAM 3, dessin, tout chez fal.ai
   passages. Le canevas final fait 1 024 px : le 2K n'apportait rien à l'écran.
   Le détourage réduit aussi à 1 280 px tout dessin de plus de 1 500 px.
 
+**Règle stricte du 21/11, demandée par l'utilisateur : une pièce n'entre dans
+le dressing qu'avec son dessin.** Elle remplace « rangée tout de suite, le
+dessin suit » du 20/11. La découpe SAM 3 reste en réserve dans le compartiment
+privé `ai-generated` (`<space>/<job>-decoupe.png`, `garderDecoupe`,
+`index.ts`), la tâche repart (`dessin_auto`, sans pièce créée), Nano Banana
+dessine avec la découpe en image 1, et la pièce n'est créée qu'avec son dessin
+(`store`), la réserve est alors effacée. Si le dessin échoue pour de bon (six
+passages, ou refus), **la pièce échoue** (message honnête, réessayer ou ranger
+à la main) : la découpe brute ne part jamais dans l'app. Attente visible :
+environ 35 s au lieu de 10 s avant que la pièce arrive. Une pièce sans masque
+exploitable (ceinture, bijou) est dessinée d'après la photo dans le même
+passage. `DESSIN_APRES_DECOUPE=0` garde l'ancien chemin (découpe seule rangée).
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu
