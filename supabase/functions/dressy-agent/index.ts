@@ -329,7 +329,12 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   // L'offre décide du modèle et de la taille : Lite en 1K pour le gratuit, 2K pour les abonnées.
   const { data: planData } = await db.rpc('space_plan', { target: job.space_id });
   const plan = typeof planData === 'string' ? planData : 'decouverte';
-  const { model, size } = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
+  const { model } = imageSettings(plan, { free: MODELS.geminiLite, paid: MODELS.gemini });
+  // 21/11 : toujours 1K. Le canevas final fait 1 024 px, donc le 2K n'apporte rien
+  // à l'écran, et fal.ai rend un vrai 2K (3,9 Mo) dont le décodage et le détourage
+  // dépassaient le temps de calcul de la fonction (« CPU Time exceeded » juste
+  // après le dessin) : la pièce restait en simple découpe, une fois sur deux.
+  const size: '1K' | '2K' = '1K';
 
   const photoHash = await sha256(sources[0].bytes);
   const pieceHash = await sha256(JSON.stringify([target.name, target.kind ?? null, target.box ?? null, target.colors, Boolean(decoupe)]));
@@ -376,7 +381,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
       return { bytes: img.bytes, mime: img.mime };
     },
     isRejection: (e) => e instanceof AgentError && e.message === SAY.refused,
-    cost: () => (size === '2K' ? COST.image2k : COST.image1k),
+    cost: () => COST.image1k,
   };
 
   const drawn = await drawWithQuota(key, ports, plan);
@@ -385,7 +390,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     throw new AgentError(SAY.quota, `plus de génération (offre ${drawn.plan})`);
   }
   const img = drawn.image;
-  if (opts.offert && drawn.kind === 'drawn') await note(job, dessinePar.startsWith(FAL) ? 'fal' : 'google', 'dessin', dessinePar, 'succes', false, size === '2K' ? COST.image2k : COST.image1k);
+  if (opts.offert && drawn.kind === 'drawn') await note(job, dessinePar.startsWith(FAL) ? 'fal' : 'google', 'dessin', dessinePar, 'succes', false, COST.image1k);
   j.ms.generation = Date.now() - t;
   j.usage.generation = usage;
   j.modele = dessinePar;
@@ -395,7 +400,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   t = Date.now();
   // Un dessin en 2K est ramené à la taille de travail : le canevas final fait 1 024 px.
   const raw = decode(img.bytes, img.mime);
-  const sized = Math.max(raw.width, raw.height) > 2000 ? downscale(raw, 1800) : raw;
+  const sized = Math.max(raw.width, raw.height) > 1500 ? downscale(raw, 1280) : raw;
   const lit = cutoutBackground(sized, { garment: garmentRgbs(target.colors, target.hex) });
   const { cut, oneShare } = cleanSpecks(lit);
   const checks = runChecks(cut, oneShare, target.hex?.[0] ?? null);
