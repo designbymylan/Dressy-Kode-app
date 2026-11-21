@@ -921,8 +921,8 @@ l'utilisateur** : la spec du 20/11 (« une photo, une pièce », détourage
 BiRefNet et étiquetage, sans génération) a été construite et essayée au banc,
 puis écartée : « la pièce ne rend pas bien ». **La génération reste le
 processus** (repérage, découpe SAM 3, puis dessin catalogue par Nano Banana,
-décisions du 20/11), avec les clés actuelles. Le code est gardé sous
-l'étiquette git `pipeline-ajout-abandonne` ; il n'est plus sur la branche. Ce
+décisions du 20/11), avec les clés actuelles. Le code reste dans l'historique
+git (dernier commit `f8c0575`) ; il n'est plus sur la branche. Ce
 qui reste en production, sans effet sur la génération : les migrations
 `pipeline_ajout`, `banc_pipeline` et `menage_pieces` (colonnes et journal
 inutilisés, contrainte de fiche que `cleanFiche` respecte déjà) et `menage`
