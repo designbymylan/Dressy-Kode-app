@@ -60,7 +60,7 @@ Banc du 21/11 (20 photos, lots de 3 simultanés) : 20 sur 20 terminés, aucune i
 ## Avant la bascule (app et site)
 
 1. **20 photos prises au téléphone**, chez soi, en suivant l'aide à la capture : c'est le vrai banc (critère : 18 sur 20 prêtes sans reprise). `node tools/banc-pipeline.mjs` accepte d'autres photos (déposées dans le compartiment `banc`).
-2. **Politique de confidentialité** : version 1.7 écrite sur la branche (photo d'origine gardée avec la pièce, lecture par Google ou Anthropic, rien de redessiné, journal 12 mois), registre §2 bis. À la bascule : redater l'avis `politique-1.7`, appliquer `supabase/tests/menage_pieces.sql` comme migration et redéployer `menage` (ménage des photos et du journal), puis le texte de permission « photos » de l'app (`app.json`).
+2. **Politique de confidentialité** : version 1.7 écrite sur la branche (photo d'origine gardée avec la pièce, lecture par Google ou Anthropic, rien de redessiné, journal 12 mois), registre §2 bis. Ménage appliqué le 21/11 avec l'accord de l'utilisateur (migration `20261121073339_menage_pieces`, `menage` v33 servie et contrôlée). À la bascule : redater l'avis `politique-1.7`, puis le texte de permission « photos » de l'app (`app.json`).
 3. **Kodi, le dressing de l'app et du site** ne lisent plus que les pièces ajoutées (`added_at`), sur la branche ; redéployer `kode` à la bascule.
 4. **Contraintes de la taxonomie** sur `kind` et `colors` (l'app actuelle écrit encore ses types d'illustration) : nouvelle migration, une fois l'app basculée.
 5. **Bascule** : `PIPELINE_AJOUT = true` dans `mobile/src/state/ajout.ts` et `web/src/lib/ajout.ts`, essai de bout en bout sur un vrai compte (app en Expo Go, site en Preview), mesure en 4G, puis main.

@@ -16,6 +16,6 @@ P=(psql -h "$D" -p 5447 -U postgres -v ON_ERROR_STOP=1 -q)
 "${P[@]}" -c "create database t" >/dev/null
 "${P[@]}" -d t -f supabase/tests/pipeline_ajout.stub.sql
 "${P[@]}" -d t -f "$(ls supabase/migrations/*_pipeline_ajout.sql)"
-"${P[@]}" -d t -f "$(ls supabase/migrations/*_menage_pieces.sql 2>/dev/null || echo supabase/tests/menage_pieces.sql)"
+"${P[@]}" -d t -f "$(ls supabase/migrations/*_menage_pieces.sql)"
 cat supabase/tests/pipeline_ajout.test.sql supabase/tests/menage_pieces.test.sql | "${P[@]}" -d t 2>&1 | grep -E "NOTICE|ERROR|ECHEC" | sed 's/^psql:[^ ]* NOTICE:  //; s/^NOTICE:  //'
 echo "tout est bon"

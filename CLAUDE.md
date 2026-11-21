@@ -954,9 +954,31 @@ banc et écarts : `docs/pipeline-ajout.md`. Arbitrages de l'utilisateur (20/11) 
   pièce ; aucun échec ; photos à plusieurs pièces toutes refusées. Limite : ce qui
   est posé avec la pièce (boîte, patère, cintre) reste dans l'image. Un appel du
   banc = un détoureur (deux dans le même appel faisaient tomber les instances).
-- **Avant la bascule** : banc de 20 photos prises au téléphone, politique de
-  confidentialité (photo d'origine gardée, au lieu de 30 jours), Kodi et tenues
-  limités aux pièces ajoutées, contraintes de taxonomie sur `kind` et `colors`.
+- **Épuration (21/11), demandée par l'utilisateur** (« que le vêtement, pas le
+  cintre ni la boîte ») : `epuration.ts`. Le détourage BiRefNet n'est gardé que
+  là où SAM 3 (photo en 512 px, type de la pièce, puis catégorie ou « clothing »
+  si rien n'est trouvé) voit la pièce, élargi de 6 px ; aucun pixel inventé ;
+  SAM en panne, la pièce passe avec son détourage. Banc : boîte, patère,
+  tringle et cintres retirés ; environ 0,008 $ par pièce. `EPURATION=0` la coupe.
+- **Temps de calcul** : « CPU Time exceeded » quand 4 traitements partagent une
+  instance (le calcul s'additionne, tout le lot est perdu). Allégé (SAM en
+  512 px, WebP méthode 2) ; l'app et le site gardent **2 pièces en traitement
+  au plus** (`EN_MEME_TEMPS`). Banc par lots de 3 : 20 sur 20. Journaux :
+  `query_logs` (Supabase), source `function_logs`.
+- **Clés (21/11), décision de l'utilisateur** : on garde les clés actuelles
+  (intermédiaire). L'étiquetage reste sur Gemini Flash-Lite, 4 à 6 s en général,
+  jusqu'à la limite de 12 s (la pièce arrive alors avec une fiche à remplir).
+- **Politique 1.7** écrite sur la branche (photo d'origine gardée avec la pièce,
+  lecture par Google ou Anthropic, rien de redessiné, journal 12 mois), registre
+  §2 bis ; avis `politique-1.7` à redater le jour de la bascule. **Ménage
+  appliqué le 21/11 avec l'accord de l'utilisateur** : `expired_files`
+  (migration `20261121073339_menage_pieces` : fichiers d'une pièce supprimée le
+  lendemain, photo d'origine d'une pièce retirée après 30 jours) et purge de
+  `garment_runs` à 12 mois (`menage` v33, contrôlée).
+- **Avant la bascule** : banc de 20 photos prises au téléphone, redater l'avis,
+  texte de permission « photos » (`app.json`), premier portant du questionnaire
+  sur le même parcours, redéployer `kode` (pièces ajoutées seulement),
+  contraintes de taxonomie sur `kind` et `colors`.
 
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
