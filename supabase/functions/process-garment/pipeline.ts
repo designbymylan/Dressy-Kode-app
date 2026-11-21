@@ -12,7 +12,7 @@ import type { Etiquettes } from '../_shared/taxonomy.ts';
 import type { Resultat as ResultatEtiquetage } from './etiquetage.ts';
 import { analyser, etirer, opaciteDe, type Analyse } from './masque.ts';
 import { epurer } from './epuration.ts';
-import { SAM_KIND } from '../dressy-agent/sam.ts';
+import { SAM_CATEGORY, SAM_KIND } from '../dressy-agent/sam.ts';
 import { couleurMediane, decouper, reduire } from './normaliser.ts';
 import { decider, type RaisonReprise } from './qualite.ts';
 import { ETIQUETAGE, SEUILS, SORTIE } from './reglages.ts';
@@ -41,9 +41,11 @@ export type Mesures = {
   essais_etiquetage: number;
   cout_etiquetage_usd: number;
   modele_etiquetage: string | null;
-  /** L'épuration : appliquée ou non, et pourquoi (journal). */
+  /** L'épuration : appliquée ou non, et pourquoi (journal) ; `prompt` : le dernier essayé. */
   epuration: { prompt: string; appliquee: boolean; raison?: string; part?: number; masques?: number } | null;
   epuration_ms: number | null;
+  /** Appels à SAM 3 (un, ou deux avec le second essai), pour le coût. */
+  epuration_appels: number;
   erreurs: string[];
 };
 
@@ -79,7 +81,7 @@ export async function traiter(original: Uint8Array, ports: Ports, opts: { plafon
   const mesures: Mesures = {
     detourage_ms: null, etiquetage_ms: null, controle_ms: null,
     essais_detourage: 0, essais_etiquetage: 0, cout_etiquetage_usd: 0, modele_etiquetage: null,
-    epuration: null, epuration_ms: null, erreurs: [],
+    epuration: null, epuration_ms: null, epuration_appels: 0, erreurs: [],
   };
   const t0 = ports.maintenant();
 
@@ -128,25 +130,35 @@ export async function traiter(original: Uint8Array, ports: Ports, opts: { plafon
     const etiquettes = (await etiquetage).etiquettes;
 
     // L'épuration : ne garder que la pièce (sans cintre, boîte, patère), guidée par son type.
+    // Si SAM ne trouve rien avec le type (« dress » pour un top), un second essai plus large :
+    // la catégorie, sinon « clothing ». Deux appels au plus.
     if (ports.segmenter) {
       const te = ports.maintenant();
-      const prompt = (etiquettes && SAM_KIND[etiquettes.type]) || 'clothing';
-      try {
-        const bruts = await ports.segmenter(original, prompt);
-        // Gardés à leur taille (512 px) : la zone s'y calcule, sans agrandir chaque masque.
-        const masques = bruts.map((b) => {
-          const r = ports.decoderPng(b.png);
-          return { alpha: opaciteDe(r), largeur: r.width, hauteur: r.height, score: b.score };
-        });
-        const e = epurer(alpha, masques, photo.width, photo.height);
-        if (e.appliquee) alpha = e.alpha;
-        mesures.epuration = e.appliquee
-          ? { prompt, appliquee: true, part: Math.round(e.part * 1000) / 1000, masques: e.masques }
-          : { prompt, appliquee: false, raison: e.raison, ...(e.part !== undefined ? { part: Math.round(e.part * 1000) / 1000 } : {}), masques: e.masques };
-      } catch (err) {
-        // SAM en panne : la pièce garde son détourage, rien n'échoue pour autant.
-        mesures.epuration = { prompt, appliquee: false, raison: 'erreur' };
-        mesures.erreurs.push(`épuration : ${err instanceof Error ? err.message : err}`);
+      const parType = (etiquettes && SAM_KIND[etiquettes.type]) || 'clothing';
+      const parCategorie = (etiquettes && SAM_CATEGORY[etiquettes.categorie]) || 'clothing';
+      const prompts = [...new Set([parType, parCategorie !== parType ? parCategorie : 'clothing'])];
+      for (const prompt of prompts) {
+        try {
+          mesures.epuration_appels++;
+          const bruts = await ports.segmenter(original, prompt);
+          // Gardés à leur taille (512 px) : la zone s'y calcule, sans agrandir chaque masque.
+          const masques = bruts.map((b) => {
+            const r = ports.decoderPng(b.png);
+            return { alpha: opaciteDe(r), largeur: r.width, hauteur: r.height, score: b.score };
+          });
+          const e = epurer(alpha, masques, photo.width, photo.height);
+          if (e.appliquee) alpha = e.alpha;
+          mesures.epuration = e.appliquee
+            ? { prompt, appliquee: true, part: Math.round(e.part * 1000) / 1000, masques: e.masques }
+            : { prompt, appliquee: false, raison: e.raison, ...(e.part !== undefined ? { part: Math.round(e.part * 1000) / 1000 } : {}), masques: e.masques };
+          // Seul « rien trouvé » mérite le second essai ; un morceau seulement (« trop_peu ») non.
+          if (e.appliquee || e.raison !== 'aucun_masque') break;
+        } catch (err) {
+          // SAM en panne : la pièce garde son détourage, rien n'échoue pour autant.
+          mesures.epuration = { prompt, appliquee: false, raison: 'erreur' };
+          mesures.erreurs.push(`épuration : ${err instanceof Error ? err.message : err}`);
+          break;
+        }
       }
       mesures.epuration_ms = ports.maintenant() - te;
     }

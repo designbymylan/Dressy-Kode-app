@@ -2,7 +2,7 @@
 /**
  * Le banc du pipeline d'ajout (spec, étape 3), en deux temps :
  *
- *   node tools/banc-pipeline.mjs preparer <dossier> [--detoureurs birefnet,bria]
+ *   node tools/banc-pipeline.mjs preparer <dossier> [--detoureurs birefnet,bria] [--photos nom1,nom2]
  *       écrit <dossier>/jetons.json (jetons à usage unique, jamais commités) et
  *       <dossier>/lignes.sql, à exécuter par l'éditeur dans Supabase (table
  *       banc_ia, fermée au client) : une ligne par photo, avec l'empreinte du jeton.
@@ -29,7 +29,8 @@ const opt = (nom, defaut) => {
 };
 
 if (action === 'preparer') {
-  const { photos } = JSON.parse(readFileSync(join(racine, 'tools/banc-pipeline.json'), 'utf8'));
+  const choix = opt('--photos', null)?.split(',');
+  const photos = JSON.parse(readFileSync(join(racine, 'tools/banc-pipeline.json'), 'utf8')).photos.filter((p) => !choix || choix.includes(p.nom));
   const detoureurs = opt('--detoureurs', 'birefnet,bria').split(',');
   const etiqueteur = opt('--etiqueteur', null);
   mkdirSync(dossier, { recursive: true });

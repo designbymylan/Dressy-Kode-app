@@ -239,6 +239,13 @@ check('paire vue comme plusieurs pièces : refusée', decider({ bord: 0, couvert
   check('pipeline : SAM interrogé avec le type de la pièce', prompts, ['sweater']);
   check('pipeline : la boîte ne fait plus partie de la pièce (2 px au contact)', s1.statut === 'ready' && [s1.largeur, s1.hauteur], [216, 198]);
   check('pipeline : épuration journalisée', s1.mesures.epuration?.appliquee, true);
+  const essais: string[] = [];
+  const s3 = await traiter(original, {
+    ...ports,
+    decoderPng: (b) => (b === pngSam ? masqueGris([[100, 60, 200, 180]]) : decodeur(b)),
+    segmenter: async (_j, prompt) => { essais.push(prompt); return prompt === 'sweater' ? [] : [{ png: pngSam, score: 0.9 }]; },
+  });
+  check('rien trouvé avec le type : second essai par la catégorie', [essais, s3.mesures.epuration?.appliquee], [['sweater', 'top'], true]);
   const s2 = await traiter(original, { ...fauxPorts({ masque: avecBoite }), segmenter: async () => { throw new Error('SAM 3 injoignable'); } });
   check('pipeline : SAM en panne, la pièce passe avec son détourage', [s2.statut, s2.mesures.epuration?.raison], ['ready', 'erreur']);
 }

@@ -146,6 +146,7 @@ function ligneDuJournal(s: Sortie, base: Record<string, unknown>) {
       bord: analyse ? Math.round(analyse.bord * 1000) / 1000 : null,
       epuration: m.epuration,
       epuration_ms: m.epuration_ms,
+      epuration_appels: m.epuration_appels,
       erreurs: m.erreurs.slice(0, 6).map((e) => e.slice(0, 200)),
     },
   };
@@ -191,7 +192,7 @@ async function traiterPiece(p: Piece, envoiMs: number | null, tentative: number)
       if (e) throw new Error(`écriture de l'état : ${e.message}`);
     }
     const cout = (s.mesures.essais_detourage ? prixDetourage(id) * s.mesures.essais_detourage : 0) + s.mesures.cout_etiquetage_usd
-      + (s.mesures.epuration ? prixSam() : 0);
+      + prixSam() * s.mesures.epuration_appels;
     await journal({
       ...ligneDuJournal(s, base), telechargement_ms: telechargementMs, ecriture_ms: Date.now() - te,
       total_ms: Date.now() - t0, cout_usd: Math.round(cout * 1e6) / 1e6,
@@ -245,7 +246,7 @@ async function modePipeline(b: Banc, params: Record<string, unknown>): Promise<R
     const s = await traiter(bytes, ports(bytes, id, qui, params.epuration === false ? false : epurationActive()));
     const total = Date.now() - t0;
     const c = (s.mesures.essais_detourage ? prixDetourage(id) * s.mesures.essais_detourage : 0) + s.mesures.cout_etiquetage_usd
-      + (s.mesures.epuration ? prixSam() : 0);
+      + prixSam() * s.mesures.epuration_appels;
     cout += c;
     const liens = s.statut === 'ready'
       ? { cutout: await b.ranger(`${nom}-${id}.webp`, s.cutout, 'image/webp'), thumb: await b.ranger(`${nom}-${id}-thumb.webp`, s.thumb, 'image/webp') }
