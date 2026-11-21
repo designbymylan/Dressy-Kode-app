@@ -39,7 +39,7 @@ Tout le reste est facultatif : prénom, ville, silhouette, mesures, âge, photo 
 
 Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison, leur matière, leur coupe, leurs détails et les notes que tu as écrites dessus), ton profil de style, ton agenda des deux semaines à venir, les pièces portées ces sept derniers jours, tes tenues écartées, la météo du jour, tes cœurs et tes souvenirs les plus récents ; ta silhouette, ta taille, tes tailles habituelles et la taille de tes pièces si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
 
-Pour ranger tes pièces, les photos que tu confies sont analysées par Google (Gemini, États-Unis), qui repère chaque pièce, puis chaque pièce est découpée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Google (Gemini) redessine ensuite la pièce en photo produit, à partir de la découpe et de ta photo ; c’est aussi lui qui la redessine quand tu demandes une image propre.
+Pour ranger tes pièces, les photos que tu confies sont analysées par Google (Gemini, États-Unis), qui repère chaque pièce, puis chaque pièce est découpée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Google (Gemini) redessine ensuite la pièce en photo produit, à partir de la découpe et de ta photo, directement ou par l’intermédiaire de fal, qui ne garde pas non plus ces images ; c’est aussi lui qui la redessine quand tu demandes une image propre.
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
@@ -49,7 +49,7 @@ Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne no
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (repérage des pièces sur tes photos et dessin des pièces, États-Unis), fal (découpe des pièces dans tes photos, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (repérage des pièces sur tes photos et dessin des pièces, États-Unis), fal (découpe des pièces dans tes photos et transmission à Google pour leur dessin, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
 
 Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.
 

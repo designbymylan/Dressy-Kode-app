@@ -72,3 +72,27 @@ Deno.test('dessin : la chaîne commence par le modèle de l’offre, sans doublo
   const c = modelesDeDessin(RELAIS_DESSIN_DEFAUT[1]);
   if (c[0] !== RELAIS_DESSIN_DEFAUT[1] || new Set(c).size !== c.length || c.length < 3) throw new Error(c.join(', '));
 });
+
+Deno.test('dessin : avec la clé fal.ai, fal dessine d’abord (même modèle), l’intermédiaire en relais', async () => {
+  Deno.env.set('FAL_KEY', 'cle-fal-test');
+  try {
+    const chaine = modelesDeDessin('modele-offre');
+    if (chaine[0] !== 'fal:google/nano-banana-2.1/edit' || chaine[1] !== 'modele-offre') throw new Error(chaine.join(', '));
+    appels.length = 0;
+    aiguille = (url) => url.startsWith('https://fal.run/')
+      ? new Response(JSON.stringify({ images: [{ url: `data:image/png;base64,${png}` }], description: '' }), { status: 200 })
+      : image();
+    const r = await dessiner('Dessine la pièce.', [photo], { model: 'modele-offre', size: '2K' }, 50);
+    if (r.model !== 'fal:google/nano-banana-2.1/edit' || appels.length !== 1 || !appels[0].startsWith('https://fal.run/google/nano-banana-2.1/edit')) throw new Error(`${r.model}, ${appels.join(' ')}`);
+    // fal occupé (429) : le relais part aussitôt chez l'intermédiaire.
+    appels.length = 0;
+    aiguille = (url) => url.startsWith('https://fal.run/') ? new Response('{"detail":"busy"}', { status: 429 }) : image();
+    const r2 = await dessiner('Dessine la pièce.', [photo], { model: 'modele-offre' }, 50);
+    if (r2.model !== 'modele-offre') throw new Error(`relais ${r2.model}`);
+    Deno.env.set('DESSIN_FAL', '0');
+    if (modelesDeDessin('modele-offre')[0] !== 'modele-offre') throw new Error('DESSIN_FAL=0 ignoré');
+  } finally {
+    Deno.env.delete('FAL_KEY');
+    Deno.env.delete('DESSIN_FAL');
+  }
+});

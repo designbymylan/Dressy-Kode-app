@@ -939,6 +939,23 @@ changer la base : la tâche reste « generating » (l'app dit que Kodi dessine)
 et `ai_jobs_sweep` la remet en file à l'heure voulue (`claimed_at` décalé).
 Après le dernier essai, la découpe reste, sans message.
 
+**Dessin par fal.ai (21/11), demandé par l'utilisateur** (« règle le problème
+de génération ») : banc du 21/11 au matin, les quatre modèles d'image de
+l'intermédiaire répondaient 429 (« service occupé ») après 35 à 40 s, même sur
+l'appel le plus simple ; ce n'était pas notre façon d'appeler. Avec la clé
+`FAL_KEY` déjà posée pour SAM 3, le dessin passe d'abord par fal, **le même
+Nano Banana 2.1** (`google/nano-banana-2.1/edit`, `dessinerFal`, `fal.ts`) :
+16 s au banc, pull à inscription exact. L'intermédiaire devient le relais
+(`modelesDeDessin`, `steps.ts`), lancé aussitôt si fal répond 429, ou après
+40 s. Mêmes garanties que SAM 3 (requête non gardée, image dans la réponse).
+Tarif fal au jeton (environ 0,05 $ l'image en 1K, plus en 2K), à suivre dans
+`generation_log` (fournisseur `fal`, type `dessin`). `DESSIN_FAL=0` (secret)
+rend la première place à l'intermédiaire ; `DESSIN_FAL=<modèle fal>` en
+choisit un autre. Une deuxième clé fal n'accélérerait rien (la limite est par
+compte, et on reste à 2 pièces à la fois). Politique 1.6 précisée (fal
+transmet aussi le dessin à Google), sans nouvelle version : ni nouveau
+destinataire ni nouvelle finalité. Tests : `deno test -A dessin.test.ts`.
+
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,
 « Noter le dessin », « Retirer du dressing ». « Image propre », « Rendu

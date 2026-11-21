@@ -25,6 +25,7 @@ import {
 import { parseSegments, type Segment } from './segment.ts';
 import { alleger, sniffMime } from './codec.ts';
 import { course as courseRelais } from '../_shared/relais.ts';
+import { dessinerFal, DESSIN_FAL_DEFAUT, FalError } from './fal.ts';
 import { accesGoogle, anthropicBase, anthropicViaIntermediaire, geminiBase, geminiUrl, geminiViaIntermediaire, GEMINI_OFFICIEL } from '../_shared/fournisseurs.ts';
 
 export type Img = { bytes: Uint8Array; mime: string };
@@ -90,9 +91,22 @@ const relaisMs = (): number => Math.max(5_000, Number(env('REPERAGE_RELAIS_MS') 
  * avance normalement (28 s mesurées en 2K).
  */
 export const RELAIS_DESSIN_DEFAUT = ['gemini-nano-banana-2.1', 'gemini-3.1-flash-image', 'gemini-3-pro-image'];
+/** Préfixe d'un modèle de dessin servi par fal.ai (`fal:google/nano-banana-2.1/edit`). */
+export const FAL = 'fal:';
+/**
+ * 21/11 : avec la clé fal.ai, le dessin passe d'abord par fal (le même Nano
+ * Banana 2.1) ; l'intermédiaire, qui répondait 429 à tous les modèles d'image,
+ * devient le relais. `DESSIN_FAL=0` rend la première place à l'intermédiaire.
+ */
+export function modeleFal(): string | null {
+  const choix = env('DESSIN_FAL');
+  if (choix === '0' || !readKey('FAL_KEY')) return null;
+  return FAL + (choix && choix !== '1' ? choix : DESSIN_FAL_DEFAUT);
+}
 export function modelesDeDessin(premier: string): string[] {
   const liste = (env('GEMINI_IMAGE_MODELS')?.split(',').map((m) => m.trim()).filter(Boolean)) ?? RELAIS_DESSIN_DEFAUT;
-  return [...new Set([premier, ...liste])].slice(0, 4);
+  const fal = premier.startsWith(FAL) ? null : modeleFal();
+  return [...new Set([...(fal ? [fal] : []), premier, ...liste])].slice(0, fal ? 5 : 4);
 }
 export const relaisDessinMs = (): number => Math.max(10_000, Number(env('DESSIN_RELAIS_MS') ?? 40_000) || 40_000);
 
@@ -121,7 +135,7 @@ export const EFFORT = {
 
 export const KEYS = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY'] as const;
 /** Les clés obligatoires, plus `GOOGLE_API_KEY` (facultative : découpe et vecteurs chez Google directement). */
-type SecretName = (typeof KEYS)[number] | 'GOOGLE_API_KEY';
+type SecretName = (typeof KEYS)[number] | 'GOOGLE_API_KEY' | 'FAL_KEY';
 
 /** La clé telle que collée, sans les espaces ni guillemets qu'un copier-coller ajoute souvent. */
 function readKey(name: SecretName): string | undefined {
@@ -161,8 +175,9 @@ function httpError(who: string, status: number, text: string): AgentError {
 // ---------------------------------------------------------------- Nano Banana
 
 export async function generate(prompt: string, sources: Img[], opts: { search?: boolean; model?: string; size?: '1K' | '2K'; signal?: AbortSignal } = {}): Promise<Img & { usage: Usage; searched: boolean; model: string }> {
-  const key = secret('GEMINI_API_KEY');
   const model = opts.model ?? MODELS.gemini;
+  if (model.startsWith(FAL)) return generateFal(prompt, sources, { ...opts, model });
+  const key = secret('GEMINI_API_KEY');
   const url = geminiUrl(model);
 
   // Consigne d'abord, puis les photos de référence : Nano Banana redessine la
@@ -239,6 +254,23 @@ export async function generate(prompt: string, sources: Img[], opts: { search?: 
   const grounding = candidate?.groundingMetadata;
   const usage = { ...(body.usageMetadata ?? {}), recherche: grounding ? { requetes: grounding.webSearchQueries ?? grounding.imageSearchQueries ?? [] } : null };
   return { bytes, mime, usage, searched, model };
+}
+
+/** Le dessin chez fal.ai (21/11, `dessinerFal`), rendu sous la même forme qu'un appel direct. */
+async function generateFal(prompt: string, sources: Img[], opts: { search?: boolean; model: string; size?: '1K' | '2K'; signal?: AbortSignal }): Promise<Img & { usage: Usage; searched: boolean; model: string }> {
+  const cle = readKey('FAL_KEY');
+  if (!cle) throw new AgentError(SAY.notReady, 'FAL_KEY absente des secrets Supabase');
+  try {
+    const r = await dessinerFal(prompt, sources, { cle, modele: opts.model.slice(FAL.length), resolution: opts.size ?? '1K', recherche: opts.search, signal: opts.signal });
+    const mime = sniffMime(r.bytes) ?? 'image/png';
+    return { bytes: r.bytes, mime, usage: { fal: { ms: r.ms } }, searched: Boolean(opts.search), model: opts.model };
+  } catch (err) {
+    if (!(err instanceof FalError)) throw err;
+    if (err.status === 401 || err.status === 403) throw new AgentError(SAY.notReady, `fal.ai refuse la clé : ${err.message}`);
+    if (err.status === 200) throw new AgentError(SAY.refused, err.message);
+    if (err.status === 429) throw new AgentError(SAY.busy, err.message, true);
+    throw new AgentError(SAY.failed, err.message, err.passager);
+  }
 }
 
 /**

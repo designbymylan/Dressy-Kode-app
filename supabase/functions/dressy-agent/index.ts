@@ -40,7 +40,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropFor, consigneDessin, garmentRgbs, isMetal, type Target } from './prompts.ts';
-import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, type Img } from './steps.ts';
+import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, FAL, type Img } from './steps.ts';
 import { cleFal, decouper, fatal, ouvrir } from './decoupage.ts';
 import { SAM_MODELE, SAM_PRIX } from './fal.ts';
 import { MODES_AGENT } from './banc.ts';
@@ -385,7 +385,7 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
     throw new AgentError(SAY.quota, `plus de génération (offre ${drawn.plan})`);
   }
   const img = drawn.image;
-  if (opts.offert && drawn.kind === 'drawn') await note(job, 'google', 'dessin', dessinePar, 'succes', false, size === '2K' ? COST.image2k : COST.image1k);
+  if (opts.offert && drawn.kind === 'drawn') await note(job, dessinePar.startsWith(FAL) ? 'fal' : 'google', 'dessin', dessinePar, 'succes', false, size === '2K' ? COST.image2k : COST.image1k);
   j.ms.generation = Date.now() - t;
   j.usage.generation = usage;
   j.modele = dessinePar;

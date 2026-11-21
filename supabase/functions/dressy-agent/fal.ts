@@ -122,3 +122,63 @@ export async function segmenterSam(
   }
   return { masques: lireReponseSam(json), ms: Date.now() - t };
 }
+
+/**
+ * Le dessin chez fal.ai (21/11) : le même Nano Banana 2.1, par un autre accès
+ * que l'intermédiaire, qui répondait 429 (« service occupé ») à tous les
+ * modèles d'image le 21/11 au matin. Mêmes garanties que SAM 3 : requête non
+ * gardée (`X-Fal-Store-IO: 0`), image rendue dans la réponse (`sync_mode`),
+ * fichier éventuel de leur CDN effacé après une heure. Le secret `DESSIN_FAL`
+ * choisit un autre modèle de fal, ou `0` pour ne plus passer par fal.
+ */
+export const DESSIN_FAL_DEFAUT = 'google/nano-banana-2.1/edit';
+
+export async function dessinerFal(
+  prompt: string,
+  images: { bytes: Uint8Array; mime: string }[],
+  opts: { cle: string; modele?: string; resolution: '1K' | '2K'; recherche?: boolean; signal?: AbortSignal; fetch?: typeof fetch; delaiMs?: number },
+): Promise<{ bytes: Uint8Array; ms: number; description: string }> {
+  const f = opts.fetch ?? fetch;
+  const t = Date.now();
+  const modele = opts.modele ?? DESSIN_FAL_DEFAUT;
+  const delai = AbortSignal.timeout(opts.delaiMs ?? 75_000);
+  let res: Response;
+  try {
+    res = await f(`https://fal.run/${modele}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Key ${opts.cle}`,
+        'Content-Type': 'application/json',
+        'X-Fal-Store-IO': '0',
+        'X-Fal-Object-Lifecycle-Preference': JSON.stringify({ expiration_duration_seconds: 3600 }),
+      },
+      body: JSON.stringify({
+        prompt,
+        image_urls: images.map((i) => `data:${i.mime};base64,${b64(i.bytes)}`),
+        num_images: 1,
+        resolution: opts.resolution,
+        aspect_ratio: '1:1',
+        output_format: 'png',
+        sync_mode: true,
+        enable_web_search: Boolean(opts.recherche),
+      }),
+      signal: opts.signal ? AbortSignal.any([delai, opts.signal]) : delai,
+    });
+  } catch (err) {
+    throw new FalError(`dessin fal ${modele} injoignable : ${err instanceof Error ? err.message : err}`, null, true);
+  }
+  const texte = await res.text();
+  if (!res.ok) {
+    throw new FalError(`dessin fal ${modele} ${res.status} : ${texte.replace(/\s+/g, ' ').slice(0, 300)}`, res.status, res.status === 429 || res.status >= 500);
+  }
+  let json: { images?: { url?: string }[]; description?: string };
+  try {
+    json = JSON.parse(texte);
+  } catch {
+    throw new FalError(`dessin fal ${modele} : réponse illisible (${texte.slice(0, 120)})`, res.status, true);
+  }
+  const source = json.images?.[0]?.url;
+  // Aucune image : la consigne ou la photo a été refusée (statut 200 sans image).
+  if (!source) throw new FalError(`dessin fal ${modele} : aucune image (${String(json.description ?? '').slice(0, 160)})`, 200, false);
+  return { bytes: await octetsDuMasque(source, f), ms: Date.now() - t, description: String(json.description ?? '') };
+}
