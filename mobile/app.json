@@ -45,14 +45,6 @@
           "microphonePermission": false
         }
       ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Dresskode utilise l’appareil photo pour photographier tes vêtements, une pièce à la fois.",
-          "microphonePermission": false,
-          "recordAudioAndroid": false
-        }
-      ],
       "expo-notifications",
       "expo-status-bar"
     ],

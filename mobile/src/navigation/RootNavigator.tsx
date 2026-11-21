@@ -12,9 +12,6 @@ import { Welcome } from '../screens/Welcome';
 import { Affiner, Onboarding } from '../screens/Onboarding';
 import { PieceScreen } from '../screens/Piece';
 import { AddPiece } from '../screens/AddPiece';
-import { Ajout } from '../screens/Ajout';
-import { PIPELINE_AJOUT } from '../state/ajout';
-import { online } from '../state/remote';
 import { Compose } from '../screens/Compose';
 import { EventScreen } from '../screens/Event';
 import { Planning } from '../screens/Planning';
@@ -94,7 +91,7 @@ export function RootNavigator() {
           <Stack.Screen name="Generations" component={Generations} />
           <Stack.Screen name="States" component={States} />
           <Stack.Group screenOptions={modalOptions}>
-            <Stack.Screen name="AddPiece" component={AjoutOuAgent} />
+            <Stack.Screen name="AddPiece" component={AddPiece} />
             <Stack.Screen name="Share" component={ShareScreen} />
           </Stack.Group>
         </>
@@ -103,15 +100,4 @@ export function RootNavigator() {
       <Stack.Screen name="Confidentialite" component={Confidentialite} />
     </Stack.Navigator>
   );
-}
-
-/**
- * L'ajout d'une pièce : le pipeline du 20/11 (une photo, une pièce, sans
- * génération) quand la bascule est faite et le compte connecté ; sinon
- * l'écran de l'agent multi-pièces. Deux composants distincts : l'ordre des
- * hooks de chacun ne change jamais.
- */
-function AjoutOuAgent() {
-  const { s } = useStore();
-  return PIPELINE_AJOUT && s.account === 'connecte' && online && s.session ? <Ajout /> : <AddPiece />;
 }

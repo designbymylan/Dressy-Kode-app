@@ -916,69 +916,28 @@ l'utilisateur.**
   l'utilisateur (20/11) : on garde un dessin par pièce.** L'outil de la
   grille reste au banc pour un nouvel essai (2K, clé Google directe).
 
-**Pipeline d'ajout de vêtements (spec du 20/11, nuit), demandé par
-l'utilisateur** (« Spec · Pipeline d'ajout de vêtements ») : une photo = une
-pièce, détourée et étiquetée en moins de 10 s, **sans aucune génération
-d'image**. Il remplacera « une photo, toutes ses pièces » et le dessin
-d'arrivée **à la bascule, après le banc et sur validation de l'utilisateur**
-(app et site derrière `PIPELINE_AJOUT`, `mobile/src/state/ajout.ts`). État,
-banc et écarts : `docs/pipeline-ajout.md`. Arbitrages de l'utilisateur (20/11) :
+**Pipeline d'ajout par détourage abandonné (21/11), décidé par
+l'utilisateur** : la spec du 20/11 (« une photo, une pièce », détourage
+BiRefNet et étiquetage, sans génération) a été construite et essayée au banc,
+puis écartée : « la pièce ne rend pas bien ». **La génération reste le
+processus** (repérage, découpe SAM 3, puis dessin catalogue par Nano Banana,
+décisions du 20/11), avec les clés actuelles. Le code est gardé sous
+l'étiquette git `pipeline-ajout-abandonne` ; il n'est plus sur la branche. Ce
+qui reste en production, sans effet sur la génération : les migrations
+`pipeline_ajout`, `banc_pipeline` et `menage_pieces` (colonnes et journal
+inutilisés, contrainte de fiche que `cleanFiche` respecte déjà) et `menage`
+v33 (purge de `garment_runs`). La fonction `process-garment` est encore
+déployée mais plus rien ne l'appelle : à supprimer depuis Supabase. La
+politique reste en version 1.6 (la 1.7 n'a jamais été publiée).
 
-- **Taxonomie** : `supabase/functions/_shared/taxonomy.ts`, source unique (schéma
-  du modèle, validation, contraintes SQL, copies `mobile/src/data/taxonomy.ts` et
-  `web/src/lib/taxonomy.ts` par `node tools/taxonomie.mjs`, jamais à la main). On
-  garde les listes en place, en français (pas celles de la spec) ; matières
-  fermées et saisons en tableau ajoutées. Le nom d'une pièce se tire de la fiche
-  (`nomDeLaPiece`, accordé). L'agent lit ses listes là ; un test vérifie le site et l'app.
-- **« Image propre » reste** à la demande (les offres vendent des générations) ;
-  le pipeline d'ajout n'appelle aucun modèle génératif.
-- **Dépendances accordées** : `@jsquash/webp` 1.5.0 (WebP, .wasm embarqué dans
-  `process-garment/vendor/`) et `expo-camera` (caméra à cadre guide).
-- **Base** : migration `pipeline_ajout` (20261120224423, additive, appliquée par
-  l'API d'administration à la demande de l'utilisateur : la confirmation de
-  l'outil Supabase ne s'affichait pas). `pipeline_status` (processing, ready,
-  needs_retake, failed), `fail_reason`, `original_path` (gardée tant que la pièce
-  existe), `added_at` (« Tout ajouter »), colonnes tenues par le serveur
-  (déclencheur `garments_pipeline`), Realtime sur `garments`, Storage (le client
-  n'écrit que `original.jpg`), journal `garment_runs`, vue `pipeline_indicateurs`.
-  Essais : `bash tools/test-pipeline.sh`.
-- **Fonction `process-garment`** (déployée sans JWT de plateforme, elle vérifie
-  elle-même le jeton) : détourage BiRefNet chez fal.ai (masque seul, appliqué à
-  nos pixels) et étiquetage (Gemini Flash-Lite par l'intermédiaire, Claude Haiku
-  5.5 dès qu'une clé Anthropic directe est posée) en parallèle, un contrôle
-  qualité, cutout WebP recadré + 4 %, vignette 256. Réglages : `reglages.ts`
-  (`PIPELINE_VERSION`). Essais : `npm run test:pipeline` (web).
-- **Banc du 20/11** (20 photos Unsplash) : BiRefNet choisi (même qualité que
-  Bria, 2 fois plus rapide, 6 fois moins cher) ; 4,2 s de médiane et 6,1 s au p95
-  côté serveur, l'étiquetage par l'intermédiaire fait l'attente ; 0,003 $ par
-  pièce ; aucun échec ; photos à plusieurs pièces toutes refusées. Limite : ce qui
-  est posé avec la pièce (boîte, patère, cintre) reste dans l'image. Un appel du
-  banc = un détoureur (deux dans le même appel faisaient tomber les instances).
-- **Épuration (21/11), demandée par l'utilisateur** (« que le vêtement, pas le
-  cintre ni la boîte ») : `epuration.ts`. Le détourage BiRefNet n'est gardé que
-  là où SAM 3 (photo en 512 px, type de la pièce, puis catégorie ou « clothing »
-  si rien n'est trouvé) voit la pièce, élargi de 6 px ; aucun pixel inventé ;
-  SAM en panne, la pièce passe avec son détourage. Banc : boîte, patère,
-  tringle et cintres retirés ; environ 0,008 $ par pièce. `EPURATION=0` la coupe.
-- **Temps de calcul** : « CPU Time exceeded » quand 4 traitements partagent une
-  instance (le calcul s'additionne, tout le lot est perdu). Allégé (SAM en
-  512 px, WebP méthode 2) ; l'app et le site gardent **2 pièces en traitement
-  au plus** (`EN_MEME_TEMPS`). Banc par lots de 3 : 20 sur 20. Journaux :
-  `query_logs` (Supabase), source `function_logs`.
-- **Clés (21/11), décision de l'utilisateur** : on garde les clés actuelles
-  (intermédiaire). L'étiquetage reste sur Gemini Flash-Lite, 4 à 6 s en général,
-  jusqu'à la limite de 12 s (la pièce arrive alors avec une fiche à remplir).
-- **Politique 1.7** écrite sur la branche (photo d'origine gardée avec la pièce,
-  lecture par Google ou Anthropic, rien de redessiné, journal 12 mois), registre
-  §2 bis ; avis `politique-1.7` à redater le jour de la bascule. **Ménage
-  appliqué le 21/11 avec l'accord de l'utilisateur** : `expired_files`
-  (migration `20261121073339_menage_pieces` : fichiers d'une pièce supprimée le
-  lendemain, photo d'origine d'une pièce retirée après 30 jours) et purge de
-  `garment_runs` à 12 mois (`menage` v33, contrôlée).
-- **Avant la bascule** : banc de 20 photos prises au téléphone, redater l'avis,
-  texte de permission « photos » (`app.json`), premier portant du questionnaire
-  sur le même parcours, redéployer `kode` (pièces ajoutées seulement),
-  contraintes de taxonomie sur `kind` et `colors`.
+**Reprises espacées du dessin (21/11)** : le 21/11 au matin, l'intermédiaire
+répondait 429 (« occupé ») aux trois modèles de dessin, et les trois passages
+immédiats ont été perdus en quatre minutes : la pièce est restée en découpe.
+Désormais, un dessin après découpe en panne passagère attend 1, 3, 6 puis
+10 minutes (`ATTENTES_DESSIN_MIN`, `index.ts`), six passages au plus, sans
+changer la base : la tâche reste « generating » (l'app dit que Kodi dessine)
+et `ai_jobs_sweep` la remet en file à l'heure voulue (`claimed_at` décalé).
+Après le dernier essai, la découpe reste, sans message.
 
 **Menu « Cette pièce » et note du dessin (18/11), demandés par l'utilisateur** :
 le menu de la fiche pièce ne garde que ce qui marche : « Modifier l'étiquette »,

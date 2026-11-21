@@ -105,8 +105,6 @@ async function loadContext(db: SupabaseClient, spaceId: string, window?: { from:
       .select('id, name, category_id, kind, season, colors, material, fiche, fit, size, notes')
       .eq('space_id', spaceId)
       .eq('status', 'active')
-      // Seulement les pièces ajoutées au dressing (pipeline du 20/11) : une pièce en revue n'existe pas encore pour Kodi.
-      .not('added_at', 'is', null)
       .order('created_at')
       .order('id'),
     db.from('garment_stats').select('garment_id, wear_count, last_worn_on').eq('space_id', spaceId),

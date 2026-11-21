@@ -1,6 +1,6 @@
 # Politique de confidentialité de Dresskode
 
-_Version 1.7 du 21 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
+_Version 1.6 du 20 novembre 2026. Texte tiré de `mobile/src/data/legal.ts` par `tools/politique.mjs` : ne pas modifier ici._
 
 ## En bref
 
@@ -18,8 +18,7 @@ Nous n’avons pas de délégué à la protection des données. Pour toute quest
 ## Ce que nous gardons, et pourquoi
 
 - **Ton compte.** E-mail, mot de passe (chiffré, illisible même pour nous), prénom, nom, pseudo et photo de profil, si tu les donnes. Pour créer et protéger ton compte. Base : le contrat qui nous lie (art. 6.1.b du RGPD).
-- **Ton dressing.** La photo de chaque pièce (réduite, sans les informations de ton téléphone comme le lieu), la pièce détourée qu’on en tire (ou redessinée, si tu demandes une image propre), ses étiquettes, son prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. La photo d’une pièce est gardée tant que la pièce est dans ton dressing, pour pouvoir la retraiter sans te la redemander ; elle est effacée 30 jours après que tu retires la pièce, et au plus tard le lendemain si tu la supprimes. Les autres photos que tu confies à Kodi sont effacées 30 jours après l’envoi.
-- **L’ajout de tes pièces.** Pour chaque photo traitée : la durée de chaque étape, le résultat (pièce prête, photo à reprendre), le coût estimé et, si tu corriges la fiche, le fait qu’elle a été corrigée. Jamais la photo ni son contenu. Pour mesurer la rapidité et la justesse du service. Base : notre intérêt légitime. Gardé 12 mois.
+- **Ton dressing.** Les photos que tu confies à Kodi, les pièces qu’il en dessine, leurs étiquettes, leurs prix, tes ports et tes prêts (avec le prénom de la personne, tel que tu l’écris). Pour ranger ton dressing et composer tes tenues. Base : le contrat. Les photos confiées sont effacées 30 jours après l’envoi ; les pièces restent jusqu’à ce que tu les retires.
 - **Ton style.** Styles, couleurs aimées et évitées, occasions, tailles de vêtements, ville et tranche d’âge. Pour des tenues à ton goût et adaptées à ta météo. Base : le contrat.
 - **Mes choix.** Les pièces et les tenues que tu aimes (cœurs). Pour les retrouver dans « Mes choix ». Base : le contrat. Si tu acceptes que Kodi apprenne de tes choix, il garde aussi, en phrases, ce que tu aimes, ce que tu écartes et ce que tu lui dis de tes goûts (deux faits courts au plus par message, jamais ta santé, ton corps, tes opinions ni une autre personne), pour mieux te proposer. Base : ton accord « Kodi apprend de mes choix », que tu retires d’un geste : ces souvenirs sont alors effacés aussitôt.
 - **Ta silhouette.** Ta taille, ta silhouette et tes mesures, seulement si tu as donné ton accord. Pour choisir tes coupes et tes longueurs. Base : ton consentement explicite (art. 9.2.a), que tu retires d’un geste : tout est alors effacé.
@@ -40,7 +39,7 @@ Tout le reste est facultatif : prénom, ville, silhouette, mesures, âge, photo 
 
 Pour te répondre, Kodi envoie à Anthropic, qui fournit son intelligence artificielle (États-Unis) : la liste de tes pièces (avec leur type, leur saison, leur matière, leur coupe, leurs détails et les notes que tu as écrites dessus), ton profil de style, ton agenda des deux semaines à venir, les pièces portées ces sept derniers jours, tes tenues écartées, la météo du jour, tes cœurs et tes souvenirs les plus récents ; ta silhouette, ta taille, tes tailles habituelles et la taille de tes pièces si tu as donné ton accord. Jamais ton nom, ton e-mail, ton poids ni tes mesures.
 
-Pour ranger une pièce, sa photo est lue par Google (Gemini, États-Unis) ou par Anthropic (Claude, États-Unis), qui en tirent le type, les couleurs, la matière et les saisons, parmi une liste fixe ; la pièce est détourée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Rien n’est redessiné : l’image de ta pièce, ce sont les pixels de ta photo. Google (Gemini) ne redessine une pièce que si tu demandes une image propre.
+Pour ranger tes pièces, les photos que tu confies sont analysées par Google (Gemini, États-Unis), qui repère chaque pièce, puis chaque pièce est découpée dans ta photo par fal (fal.ai, États-Unis), qui ne garde pas ta photo dans son historique. Google (Gemini) redessine ensuite la pièce en photo produit, à partir de la découpe et de ta photo ; c’est aussi lui qui la redessine quand tu demandes une image propre.
 
 Ces prestataires agissent pour nous, sous contrat : ils n’utilisent pas tes données pour entraîner leurs modèles et les effacent au plus tard 30 jours après le traitement, sauf obligation légale.
 
@@ -50,7 +49,7 @@ Un conseil : évite de montrer ton visage sur les photos de vêtements, et ne no
 
 ## Qui reçoit tes données
 
-Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi et lecture des pièces sur tes photos, États-Unis), Google (lecture des pièces sur tes photos et dessin d’une image propre à ta demande, États-Unis), fal (détourage des pièces dans tes photos, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
+Seulement les prestataires qui font tourner Dresskode, liés par contrat et tenus à la confidentialité : Supabase (base de données et fichiers, Union européenne, Irlande), Vercel (site, États-Unis), Anthropic (intelligence artificielle de Kodi, États-Unis), Google (repérage des pièces sur tes photos et dessin des pièces, États-Unis), fal (découpe des pièces dans tes photos, États-Unis), Stripe (paiement), Expo (distribution des mises à jour de l’app, sans aucune donnée de ton compte, et, si tu acceptes les notifications, acheminement du message « tes pièces sont prêtes », États-Unis) et Apple (service de notifications de ton iPhone, États-Unis).
 
 Les données du jour (météo, lieux, jours fériés, vacances scolaires) viennent de services publics et ouverts, dont la liste et les licences sont dans Réglages › Sources des données. Nos serveurs leur envoient la position de la ville de ton compte, ou celle d’un voyage, jamais ton nom ni ton e-mail.
 
@@ -58,16 +57,14 @@ La liste nominative de nos prestataires t’est envoyée sur simple demande. Per
 
 ## Hors de l’Union européenne
 
-Anthropic, Google, fal, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, la lecture et le détourage des pièces sur tes photos, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).
+Anthropic, Google, fal, Stripe, Vercel, Expo et Apple traitent des données aux États-Unis : l’intelligence artificielle de Kodi, le repérage et la découpe des pièces sur tes photos, le paiement, l’hébergement du site (Vercel ne garde que des journaux techniques), la distribution des mises à jour de l’app (Expo, sans donnée de ton compte ni de ton dressing) et l’acheminement des notifications (Expo et Apple : l’identifiant de ton téléphone et le texte du message).
 
 Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, quand le prestataire y adhère, par le cadre de protection des données entre l’Union européenne et les États-Unis.
 
 ## Combien de temps
 
 - **Ton compte et ton dressing.** Tant que ton compte existe. Supprimé, tout est effacé de nos bases aussitôt ; les copies de sauvegarde disparaissent au plus tard 30 jours après.
-- **La photo d’une pièce.** Tant que la pièce est dans ton dressing ; 30 jours après que tu la retires, et au plus tard le lendemain si tu la supprimes.
-- **Les autres photos confiées à Kodi.** 30 jours après l’envoi.
-- **Le journal de l’ajout de tes pièces.** 12 mois.
+- **Les photos confiées à Kodi.** 30 jours après l’envoi.
 - **Les conversations avec Kodi.** 12 mois, 2 mois une fois archivées.
 - **Les tenues écartées.** 6 mois.
 - **Les souvenirs de Kodi.** 12 mois, ou jusqu’à ce que tu les effaces ou retires ton accord.

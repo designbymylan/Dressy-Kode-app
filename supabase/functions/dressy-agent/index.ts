@@ -496,6 +496,16 @@ const DESSIN_BUDGET_MS = Math.max(30_000, Number(Deno.env.get('DESSIN_BUDGET_MS'
 /** Passages accordés à une pièce dont le fournisseur a eu une panne passagère. */
 const REPRISES_PASSAGERES = 3;
 
+/**
+ * Attente avant le passage suivant du dessin après découpe, selon le passage
+ * qui vient d'échouer (le premier passage est la découpe) : 1 min après le 2e,
+ * 3 après le 3e, 6 après le 4e, 10 après le 5e ; le 6e est le dernier.
+ */
+const ATTENTES_DESSIN_MIN = [1, 1, 3, 6, 10];
+
+/** Délai après lequel `ai_jobs_sweep` remet en file un passage resté en route. */
+const SWEEP_MIN = 4;
+
 async function runOnce() {
   if (!IA_ACTIVE) {
     console.log('AI_ENABLED=false : aucune tâche prise, les photos attendent en file');
@@ -560,6 +570,19 @@ async function runOnce() {
     // fait plus échouer la pièce. La tâche repart en file, sans message
     // d'erreur ; le ménage de chaque minute (`ai_jobs_sweep`) la réveille une
     // à deux minutes plus tard. Trois passages au plus, puis l'échec.
+    // 21/11 : le dessin d'une pièce déjà rangée attend avant de repartir (1, 3,
+    // 6 puis 10 minutes) : l'intermédiaire saturé répondait 429 aux trois
+    // passages immédiats, et la découpe restait. La personne voit déjà sa pièce.
+    // Sans changer la base : la tâche reste « generating » (l'app dit que Kodi
+    // dessine) et le ménage de chaque minute (`ai_jobs_sweep`) la remet en file
+    // quatre minutes après `claimed_at`, qu'on place donc à l'heure voulue.
+    if (job.dessin_auto && job.garment_id && passager(err) && job.runs < MAX_RUNS) {
+      const attente = ATTENTES_DESSIN_MIN[Math.min(job.runs, ATTENTES_DESSIN_MIN.length) - 1] ?? 10;
+      log(`dessin en panne passagère, nouvel essai dans ${attente} min (passage ${job.runs}/${MAX_RUNS}) : ${detail}`);
+      const reprise = Date.now() + (attente - SWEEP_MIN) * 60_000;
+      await db.from('ai_jobs').update({ status: 'generating', error: null, claimed_at: new Date(reprise).toISOString() }).eq('id', job.id);
+      return;
+    }
     if (passager(err) && job.runs < REPRISES_PASSAGERES) {
       log(`panne passagère, remise en file (passage ${job.runs}/${REPRISES_PASSAGERES}) : ${detail}`);
       await db.from('ai_jobs').update({ status: 'queued', error: null }).eq('id', job.id);
