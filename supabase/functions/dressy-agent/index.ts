@@ -559,7 +559,18 @@ async function runOnce() {
         await cutOut(job, target, sources, log);
       }
     } else {
-      await cutOut(job, target, sources, log);
+      try {
+        await cutOut(job, target, sources, log);
+      } catch (err) {
+        // 21/11 : une pièce fine ou petite (ceinture, bijou) sans masque exploitable
+        // échouait et disparaissait du dressing. Elle est dessinée d'après la photo
+        // (offert, comme le dessin d'arrivée), au lieu d'être perdue.
+        const sansMasque = err instanceof AgentError && /^aucun détourage exploitable/.test(err.detail ?? '');
+        if (!arrivee || !sansMasque || !cleFal()) throw err;
+        log(`${(err as AgentError).detail} : dessin d'après la photo`);
+        await redraw(job, targetOf(job), sources, log, { offert: true, limite });
+        return;
+      }
       if (arrivee && DESSIN_APRES_DECOUPE) {
         // La pièce est rangée (la personne la voit déjà) ; le dessin suit dans un autre passage.
         await setJob(job, { status: 'queued', dessin_auto: true });
