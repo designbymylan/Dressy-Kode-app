@@ -23,6 +23,7 @@ import { isActive, type JobRow } from './jobs';
 import { RELIRE_APRES, jourIso, maintenant, semaine, type Contexte } from './contexte';
 import { cleTenue, evite, garder, type Ecart, type Raison } from './ecarts';
 import type { NoteDessin } from './notes';
+import type { RowId } from '../ui/outfit';
 
 export type { PlanId, Period, Planned, Session, NotifChoice };
 export type { Silhouette, MeasureId, Profile } from './profile';
@@ -103,6 +104,14 @@ export function normalizeModules(list: { id: string; on: boolean }[] | undefined
   return shownFirst([...kept, ...DEFAULT_MODULES.filter((m) => !have.has(m.id)).map((m) => ({ ...m, on: false }))]);
 }
 
+/**
+ * Les rangées de la tenue du jour (22/11) : celles qu'on a fixées et celles qu'on
+ * a retirées. Gardées d'un lancement à l'autre ; une rangée fixée garde la pièce
+ * choisie même quand on demande une autre tenue ou qu'on actualise.
+ */
+export type Rangees = { verrous: Partial<Record<RowId, string>>; masquees: RowId[] };
+const RANGEES_VIDES: Rangees = { verrous: {}, masquees: [] };
+
 type State = {
   /** Le temps, au lancement, de relire la session et l'état gardé. */
   booting: boolean;
@@ -119,6 +128,7 @@ type State = {
   profile: Profile;
   pieces: Piece[];
   outfitIndex: number;
+  rangees: Rangees;
   wornToday: string[] | null;
   /** Les tenues prévues, par date (AAAA-MM-JJ), sur le mois passé et les mois à venir. */
   planned: Record<Iso, Planned>;
@@ -183,6 +193,7 @@ const initial: State = {
   profile: EMPTY_PROFILE,
   pieces: [],
   outfitIndex: 0,
+  rangees: RANGEES_VIDES,
   wornToday: null,
   planned: {},
   events: [],
@@ -273,6 +284,9 @@ type Action =
   | { t: 'wear'; ids: string[]; toast: string }
   | { t: 'undo' }
   | { t: 'nextOutfit' }
+  | { t: 'rangees'; rangees: Rangees }
+  | { t: 'verrou'; row: RowId; id: string | null }
+  | { t: 'masquer'; row: RowId; masquee: boolean }
   | { t: 'addPiece'; piece: Piece }
   | { t: 'swapId'; from: string; to: string }
   | { t: 'removePiece'; id: string }
@@ -452,6 +466,21 @@ function reducer(s: State, a: Action): State {
     }
     case 'nextOutfit':
       return { ...s, outfitIndex: (s.outfitIndex + 1) % Math.max(1, tenuesDuJour(s, meteoDe(s).jours[0]).length), wornToday: null };
+    case 'rangees':
+      return { ...s, rangees: { verrous: a.rangees.verrous ?? {}, masquees: a.rangees.masquees ?? [] } };
+    case 'verrou': {
+      const verrous = { ...s.rangees.verrous };
+      if (a.id) verrous[a.row] = a.id;
+      else delete verrous[a.row];
+      return { ...s, rangees: { ...s.rangees, verrous } };
+    }
+    case 'masquer': {
+      // Une rangée retirée n'est plus fixée : rien à garder là où il n'y a plus rien.
+      const verrous = { ...s.rangees.verrous };
+      if (a.masquee) delete verrous[a.row];
+      const rest = s.rangees.masquees.filter((r) => r !== a.row);
+      return { ...s, rangees: { verrous, masquees: a.masquee ? [...rest, a.row] : rest } };
+    }
     case 'ecart':
       // La tenue écartée sort de la liste : le même rang montre déjà la suivante.
       return { ...s, ecarts: garder([a.ecart, ...s.ecarts]), wornToday: null };
@@ -588,7 +617,7 @@ function refreshDemo(pieces: Piece[]): Piece[] {
   return [...updated, ...PIECES.filter((p) => p.image && !known.has(p.id))];
 }
 
-const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'notes', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'creator', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
+const KEPT = ['onboarded', 'account', 'session', 'pendingEmail', 'profile', 'pieces', 'pendingPhotos', 'planned', 'events', 'trips', 'notifs', 'ecarts', 'coeurs', 'notes', 'rangees', 'journal', 'messages', 'kodeUsed', 'plan', 'period', 'extraPlaces', 'gen', 'creator', 'packs', 'modules', 'density', 'shares', 'contexte', 'contexteLu'] as const;
 
 async function readSaved(): Promise<Partial<State> | null> {
   try {
@@ -850,6 +879,10 @@ function useActions(dispatch: (a: Action) => void, getState: () => State) {
         sync(u.kind === 'wear' ? remote.unwear(u.ids) : remote.setPieceStatus(u.id, 'active'));
       },
       nextOutfit: () => dispatch({ t: 'nextOutfit' }),
+      /** Fixe une rangée de la tenue du jour sur cette pièce (`null` : la libère). */
+      verrouiller: (row: RowId, id: string | null) => dispatch({ t: 'verrou', row, id }),
+      /** Retire une rangée de la tenue du jour (pas de veste, pas d'accessoires), ou la remet. */
+      masquerRangee: (row: RowId, masquee: boolean) => dispatch({ t: 'masquer', row, masquee }),
       /**
        * « Pas pour moi » : la tenue montrée est écartée, avec sa raison. Elle
        * ne revient plus ; la raison part chez Kodi avec le compte. Rend vrai
@@ -1223,6 +1256,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             dispatch({ t: 'account', acc });
             // Le dernier paquet du même espace s'affiche tout de suite, le neuf arrive ensuite.
             if (saved?.contexte && saved.session?.spaceId === acc.session.spaceId) dispatch({ t: 'contexte', contexte: saved.contexte, at: saved.contexteLu ?? 0 });
+            // Les rangées fixées ou retirées (22/11) restent sur ce téléphone, pour le même espace seulement.
+            if (saved?.rangees && saved.session?.spaceId === acc.session.spaceId) dispatch({ t: 'rangees', rangees: saved.rangees });
             return;
           }
           // Plus de session : ce qui avait été relu d'un compte n'a plus à rester ici.

@@ -16,7 +16,7 @@ import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { Button, IconButton } from '../ui/Button';
 import { ScrollEdge, TabHeader, useTabScroll, useTabTop } from '../ui/layout';
-import { DressRows, FlatLay, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
+import { DressRows, FlatLay, ROW_NAME, ROW_ORDER, assembleDelay, headToToe, rowOf, type RowId } from '../ui/outfit';
 import { Card, Tag, WeatherIcon } from '../ui/bits';
 import { NotForMeSheet } from '../ui/ecart';
 import { bilanDe, jourDeBilan, motDuPort, serie } from '../state/bilan';
@@ -176,30 +176,41 @@ function TodayCard({ W }: { W: number }) {
   const inner = W - 28;
   // La tenue telle qu'on l'a ajustée : une pièce prise à une voisine remplace celle de sa rangée.
   const [swapped, setSwapped] = useState<Partial<Record<RowId, string>>>({});
-  const [pinned, setPinned] = useState<Set<RowId>>(new Set());
   const [nope, setNope] = useState(false);
   // L'indice du geste (10/11) : montré tant qu'aucune pièce n'a été changée, plus jamais ensuite.
   const [hint, hintDone] = useOnce('rangees');
+  // Les rangées fixées et retirées (22/11) sont gardées avec le compte : elles survivent à « Une autre » et à l'actualisation.
+  const { verrous, masquees } = s.rangees;
   const base = worn ? (s.wornToday!.map((id) => byId.get(id)).filter(Boolean) as Piece[]) : pieces;
+  // Une tenue déjà portée se lit telle qu'elle a été portée ; sinon, une rangée fixée l'emporte sur celles qu'on a glissées.
+  const overrides: Partial<Record<RowId, string>> = worn ? {} : { ...swapped, ...verrous };
   const shown = (() => {
     const out = base.map((p) => {
-      const id = swapped[rowOf(p)];
+      const id = overrides[rowOf(p)];
       return id && byId.get(id) ? byId.get(id)! : p;
     });
     // Une pièce gardée d'une tenue à l'autre s'ajoute si la nouvelle n'a pas cette rangée.
-    for (const [r, id] of Object.entries(swapped)) if (id && !out.some((p) => rowOf(p) === r) && byId.get(id)) out.push(byId.get(id)!);
-    return headToToe(out.filter((p, i, all) => all.findIndex((x) => x.id === p.id) === i));
+    for (const [r, id] of Object.entries(overrides)) if (id && !out.some((p) => rowOf(p) === r) && byId.get(id)) out.push(byId.get(id)!);
+    const kept = worn ? out : out.filter((p) => !masquees.includes(rowOf(p)));
+    return headToToe(kept.filter((p, i, all) => all.findIndex((x) => x.id === p.id) === i));
   })();
-  // Une rangée a-t-elle une voisine à proposer ? Sans cela, l'indice mentirait.
-  const canSwap = s.pieces.some((p) => !shown.some((q) => q.id === p.id) && shown.some((q) => rowOf(q) === rowOf(p)));
-  const another = () => {
-    // Les rangées verrouillées passent à la tenue suivante ; le reste change.
-    const keep: Partial<Record<RowId, string>> = {};
-    for (const r of pinned) {
-      const p = shown.find((x) => rowOf(x) === r);
-      if (p) keep[r] = p.id;
+  // Une rangée est « fixée » quand sa pièce est bien là : une pièce retirée du dressing libère son cadenas.
+  const pinned = new Set<RowId>((Object.keys(verrous) as RowId[]).filter((r) => shown.some((p) => rowOf(p) === r && p.id === verrous[r])));
+  // Les rangées qu'on peut ajouter : celles que la tenue n'affiche pas et où le dressing a une pièce à proposer.
+  const addable = worn ? [] : ROW_ORDER.filter((r) => !shown.some((p) => rowOf(p) === r) && s.pieces.some((p) => rowOf(p) === r));
+  /** Ajoute une rangée : la pièce de la tenue si elle en avait une, sinon celle qui dort le plus longtemps. */
+  const addRow = (r: RowId) => {
+    a.masquerRangee(r, false);
+    if (!base.some((p) => rowOf(p) === r) && !overrides[r]) {
+      const first = s.pieces.filter((p) => rowOf(p) === r).sort((x, z) => (z.lastWorn ?? 999) - (x.lastWorn ?? 999))[0];
+      if (first) setSwapped((prev) => ({ ...prev, [r]: first.id }));
     }
-    setSwapped(keep);
+  };
+  // Une rangée a-t-elle une voisine à proposer ? Sans cela, l'indice mentirait.
+  const canSwap = s.pieces.some((p) => !shown.some((q) => q.id === p.id) && shown.some((q) => rowOf(q) === rowOf(p) && !pinned.has(rowOf(q))));
+  const another = () => {
+    // Les rangées fixées passent à la tenue suivante (elles sont dans le compte) ; le reste change.
+    setSwapped({});
     a.nextOutfit();
   };
 
@@ -227,13 +238,31 @@ function TodayCard({ W }: { W: number }) {
           pool={worn ? [] : s.pieces}
           width={inner}
           pinned={pinned}
-          onTogglePin={(r) => setPinned((prev) => { const n = new Set(prev); if (n.has(r)) n.delete(r); else n.add(r); return n; })}
+          editable={!worn}
+          onTogglePin={(r) => {
+            const here = shown.find((p) => rowOf(p) === r);
+            a.verrouiller(r, pinned.has(r) || !here ? null : here.id);
+          }}
+          onHide={(r) => {
+            a.masquerRangee(r, true);
+            setSwapped((prev) => { const { [r]: _, ...rest } = prev; return rest; });
+          }}
           onSwap={(r, to) => {
             setSwapped((prev) => ({ ...prev, [r]: to.id }));
             if (hint) hintDone();
           }}
           onPiece={(p) => nav.navigate('Piece', { id: p.id })}
         />
+        {addable.length > 0 && (
+          <View testID="rows-add" className="flex-row flex-wrap justify-center" style={{ gap: 6, paddingTop: 10, paddingHorizontal: 10 }}>
+            {addable.map((r) => (
+              <Tap key={r} testID={`row-${r}-add`} onPress={() => addRow(r)} feedback="select" hitSlop={6} accessibilityRole="button" accessibilityLabel={`Ajouter une rangée : ${ROW_NAME[r]}`} scaleTo={0.97} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: c.ink2 }}>
+                <Icon name="plus" size={12} color={c.ink2} strokeWidth={2.2} />
+                <T v="small">{ROW_NAME[r]}</T>
+              </Tap>
+            ))}
+          </View>
+        )}
         {hint && !worn && canSwap && (
           <Animated.View testID="rows-hint" entering={FadeIn.delay(900).duration(400)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 8 }}>
             <View style={{ transform: [{ scaleX: -1 }] }}>
@@ -273,9 +302,10 @@ function TodayCard({ W }: { W: number }) {
         onConfirm={(raison, cibles) => {
           setNope(false);
           a.ecarter(shown.map((p) => p.id), raison, cibles, outfit.pieces);
-          // La suivante arrive telle que Kodi l'a pensée : les pièces changées ou gardées repartent.
+          // La suivante arrive telle que Kodi l'a pensée : les pièces changées repartent. Une rangée fixée reste,
+          // sauf si c'est la pièce qu'on vient de refuser.
           setSwapped({});
-          setPinned(new Set());
+          for (const r of pinned) if (cibles.includes(verrous[r] ?? '')) a.verrouiller(r, null);
         }}
       />
     </Card>

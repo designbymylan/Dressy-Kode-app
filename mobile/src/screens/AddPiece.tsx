@@ -19,7 +19,8 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/controls';
 import { StackHeader, useStackTop } from '../ui/layout';
 import { glassSurface } from '../ui/Glass';
-import { Card, Gauge, Skeleton } from '../ui/bits';
+import { Card, Gauge, Skeleton, Tag } from '../ui/bits';
+import { BottomFade } from '../ui/shop';
 import { Garment } from '../ui/Garment';
 import { Icon } from '../ui/Icon';
 import { useScreen } from '../ui/screen';
@@ -49,7 +50,10 @@ export function AddPiece() {
   const { width } = useScreen();
   const top = useStackTop(true);
   const [found, setFound] = useState<Found | null>(null);
-  const [phase, setPhase] = useState<'source' | 'analyse' | 'result' | 'suivi'>('source');
+  const [phase, setPhase] = useState<'source' | 'prepare' | 'analyse' | 'result' | 'suivi'>('source');
+  // Compte connecté : les photos choisies attendent ici, rien ne part avant « Générer » (22/11).
+  const [staged, setStaged] = useState<Picked[]>([]);
+  const sending = useRef(false);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Found | null>(null);
   const [photo, setPhoto] = useState<Picked | null>(null);
@@ -73,7 +77,6 @@ export function AddPiece() {
   const limit = pieceLimit(s);
   const full = limit !== null && s.pieces.length >= limit;
   const tile = (width - space.gutter * 2 - 20) / 3;
-  const burst = !demo && Platform.OS !== 'web';
 
   useEffect(() => {
     if (phase !== 'analyse') return;
@@ -108,11 +111,47 @@ export function AddPiece() {
     return r;
   };
 
-  /** Rien n'est parti : retour au choix de la photo, avec la raison. */
+  /** Rien n'est parti : retour à la préparation (les photos et les mots restent), avec la raison. */
   const giveUp = (message: string) => {
     setSent(null);
-    setPhase('source');
+    setPhase(staged.length ? 'prepare' : 'source');
     setError(message);
+  };
+
+  /** Les photos choisies rejoignent la préparation : dix au plus, rien ne part encore. */
+  const stage = (shots: Picked[]) => {
+    if (!shots.length) return;
+    setStaged((prev) => [...prev, ...shots].slice(0, 10));
+    setPhase('prepare');
+  };
+
+  /** Retire une photo de la préparation ; sans photo, retour au choix de la source. */
+  const unstage = (i: number) => {
+    const rest = staged.filter((_, k) => k !== i);
+    setStaged(rest);
+    if (!rest.length) setPhase('source');
+  };
+
+  /** « Générer » : seulement maintenant, Kodi reçoit les photos, ce qu'on lui demande et les précisions. */
+  const generate = async () => {
+    if (sending.current || !staged.length) return;
+    sending.current = true;
+    setError(null);
+    try {
+      const r = await confide(staged, true);
+      if (!r.ok) giveUp(r.message);
+    } finally {
+      sending.current = false;
+    }
+  };
+
+  const reset = () => {
+    setSent(null);
+    setStaged([]);
+    setHint('');
+    setDetails({ brand: '', size: '', fit: '', material: '' });
+    setError(null);
+    setPhase('source');
   };
 
   /**
@@ -130,29 +169,21 @@ export function AddPiece() {
         setSettings(true);
         return setError(CAMERA_BLOCKED);
       }
-      if (camera && native && live) {
-        // En rafale : chaque photo part chez Kodi pendant qu'on prend la suivante.
-        const sending: ReturnType<typeof confide>[] = [];
-        const shots = await shootBurst({ max: 10, quality: 0.8, onShot: (shot) => sending.push(confide([shot])) });
-        if (!shots.length) return;
-        const results = await Promise.all(sending);
-        const first = results[0];
-        if (!results.some((r) => r.ok) && first && !first.ok) giveUp(first.message);
-        return;
-      }
+      // Places restantes dans la préparation (compte connecté) : dix photos au plus.
+      const room = Math.max(1, 10 - staged.length);
       let picked: Picked[];
       if (camera && native) {
-        // Sans compte, la rafale attend sur le téléphone ; la démonstration simule une seule photo.
-        picked = await shootBurst({ max: demo ? 1 : Math.max(1, 10 - waiting), quality: 0.8 });
+        // Rafale : l'appareil se rouvre après chaque photo, jusqu'à « Annuler ». Sans compte, elle attend
+        // sur le téléphone ; la démonstration simule une seule photo.
+        picked = await shootBurst({ max: demo ? 1 : live ? room : Math.max(1, 10 - waiting), quality: 0.8 });
       } else {
-        const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : 10 });
+        const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsMultipleSelection: !demo, selectionLimit: demo ? 1 : live ? room : 10 });
         picked = r.canceled ? [] : r.assets.map((x) => ({ uri: x.uri, mime: x.mimeType, ratio: x.width && x.height ? x.width / x.height : 0.75 }));
       }
       if (!picked.length) return;
-      if (live) {
-        const r = await confide(picked.slice(0, 10), true);
-        if (!r.ok) giveUp(r.message);
-      } else if (demo) pick(gallery[0], picked[0]);
+      // Connecté : rien ne part tout de suite, la personne précise puis touche « Générer ».
+      if (live) stage(picked);
+      else if (demo) pick(gallery[0], picked[0]);
       else {
         a.queuePhotos(picked.map((p) => ({ uri: p.uri, mime: p.mime })));
         setAccount(true);
@@ -189,6 +220,24 @@ export function AddPiece() {
     nav.goBack();
   };
 
+  /** Ce qui a arrêté la photo (appareil bloqué, envoi raté) : le même bandeau avant et après le choix. */
+  const errorCard = error ? (
+    <Card className="bg-butter" style={{ gap: 10 }} testID="add-error">
+      <T v="body">{error}</T>
+      {settings && <Button testID="add-settings" label="Ouvrir les Réglages" size="s" variant="secondary" onPress={() => Linking.openSettings()} />}
+    </Card>
+  ) : null;
+  /** Une seule ligne, au moment où la photo va partir (RGPD : photo effacée sous 30 jours, éviter le visage). */
+  const privacy = (
+    <View className="flex-row items-center" style={{ gap: 8, paddingHorizontal: 4 }} testID="add-privacy">
+      <Icon name="lock" size={15} color={c.ink2} />
+      <T v="small" tone="ink2" style={{ flex: 1 }}>
+        Photo effacée sous 30 jours. Évite d’y montrer ton visage.
+      </T>
+    </View>
+  );
+  const preparing = phase === 'prepare' && staged.length > 0;
+
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-add">
       <Ambient />
@@ -207,9 +256,14 @@ export function AddPiece() {
           setTimeout(() => nav.goBack(), 320);
         }}
       />
-      <Animated.ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + 32, gap: 18 }}>
+      <Animated.ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{ paddingTop: top, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + (preparing ? 120 : 32), gap: 18 }}
+      >
         {phase === 'source' && (
-          <Animated.View entering={FadeIn.duration(200)} style={{ gap: 18 }}>
+          <Animated.View entering={FadeIn.duration(200)} style={{ gap: 24 }}>
             <View style={{ gap: 8 }}>
               <T v="title" accessibilityRole="header">
                 Une photo suffit.
@@ -221,14 +275,14 @@ export function AddPiece() {
 
             {/* Une débutante voit le chemin vers sa première tenue, pas un quota (09/10). */}
             {s.pieces.length < 3 ? (
-              <View style={{ gap: 6 }} testID="add-first">
+              <View style={{ gap: 8 }} testID="add-first">
                 <T v="kicker" tone="ink2">
-                  {`Ta première tenue : ${s.pieces.length}/3 pièces · une photo de tenue entière en compte plusieurs`}
+                  {`Première tenue · ${s.pieces.length}/3 pièces`}
                 </T>
                 <Gauge value={s.pieces.length} max={3} label="Pièces pour la première tenue" />
               </View>
             ) : limit !== null && (
-              <View style={{ gap: 6 }}>
+              <View style={{ gap: 8 }}>
                 <T v="kicker" tone={full ? 'caution' : 'ink2'}>
                   {`${s.pieces.length} / ${limit} places`}
                 </T>
@@ -253,25 +307,20 @@ export function AddPiece() {
               </Card>
             ) : (
               <>
-                <View className="flex-row" style={{ gap: 10 }}>
+                {/* Deux grandes cases, rien d'autre (22/11) : ce qu'on précise vient après la photo. */}
+                <View className="flex-row" style={{ gap: 12 }}>
                   {[
-                    // Sur iPhone, l'appareil se rouvre après chaque photo (rafale), sauf dans la démonstration.
-                    burst
-                      ? { icon: 'camera' as const, label: 'Photo', note: 'à la suite, 10 max', hint: 'Prendre des photos à la suite. Touche Annuler quand tu as fini.' }
-                      : { icon: 'camera' as const, label: 'Photo', note: 'cintre ou à plat', hint: 'Prendre une photo' },
-                    { icon: 'image' as const, label: 'Galerie', note: demo ? '1 photo à la fois' : '10 photos max', hint: 'Depuis la galerie' },
+                    { icon: 'camera' as const, label: 'Photo', hint: live && Platform.OS !== 'web' ? 'Prendre des photos à la suite. Touche Annuler quand tu as fini.' : 'Prendre une photo' },
+                    { icon: 'image' as const, label: 'Galerie', hint: 'Depuis la galerie' },
                   ].map((o) => {
-                    // La photo est l'action principale (noire) ; la galerie, en gris studio (05/10).
+                    // La photo est l'action principale (bleue) ; la galerie, en gris studio (05/10).
                     const main = o.icon === 'camera';
                     return (
-                      <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(main)} accessibilityLabel={o.hint} outerStyle={{ flex: 1 }} style={[{ borderRadius: 28, padding: 16, gap: 12, minHeight: 150, alignItems: 'center', justifyContent: 'center', backgroundColor: main ? c['primary-bg'] : c.stage }]}>
-                        <Icon name={o.icon} size={30} color={main ? c['primary-fg'] : c.ink} />
-                        <View style={{ gap: 2, alignItems: 'center' }}>
-                          <T v="bodyStrong" tone={main ? 'primary-fg' : 'ink'}>{o.label}</T>
-                          <T v="kicker" tone={main ? 'primary-fg' : 'ink2'}>
-                            {o.note}
-                          </T>
-                        </View>
+                      <Tap key={o.label} testID={`source-${o.icon}`} onPress={() => fromDevice(main)} accessibilityLabel={o.hint} outerStyle={{ flex: 1 }} style={[{ borderRadius: 28, padding: 16, gap: 14, minHeight: 168, alignItems: 'center', justifyContent: 'center', backgroundColor: main ? c['primary-bg'] : c.stage }]}>
+                        <Icon name={o.icon} size={32} color={main ? c['primary-fg'] : c.ink} />
+                        <T v="bodyStrong" tone={main ? 'primary-fg' : 'ink'}>
+                          {o.label}
+                        </T>
                       </Tap>
                     );
                   })}
@@ -282,100 +331,49 @@ export function AddPiece() {
                     Ou la saisir sans photo
                   </T>
                 )}
-                {!demo && (
-                  <View className="flex-row" style={{ gap: 8, paddingHorizontal: 4 }} testID="add-privacy">
-                    <Icon name="lock" size={15} color={c.ink2} />
-                    <T v="small" tone="ink2" style={{ flex: 1 }}>
-                      Ta photo sert seulement à découper tes pièces, puis elle est effacée sous 30 jours. Évite d’y montrer ton visage.
-                    </T>
-                  </View>
-                )}
-                {error && (
-                  <Card className="bg-butter" style={{ gap: 10 }} testID="add-error">
-                    <T v="body">{error}</T>
-                    {settings && <Button testID="add-settings" label="Ouvrir les Réglages" size="s" variant="secondary" onPress={() => Linking.openSettings()} />}
-                  </Card>
-                )}
-                {live ? (
-                  <View style={{ gap: 8 }}>
+                {errorCard}
+                {!live && !demo ? (
+                  // Sans compte : aucune pièce d'exemple, l'invitation à créer le compte.
+                  <>
+                    <Card className="bg-butter" style={{ gap: 10 }} testID="add-account">
+                      <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kodi découpe tes pièces avec ton compte.'}</T>
+                      <T v="body" tone="ink2">
+                        {remote.online
+                          ? 'Gratuit, en une minute : Kodi range chaque vêtement de tes photos.'
+                          : 'Dans cet aperçu, Kodi ne reçoit pas les photos.'}
+                      </T>
+                      {remote.online && <Button testID="add-create-account" label="Créer mon compte" size="m" onPress={() => setAccount(true)} />}
+                    </Card>
+                    {privacy}
+                  </>
+                ) : demo ? (
+                  <>
                     <T v="kicker" tone="ink2">
-                      Seulement certaines pièces ?
+                      Photos d’exemple
                     </T>
-                    <TextInput
-                      testID="add-hint"
-                      value={hint}
-                      onChangeText={setHint}
-                      maxLength={280}
-                      placeholder="Par exemple : seulement la veste et le jean"
-                      placeholderTextColor={c.ink2}
-                      accessibilityLabel="Les pièces que Kodi doit découper, si tu ne veux pas toute la photo"
-                      className="bg-sunk"
-                      style={{ minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
-                    />
-                    <T v="small" tone="ink2">
-                      Sinon, Kodi range tout ce qu’il voit.
-                    </T>
-                    <T v="kicker" tone="ink2" style={{ marginTop: 8 }}>
-                      Un seul vêtement ? Précise-le
-                    </T>
-                    <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                      {([
-                        ['brand', 'Marque', 60],
-                        ['size', 'Taille', 20],
-                        ['fit', 'Coupe', 40],
-                        ['material', 'Matière', 60],
-                      ] as const).map(([key, label, max]) => (
-                        <TextInput
-                          key={key}
-                          testID={`add-${key}`}
-                          value={details[key]}
-                          onChangeText={(v) => setDetails((d) => ({ ...d, [key]: v }))}
-                          maxLength={max}
-                          placeholder={label}
-                          placeholderTextColor={c.ink2}
-                          accessibilityLabel={`${label} du vêtement, facultatif`}
-                          className="bg-sunk"
-                          style={{ flexBasis: '47%', flexGrow: 1, minHeight: 50, borderRadius: 25, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 }}
-                        />
+                    <View className="flex-row flex-wrap" style={{ gap: 10 }}>
+                      {gallery.slice(0, 9).map((g, i) => (
+                        <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ alignItems: 'center', justifyContent: 'center', width: tile, height: tile * 1.2, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden' }}>
+                          <View style={{ transform: [{ rotate: `${((i % 3) - 1) * 4}deg` }], opacity: 0.92 }}>
+                            <Garment kind={g.kind} tint={g.tint} size={tile * 0.7} />
+                          </View>
+                        </Tap>
                       ))}
                     </View>
-                    <T v="small" tone="ink2">
-                      Pour une photo à plusieurs pièces, ou en rafale, modifie l’étiquette ensuite.
-                    </T>
-                  </View>
-                ) : !demo ? (
-                  // Sans compte : aucune pièce d'exemple, l'invitation à créer le compte.
-                  <Card className="bg-butter" style={{ gap: 10 }} testID="add-account">
-                    <T v="cardTitle">{waiting ? `${waiting} photo${waiting > 1 ? 's' : ''} attend${waiting > 1 ? 'ent' : ''} ton compte.` : 'Kodi découpe tes pièces avec ton compte.'}</T>
-                    <T v="body" tone="ink2">
-                      {remote.online
-                        ? 'Gratuit, en une minute : Kodi range chaque vêtement de tes photos.'
-                        : 'Dans cet aperçu, Kodi ne reçoit pas les photos.'}
-                    </T>
-                    {remote.online && <Button testID="add-create-account" label="Créer mon compte" size="m" onPress={() => setAccount(true)} />}
-                  </Card>
-                ) : (
-                <>
-                <T v="kicker" tone="ink2">
-                  Photos d’exemple
-                </T>
-                <View className="flex-row flex-wrap" style={{ gap: 10 }}>
-                  {gallery.slice(0, 9).map((g, i) => (
-                    <Tap key={g.name} testID={`photo-${i}`} onPress={() => pick(g)} accessibilityLabel={`Photo ${i + 1}`} style={{ alignItems: 'center', justifyContent: 'center', width: tile, height: tile * 1.2, borderRadius: 14, backgroundColor: g.backdrop, overflow: 'hidden' }}>
-                      <View style={{ transform: [{ rotate: `${((i % 3) - 1) * 4}deg` }], opacity: 0.92 }}>
-                        <Garment kind={g.kind} tint={g.tint} size={tile * 0.7} />
-                      </View>
-                    </Tap>
-                  ))}
-                </View>
-                </>
-                )}
-                <T v="small" tone="ink2">
-                  Tes photos servent seulement à découper la pièce. Elles ne sont ni publiées ni partagées.
-                </T>
+                  </>
+                ) : null}
               </>
             )}
           </Animated.View>
+        )}
+
+        {/* Connecté : la photo est posée ici, on dit quelles pièces et ce qu'on sait d'elle, puis « Générer » (22/11). */}
+        {phase === 'prepare' && staged.length > 0 && (
+          <>
+            <PrepareStep staged={staged} onRemove={unstage} onAdd={fromDevice} hint={hint} onHint={setHint} details={details} onDetails={setDetails} />
+            {errorCard}
+            {privacy}
+          </>
         )}
 
         {phase === 'analyse' && found && (
@@ -483,15 +481,136 @@ export function AddPiece() {
           <LiveTracking
             sent={sent}
             hint={hint}
-            onAgain={() => {
-              setSent(null);
-              setHint('');
-              setPhase('source');
-            }}
+            onAgain={reset}
           />
         )}
       </Animated.ScrollView>
+      {/* Le bouton reste en bas, la page passe dessous : « Générer » est le seul geste qui lance Kodi (22/11). */}
+      {preparing && (
+        <>
+          <BottomFade solid={insets.bottom + 76} />
+          <View style={{ position: 'absolute', left: space.gutter, right: space.gutter, bottom: insets.bottom + 14 }}>
+            <Button testID="add-generate" label={staged.length === 1 ? 'Générer' : `Générer ${staged.length} photos`} hint="Kodi découpe et range la pièce" onPress={generate} />
+          </View>
+        </>
+      )}
     </View>
+  );
+}
+
+/** Ce qu'on peut préciser pour un seul vêtement : marque, taille, coupe, matière. Aucune marque citée en exemple. */
+const DETAIL_FIELDS = [
+  ['brand', 'Marque', 60, 'Facultatif'],
+  ['size', 'Taille', 20, 'M, 38, 42'],
+  ['fit', 'Coupe', 40, 'Slim, droite…'],
+  ['material', 'Matière', 60, 'Coton, laine…'],
+] as const;
+
+type Details = { brand: string; size: string; fit: string; material: string };
+
+/**
+ * L'étape entre la photo et Kodi (22/11) : la ou les photos choisies, une zone
+ * pour dire quelles pièces générer (toutes, ou « seulement la veste et le
+ * jean »), et, pour une seule photo, les cases marque, taille, coupe, matière.
+ * Rien ne part avant « Générer » ; le texte et les cases partent avec la photo.
+ */
+function PrepareStep({ staged, onRemove, onAdd, hint, onHint, details, onDetails }: { staged: Picked[]; onRemove: (i: number) => void; onAdd: (camera: boolean) => void; hint: string; onHint: (v: string) => void; details: Details; onDetails: (d: Details) => void }) {
+  const { c } = useTheme();
+  const { width } = useScreen();
+  const W = width - space.gutter * 2;
+  const n = staged.length;
+  const one = n === 1;
+  const ph = one ? 250 : 150;
+  const input = { minHeight: 48, borderRadius: 24, paddingHorizontal: 18, color: c.ink, ...F.s400, fontSize: 16 } as const;
+  return (
+    <Animated.View entering={FadeIn.duration(200)} style={{ gap: 18 }} testID="add-prepare">
+      <T v="title" accessibilityRole="header">
+        {one ? 'Ta photo' : `${n} photos`}
+      </T>
+
+      <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ marginHorizontal: -space.gutter }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+        {staged.map((p, i) => {
+          const w = Math.round(Math.min(one ? W * 0.72 : 130, Math.max(96, ph * p.ratio)));
+          return (
+            <View key={p.uri} style={{ width: w, height: ph, borderRadius: 22, overflow: 'hidden', backgroundColor: c.stage }}>
+              <Image source={{ uri: p.uri }} style={{ width: w, height: ph }} resizeMode="cover" accessibilityLabel={`Photo ${i + 1}`} />
+              <View style={{ position: 'absolute', top: 8, right: 8 }}>
+                <Tap testID={`add-remove-${i}`} onPress={() => onRemove(i)} hitSlop={8} accessibilityLabel={`Retirer la photo ${i + 1}`} style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c['glass-strong'] }}>
+                  <Icon name="close" size={14} color={c.ink} strokeWidth={2.2} />
+                </Tap>
+              </View>
+            </View>
+          );
+        })}
+        {n < 10 && (
+          <View style={{ gap: 10 }}>
+            {[
+              { icon: 'camera' as const, label: 'Photo', camera: true, hint: 'Ajouter des photos avec l’appareil' },
+              { icon: 'image' as const, label: 'Galerie', camera: false, hint: 'Ajouter des photos depuis la galerie' },
+            ].map((o) => (
+              <Tap key={o.label} testID={`add-more-${o.icon}`} onPress={() => onAdd(o.camera)} accessibilityLabel={o.hint} style={{ width: 88, height: (ph - 10) / 2, borderRadius: 22, gap: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: c.stage }}>
+                <Icon name={o.icon} size={22} color={c.ink} />
+                <T v="small" tone="ink2">
+                  {o.label}
+                </T>
+              </Tap>
+            ))}
+          </View>
+        )}
+      </Animated.ScrollView>
+
+      <Card style={{ gap: 12, padding: 16 }}>
+        <Tag label="Pièces à générer" />
+        <TextInput
+          testID="add-hint"
+          value={hint}
+          onChangeText={onHint}
+          maxLength={280}
+          placeholder="Toutes, ou : la veste et le jean"
+          placeholderTextColor={c.ink2}
+          accessibilityLabel="Les pièces que Kodi doit générer. Laisse vide pour toutes celles de la photo."
+          className="bg-sunk"
+          style={input}
+        />
+        {n > 1 && (
+          <T v="small" tone="ink2">
+            Vaut pour chaque photo.
+          </T>
+        )}
+      </Card>
+
+      {/* Marque, taille, coupe, matière : pour un seul vêtement, elles vont sur sa fiche. */}
+      {one && (
+        <Card style={{ gap: 14, padding: 16 }} testID="add-details">
+          <View className="flex-row items-center justify-between">
+            <Tag label="Précisions" />
+            <T v="small" tone="ink2">
+              Facultatif
+            </T>
+          </View>
+          <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+            {DETAIL_FIELDS.map(([key, label, max, example]) => (
+              <View key={key} style={{ flexBasis: '47%', flexGrow: 1, gap: 6 }}>
+                <T v="small" tone="ink2" style={{ paddingLeft: 6 }}>
+                  {label}
+                </T>
+                <TextInput
+                  testID={`add-${key}`}
+                  value={details[key]}
+                  onChangeText={(v) => onDetails({ ...details, [key]: v })}
+                  maxLength={max}
+                  placeholder={example}
+                  placeholderTextColor={c.ink2}
+                  accessibilityLabel={`${label} du vêtement, facultatif`}
+                  className="bg-sunk"
+                  style={input}
+                />
+              </View>
+            ))}
+          </View>
+        </Card>
+      )}
+    </Animated.View>
   );
 }
 

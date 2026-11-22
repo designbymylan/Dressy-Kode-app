@@ -165,7 +165,7 @@ const ROW_H: Record<RowId, number> = { tete: 62, veste: 126, haut: 126, bas: 148
 const ROW_ART: Record<RowId, number> = { tete: 88, veste: 100, haut: 100, bas: 116, pieds: 116, main: 100 };
 /** Où se trouve le dessin dans son cadre (0 en haut, 1 en bas), pour le centrer dans sa rangée. */
 const DRAWN_AT: Partial<Record<GarmentKind, number>> = { baskets: 0.66, mocassins: 0.68, escarpins: 0.68, bottines: 0.55, sac: 0.64, foulard: 0.55, ceinture: 0.6 };
-const ROW_NAME: Record<RowId, string> = { tete: 'Visage et cou', veste: 'Veste', haut: 'Haut', bas: 'Bas', pieds: 'Chaussures', main: 'Sac et accessoires' };
+export const ROW_NAME: Record<RowId, string> = { tete: 'Visage et cou', veste: 'Veste', haut: 'Haut', bas: 'Bas', pieds: 'Chaussures', main: 'Sac et accessoires' };
 
 const plain = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 /** Ce qui se porte sur la tête, le visage ou le cou : en haut de la tenue. */
@@ -193,8 +193,13 @@ type DressProps = {
   /** Tout le dressing : les voisines de chaque rangée viennent de là. */
   pool: Piece[];
   width: number;
+  /** Les rangées fixées : elles ne se glissent plus et gardent leur pièce. */
   pinned: Set<RowId>;
+  /** Faux pour une tenue déjà portée : on la lit, on ne la retouche plus. */
+  editable?: boolean;
   onTogglePin: (r: RowId) => void;
+  /** Retire une rangée de la tenue (pas de veste, pas d'accessoires). */
+  onHide: (r: RowId) => void;
   onSwap: (r: RowId, to: Piece) => void;
   onPiece: (p: Piece) => void;
 };
@@ -203,9 +208,10 @@ type DressProps = {
  * La tenue du jour en rangées (06/10, sur le modèle « Dress me » des apps de
  * garde-robe) : une rangée par niveau, de la tête aux pieds, la pièce au
  * centre et ses voisines coupées par le bord. Toucher une voisine la prend ;
- * le cadenas garde la pièce quand Kodi propose une autre tenue.
+ * le cadenas fixe la rangée (22/11) : elle ne se glisse plus et garde sa
+ * pièce quand Kodi propose une autre tenue ; la croix la retire de la tenue.
  */
-export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, onPiece }: DressProps) {
+export function DressRows({ pieces, pool, width, pinned, editable = true, onTogglePin, onHide, onSwap, onPiece }: DressProps) {
   const rows = ROW_ORDER.map((r) => ({ r, items: pieces.filter((p) => rowOf(p) === r) })).filter((x) => x.items.length);
   const inOutfit = new Set(pieces.map((p) => p.id));
   return (
@@ -219,7 +225,10 @@ export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, on
           alts={pool.filter((p) => rowOf(p) === r && !inOutfit.has(p.id)).sort(rest)}
           width={width}
           keep={pinned.has(r)}
+          editable={editable}
+          canHide={rows.length > 2}
           onTogglePin={onTogglePin}
+          onHide={onHide}
           onSwap={onSwap}
           onPiece={onPiece}
         />
@@ -228,7 +237,7 @@ export function DressRows({ pieces, pool, width, pinned, onTogglePin, onSwap, on
   );
 }
 
-type RowProps = Pick<DressProps, 'width' | 'onTogglePin' | 'onSwap' | 'onPiece'> & { r: RowId; i: number; items: Piece[]; alts: Piece[]; keep: boolean };
+type RowProps = Pick<DressProps, 'width' | 'onTogglePin' | 'onHide' | 'onSwap' | 'onPiece'> & { r: RowId; i: number; items: Piece[]; alts: Piece[]; keep: boolean; editable: boolean; canHide: boolean };
 
 /** Ce qu'il faut glisser pour changer de pièce, et jusqu'où la rangée suit le doigt. */
 const SWIPE = 36;
@@ -240,7 +249,7 @@ const FOLLOW = 44;
  * arrive du côté d'où elle vient. Le lecteur d'écran garde les voisines
  * comme boutons.
  */
-function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece }: RowProps) {
+function DressRow({ r, i, items, alts, width, keep, editable, canHide, onTogglePin, onHide, onSwap, onPiece }: RowProps) {
   const { c, scheme } = useTheme();
   const reduced = useReducedMotion();
   const h = ROW_H[r];
@@ -253,7 +262,8 @@ function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece
   const swipedAt = useRef(0);
   const take = (edge: 'left' | 'right') => {
     const p = edge === 'left' ? alts[0] : alts[1] ?? alts[0];
-    if (!p) return;
+    // Une rangée fixée ne change plus, ni au toucher ni au glissé.
+    if (!p || keep) return;
     setFrom(edge);
     onSwap(r, p);
   };
@@ -267,7 +277,7 @@ function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece
   };
 
   const x = useSharedValue(0);
-  const can = alts.length > 0;
+  const can = alts.length > 0 && !keep;
   // Le geste ne prend la main que sur un mouvement franchement horizontal : la page défile comme avant.
   const swipe = Gesture.Pan()
     .enabled(can)
@@ -320,8 +330,9 @@ function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece
   return (
     <GestureDetector gesture={swipe} touchAction="pan-y">
       <Animated.View entering={FadeInDown.delay(80 + i * 90).duration(380)} style={{ height: h, width, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={ROW_NAME[r]}>
-        {neighbour(alts[0], 'left')}
-        {neighbour(alts[1], 'right')}
+        {/* Fixée, la rangée n'offre plus de voisines : on voit tout de suite qu'elle ne bougera pas. */}
+        {!keep && neighbour(alts[0], 'left')}
+        {!keep && neighbour(alts[1], 'right')}
         <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8 }, follow]}>
           {items.map((p) => (
             <Animated.View key={p.id} entering={enter}>
@@ -331,22 +342,41 @@ function DressRow({ r, i, items, alts, width, keep, onTogglePin, onSwap, onPiece
             </Animated.View>
           ))}
         </Animated.View>
-        {can && (
-          <View style={{ position: 'absolute', top: 0, left: width / 2 + groupW / 2 - 6 }}>
-            <Tap
-              testID={`row-${r}-pin`}
-              onPress={() => onTogglePin(r)}
-              feedback="select"
-              accessibilityRole="switch"
-              accessibilityState={{ checked: keep }}
-              accessibilityLabel={keep ? `${ROW_NAME[r]} : ne plus garder` : `${ROW_NAME[r]} : garder pour la prochaine tenue`}
-              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Animated.View style={[{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }, lock]}>
-                <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
-              </Animated.View>
-            </Tap>
-          </View>
+        {editable && (
+          <>
+            {/* À droite de la pièce, le cadenas fixe la rangée ; à gauche, la croix la retire de la tenue. */}
+            <View style={{ position: 'absolute', top: 0, left: width / 2 + groupW / 2 - 6 }}>
+              <Tap
+                testID={`row-${r}-pin`}
+                onPress={() => onTogglePin(r)}
+                feedback="select"
+                accessibilityRole="switch"
+                accessibilityState={{ checked: keep }}
+                accessibilityLabel={keep ? `${ROW_NAME[r]} : fixée, toucher pour la libérer` : `${ROW_NAME[r]} : fixer cette pièce`}
+                style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Animated.View style={[{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: keep ? c['primary-bg'] : c['glass-strong'] }, lock]}>
+                  <Icon name="lock" size={13} color={keep ? c['primary-fg'] : c.ink} strokeWidth={2} />
+                </Animated.View>
+              </Tap>
+            </View>
+            {canHide && (
+              <View style={{ position: 'absolute', top: 0, left: width / 2 - groupW / 2 - 38 }}>
+                <Tap
+                  testID={`row-${r}-hide`}
+                  onPress={() => onHide(r)}
+                  feedback="select"
+                  accessibilityRole="button"
+                  accessibilityLabel={`${ROW_NAME[r]} : retirer de la tenue`}
+                  style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: c['glass-strong'] }}>
+                    <Icon name="close" size={12} color={c.ink} strokeWidth={2.2} />
+                  </View>
+                </Tap>
+              </View>
+            )}
+          </>
         )}
       </Animated.View>
     </GestureDetector>

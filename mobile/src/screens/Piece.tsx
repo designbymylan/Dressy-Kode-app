@@ -1,19 +1,20 @@
-import { useRef, useState } from 'react';
-import { View, type ViewInstance } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { TextInput, View, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CATEGORIES, MONTHS_SHORT, addedLabel, costPerWear, dayDate, forms, isNew, sinceLabel, wornLabel, type Piece as PieceT } from '../data/wardrobe';
 import { useStore } from '../state/store';
 import { useTheme } from '../theme/ThemeProvider';
-import { Glass } from '../ui/Glass';
 import { motion, space } from '../theme/tokens';
 import { T } from '../ui/T';
 import { Tap } from '../ui/Tap';
 import { IconButton } from '../ui/Button';
 import { Button } from '../ui/Button';
 import { StackHeader, useHeaderScroll, useStackTop } from '../ui/layout';
-import { Bars, Card, DotChip, EmptyState, Row, Tag } from '../ui/bits';
+import { Bars, Card, EmptyState, Row, Tag } from '../ui/bits';
+import { Icon } from '../ui/Icon';
+import { F } from '../theme/fonts';
 import { Garment, hangOf } from '../ui/Garment';
 import { HeartButton } from '../ui/Heart';
 import { Sheet } from '../ui/Sheet';
@@ -106,6 +107,61 @@ function useGrowFrom(from?: { x: number; y: number; w: number; h: number }) {
   return { ref, onLayout, style };
 }
 
+/**
+ * Un texte de la fiche qu'on corrige sur place (22/11) : le nom, la marque. Un
+ * toucher l'ouvre, « OK » ou la sortie du champ l'enregistre. Vide, la marque
+ * propose de l'ajouter ; le nom, lui, ne se vide pas.
+ */
+function InlineEdit({ value, empty, kind, max, required, onSave, testID }: { value: string; empty: string; kind: 'name' | 'brand'; max: number; required?: boolean; onSave: (v: string) => void; testID?: string }) {
+  const { c } = useTheme();
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(value);
+  useEffect(() => {
+    if (!editing) setText(value);
+  }, [value, editing]);
+  const commit = () => {
+    setEditing(false);
+    const v = text.trim();
+    if (v === value || (required && !v)) return setText(value);
+    onSave(v);
+  };
+  const name = kind === 'name';
+  if (editing)
+    return (
+      <TextInput
+        testID={`${testID}-input`}
+        value={text}
+        onChangeText={setText}
+        onBlur={commit}
+        onSubmitEditing={commit}
+        autoFocus
+        selectTextOnFocus
+        maxLength={max}
+        returnKeyType="done"
+        autoCapitalize={name ? 'sentences' : 'words'}
+        placeholder={name ? 'Nom de la pièce' : 'Marque'}
+        placeholderTextColor={c.ink2}
+        accessibilityLabel={name ? 'Nom de la pièce' : 'Marque de la pièce'}
+        style={{ color: c.ink, paddingVertical: 4, borderBottomWidth: 1.5, borderColor: c.ink, ...(name ? { ...F.display, fontSize: 26 } : { ...F.s500, fontSize: 14 }) }}
+      />
+    );
+  const filled = value.length > 0;
+  return (
+    <Tap testID={testID} onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel={filled ? `${name ? 'Nom' : 'Marque'} : ${value}. Modifier` : empty} hitSlop={6} scaleTo={0.99} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: name ? 36 : 22 }}>
+      {name ? (
+        <T v="title" accessibilityRole="header" style={{ flexShrink: 1 }}>
+          {value}
+        </T>
+      ) : (
+        <T v="label" tone={filled ? 'ink' : 'ink2'} numberOfLines={1} style={{ flexShrink: 1 }}>
+          {filled ? value : empty}
+        </T>
+      )}
+      <Icon name={filled || name ? 'edit' : 'plus'} size={name ? 16 : 13} color={c.ink2} strokeWidth={2} />
+    </Tap>
+  );
+}
+
 export function PieceScreen() {
   const { s, a } = useStore();
   const nav = useNavigation<Nav>();
@@ -156,6 +212,17 @@ export function PieceScreen() {
   const tag = wornToday ? `Porté${f.e} aujourd’hui` : piece.wears === 0 ? (isNew(piece) ? 'Nouveau' : `Jamais porté${f.e}`) : cat.short;
   const usage = [`${piece.wears} port${piece.wears > 1 ? 's' : ''}`, cpw ? `${cpw} par port` : null].filter(Boolean).join(' · ');
   const priceTxt = piece.price != null ? `${piece.price.toFixed(2).replace('.', ',').replace(',00', '')} €` : null;
+  // Ce que la fiche dit de la pièce : une case par caractéristique, « Ajouter » quand elle manque.
+  const specs: { label: string; value: string | null; swatch?: string }[] = [
+    { label: 'Catégorie', value: cat.short },
+    { label: 'Couleur', value: piece.color || null, swatch: piece.swatch },
+    { label: 'Matière', value: piece.material ? cap(piece.material) : null },
+    { label: 'Taille', value: piece.size ?? null },
+    { label: 'Coupe', value: piece.fit ? cap(piece.fit) : null },
+    { label: 'Saison', value: cap(piece.season) },
+    { label: 'Prix d’achat', value: priceTxt },
+    { label: 'Au dressing', value: cap(addedLabel(piece.addedDaysAgo)) },
+  ];
 
   return (
     <View className="bg-paper" style={{ flex: 1 }} testID="screen-piece">
@@ -170,44 +237,58 @@ export function PieceScreen() {
           </Animated.View>
         </View>
 
-        <Glass radius={22} shadow={false}>
-          <View className="flex-row items-end" style={{ padding: 16, gap: 12 }}>
-            <View style={{ flex: 1, gap: 8 }}>
-              <Tag label={tag} tone="glass" />
-              <T v="title" accessibilityRole="header">
-                {piece.name}
-              </T>
-              <T v="kicker" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'}>
-                {usage}
-              </T>
-            </View>
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              <HeartButton testID="piece-coeur" liked={liked} onToggle={() => a.coeur(piece.id)} name={piece.name} size={48} />
-              <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={48} onPress={() => nav.navigate('Compose', { with: piece.id })} />
-            </View>
-          </View>
-        </Glass>
-
-        <View style={{ gap: 10 }}>
+        {/* La carte d'identité de la pièce (22/11) : état et gestes, marque, nom qu'on corrige d'un toucher, puis ses caractéristiques rangées en grille. */}
+        <Card style={{ padding: 18, gap: 14 }} testID="piece-id">
           <View className="flex-row items-center justify-between">
-            <T v="bodyStrong" style={{ fontSize: 15 }} accessibilityRole="header">
-              L’étiquette
-            </T>
-            <T testID="label-edit" v="label" tone="ink2" onPress={() => setEditing(true)} accessibilityRole="button" accessibilityLabel="Modifier l’étiquette" suppressHighlighting style={{ paddingVertical: 12, paddingLeft: 16 }}>
-              Modifier
+            <Tag label={tag} tone="glass" />
+            <View className="flex-row items-center" style={{ gap: 8 }}>
+              <HeartButton testID="piece-coeur" liked={liked} onToggle={() => a.coeur(piece.id)} name={piece.name} size={44} />
+              <IconButton testID="piece-compose" icon="chevron" label="Composer une tenue avec cette pièce" variant="solid" size={44} onPress={() => nav.navigate('Compose', { with: piece.id })} />
+            </View>
+          </View>
+
+          <View style={{ gap: 4 }}>
+            <InlineEdit testID="piece-brand" kind="brand" value={piece.brand ?? ''} empty="Ajouter la marque" max={60} onSave={(v) => a.updatePiece({ ...piece, brand: v || undefined })} />
+            <InlineEdit testID="piece-name" kind="name" value={piece.name} empty="Nommer la pièce" max={60} required onSave={(v) => a.updatePiece({ ...piece, name: v })} />
+            <T v="kicker" tone={piece.wears === 0 && !isNew(piece) ? 'caution' : 'ink2'} style={{ marginTop: 2 }}>
+              {usage}
             </T>
           </View>
-          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-            <DotChip label={piece.color} swatch={piece.swatch} />
-            {piece.material ? <DotChip label={cap(piece.material)} /> : null}
-            {piece.brand ? <DotChip label={piece.brand} /> : null}
-            {piece.size ? <DotChip label={`Taille ${piece.size}`} /> : null}
-            {piece.fit ? <DotChip label={cap(piece.fit)} /> : null}
-            <DotChip label={cap(piece.season)} />
-            {priceTxt && <DotChip label={priceTxt} />}
-            <DotChip label={cap(addedLabel(piece.addedDaysAgo))} />
+
+          <View className="flex-row flex-wrap" testID="piece-specs">
+            {specs.map((x) => (
+              <Tap
+                key={x.label}
+                testID={`spec-${x.label}`}
+                onPress={() => setEditing(true)}
+                accessibilityRole="button"
+                accessibilityLabel={x.value ? `${x.label} : ${x.value}. Modifier l’étiquette` : `${x.label} : à renseigner`}
+                outerStyle={{ width: '50%' }}
+                scaleTo={0.98}
+                style={{ gap: 5, paddingVertical: 12, paddingRight: 12, borderTopWidth: 1, borderColor: c.rule }}
+              >
+                <T v="label" tone="ink2">
+                  {x.label}
+                </T>
+                {x.value ? (
+                  <View className="flex-row items-center" style={{ gap: 7 }}>
+                    {x.swatch ? <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: x.swatch, borderWidth: 1, borderColor: c.rule }} /> : null}
+                    <T v="bodyStrong" numberOfLines={1} style={{ flexShrink: 1 }}>
+                      {x.value}
+                    </T>
+                  </View>
+                ) : (
+                  <View className="flex-row items-center" style={{ gap: 5 }}>
+                    <Icon name="plus" size={13} color={c.ink2} strokeWidth={2} />
+                    <T v="body" tone="ink2">
+                      Ajouter
+                    </T>
+                  </View>
+                )}
+              </Tap>
+            ))}
           </View>
-        </View>
+        </Card>
 
         <Button testID="piece-wear" label={wornToday ? `Porté${f.e} aujourd’hui` : `Je ${f.le} porte`} hint="Note un port aujourd’hui" disabled={wornToday} icon={wornToday ? 'check' : undefined} onPress={() => a.wear([piece.id], `C’est noté : ${piece.name.toLowerCase()} aujourd’hui`)} />
 
