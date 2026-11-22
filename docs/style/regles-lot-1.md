@@ -1,147 +1,193 @@
-# Règles de mode, lot 1 (brouillon, non vérifié)
+# Règles de mode, lot 1 : vérification
 
-Premier lot de règles pour Kodi, séparé en **femmes (F)**, **hommes (H)** et **communes (C)**.
+Les 43 règles du brouillon du lot 1 (C1 à C13, F1 à F13, H1 à H17), vérifiées une par une : confirmées, corrigées, requalifiées ou retirées. Seules les règles conservées figurent dans le tableau ; les autres sont dans la section des retraits. Le jeu étendu est dans regles-complet.md.
 
-## Statut : à lire avant d'utiliser
+Date de la passe : 2026-11-23.
 
-- **Aucune page n'a été ouverte.** Chaque règle s'appuie sur des extraits de résultats de recherche (titres, débuts de texte). Les pages restent à lire une par une.
-- **Le niveau est mon estimation**, pas une mesure. Il dit seulement ce que les extraits laissent voir.
-- **Le compte de sources est un compte d'extraits.** Il ne compte que les sites qui apparaissent dans les extraits pour cette règle. Il ne tient pas compte des recopies entre sites.
-- **Sites de vente** (marques qui vendent les vêtements dont elles parlent) et **listes à clics** : comptés, mais pèsent moins.
-- **Exclus** : les pages « product-insights » d'Alibaba. Leurs citations d'experts ne se vérifient pas. Aucun TikTok et aucun forum n'est utilisé.
+## Nombre de règles par niveau et par genre
 
-## Niveaux
-
-- **A, consensus** : au moins deux sources indépendantes qui disent la même chose, sans débat sérieux.
-- **B, convention avec exceptions** : vrai selon le contexte ou le goût, mais une tendance nette.
-- **C, avis ou contesté** : une source, ou des sources qui divergent. Kodi le dit comme une opinion, jamais comme une règle.
-- **« À sourcer »** : aucune source identifiée à ce stade.
-
-## Sources (index)
-
-| Code | Site (page) |
-|---|---|
-| S1 | womanandhome.com, colour combinations loved by stylists |
-| S2 | stitchfix.com/women/blog/?p=74809, Style Guide |
-| S3 | whowhatwear.com/uk, best wardrobe basics according to stylists |
-| S4 | stitchfix.com/women/blog/?p=10590, 12 Wardrobe Essentials |
-| S6 | blog.petitedressing.com, 7 color pairings stylists say always work |
-| S7 | stylecraze.com, how to match the colors of your clothes |
-| S8 | howtowearfashion.com, how to use the color wheel |
-| S9 | luxe.digital, color matching style guide |
-| S10 | bustle.com, how to pull off colors that don't go together |
-| S11 | bestlifeonline.com, 5 colors you should never wear together |
-| S13 | outfittrends.com/?p=19661, high waisted pants |
-| S14 | thenolishop.com, tops to pair with high-waisted jeans |
-| S15 | autumlove.squarespace.com, styling long torso and short legs |
-| S16 | outfittrends.com/?p=118579, how to look slim in skirts |
-| S17 | thredup.com, styling tips for petite women |
-| S18 | menswearhouse.com, complete guide to men's suit sizing and fit |
-| S19 | artofmanliness.com, good fitted suit visual |
-| S20 | suitsupply.com/en-ca, how it should fit |
-| S21 | josbank.com/blog/?p=72, suit fit |
-| S22 | menswearhouse.com/advice/buying-your-first-suit |
-| S23 | menswearhouse.com/blog/?p=9039, should your belt match your shoes |
-| S24 | aquila.com.au, matching belt and shoes |
-| S25 | blacklapel.com, matching belt and shoes |
-| S26 | mensfashion.thefuntimesguide.com, belt shoes |
-| S27 | florsheim.com, shoes belt match tips |
-| S28 | realmenrealstyle.com, matching shoes belt |
-| S29 | nimble-made.com, should your belt match your shoes |
-| S30 | gentlemansgazette.com, smart casual dress code for men |
-| S31 | manofmany.com, guide to men's smart casual dress code |
-| S32 | fashionbeans.com, dressy casual attire guide |
-| S33 | thefashionisto.com, smart casual for men |
-| S34 | charlestyrwhitt.com, how to dress business casual (vente) |
-| S35 | taylorstitch.com, smart casual style guide (vente) |
-| S36 | blacksocks.com, smart casual (vente) |
-| S37 | gentlemansgazette.com, menswear rules to break |
-| S38 | menswearhouse.com/blog/casual-wear |
-| S39 | theessentialman.com, business casual style guide for men |
-| S40 | bowtiedapollo.substack.com, men's fashion 102, dress codes |
-| S41 | gentlemansgazette.com, summer fabrics guide |
-| S42 | harryrosen.com, warm weather fabric guide (vente) |
-| S43 | studiobytcs.com, best fabrics to wear year-round |
-| S45 | aarp.org, how to mix prints and patterns |
-| S46 | stitchfix.com/women/blog/?p=6836, how to mix prints and patterns |
-| S47 | masterclass.com, smart casual dress code and attire guide |
-| S48 | marksandspencer.com, what is smart casual for women (vente) |
-| S49 | countryandtownhouse.com, dress code decoded: smart casual for women |
-| S50 | hugoboss.com, smart casual outfits for women (vente) |
-| S51 | matalan.co.uk, smart casual clothing guide (vente) |
-| S54 | thefashionisto.com, dress codes good or bad |
-
-## Règles communes (C)
-
-| ID | Règle | Niveau | Sources (extraits) | Nb | Statut |
+| Genre | A | B | C | à sourcer | Total |
 |---|---|---|---|---|---|
-| C1 | Un socle neutre (noir, blanc, marine, gris, beige, camel, marron), puis une couleur d'accent. | B | S1, S2, S6 | 3 | À lire. Attribution exacte à confirmer pour une partie. |
-| C2 | Harmonie analogue : une couleur dominante, les voisines sur le cercle chromatique en accent. | B | S7, S8, S9 | 3 | À lire. |
-| C3 | Couleurs opposées (complémentaires) : contraste fort, à doser avec un seul accent. | B | S7, S8, S9 | 3 | À lire. |
-| C4 | Rose + vert : déconseillé, pas interdit. Contraste assumé, qui dépend des tons. Une règle absolue exclurait des choix que des stylistes font. | C | S10 (indirect) | 1 | Aucune source directe trouvée. |
-| C5 | Noir + marine : contraste faible, à éviter comme duo principal. | C | S11 | 1 | Listicle. |
-| C6 | Rouge vif + violet vif, saturés : rendu chargé. | C | S11 | 1 | Listicle. |
-| C7 | Trois couleurs au plus par tenue. | B | Un styliste cité dans un extrait, auteur non identifié | 0 | À sourcer. |
-| C8 | Matières : lin et coton pour la chaleur, laine pour le froid, les mélanges couvrent la mi-saison. | A | S41, S42, S43 | 3 | À lire. S42 est un site de vente. |
-| C9 | Le poids du tissu compte autant que la fibre (isolation, respirabilité). | B | Un guide cité dans un extrait, auteur non identifié | 0 | À sourcer. |
-| C10 | Laine ouverte portable en mi-saison : les sources divergent. | C | S43 | 1 | Désaccord entre sources. |
-| C11 | Motifs : un motif mène, l'autre sert d'accent (rayures + fleurs). Pas de règle stricte selon AARP. | C | S45, S46 | 2 | S45 nuance la règle. S46 n'est lu que par son titre. |
-| C12 | Deux motifs de même taille se concurrencent : varier l'échelle. | C | Aucune source fiable (seules des pages Alibaba exclues) | 0 | À sourcer. |
-| C13 | Motifs : un fond neutre (marine, noir, beige, blanc) pour tenir les couches imprimées. | C | Aucune source fiable | 0 | À sourcer. |
+| C | 1 | 3 | 9 | 0 | 13 |
+| F | 0 | 0 | 6 | 4 | 10 |
+| H | 3 | 5 | 7 | 2 | 17 |
+| Total | 4 | 8 | 22 | 6 | 40 |
 
-## Règles pour les femmes (F)
+## Pages inaccessibles ou écartées
 
-| ID | Règle | Niveau | Sources (extraits) | Nb | Statut |
-|---|---|---|---|---|---|
-| F1 | Haut ajusté ou rentré dans un bas à taille haute : la taille sert d'ancrage visuel. | B | S13, S14, S15 | 3 | À lire. S15 est une anecdote personnelle. |
-| F2 | Bas ample ou palazzo : haut ajusté, court ou body structuré, sans volume en haut. | B | S13, S14 | 2 | À lire. |
-| F3 | Haut qui s'arrête à la hanche : proportions défavorables. | C | S14 | 1 | Une seule source. |
-| F4 | Jupe ajustée : haut ajusté ou court. Jupe évasée ou plissée : plus de volume accepté. | B | S16 | 1 | À lire. |
-| F5 | Répartition d'environ un tiers pour le haut et deux tiers pour le bas. | C | S15 | 1 | Anecdote, pas une règle. |
-| F6 | Petite taille : rayures verticales et taille marquée. | C | S17 | 1 | Une seule source. |
-| F7 | Smart casual : ni trop décontracté ni trop habillé. Éviter les t-shirts et hauts lâches. Un blazer en couche. | B | S47, S48, S49 | 3 | À lire. |
-| F8 | Baskets ou ballerines : acceptées selon le lieu de travail. | C | S49, S54 | 2 | Les sources divergent. |
-| F9 | Joggers en smart casual : coupe ajustée, matière plus noble, longueur juste au-dessus de la cheville, avec un haut ajusté ou un blazer. | C | S50, S51 | 2 | Deux sites de vente, pas une autorité. |
-| F10 | Basiques : t-shirts blancs et noirs, pantalon noir de qualité. | B | S2, S3, S4 | 3 | À lire. |
-| F11 | Neutres de base : noir, blanc, marron, beige, gris. | B | S1, S2, S3 | 3 | À lire. |
-| F12 | Marine + camel ; noir + blanc pour un style minimaliste. | C | S6 | 1 | Un blog. |
-| F13 | Rouge vrai, noir, blanc et marine passent sur la plupart des gens. | C | Un styliste cité dans un extrait, auteur non identifié | 0 | À sourcer. |
+- howtowearfashion.com (page sur le cercle chromatique) : la page affiche un contenu sans rapport (casino en ligne), site vraisemblablement détourné. Écartée.
+- outfittrends.com/?p=118579 (jupes) : page d'accueil sans contenu sur le sujet. Écartée, ce qui laisse F4 sans source.
+- editorialist.com/fashion/how-to-mix-patterns/ : page vide à la lecture. Écartée.
+- permanentstyle.com, article de 2008 sur les chaussettes : erreur client (client_error), rien lu.
+- seek.com.au, conseils de tenue business casual pour femmes : redirection 302 vers au.seek.com non suivie ; la lecture de au.seek.com n'a pas pu se faire (demande d'autorisation restée sans réponse, erreur PROVENANCE_REQUIRED). Rien lu.
+- aarp.org : pages réservées aux membres, non lues. Crate and Barrel : repérée, non lue.
+- bustle.com (article de 2016) : lue, mais l'adresse complète n'a pas été conservée ; non citée, aucune règle ne s'appuie dessus.
+- Accès réseau direct (curl) : refusé par le proxy (403, CONNECT tunnel failed) ; seules les pages lues par l'outil de lecture web comptent.
+- alibaba.com/product-insights : exclues par la consigne, aucune lue.
+- Pages repérées dans des résultats de recherche (extraits seulement) : jamais comptées comme lues.
 
-## Règles pour les hommes (H)
+## Méthode et limites
 
-| ID | Règle | Niveau | Sources (extraits) | Nb | Statut |
-|---|---|---|---|---|---|
-| H1 | L'épaule de la veste s'arrête au bord naturel de l'épaule. Un pli ou un creux signale une mauvaise taille. | A | S18, S19, S20, S21, S22 | 5 | À lire. |
-| H2 | Manche : le bout se pose au-dessus de l'os du poignet, un liseré de chemise reste visible. La mesure exacte varie selon les guides. | A | S18, S19, S20, S22 | 4 | Principe A, mesure B. À lire. |
-| H3 | Pantalon : une cassure légère (classique) ou aucune (moderne). L'ourlet ne doit pas traîner sur la chaussure. | B | S18, S19, S20 | 3 | Les goûts divergent. |
-| H4 | En cas de doute à l'achat, prendre la taille plus grande : on retouche plus facilement. | B | S18, S22 | 2 | À lire. |
-| H5 | Chemise blanche : plus habillée. Couleur ou motif : plus décontracté. | B | S40 | 1 | Une seule source. |
-| H6 | Ceinture et chaussures : même couleur ou ton très proche. Règle stricte au bureau, plus souple en casual. | B | S23, S24, S27, S28, S29 | 5 | À lire. |
-| H7 | Noir + marron (ceinture et chaussures) : débat. | C | S24 (oui en contexte), S25 (non) | 2 | Les sources s'opposent. |
-| H8 | Marron moyen avec beige ou camel ; marron foncé avec marine. | C | S26 | 1 | Source faible. |
-| H9 | En cas de doute, un cran plus habillé. | B | Un guide cité dans un extrait, auteur non identifié | 0 | À sourcer. |
-| H10 | Sweat à capuche : hors smart casual (trop décontracté avec un chino). Préférer un polo ou une chemise. | B | S30, S31, S32, S33 (+ S34, S35, S36 : sites de vente) | 4 indépendants | À lire. |
-| H11 | Jogging ou pantalon de sport : à éviter en smart casual. | B | Un des guides S30 à S36, lequel reste à identifier | 1 | À identifier. |
-| H12 | Chemise + jogging : à éviter. | A proposé | Aucune source trouvée | 0 | À sourcer. Niveau proposé par moi, non vérifié. |
-| H13 | Chino ou jean sombre propre : permis en smart casual. Ni froissé, ni effiloché, ni délavé. | B | S30 à S36 (auteur à identifier) | 1 | À identifier. |
-| H14 | Baskets propres : acceptées en casual. En smart casual, mocassins, derbies ou chelsea. | B | S33, S37, S38 | 3 | À lire. |
-| H15 | Costume + baskets : débat. | C | S37 (contre), S38 (les mocassins habillent) | 2 | Les sources s'opposent. |
-| H16 | Smart casual : décontracté mais nettement plus soigné que le quotidien. | B | S30, S54 | 2 | À lire. |
-| H17 | Les codes du business casual changent : pas de règle fixe. | B | S39 | 1 | Une seule source. |
+- Passe du 2026-11-23 (Europe/Paris). Toutes les pages ont été consultées ce jour-là.
+- Les pages ont été lues par un outil de lecture web qui renvoie une synthèse de la page, orientée par la question posée. La lecture intégrale mot à mot n'est donc pas garantie : à noter pour toute reprise des règles.
+- Sources ouvertes uniquement (guides de stylistes, magazines, guides de codes vestimentaires, guides de coupe et de tissus). Aucune page de TikTok, Instagram, Reddit, forum ou Alibaba.
+- Indépendance : comptée par groupe éditorial, pas par page. Deux pages du même site, du même groupe (Men's Wearhouse et Jos. A. Bank) ou du même auteur (Art of Manliness et Real Men Real Style) comptent pour une seule source.
+- Incohérence dans la consigne : le niveau A demande à la fois au moins 3 et au moins 5 sources indépendantes. La lecture retenue est la plus stricte : 5 groupes indépendants. À trancher.
+- Plafonds appliqués par le script : A exige 5 groupes indépendants dont 3 hors vente et aucun désaccord ; B exige 5 groupes dont 2 hors vente ; en dessous, C ; sans source, à sourcer. Les sites de vente comptent mais sont signalés. Les sites à liens d'affiliation sont signalés aussi.
+- Le niveau est une estimation fondée sur les sources lues, pas une mesure. Kodi présente le niveau C comme une opinion, jamais comme une règle.
+- Marché : sources surtout américaines et britanniques, souvent des sites de vente. Aucune source française n'a été lue.
+- Aucune règle ne porte sur le corps, le poids, l'âge ou la morphologie ; les passages de ce genre dans les sources ont été ignorés. Un interdit n'est écrit que s'il vaut presque partout, sinon c'est déconseillé.
+- Les noms de sites ne servent que de références : ils ne s'affichent jamais dans l'app.
+- Paraphrase uniquement, aucune citation.
 
-## Bilan du lot
+## Règles retirées ou requalifiées (lot 1)
 
-- **43 règles** : 13 femmes, 17 hommes, 13 communes.
-- **A (consensus)** : H1, H2, C8. H12 est proposée mais non sourcée.
-- **B** : une vingtaine. Sources le plus souvent des blogs et des sites de vente.
-- **C** : une quinzaine. Avis, anecdotes ou sources qui divergent. Kodi ne les présente jamais comme une règle.
-- **À sourcer** : C7, C9, C12, C13, H9, H12, F13. Aucune source fiable trouvée.
+| ID | Brouillon | Vérifié | Décision | Raison |
+|---|---|---|---|---|
+| C3 | B | B | corrigée | dosage précisé (une dominante, une en accent, tons atténués pour débuter) |
+| C4 | C | C | corrigée | formulation du brouillon non retrouvée : une source défend fuchsia + émeraude |
+| C6 | C | C | corrigée | nuance ajoutée (lilas + rouge passe avec un dominant et un accent) |
+| C7 | B | C | requalifiée | 3 groupes indépendants lus (2 hors vente) |
+| C8 | A | A | corrigée | partie 'mélanges en mi-saison' retirée : aucune source lue |
+| C9 | B | C | requalifiée | 4 groupes indépendants lus (2 hors vente) |
+| C10 | C | C | corrigée | divergence du brouillon non retrouvée ; texte précisé (laine légère à tissage ouvert) |
+| F1 | B | C | requalifiée | 3 groupes indépendants lus (1 hors vente) |
+| F2 | B | C | requalifiée et corrigée | reformulée en termes de pièces et de proportions de la tenue ; 3 groupes indépendants lus (1 hors vente) |
+| F3 | C | C | corrigée | reformulée en termes de pièces et de proportions de la tenue |
+| F4 | B | à sourcer | requalifiée | 0 groupes indépendants lus (0 hors vente) |
+| F5 | C | retirée | retirée | tirée d'un témoignage personnel, aucune source lue ne la formule |
+| F6 | C | retirée | retirée | règle de morphologie (petite taille) : hors périmètre, aucune règle sur le corps |
+| F7 | B | à sourcer | requalifiée | 0 groupes indépendants lus (0 hors vente) |
+| F8 | C | à sourcer | requalifiée | 0 groupes indépendants lus (0 hors vente) |
+| F9 | C | à sourcer | requalifiée | 0 groupes indépendants lus (0 hors vente) |
+| F10 | B | C | requalifiée | 2 groupes indépendants lus (1 hors vente) |
+| F11 | B | C | requalifiée | 4 groupes indépendants lus (3 hors vente) |
+| F13 | C | retirée | retirée | dépend de la personne (teint) et ne repose que sur une citation de styliste dans un magazine |
+| H2 | A | B | requalifiée | 5 groupes indépendants lus (2 hors vente) |
+| H4 | B | C | requalifiée et corrigée | corrigée : les sources placent l'épaule en priorité, la taille au-dessus n'est pas une règle générale ; 3 groupes indépendants lus (1 hors vente) |
+| H5 | B | C | requalifiée et corrigée | le brouillon posait une hiérarchie blanche, couleur, motif que aucune source ne formule ; 3 groupes indépendants lus (3 hors vente) |
+| H7 | C | B | requalifiée | 5 groupes indépendants lus (3 hors vente) |
+| H8 | C | à sourcer | requalifiée | 0 groupes indépendants lus (0 hors vente) |
+| H9 | B | C | requalifiée | 4 groupes indépendants lus (4 hors vente) |
+| H10 | B | C | requalifiée | 4 groupes indépendants lus (4 hors vente) |
+| H11 | B | C | requalifiée | 3 groupes indépendants lus (3 hors vente) |
+| H12 | A | à sourcer | requalifiée | 0 groupes indépendants lus (0 hors vente) |
+| H13 | B | A | requalifiée et corrigée | scindée : le chino ici, le jean foncé dans une règle à part ; 7 groupes indépendants lus (6 hors vente) |
+| H14 | B | B | corrigée | scindée : les baskets ici, mocassins et derbies dans une règle à part |
+| H15 | C | C | corrigée | formulation 'débat' sans source retirée, remplacée par la règle sur les baskets en cocktail |
+| H16 | B | A | requalifiée | 7 groupes indépendants lus (7 hors vente) |
+| H17 | B | C | requalifiée | 3 groupes indépendants lus (3 hors vente) |
 
-**Ce qui manque avant de passer une règle en « vérifiée » :** 5 sources indépendantes, lues en entier, avec date de consultation. Aucune règle de ce lot n'y est encore.
+## Règles
 
-## Prochaines étapes
+### Communes (C)
 
-1. Lire les pages S18 à S33 et S41 à S43 pour confirmer ou corriger les niveaux A et B.
-2. Chercher les sources manquantes (C7, C9, C12, C13, H9, H11, H12, F13).
-3. Chercher les règles absentes : couleurs de peau et teints (en évitant toute règle sur le corps ou l'âge), coupes de robe, longueurs de jupe, cols et encolures, matières de tailleur, tenues de soirée.
-4. Revue humaine avant tout branchement dans le code.
+| ID | Règle (une phrase) | Genre (F/H/C) | Niveau (A/B/C/à sourcer) | Contexte | Sources lues (URL, site, date de consultation) | Nombre de sources indépendantes | Notes (biais, désaccords, limites) |
+|---|---|---|---|---|---|---|---|
+| C1 | Partir d'un socle neutre (noir, blanc, marine, gris, beige, camel, marron), puis ajouter une couleur d'accent. | C | B | Couleurs | womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>stitchfix.com : https://stitchfix.com/women/blog/?p=74809<br>whowhatwear.com : https://whowhatwear.com/uk/best-wardrobe-basics-according-to-stylists<br>petitedressing.com : https://blog.petitedressing.com/7-color-pairings-stylists-say-always-work/<br>stylecraze.com : https://stylecraze.com/articles/how-to-match-the-colors-of-your-clothes<br>luxe.digital : https://luxe.digital/lifestyle/style/color-matching-style-guide/<br>masterclass.com : https://masterclass.com/articles/how-to-match-clothes-using-the-color-wheel<br>gentlemansgazette.com : https://gentlemansgazette.com/how-to-use-the-color-wheel-to-assemble-superior-outfits/<br>consultées le 2026-11-23 | 8 (dont 7 hors vente) | Lot 1 : confirmée (brouillon B). Principe très concordant ; les listes de neutres varient (GGW juge gris et blanc plus polyvalents que le noir). S1 insiste sur l'absence de règle stricte. Vente : stitchfix.com. Liens d'affiliation : gentlemansgazette.com. |
+| C2 | Harmonie analogue : une couleur dominante, ses voisines du cercle chromatique en accent, pour un rendu discret. | C | B | Couleurs | stitchfix.com : https://stitchfix.com/women/blog/?p=74809<br>stylecraze.com : https://stylecraze.com/articles/how-to-match-the-colors-of-your-clothes<br>luxe.digital : https://luxe.digital/lifestyle/style/color-matching-style-guide/<br>masterclass.com : https://masterclass.com/articles/how-to-match-clothes-using-the-color-wheel<br>gentlemansgazette.com : https://gentlemansgazette.com/how-to-use-the-color-wheel-to-assemble-superior-outfits/<br>consultées le 2026-11-23 | 5 (dont 4 hors vente) | Lot 1 : confirmée (brouillon B). Vente : stitchfix.com. Liens d'affiliation : gentlemansgazette.com. |
+| C3 | Couleurs opposées : contraste fort ; doser (une dominante, une en accent) et prendre des tons atténués pour débuter. | C | B | Couleurs | womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>stylecraze.com : https://stylecraze.com/articles/how-to-match-the-colors-of-your-clothes<br>luxe.digital : https://luxe.digital/lifestyle/style/color-matching-style-guide/<br>masterclass.com : https://masterclass.com/articles/how-to-match-clothes-using-the-color-wheel<br>gentlemansgazette.com : https://gentlemansgazette.com/how-to-use-the-color-wheel-to-assemble-superior-outfits/<br>consultées le 2026-11-23 | 5 (dont 5 hors vente) | Lot 1 : corrigée (brouillon B). Le dosage vient de S1 (lilas + rouge) et S9 (tons atténués pour débuter). Liens d'affiliation : gentlemansgazette.com. |
+| C4 | Rose + vert : pas d'interdit ; une source lue défend fuchsia + émeraude. | C | C | Couleurs | womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>consultées le 2026-11-23 | 1 (dont 1 hors vente) | Lot 1 : corrigée (brouillon C). Le brouillon disait déconseillé : aucune page lue ne le dit, et S1 dit l'inverse pour fuchsia + émeraude. |
+| C5 | Noir + marine : contraste faible, déconseillé comme duo principal. | C | C | Couleurs | bestlifeonline.com : https://bestlifeonline.com/colors-you-should-never-wear-together/<br>consultées le 2026-11-23 | 1 (dont 1 hors vente) | Lot 1 : confirmée (brouillon C). Une seule source lue ; elle précise que ça ne marche pas toujours. |
+| C6 | Rouge vif + violet vif saturés ensemble : rendu chargé ; lilas + rouge passe avec un dominant et un accent. | C | C | Couleurs | bestlifeonline.com : https://bestlifeonline.com/colors-you-should-never-wear-together/<br>womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>consultées le 2026-11-23 | 2 (dont 2 hors vente) | Lot 1 : corrigée (brouillon C). S11 déconseille violet + rouge, S1 l'admet avec dosage : désaccord. |
+| C7 | Trois couleurs au plus par tenue (les neutres sont souvent comptés à part). | C | C | Couleurs | womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>stitchfix.com : https://stitchfix.com/women/blog/?p=74809<br>bestlifeonline.com : https://bestlifeonline.com/colors-you-should-never-wear-together/<br>consultées le 2026-11-23 | 3 (dont 2 hors vente) | Lot 1 : requalifiée (brouillon B). MCW et S9 ne fixent aucun maximum (lues, non comptées pour la règle) : désaccord. Vente : stitchfix.com. |
+| C8 | Lin et coton pour la chaleur ; laine (mérinos, cachemire, flanelle) pour le froid. | C | A | Tissus, saison | whowhatwear.com : https://whowhatwear.com/summer-fabrics<br>harryrosen.com : https://harryrosen.com/en/editorial/warm-weather-fabric-guide<br>gentlemansgazette.com : https://gentlemansgazette.com/summer-fabrics-guide/<br>stitchfix.com : https://stitchfix.com/women/blog/fashion-tips/guide-breathable-summer-fabrics/<br>lyst.co.uk : https://lyst.co.uk/stories/best-fabrics-for-spring-summer-mens<br>fashionbeans.com : https://fashionbeans.com/article/best-winter-fabrics/<br>apetogentleman.com : https://apetogentleman.com/best-winter-fabrics-men/<br>consultées le 2026-11-23 | 7 (dont 4 hors vente) | Lot 1 : corrigée (brouillon A). Toutes les sources lues concordent ; marché anglo-saxon. Vente : harryrosen.com, lyst.co.uk, stitchfix.com. Liens d'affiliation : gentlemansgazette.com. |
+| C9 | Le poids (grammage) et le tissage d'un tissu comptent autant que la fibre. | C | C | Tissus, saison | lyst.co.uk : https://lyst.co.uk/stories/best-fabrics-for-spring-summer-mens<br>gentlemansgazette.com : https://gentlemansgazette.com/summer-fabrics-guide/<br>harryrosen.com : https://harryrosen.com/en/editorial/warm-weather-fabric-guide<br>fashionbeans.com : https://fashionbeans.com/article/best-winter-fabrics/<br>consultées le 2026-11-23 | 4 (dont 2 hors vente) | Lot 1 : requalifiée (brouillon B). Un tissu léger mais serré peut être plus chaud (GGS). Niveau visé B ramené à C : 4 groupes indépendants, 2 hors vente. Vente : harryrosen.com, lyst.co.uk. Liens d'affiliation : gentlemansgazette.com. |
+| C10 | Une laine légère à tissage ouvert (tropicale, fresco, summer wool) reste portable en été. | C | C | Tissus, saison | whowhatwear.com : https://whowhatwear.com/summer-fabrics<br>harryrosen.com : https://harryrosen.com/en/editorial/warm-weather-fabric-guide<br>gentlemansgazette.com : https://gentlemansgazette.com/summer-fabrics-guide/<br>consultées le 2026-11-23 | 3 (dont 2 hors vente) | Lot 1 : corrigée (brouillon C). Niveau visé B ramené à C : 3 groupes indépendants, 2 hors vente. Vente : harryrosen.com. Liens d'affiliation : gentlemansgazette.com. |
+| C11 | Mélanger des motifs : un motif mène, l'autre reste en accent. | C | C | Motifs | stitchfix.com : https://stitchfix.com/women/blog/?p=6836<br>masterclass.com : https://masterclass.com/articles/how-to-mix-prints-and-patterns-to-create-a-stylish-outfit<br>themodestman.com : https://themodestman.com/?p=591163<br>harryrosen.com : https://harryrosen.com/en/editorial/how-to-wear-a-tie<br>consultées le 2026-11-23 | 4 (dont 2 hors vente) | Lot 1 : confirmée (brouillon C). Niveau visé B ramené à C : 4 groupes indépendants, 2 hors vente. Vente : harryrosen.com, stitchfix.com. |
+| C12 | Deux motifs de même échelle se concurrencent : varier la taille (petit + grand). | C | C | Motifs | stitchfix.com : https://stitchfix.com/women/blog/?p=6836<br>masterclass.com : https://masterclass.com/articles/how-to-mix-prints-and-patterns-to-create-a-stylish-outfit<br>themodestman.com : https://themodestman.com/?p=591163<br>harryrosen.com : https://harryrosen.com/en/editorial/how-to-wear-a-tie<br>consultées le 2026-11-23 | 4 (dont 2 hors vente) | Lot 1 : confirmée (brouillon C). Niveau visé B ramené à C : 4 groupes indépendants, 2 hors vente. Vente : harryrosen.com, stitchfix.com. |
+| C13 | Ancrer un mélange de motifs avec une pièce unie neutre. | C | C | Motifs | stitchfix.com : https://stitchfix.com/women/blog/?p=6836<br>masterclass.com : https://masterclass.com/articles/how-to-mix-prints-and-patterns-to-create-a-stylish-outfit<br>consultées le 2026-11-23 | 2 (dont 1 hors vente) | Lot 1 : confirmée (brouillon C). Niveau visé B ramené à C : 2 groupes indépendants, 1 hors vente. Vente : stitchfix.com. |
+
+### Femmes (F)
+
+| ID | Règle (une phrase) | Genre (F/H/C) | Niveau (A/B/C/à sourcer) | Contexte | Sources lues (URL, site, date de consultation) | Nombre de sources indépendantes | Notes (biais, désaccords, limites) |
+|---|---|---|---|---|---|---|---|
+| F1 | Avec un bas à taille haute, porter un haut rentré ou ajusté. | F | C | Proportions des pièces | stitchfix.com : https://stitchfix.com/women/blog/?p=74809<br>outfittrends.com : https://outfittrends.com/?p=19661<br>thenolishop.com : https://thenolishop.com/blogs/noli-blog/tops-to-paired-with-high-waisted-jeans<br>consultées le 2026-11-23 | 3 (dont 1 hors vente) | Lot 1 : requalifiée (brouillon B). Niveau visé B ramené à C : 3 groupes indépendants, 1 hors vente. Vente : stitchfix.com, thenolishop.com. |
+| F2 | Avec un bas ample ou évasé (palazzo), un haut ajusté, rentré ou court équilibre la tenue. | F | C | Proportions des pièces | stitchfix.com : https://stitchfix.com/women/blog/?p=74809<br>outfittrends.com : https://outfittrends.com/?p=19661<br>thenolishop.com : https://thenolishop.com/blogs/noli-blog/tops-to-paired-with-high-waisted-jeans<br>consultées le 2026-11-23 | 3 (dont 1 hors vente) | Lot 1 : requalifiée et corrigée (brouillon B). Niveau visé B ramené à C : 3 groupes indépendants, 1 hors vente. Vente : stitchfix.com, thenolishop.com. |
+| F3 | Avec un bas à taille haute, un haut qui s'arrête à mi-hanche coupe la ligne : préférer un haut rentré ou qui rejoint la ceinture. | F | C | Proportions des pièces | outfittrends.com : https://outfittrends.com/?p=19661<br>thenolishop.com : https://thenolishop.com/blogs/noli-blog/tops-to-paired-with-high-waisted-jeans<br>consultées le 2026-11-23 | 2 (dont 1 hors vente) | Lot 1 : corrigée (brouillon C). Vente : thenolishop.com. |
+| F4 | Jupe ajustée : haut ajusté ou court ; jupe évasée : haut avec plus de volume. | F | à sourcer | Proportions des pièces | aucune | 0 | Lot 1 : requalifiée (brouillon B). La seule page prévue (outfittrends ?p=118579) était vide à la lecture. Aucune source lue : à confirmer ou retirer. |
+| F7 | Smart casual femme : ni trop décontracté ni trop habillé, blazer en couche. | F | à sourcer | Smart casual | aucune | 0 | Lot 1 : requalifiée (brouillon B). Aucune source lue ne traite le smart casual pour femme. Aucune source lue : à confirmer ou retirer. |
+| F8 | Baskets ou ballerines au bureau selon le lieu de travail. | F | à sourcer | Bureau | aucune | 0 | Lot 1 : requalifiée (brouillon C). Aucune source femme lue ; voir la règle commune sur les baskets sobres en casual de bureau. Aucune source lue : à confirmer ou retirer. |
+| F9 | Joggers en smart casual : coupe ajustée, matière noble. | F | à sourcer | Smart casual | aucune | 0 | Lot 1 : requalifiée (brouillon C). Les sources hommes déconseillent le jogging ; aucune source femme lue. Aucune source lue : à confirmer ou retirer. |
+| F10 | Basiques : t-shirt blanc, t-shirt noir, pantalon noir bien coupé. | F | C | Basiques | whowhatwear.com : https://whowhatwear.com/uk/best-wardrobe-basics-according-to-stylists<br>stitchfix.com : https://stitchfix.com/women/blog/?p=10590<br>consultées le 2026-11-23 | 2 (dont 1 hors vente) | Lot 1 : requalifiée (brouillon B). S3 date de 2018 ; S4 est un site de vente. Niveau visé B ramené à C : 2 groupes indépendants, 1 hors vente. Vente : stitchfix.com. |
+| F11 | Neutres de base : noir, blanc, gris, beige, marron. | F | C | Basiques | womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>stitchfix.com : https://stitchfix.com/women/blog/?p=74809<br>whowhatwear.com : https://whowhatwear.com/uk/best-wardrobe-basics-according-to-stylists<br>stitchfix.com : https://stitchfix.com/women/blog/?p=10590<br>petitedressing.com : https://blog.petitedressing.com/7-color-pairings-stylists-say-always-work/<br>consultées le 2026-11-23 | 4 (dont 3 hors vente) | Lot 1 : requalifiée (brouillon B). Sources toutes orientées femmes ; S6 est un blog dont les stylistes sont anonymes. Niveau visé B ramené à C : 4 groupes indépendants, 3 hors vente. Vente : stitchfix.com. Même groupe, compté une fois : S2, S4. |
+| F12 | Associations qui marchent : marine + camel, noir + blanc. | F | C | Couleurs | womanandhome.com : https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/<br>petitedressing.com : https://blog.petitedressing.com/7-color-pairings-stylists-say-always-work/<br>consultées le 2026-11-23 | 2 (dont 2 hors vente) | Lot 1 : confirmée (brouillon C). Niveau visé B ramené à C : 2 groupes indépendants, 2 hors vente. |
+
+### Hommes (H)
+
+| ID | Règle (une phrase) | Genre (F/H/C) | Niveau (A/B/C/à sourcer) | Contexte | Sources lues (URL, site, date de consultation) | Nombre de sources indépendantes | Notes (biais, désaccords, limites) |
+|---|---|---|---|---|---|---|---|
+| H1 | L'épaule de la veste s'arrête au bord naturel de l'épaule, sans plis ni débord. | H | A | Costume, ajustement | menswearhouse.com : https://menswearhouse.com/advice/buying-your-first-suit<br>josbank.com : https://josbank.com/blog/?p=72<br>artofmanliness.com : https://artofmanliness.com/style/clothing/good-fitted-suit-visual/<br>suitsupply.com : https://suitsupply.com/en-ca/journal/how-it-should-fit.html<br>realmenrealstyle.com : https://realmenrealstyle.com/visual-suit-fit-guide/<br>theknot.com : https://theknot.com/content/tips-for-a-perfect-tuxedo-fit<br>gentlemansgazette.com : https://gentlemansgazette.com/?p=106193<br>nimble-made.com : https://nimble-made.com/blogs/news/how-should-a-suit-fit<br>consultées le 2026-11-23 | 6 (dont 3 hors vente) | Lot 1 : confirmée (brouillon A). Tolérance d'environ 0,6 cm de débord pour un smoking (KNOTF). Marché anglo-saxon, plusieurs sites de vente. Vente : josbank.com, menswearhouse.com, nimble-made.com, suitsupply.com. Liens d'affiliation : gentlemansgazette.com. Même groupe, compté une fois : S22, S21 ; AOMF, RMRS. |
+| H2 | La manche de la veste s'arrête au poignet et laisse voir environ 1 à 2 cm de manchette de chemise. | H | B | Costume, ajustement | menswearhouse.com : https://menswearhouse.com/advice/buying-your-first-suit<br>josbank.com : https://josbank.com/blog/?p=72<br>artofmanliness.com : https://artofmanliness.com/style/clothing/good-fitted-suit-visual/<br>suitsupply.com : https://suitsupply.com/en-ca/journal/how-it-should-fit.html<br>realmenrealstyle.com : https://realmenrealstyle.com/visual-suit-fit-guide/<br>theknot.com : https://theknot.com/content/tips-for-a-perfect-tuxedo-fit<br>nimble-made.com : https://nimble-made.com/blogs/news/how-should-a-suit-fit<br>consultées le 2026-11-23 | 5 (dont 2 hors vente) | Lot 1 : requalifiée (brouillon A). Les fourchettes varient (0,6 à 2,5 cm selon les sources). Vente : josbank.com, menswearhouse.com, nimble-made.com, suitsupply.com. Même groupe, compté une fois : S22, S21 ; AOMF, RMRS. |
+| H3 | Pantalon de costume : cassure légère ou nulle (un seul petit pli). | H | B | Costume, ajustement | menswearhouse.com : https://menswearhouse.com/advice/buying-your-first-suit<br>artofmanliness.com : https://artofmanliness.com/style/clothing/good-fitted-suit-visual/<br>suitsupply.com : https://suitsupply.com/en-ca/journal/how-it-should-fit.html<br>nimble-made.com : https://nimble-made.com/blogs/news/how-should-a-suit-fit<br>gentlemansgazette.com : https://gentlemansgazette.com/?p=106193<br>realmenrealstyle.com : https://realmenrealstyle.com/visual-suit-fit-guide/<br>consultées le 2026-11-23 | 5 (dont 2 hors vente) | Lot 1 : confirmée (brouillon B). Une cassure pleine paraît moins soignée (NIM). Vente : menswearhouse.com, nimble-made.com, suitsupply.com. Liens d'affiliation : gentlemansgazette.com. Même groupe, compté une fois : AOMF, RMRS. |
+| H4 | Choisir la veste d'après les épaules : le reste se retouche plus facilement. | H | C | Costume, ajustement | menswearhouse.com : https://menswearhouse.com/advice/buying-your-first-suit<br>nimble-made.com : https://nimble-made.com/blogs/news/how-should-a-suit-fit<br>realmenrealstyle.com : https://realmenrealstyle.com/visual-suit-fit-guide/<br>artofmanliness.com : https://artofmanliness.com/style/clothing/good-fitted-suit-visual/<br>consultées le 2026-11-23 | 3 (dont 1 hors vente) | Lot 1 : requalifiée et corrigée (brouillon B). S22 et NIM conseillent de prendre légèrement plus grand puis retoucher ; AOMF et RMRS placent l'épaule en priorité. Vente : menswearhouse.com, nimble-made.com. Même groupe, compté une fois : RMRS, AOMF. |
+| H5 | Pour une tenue habillée, chemise claire et unie (blanche ou bleu clair). | H | C | Chemise | thefashionisto.com : https://thefashionisto.com/business-casual-vs-business-formal/<br>gentlemansgazette.com : https://gentlemansgazette.com/cocktail-attire-for-men/<br>theknot.com : https://theknot.com/content/wearing-white-to-wedding<br>consultées le 2026-11-23 | 3 (dont 3 hors vente) | Lot 1 : requalifiée et corrigée (brouillon B). Liens d'affiliation : gentlemansgazette.com, thefashionisto.com. |
+| H6 | Ceinture et chaussures de même famille de couleur et de même finition (proches, pas forcément identiques). | H | B | Ceinture et chaussures | menswearhouse.com : https://menswearhouse.com/blog/?p=9039<br>permanentstyle.com : https://permanentstyle.com/2018/09/should-your-belt-match-your-shoes-or-bag.html<br>gentlemansgazette.com : https://gentlemansgazette.com/pair-belts-shoes-metal/<br>themodestman.com : https://themodestman.com/?p=9065<br>aquila.com.au : https://aquila.com.au/style-guide/matching-belt-and-shoes<br>bespokepost.com : https://bespokepost.com/the-post/the-new-rules-of-matching-your-belt-to-your-shoes<br>gentlemansgazette.com : https://gentlemansgazette.com/cocktail-attire-for-men/<br>consultées le 2026-11-23 | 6 (dont 3 hors vente) | Lot 1 : confirmée (brouillon B). Plus la tenue est formelle, plus l'assortiment est exact ; en casual il est plus libre. Vente : aquila.com.au, bespokepost.com, menswearhouse.com. Liens d'affiliation : gentlemansgazette.com. Même groupe, compté une fois : GGB, GGC. |
+| H7 | Ceinture marron avec chaussures noires (et inversement) : à éviter, avec de rares exceptions. | H | B | Ceinture et chaussures | menswearhouse.com : https://menswearhouse.com/blog/?p=9039<br>permanentstyle.com : https://permanentstyle.com/2018/09/should-your-belt-match-your-shoes-or-bag.html<br>gentlemansgazette.com : https://gentlemansgazette.com/pair-belts-shoes-metal/<br>themodestman.com : https://themodestman.com/?p=9065<br>bespokepost.com : https://bespokepost.com/the-post/the-new-rules-of-matching-your-belt-to-your-shoes<br>consultées le 2026-11-23 | 5 (dont 3 hors vente) | Lot 1 : requalifiée (brouillon C). Le brouillon parlait d'un débat : les sources lues concordent, avec des exceptions subtiles. Vente : bespokepost.com, menswearhouse.com. Liens d'affiliation : gentlemansgazette.com. |
+| H8 | Marron moyen avec beige ou camel ; marron foncé avec marine. | H | à sourcer | Couleurs | aucune | 0 | Lot 1 : requalifiée (brouillon C). Aucune page lue ne traite ces associations de vêtements. Aucune source lue : à confirmer ou retirer. |
+| H9 | En cas de doute, choisir le cran plus habillé. | H | C | Smart casual | gentlemansgazette.com : https://gentlemansgazette.com/smart-casual-dress-code/<br>manofmany.com : https://manofmany.com/style/guide-mens-smart-casual-dress-code<br>thefashionisto.com : https://thefashionisto.com/smart-casual-dress-code-men<br>thefashionisto.com : https://thefashionisto.com/business-casual-vs-business-formal/<br>artofmanliness.com : https://artofmanliness.com/style/clothing/a-mans-guide-to-smart-casual/<br>consultées le 2026-11-23 | 4 (dont 4 hors vente) | Lot 1 : requalifiée (brouillon B). S33 et TFB sont du même site. Niveau visé B ramené à C : 4 groupes indépendants, 4 hors vente. Liens d'affiliation : gentlemansgazette.com, manofmany.com, thefashionisto.com. Même groupe, compté une fois : S33, TFB. |
+| H10 | Sweat à capuche : à éviter en smart casual. | H | C | Smart casual | gentlemansgazette.com : https://gentlemansgazette.com/smart-casual-dress-code/<br>manofmany.com : https://manofmany.com/style/guide-mens-smart-casual-dress-code<br>fashionbeans.com : https://fashionbeans.com/article/dressy-casual-attire-guide/<br>thefashionisto.com : https://thefashionisto.com/smart-casual-dress-code-men<br>consultées le 2026-11-23 | 4 (dont 4 hors vente) | Lot 1 : requalifiée (brouillon B). S33 admet un hoodie léger sous un blazer : désaccord. Niveau visé B ramené à C : 4 groupes indépendants, 4 hors vente. Liens d'affiliation : gentlemansgazette.com, manofmany.com, thefashionisto.com. |
+| H11 | Jogging : à éviter en smart casual. | H | C | Smart casual | gentlemansgazette.com : https://gentlemansgazette.com/smart-casual-dress-code/<br>manofmany.com : https://manofmany.com/style/guide-mens-smart-casual-dress-code<br>fashionbeans.com : https://fashionbeans.com/article/dressy-casual-attire-guide/<br>consultées le 2026-11-23 | 3 (dont 3 hors vente) | Lot 1 : requalifiée (brouillon B). Niveau visé B ramené à C : 3 groupes indépendants, 3 hors vente. Liens d'affiliation : gentlemansgazette.com, manofmany.com. |
+| H12 | Chemise + jogging : à éviter. | H | à sourcer | Smart casual | aucune | 0 | Lot 1 : requalifiée (brouillon A). Aucune source lue ne traite cette association. Aucune source lue : à confirmer ou retirer. |
+| H13 | Chino : accepté en smart casual, de couleur neutre et de coupe ajustée. | H | A | Smart casual | gentlemansgazette.com : https://gentlemansgazette.com/smart-casual-dress-code/<br>manofmany.com : https://manofmany.com/style/guide-mens-smart-casual-dress-code<br>fashionbeans.com : https://fashionbeans.com/article/dressy-casual-attire-guide/<br>thefashionisto.com : https://thefashionisto.com/smart-casual-dress-code-men<br>dmarge.com : https://dmarge.com/style/smart-casual-dress-code-men<br>artofmanliness.com : https://artofmanliness.com/style/clothing/a-mans-guide-to-smart-casual/<br>menswearhouse.com : https://menswearhouse.com/blog/casual-wear<br>consultées le 2026-11-23 | 7 (dont 6 hors vente) | Lot 1 : requalifiée et corrigée (brouillon B). Vente : menswearhouse.com. Liens d'affiliation : gentlemansgazette.com, manofmany.com, thefashionisto.com. |
+| H14 | Baskets minimalistes, propres, en cuir sobre : tolérées en smart casual (pas de baskets de sport). | H | B | Smart casual | manofmany.com : https://manofmany.com/style/guide-mens-smart-casual-dress-code<br>fashionbeans.com : https://fashionbeans.com/article/dressy-casual-attire-guide/<br>thefashionisto.com : https://thefashionisto.com/smart-casual-dress-code-men<br>dmarge.com : https://dmarge.com/style/smart-casual-dress-code-men<br>apetogentleman.com : https://apetogentleman.com/mens-modern-smart-casual/<br>artofmanliness.com : https://artofmanliness.com/style/clothing/a-mans-guide-to-smart-casual/<br>menswearhouse.com : https://menswearhouse.com/blog/casual-wear<br>gentlemansgazette.com : https://gentlemansgazette.com/smart-casual-dress-code/<br>consultées le 2026-11-23 | 8 (dont 7 hors vente) | Lot 1 : corrigée (brouillon B). S30 les déconseille et classe les baskets de luxe en zone grise : désaccord. Vente : menswearhouse.com. Liens d'affiliation : gentlemansgazette.com, manofmany.com, thefashionisto.com. |
+| H15 | Avec un costume de cocktail : pas de baskets. | H | C | Cocktail | gentlemansgazette.com : https://gentlemansgazette.com/cocktail-attire-for-men/<br>theknot.com : https://theknot.com/content/cocktail-wedding-attire<br>masterclass.com : https://masterclass.com/articles/how-to-dress-for-a-cocktail-party<br>consultées le 2026-11-23 | 3 (dont 3 hors vente) | Lot 1 : corrigée (brouillon C). Niveau visé B ramené à C : 3 groupes indépendants, 3 hors vente. Liens d'affiliation : gentlemansgazette.com. |
+| H16 | Smart casual : entre décontracté et formel, plus soigné qu'un casual quotidien, sans être une tenue de bureau. | H | A | Smart casual | gentlemansgazette.com : https://gentlemansgazette.com/smart-casual-dress-code/<br>manofmany.com : https://manofmany.com/style/guide-mens-smart-casual-dress-code<br>fashionbeans.com : https://fashionbeans.com/article/dressy-casual-attire-guide/<br>thefashionisto.com : https://thefashionisto.com/smart-casual-dress-code-men<br>dmarge.com : https://dmarge.com/style/smart-casual-dress-code-men<br>apetogentleman.com : https://apetogentleman.com/mens-modern-smart-casual/<br>artofmanliness.com : https://artofmanliness.com/style/clothing/a-mans-guide-to-smart-casual/<br>consultées le 2026-11-23 | 7 (dont 7 hors vente) | Lot 1 : requalifiée (brouillon B). Liens d'affiliation : gentlemansgazette.com, manofmany.com, thefashionisto.com. |
+| H17 | Les codes du business casual varient selon l'entreprise : pas de règle fixe. | H | C | Bureau, casual | masterclass.com : https://masterclass.com/articles/how-to-dress-for-work<br>monster.com : https://monster.com/career-advice/article/business-casual-dress<br>thefashionisto.com : https://thefashionisto.com/business-casual-vs-business-formal/<br>consultées le 2026-11-23 | 3 (dont 3 hors vente) | Lot 1 : requalifiée (brouillon B). Niveau visé B ramené à C : 3 groupes indépendants, 3 hors vente. Liens d'affiliation : thefashionisto.com. |
+
+## Annexe : sources lues
+
+| Site | URL | Auteur | Date visible | Consultée le | Nature | Groupe |
+|---|---|---|---|---|---|---|
+| apetogentleman.com | https://apetogentleman.com/best-winter-fabrics-men/ | Paddy Maddison | 2026-01-12 | 2026-11-23 | magazine | ape |
+| apetogentleman.com | https://apetogentleman.com/mens-modern-smart-casual/ | Paddy Maddison | 2026-02-23 | 2026-11-23 | magazine | ape |
+| aquila.com.au | https://aquila.com.au/style-guide/matching-belt-and-shoes | James Shackell | 2022-11-27 | 2026-11-23 | vente | aquila |
+| artofmanliness.com | https://artofmanliness.com/style/clothing/a-mans-guide-to-smart-casual/ | Brett et Kate McKay | 2023-09-07, maj 2026-01-14 | 2026-11-23 | magazine | aom |
+| artofmanliness.com | https://artofmanliness.com/style/clothing/good-fitted-suit-visual/ | Antonio Centeno | 2018-05-01, maj 2026-09-15 | 2026-11-23 | magazine | aom |
+| bespokepost.com | https://bespokepost.com/the-post/the-new-rules-of-matching-your-belt-to-your-shoes | Andrew Craig | sans date | 2026-11-23 | vente | bespokepost |
+| bestlifeonline.com | https://bestlifeonline.com/colors-you-should-never-wear-together/ | non visible | non visible | 2026-11-23 | magazine | bestlife |
+| dmarge.com | https://dmarge.com/style/smart-casual-dress-code-men | Jeff Lack | 2025-07-08 | 2026-11-23 | magazine | dmarge |
+| fashionbeans.com | https://fashionbeans.com/article/best-winter-fabrics/ | sans auteur | sans date | 2026-11-23 | magazine | fashionbeans |
+| fashionbeans.com | https://fashionbeans.com/article/dressy-casual-attire-guide/ | sans auteur | sans date | 2026-11-23 | magazine | fashionbeans |
+| gentlemansgazette.com | https://gentlemansgazette.com/?p=106193 | Sven Raphael Schneider | 2018-12-03, maj 2024-03-27 | 2026-11-23 | affilié | gg |
+| gentlemansgazette.com | https://gentlemansgazette.com/cocktail-attire-for-men/ | E.J. Daniels | 2024-04-17 | 2026-11-23 | affilié | gg |
+| gentlemansgazette.com | https://gentlemansgazette.com/how-to-use-the-color-wheel-to-assemble-superior-outfits/ | Preston Schlueter | 2019-01-18 | 2026-11-23 | affilié | gg |
+| gentlemansgazette.com | https://gentlemansgazette.com/pair-belts-shoes-metal/ | Sven Raphael Schneider | 2020-05-17 | 2026-11-23 | affilié | gg |
+| gentlemansgazette.com | https://gentlemansgazette.com/smart-casual-dress-code/ | Sven Raphael Schneider | 2018-04-16, maj 2024-06-03 | 2026-11-23 | affilié | gg |
+| gentlemansgazette.com | https://gentlemansgazette.com/summer-fabrics-guide/ | Sven Raphael Schneider | 2017-05-24 | 2026-11-23 | affilié | gg |
+| harryrosen.com | https://harryrosen.com/en/editorial/how-to-wear-a-tie | Harry Rosen Staff | 2025-08-19 | 2026-11-23 | vente | harryrosen |
+| harryrosen.com | https://harryrosen.com/en/editorial/warm-weather-fabric-guide | Harry Rosen Staff | 2024-08-08 | 2026-11-23 | vente | harryrosen |
+| josbank.com | https://josbank.com/blog/?p=72 | sans auteur | 2026-04-01 | 2026-11-23 | vente | tailored |
+| luxe.digital | https://luxe.digital/lifestyle/style/color-matching-style-guide/ | Emma Treagus | 2023-01-03, maj 2024-06-04 | 2026-11-23 | magazine | luxe |
+| lyst.co.uk | https://lyst.co.uk/stories/best-fabrics-for-spring-summer-mens | Toby Standing | 2025-04-02 | 2026-11-23 | vente | lyst |
+| manofmany.com | https://manofmany.com/style/guide-mens-smart-casual-dress-code | Jacob Osborn | 2017-11-16, maj 2025-09-04 | 2026-11-23 | affilié | manofmany |
+| masterclass.com | https://masterclass.com/articles/how-to-dress-for-a-cocktail-party | MasterClass | maj 2021-06-07 | 2026-11-23 | magazine | masterclass |
+| masterclass.com | https://masterclass.com/articles/how-to-dress-for-work | MasterClass | maj 2021-06-07 | 2026-11-23 | magazine | masterclass |
+| masterclass.com | https://masterclass.com/articles/how-to-match-clothes-using-the-color-wheel | MasterClass | maj 2021-06-07 | 2026-11-23 | magazine | masterclass |
+| masterclass.com | https://masterclass.com/articles/how-to-mix-prints-and-patterns-to-create-a-stylish-outfit | MasterClass | maj 2021-06-07 | 2026-11-23 | magazine | masterclass |
+| menswearhouse.com | https://menswearhouse.com/advice/buying-your-first-suit | sans auteur | 2026-07-01 | 2026-11-23 | vente | tailored |
+| menswearhouse.com | https://menswearhouse.com/blog/?p=9039 | sans auteur | 2026-09-29 | 2026-11-23 | vente | tailored |
+| menswearhouse.com | https://menswearhouse.com/blog/casual-wear | sans auteur | page catégorie, dernier billet 2026-10-28 | 2026-11-23 | vente | tailored |
+| monster.com | https://monster.com/career-advice/article/business-casual-dress | sans auteur | sans date | 2026-11-23 | emploi | monster |
+| nimble-made.com | https://nimble-made.com/blogs/news/how-should-a-suit-fit | Wesley Kang | 2020-06-01 | 2026-11-23 | vente | nimble |
+| outfittrends.com | https://outfittrends.com/?p=19661 | Caz Jones | 2026-06-01, maj 2026-08-20 | 2026-11-23 | blog | outfittrends |
+| permanentstyle.com | https://permanentstyle.com/2018/09/should-your-belt-match-your-shoes-or-bag.html | non visible | 2018-09 (dans l'adresse) | 2026-11-23 | blog | permanentstyle |
+| petitedressing.com | https://blog.petitedressing.com/7-color-pairings-stylists-say-always-work/ | ClassyTrendy | 2025-11-28 | 2026-11-23 | blog | petitedressing |
+| realmenrealstyle.com | https://realmenrealstyle.com/visual-suit-fit-guide/ | Antonio Centeno (même auteur que AOMF) | 2023-03-29, maj 2026-04-02 | 2026-11-23 | blog | aom |
+| stitchfix.com | https://stitchfix.com/women/blog/?p=10590 | sans auteur | 2017-06-22, maj 2025-06-14 | 2026-11-23 | vente | stitchfix |
+| stitchfix.com | https://stitchfix.com/women/blog/?p=6836 | sans auteur | sans date | 2026-11-23 | vente | stitchfix |
+| stitchfix.com | https://stitchfix.com/women/blog/?p=74809 | sans auteur | 2021-12-14, maj 2025-06-23 | 2026-11-23 | vente | stitchfix |
+| stitchfix.com | https://stitchfix.com/women/blog/fashion-tips/guide-breathable-summer-fabrics/ | sans auteur | 2025-06-12, maj 2025-06-24 | 2026-11-23 | vente | stitchfix |
+| stylecraze.com | https://stylecraze.com/articles/how-to-match-the-colors-of-your-clothes | Pratima Ati | sans date | 2026-11-23 | blog | stylecraze |
+| suitsupply.com | https://suitsupply.com/en-ca/journal/how-it-should-fit.html | sans auteur | sans date | 2026-11-23 | vente | suitsupply |
+| thefashionisto.com | https://thefashionisto.com/business-casual-vs-business-formal/ | sans auteur | sans date | 2026-11-23 | affilié | fashionisto |
+| thefashionisto.com | https://thefashionisto.com/smart-casual-dress-code-men | sans auteur | sans date | 2026-11-23 | affilié | fashionisto |
+| theknot.com | https://theknot.com/content/cocktail-wedding-attire | Cathryn Haight | maj 2026-06-15 | 2026-11-23 | magazine | theknot |
+| theknot.com | https://theknot.com/content/tips-for-a-perfect-tuxedo-fit | Tres Dean | 2023-05-31 | 2026-11-23 | magazine | theknot |
+| theknot.com | https://theknot.com/content/wearing-white-to-wedding | Shyla Watson | maj 2025-08-20 | 2026-11-23 | magazine | theknot |
+| themodestman.com | https://themodestman.com/?p=591163 | David Komisarchik | 2026-04-15, maj 2026-04-21 | 2026-11-23 | blog | modest |
+| themodestman.com | https://themodestman.com/?p=9065 | Brock McGoff | 2017-01-23, maj 2022-03-23 | 2026-11-23 | blog | modest |
+| thenolishop.com | https://thenolishop.com/blogs/noli-blog/tops-to-paired-with-high-waisted-jeans | sans auteur | sans date | 2026-11-23 | vente | nolishop |
+| whowhatwear.com | https://whowhatwear.com/summer-fabrics | Mandy Zee | 2018-05-02, maj 2023-06-23 | 2026-11-23 | magazine | whowhatwear |
+| whowhatwear.com | https://whowhatwear.com/uk/best-wardrobe-basics-according-to-stylists | Lauren Eggertsen | 2018-07-19 | 2026-11-23 | magazine | whowhatwear |
+| womanandhome.com | https://womanandhome.com/fashion/amazing-colour-combinations-loved-by-stylists/ | Anna Paul | 2025-09-20 | 2026-11-23 | magazine | womanandhome |
