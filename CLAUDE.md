@@ -735,6 +735,13 @@ demandé par l'utilisateur.** Décisions et état :
   (`banc-ia/scenarios.ts`) notés par un juge, sondes des fournisseurs, essais
   de découpe (`dressy-agent`, mode banc). Référence avant v2 : étiquette git
   `banc-v1`.
+- **Déploiement des fonctions par GitHub (24/11)** : depuis l'environnement de
+  Claude la CLI est bloquée (le proxy remplace le jeton, 401), et un jeton ne
+  se colle jamais dans la conversation. Le workflow
+  `.github/workflows/deployer-fonction.yml` déploie `dressy-agent` à chaque push
+  qui le touche (sur `main` et la branche de travail listée) et, à la main, n'importe
+  quelle fonction ; il lit le secret GitHub `SUPABASE_ACCESS_TOKEN` et vérifie que
+  la fonction répond. C'est la voie à préférer à la CLI locale.
 - **Déploiement des fonctions** : par la CLI Supabase, depuis un commit
   poussé, `supabase functions deploy <fonction> --use-api --project-ref
   pxjlbtevrexlckhxskdn`, avec un jeton d'accès personnel donné par
