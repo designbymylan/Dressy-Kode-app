@@ -42,6 +42,22 @@ Règles de base de l'agent photo (`dressy-agent`), décidées par l'utilisateur
   pièce) : la vitesse compte autant que la ressemblance.
 - Chaque pièce arrive dans le dressing **sans fond** (PNG transparent,
   détouré par `cutout.ts`), jamais avec le fond de la photo ou du générateur.
+- **RÈGLE STRICTE (24/11) : une pièce n'arrive dans l'app que lorsqu'elle
+  est réellement terminée, c'est-à-dire son dessin fini.** Jamais une
+  découpe, un croquis ou une image en cours de traitement dans le dressing :
+  la personne n'y comprendrait rien (une image qui change sous ses yeux, une
+  jambe de pantalon décollée). Tant que Kodi travaille, seule la tâche est
+  visible (« Kodi dessine ta pièce »), pas la pièce. Si le dessin échoue après
+  toutes ses reprises, la pièce **échoue** (message, réessayer, ranger à la
+  main) : on ne range jamais la découpe à sa place. Appliquée dans
+  `store` (`index.ts`), qui refuse de créer une pièce qui ne vient pas d'un
+  dessin. Toute évolution du pipeline (nouveau modèle, nouvelle étape) garde
+  cette règle : une seule écriture dans `garments`, à la toute fin.
+- **Les pantalons arrivent à plat, de face** (24/11) : ceinture en haut,
+  horizontale, deux jambes complètes, droites, parallèles et symétriques,
+  ourlets à la même hauteur, jamais une jambe coupée, tordue ou inclinée,
+  pour qu'on les voie en entier et qu'on les reconnaisse (`poseDuDessin`,
+  `prompts.ts`, d'après les deux photos de référence de l'utilisateur).
 - **Fidélité avant tout** (04/10) : Opus 5 relève les vraies teintes (`hex`)
   et les marquages visibles (logos, bandes, textes), qui sont reproduits tels
   quels sur le dessin. Le fond du dessin s'éloigne des teintes de la pièce :
@@ -862,24 +878,32 @@ rendu soit exactement comme ça », avec une attente plus courte. Une découpe
 seule ne peut pas donner ce rendu (bras, plis, parties cachées) : il faut un
 dessin. Il complète la décision SAM 3 du même jour, sans la remplacer.
 
-- **Deux passages** (`index.ts`) : la pièce est découpée par SAM 3 et rangée
-  tout de suite (visible 10 à 20 s après l'envoi), puis la même tâche repart
+- **Deux passages** (`index.ts`) : la pièce est découpée par SAM 3, **sans
+  être rangée** (depuis le 24/11, voir la règle stricte plus haut : la découpe
+  attend dans un fichier de travail `uploads/<espace>/travail-<tâche>.png`,
+  effacé à la fin, purgé à 30 jours au pire), puis la même tâche repart
   (`ai_jobs.dessin_auto`, migration `dessin_apres_decoupe`) : Nano Banana la
   redessine en photo produit, **la découpe en image 1** (la pièce exacte) et
-  la photo en image 2, puis l'image est remplacée (nouveau nom de fichier,
-  jamais d'ancienne image en cache). Offert, rien au compteur ; s'il échoue, la
-  découpe reste, sans message. Une seule notification (déclencheur
-  `ai_jobs_notify_on_retry` sans `dessin_auto`). Deux passages, aussi, pour le
-  temps de calcul compté de la fonction. `DESSIN_APRES_DECOUPE=0` (secret)
-  garde la découpe seule.
+  la photo en image 2 ; **c'est ce dessin qui crée la pièce dans le dressing**
+  (une seule écriture, à la fin). Offert, rien au compteur. Un dessin
+  inexploitable repart comme une panne passagère ; après la dernière reprise
+  la pièce échoue (`failed`, `dessin_auto` remis à faux, réessayer repart de
+  zéro). Avant le 24/11, la découpe était rangée tout de suite et remplacée
+  par le dessin, ou restait si le dessin échouait : abandonné. Une seule
+  notification (déclencheur `ai_jobs_notify_on_retry` sans `dessin_auto`).
+  Deux passages, aussi, pour le temps de calcul compté de la fonction. Le
+  secret `DESSIN_APRES_DECOUPE` n'existe plus ; sans clé fal, le dessin part
+  directement de la photo, sans repli sur la découpe.
 - **Pose** (`poseDuDessin`, `fallbackPrompt`, `consigneDessin` dans
   `prompts.ts`, partagés avec le banc) : hauts, vestes et robes sur mannequin
   invisible, de face, repassés, manches le long du corps ; bas à plat, de
   face ; chaussures par paire, de trois quarts ; sacs de face. Toujours sans
   ombre (le détourage par chrominance en a besoin) ; `PROMPT_VERSION`
-  `dessin-4`.
+  `dessin-5` (24/11 : bas à plat, jambes droites et symétriques, et la pose de
+  la découpe de référence ne compte pas : une jambe coupée est reconstruite).
 - **App et site** : le dressing se relit dès qu'une tâche reçoit sa pièce
-  (`store.tsx`, `JobList.tsx`), pas seulement quand tout est fini.
+  (`store.tsx`, `JobList.tsx`), pas seulement quand tout est fini. Depuis le
+  24/11, cette pièce est déjà son dessin fini.
 - **Banc du 20/11** (photos de test) : pull à inscription, veste, jean,
   baskets, sabots : rendu conforme au modèle, inscription exacte ; 19 à 22 s
   par dessin, 55 à 61 s quand le premier modèle de l'intermédiaire cale et
@@ -937,7 +961,10 @@ Désormais, un dessin après découpe en panne passagère attend 1, 3, 6 puis
 10 minutes (`ATTENTES_DESSIN_MIN`, `index.ts`), six passages au plus, sans
 changer la base : la tâche reste « generating » (l'app dit que Kodi dessine)
 et `ai_jobs_sweep` la remet en file à l'heure voulue (`claimed_at` décalé).
-Après le dernier essai, la découpe reste, sans message.
+Après le dernier essai, la pièce échoue (règle stricte du 24/11 : la découpe
+n'est plus rangée à la place du dessin). Compromis assumé : jusqu'à environ
+vingt minutes d'attente quand les fournisseurs sont saturés, mais jamais une
+pièce à moitié faite dans le dressing.
 
 **Dessin par fal.ai (21/11), demandé par l'utilisateur** (« règle le problème
 de génération ») : banc du 21/11 au matin, les quatre modèles d'image de

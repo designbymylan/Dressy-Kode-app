@@ -17,18 +17,29 @@
  *       rangement dans le dressing.
  *
  * Puis, le même soir (20/11, rendu « catalogue » demandé par l'utilisateur) :
- * la pièce découpée est rangée TOUT DE SUITE (la personne la voit en 10 à
- * 20 s), et la tâche repart aussitôt pour un second passage (`dessin_auto`) :
- * Nano Banana la redessine en photo produit (mannequin invisible, de face),
- * la découpe servant de référence exacte, et l'image est remplacée. Offert,
- * rien au compteur ; s'il échoue, la découpe reste, sans message d'erreur.
- * Deux passages, aussi, pour le temps de calcul compté de la fonction.
+ * la tâche repart aussitôt pour un second passage (`dessin_auto`) : Nano
+ * Banana redessine la pièce en photo produit (mannequin invisible, de face ;
+ * bas à plat, jambes droites et symétriques), la découpe servant de référence
+ * exacte. Offert, rien au compteur. Deux passages, pour le temps de calcul
+ * compté de la fonction.
+ *
+ * RÈGLE STRICTE (24/11, demandée par l'utilisateur) : UNE PIÈCE N'ARRIVE DANS
+ * L'APP QUE LORSQUE SON DESSIN EST TERMINÉ. Ni la découpe, ni un croquis, ni une
+ * image en cours de traitement ne sont jamais rangés dans le dressing : la
+ * personne ne doit voir que des pièces finies, jamais une image qui change
+ * sous ses yeux. Pendant le travail, la tâche seule est visible (« Kodi
+ * dessine ta pièce »). La découpe de la première passe n'est qu'une référence
+ * de travail (fichier `travail-<tâche>.png` du bucket privé `uploads`), effacée
+ * à la fin. Si le dessin échoue après toutes ses reprises, la pièce ÉCHOUE
+ * (la personne peut réessayer ou la ranger à la main) : on ne range jamais la
+ * découpe à sa place. `store` refuse d'ailleurs de CRÉER une pièce qui ne
+ * vient pas d'un dessin.
  *
  * À la demande : « Image propre » (fiche pièce) ou la 2e reprise d'un « rendu
  * incorrect » redessinent la pièce ; chacun prend une génération au compteur
  * de la personne (quota.ts, migration quotas_generation) : rendue si le
  * dessin échoue, jamais prise si l'image est déjà en cache. Sans clé fal.ai,
- * l'ancien chemin du 18/11 (dessin d'arrivée offert) reste en place.
+ * le dessin d'arrivée part directement de la photo (chemin du 18/11, offert).
  *
  * L'état complet est en base : un passage tué en route reprend sans repayer
  * ce qui a déjà été fait (repérage).
@@ -41,7 +52,7 @@ import { createClient } from '@supabase/supabase-js';
 import { MAX_RUNS } from './decide.ts';
 import { backdropFor, consigneDessin, garmentRgbs, isMetal, type Target } from './prompts.ts';
 import { survey, dessiner, checkSetup, passager, AgentError, SAY, MODELS, EFFORT, KEYS, FAL, type Img } from './steps.ts';
-import { cleFal, decouper, fatal, ouvrir } from './decoupage.ts';
+import { cleFal, decouper, ouvrir } from './decoupage.ts';
 import { SAM_MODELE, SAM_PRIX } from './fal.ts';
 import { MODES_AGENT } from './banc.ts';
 import { lancerBanc } from '../_shared/banc.ts';
@@ -110,17 +121,18 @@ async function setJob(job: Job, patch: Record<string, unknown>) {
 // ---------------------------------------------------------------- mesures
 
 /**
- * Le dessin d'arrivée (18/11) ne sert plus que sans clé fal.ai (20/11) : avec
- * elle, une pièce qui arrive est découpée par SAM 3, et le dessin attend
- * qu'on le demande. Le secret DESSIN_PAR_DEFAUT force l'un (1) ou l'autre (0).
+ * Comment une pièce qui arrive est dessinée (20/11, règle stricte du 24/11) :
+ * avec une clé fal.ai, d'abord découpée par SAM 3 (la découpe sert de
+ * référence au dessin, jamais d'image rangée), puis dessinée dans un second
+ * passage ; sans elle, dessinée directement à partir de la photo. Dans les deux
+ * cas, la pièce n'entre dans le dressing qu'une fois dessinée. Le secret
+ * DESSIN_PAR_DEFAUT force le dessin direct (1) ou la découpe d'abord (0).
+ * (Le secret DESSIN_APRES_DECOUPE=0, qui rangeait la découpe seule, n'existe plus.)
  */
 const DESSIN_PAR_DEFAUT = Deno.env.get('DESSIN_PAR_DEFAUT') === '1' || (Deno.env.get('DESSIN_PAR_DEFAUT') !== '0' && !cleFal());
 
-/**
- * Le dessin catalogue après la découpe (20/11) : actif avec la découpe par
- * SAM 3 ; le secret DESSIN_APRES_DECOUPE=0 garde la découpe seule.
- */
-const DESSIN_APRES_DECOUPE = !DESSIN_PAR_DEFAUT && Deno.env.get('DESSIN_APRES_DECOUPE') !== '0';
+/** Le fichier de travail de la découpe : bucket privé `uploads`, purgé après 30 jours même s'il restait. */
+const cheminTravail = (job: Pick<Job, 'space_id' | 'id'>) => `${job.space_id}/travail-${job.id}.png`;
 
 /**
  * L'interrupteur général (20/11) : AI_ENABLED=false coupe tout appel aux
@@ -262,8 +274,14 @@ type Journal = {
   usage: Record<string, unknown>;
 };
 
-/** Découpe la pièce dans la photo (decoupage.ts), puis la range. */
-async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void) {
+/**
+ * Découpe la pièce dans la photo (decoupage.ts). Avec `pourDessin` (toute pièce
+ * qui arrive, règle stricte du 24/11), la découpe n'est PAS rangée : elle est
+ * gardée dans un fichier de travail et la tâche repart pour le dessin, seule
+ * image qui entrera dans le dressing. Sans lui, la découpe remplace l'image
+ * d'une pièce déjà rangée (reprise après « rendu incorrect »).
+ */
+async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string) => void, opts: { pourDessin?: boolean } = {}) {
   await setJob(job, { status: 'cutout', image_model: cleFal() ? SAM_MODELE : MODELS.segment });
   const j: Journal = { version: CUTOUT.version, niveau: job.redo, ms: {}, usage: {} };
   const photo = sources[0];
@@ -292,7 +310,34 @@ async function cutOut(job: Job, target: Target, sources: Img[], log: (m: string)
 
   j.methode = d.best.method;
   j.controles = d.best.checks;
+  if (opts.pourDessin) {
+    if (job.cutout?.reperage) j.usage.reperage = job.cutout.reperage;
+    await upload('uploads', cheminTravail(job), { bytes: encodePng(fitOnCanvas(d.best.cut)), mime: 'image/png' });
+    // Rien n'entre dans le dressing : la tâche repart pour son dessin (second passage).
+    await setJob(job, { status: 'queued', dessin_auto: true, cutout: j });
+    log('découpe gardée comme référence (pas rangée), dessin remis en file');
+    return;
+  }
   await store(job, target, d.best.cut, 'photo', j, log);
+}
+
+/**
+ * La découpe de la première passe (PNG transparent), posée sur le fond voulu ;
+ * `null` si elle manque : le dessin part alors de la photo seule. Jamais rangée
+ * dans le dressing (règle stricte du 24/11).
+ */
+async function decoupeDeTravail(job: Job, fond: string): Promise<Img | null> {
+  try {
+    const png = await download('uploads', cheminTravail(job));
+    return { bytes: encodePng(surFond(decode(png.bytes, 'image/png'), fond)), mime: 'image/png' };
+  } catch {
+    return null;
+  }
+}
+
+/** Efface le fichier de travail (fin du dessin ou échec définitif) ; jamais bloquant. */
+async function effacerTravail(job: Job) {
+  await db.storage.from('uploads').remove([cheminTravail(job)]).catch(() => undefined);
 }
 
 /** La pièce rangée (PNG transparent), posée sur le fond voulu ; `null` si elle manque. */
@@ -322,7 +367,11 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   // d'origine suit pour les détails cachés. Après deux « rendu incorrect », la
   // découpe est jugée fausse : la photo seule, comme avant.
   const fond = backdropFor(target.colors, target.hex, isMetal(target));
-  const decoupe = (job.clean || job.dessin_auto) && job.garment_id ? await pieceDecoupee(job.garment_id, fond) : null;
+  // 24/11 : à l'arrivée (`dessin_auto`), la pièce n'est pas encore dans le
+  // dressing ; la découpe de la première passe attend dans un fichier de travail.
+  const decoupe = job.clean && job.garment_id
+    ? await pieceDecoupee(job.garment_id, fond)
+    : job.dessin_auto && !job.garment_id ? await decoupeDeTravail(job, fond) : null;
   const references = decoupe ? [decoupe, ...sources] : sources;
   const prompt = consigneDessin(target, Boolean(decoupe));
 
@@ -402,8 +451,11 @@ async function redraw(job: Job, target: Target, sources: Img[], log: (m: string)
   j.ms.detourage = Date.now() - t;
   j.methode = 'generation';
   j.controles = checks;
-  if (checks.failed.some((f) => BLOCKING.includes(f))) throw new AgentError(SAY.failed, `dessin inexploitable (${checks.failed.join(', ')})`);
+  // Un dessin raté n'est jamais rangé : à l'arrivée, un nouveau dessin repart
+  // (passager), sinon la pièce échoue. Un autre tirage suffit souvent.
+  if (checks.failed.some((f) => BLOCKING.includes(f))) throw new AgentError(SAY.failed, `dessin inexploitable (${checks.failed.join(', ')})`, job.dessin_auto);
   await store(job, target, cut, 'ai', j, log);
+  await effacerTravail(job);
 }
 
 // ---------------------------------------------------------------- rangement
@@ -412,6 +464,9 @@ const clip = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n) || nu
 
 /** Met la pièce au format fixe, l'envoie, puis la crée dans le dressing (ou remplace son image). */
 async function store(job: Job, t: Target, cut: Raster, source: 'photo' | 'ai', j: Journal, log: (m: string) => void) {
+  // RÈGLE STRICTE (24/11) : une pièce n'est CRÉÉE dans le dressing que depuis un
+  // dessin terminé. Une découpe ne peut que remplacer l'image d'une pièce qui existe.
+  if (!job.garment_id && source !== 'ai') throw new AgentError(SAY.failed, 'règle : une pièce n’arrive dans le dressing que dessinée');
   let t0 = Date.now();
   if (job.cutout?.reperage) j.usage.reperage = job.cutout.reperage;
   const dominant = dominantColour(cut);
@@ -536,30 +591,22 @@ async function runOnce() {
     // laisse la place au repli) avant que la fonction soit tuée par sa durée maximale.
     const limite = started + DESSIN_BUDGET_MS;
     const arrivee = !job.garment_id && !job.redo && !job.clean;
-    if (job.dessin_auto && job.garment_id) {
-      // Second passage (20/11) : le dessin catalogue remplace la découpe déjà rangée.
+    if (job.dessin_auto) {
+      // Second passage (20/11) : le dessin catalogue, à partir de la découpe de
+      // travail. C'est lui, et lui seul, qui range la pièce (règle stricte du 24/11).
       await redraw(job, targetOf(job), sources, log, { offert: true, limite });
     } else if (job.redo >= 2 || job.clean) await redraw(job, targetOf(job), sources, log, { limite });
-    else if (DESSIN_PAR_DEFAUT && !job.garment_id && !job.redo) {
-      // Sans clé fal.ai seulement depuis le 20/11 (voir DESSIN_PAR_DEFAUT).
-      // 18/11 : une pièce qui arrive est d'abord REDESSINÉE seule sur un fond uni
-      // puis détourée (c'est ce qui donnait des images nettes). La découpe dans la
-      // photo, qui garde la peau et le décor sans masque Google, ne sert plus que
-      // de repli quand le dessin échoue.
-      try {
-        await redraw(job, targetOf(job), sources, log, { offert: true, limite });
-      } catch (err) {
-        if (fatal(err)) throw err;
-        log(`dessin impossible (${err instanceof AgentError ? err.detail ?? err.message : err instanceof Error ? err.message : err}) : repli sur la découpe`);
-        await cutOut(job, target, sources, log);
-      }
+    else if (arrivee && DESSIN_PAR_DEFAUT) {
+      // Sans clé fal.ai (voir DESSIN_PAR_DEFAUT) : la pièce est dessinée directement
+      // à partir de la photo, seule sur un fond uni, puis détourée. Depuis le 24/11,
+      // aucun repli sur la découpe : si le dessin échoue, la pièce échoue (ou
+      // repart si la panne est passagère), elle n'arrive jamais à moitié faite.
+      await redraw(job, targetOf(job), sources, log, { offert: true, limite });
     } else {
-      await cutOut(job, target, sources, log);
-      if (arrivee && DESSIN_APRES_DECOUPE) {
-        // La pièce est rangée (la personne la voit déjà) ; le dessin suit dans un autre passage.
-        await setJob(job, { status: 'queued', dessin_auto: true });
-        log('découpe rangée, dessin catalogue remis en file');
-      }
+      // Arrivée avec SAM 3 : la découpe n'est qu'une référence, rangée nulle part ;
+      // le dessin suit dans un second passage. Une reprise (`redo` 1) remplace
+      // l'image d'une pièce déjà rangée, ce qui n'est pas une arrivée.
+      await cutOut(job, target, sources, log, { pourDessin: arrivee });
     }
   } catch (err) {
     // La personne lit `error` dans son dressing : jamais de détail technique
@@ -570,13 +617,14 @@ async function runOnce() {
     // fait plus échouer la pièce. La tâche repart en file, sans message
     // d'erreur ; le ménage de chaque minute (`ai_jobs_sweep`) la réveille une
     // à deux minutes plus tard. Trois passages au plus, puis l'échec.
-    // 21/11 : le dessin d'une pièce déjà rangée attend avant de repartir (1, 3,
-    // 6 puis 10 minutes) : l'intermédiaire saturé répondait 429 aux trois
-    // passages immédiats, et la découpe restait. La personne voit déjà sa pièce.
+    // 21/11 : le dessin d'une arrivée attend avant de repartir (1, 3, 6 puis 10
+    // minutes) : l'intermédiaire saturé répondait 429 aux trois passages
+    // immédiats. Depuis le 24/11 la pièce n'est pas encore dans le dressing : la
+    // personne la voit « en cours » (Kodi dessine), jamais à moitié faite.
     // Sans changer la base : la tâche reste « generating » (l'app dit que Kodi
     // dessine) et le ménage de chaque minute (`ai_jobs_sweep`) la remet en file
     // quatre minutes après `claimed_at`, qu'on place donc à l'heure voulue.
-    if (job.dessin_auto && job.garment_id && passager(err) && job.runs < MAX_RUNS) {
+    if (job.dessin_auto && passager(err) && job.runs < MAX_RUNS) {
       const attente = ATTENTES_DESSIN_MIN[Math.min(job.runs, ATTENTES_DESSIN_MIN.length) - 1] ?? 10;
       log(`dessin en panne passagère, nouvel essai dans ${attente} min (passage ${job.runs}/${MAX_RUNS}) : ${detail}`);
       const reprise = Date.now() + (attente - SWEEP_MIN) * 60_000;
@@ -589,13 +637,12 @@ async function runOnce() {
       return;
     }
     log(`échec : ${detail}`);
-    if (job.dessin_auto && job.garment_id) {
-      // Le dessin après la découpe a échoué : la découpe reste, sans message pour la personne.
-      await db.from('ai_jobs').update({ status: 'done', error: null, dessin_auto: false }).eq('id', job.id);
-      return;
-    }
-    // Une reprise ratée laisse la pièce telle qu'elle était : seule la tâche garde la trace.
-    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false }).eq('id', job.id);
+    // Règle stricte du 24/11 : un dessin qui échoue après toutes ses reprises ne
+    // laisse PAS la découpe à sa place. La pièce échoue, la personne lit pourquoi
+    // et peut réessayer (le relancement repart de zéro, `dessin_auto` remis à faux).
+    // Une reprise ratée (« Image propre ») laisse la pièce rangée telle qu'elle était.
+    await effacerTravail(job);
+    await db.from('ai_jobs').update({ status: job.garment_id ? 'done' : 'failed', error: message, clean: false, dessin_auto: false }).eq('id', job.id);
   }
 }
 
@@ -622,7 +669,7 @@ Deno.serve(async (req) => {
     const keys = Object.fromEntries(KEYS.map((k) => [k, Boolean(Deno.env.get(k))]));
     return Response.json({
       agent: 'dressy-agent', gabarit: CUTOUT.version, models: MODELS, effort: EFFORT, keys,
-      ia: IA_ACTIVE, decoupe: cleFal() ? SAM_MODELE : 'gemini ou contraste', dessin_par_defaut: DESSIN_PAR_DEFAUT, dessin_apres_decoupe: DESSIN_APRES_DECOUPE,
+      ia: IA_ACTIVE, decoupe: cleFal() ? SAM_MODELE : 'gemini ou contraste', dessin_par_defaut: DESSIN_PAR_DEFAUT, regle_arrivee: 'dessin termine seulement',
     });
   }
   if (req.method !== 'POST') return new Response('Méthode non prise en charge', { status: 405 });

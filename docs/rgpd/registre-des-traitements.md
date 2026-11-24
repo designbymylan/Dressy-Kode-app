@@ -74,7 +74,11 @@ sur les clauses contractuelles types de son contrat (à vérifier, voir
   les métadonnées de l'appareil, dont la position (minimisation).
 - **Tables et fichiers** : `ai_jobs` (dont le journal de découpe : méthode,
   contrôles, durées, jetons), `ai_images`, `garments`, `garment_reports`,
-  `categories` ; seaux `uploads`, `ai-generated`, `garments`.
+  `categories` ; seaux `uploads`, `ai-generated`, `garments`. Depuis le
+  24/11, la découpe d'une pièce qui arrive n'est pas rangée dans le dressing :
+  elle attend le dessin dans un fichier de travail (`uploads`, `travail-<tâche>.png`),
+  effacé dès que le dessin est fini ou que la pièce échoue, et au plus tard
+  par la purge des 30 jours des photos confiées (aucune nouvelle durée).
 - **Destinataires** : Supabase ; Google (repérage des pièces sur la photo,
   depuis le 17/11 ; dessin de chaque pièce en photo produit après sa
   découpe, depuis le 20/11 au soir, à partir de la pièce découpée et de la

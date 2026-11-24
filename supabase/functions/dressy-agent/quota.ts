@@ -14,7 +14,7 @@
  */
 
 /** À changer quand la consigne de dessin change : l'ancien cache ne sert plus. */
-export const PROMPT_VERSION = 'dessin-4'; // 20/11 : pose du modèle de l'utilisateur (mannequin invisible) ; 17/11 : « catalogue »
+export const PROMPT_VERSION = 'dessin-5'; // 24/11 : bas à plat, jambes droites et symétriques, pose de la référence corrigée ; 20/11 : pose du modèle de l'utilisateur (mannequin invisible) ; 17/11 : « catalogue »
 
 export type Status = 'succes' | 'echec' | 'rejet';
 

@@ -5,7 +5,7 @@
  * ils tournent à l'identique sous Node et dans l'Edge Function.
  */
 import { cutoutBackground, alphaRatio, cropToContent, contentBox, downscale, type Raster } from './cutout.ts';
-import { backdropFor, cleanTarget, cleanBox, cleanFiche, deltaE, isMetal, stripClauses, KINDS } from './prompts.ts';
+import { backdropFor, cleanTarget, cleanBox, cleanFiche, consigneDessin, deltaE, isMetal, poseDuDessin, stripClauses, KINDS } from './prompts.ts';
 
 let fails = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -224,6 +224,23 @@ check('fiche de style : valeurs inconnues écartées, habillage borné', [bancal
 check('fiche de style : habillage arrondi', cleanFiche({ habillage: 2.6 })?.habillage, 3);
 check('nouveaux types reconnus', ['polo', 'capuche', 'chino', 'jupeculotte', 'salopette', 'mules', 'derbies'].map((k) => Object.values(KINDS).some((ks) => ks.includes(k))), [true, true, true, true, true, true, true]);
 check('chaque type tient dans la contrainte de la base', Object.values(KINDS).flat().every((k) => /^[a-z]{2,20}$/.test(k)), true);
+
+// ---------------------------------------------------------------- pose des bas (24/11)
+//
+// Un pantalon arrive toujours à plat, de face, deux jambes complètes, droites et
+// symétriques (photos de référence de l'utilisateur). La consigne le dit, et dit
+// que la pose de la découpe de référence ne compte pas (une jambe coupée ou
+// décollée doit être reconstruite).
+
+const POSES_PANTALON = ['jean', 'pantalon', 'chino', 'legging', 'short', null].map((k) => poseDuDessin('bas', k));
+check('pose des bas : à plat, de face, jambes droites et symétriques', POSES_PANTALON.every((p) => /perfectly flat/.test(p) && /straight from the front/.test(p) && /parallel and perfectly symmetrical/.test(p) && /waistband at the top/.test(p)), true);
+check('pose des bas : jamais de jambe coupée, croisée ou inclinée', POSES_PANTALON.every((p) => /none cut off, hidden, bent, crossed, folded, twisted or tilted/.test(p)), true);
+check('pose d\'une jupe : pas de jambes', /legs/.test(poseDuDessin('bas', 'jupe')), false);
+check('pose du haut : inchangée (mannequin invisible)', /ghost mannequin/.test(poseDuDessin('hauts', 'pull')), true);
+
+const cargo = cleanTarget({ name: 'Pantalon cargo camouflage', category: 'bas', kind: 'pantalon', prompt: 'x' })!;
+const consigne = consigneDessin(cargo, true);
+check('consigne d\'un pantalon : pose stricte et référence reconstruite', [/laid perfectly flat/.test(consigne), /one trouser leg cut off or detached/.test(consigne)], [true, true]);
 
 console.log(fails === 0 ? '\nTOUT PASSE' : `\n${fails} ÉCHEC(S)`);
 process.exit(fails ? 1 : 0);

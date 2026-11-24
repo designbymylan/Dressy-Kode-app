@@ -240,20 +240,31 @@ const keepHex = (v: unknown) => (Array.isArray(v) ? v : [])
  * chaussures et sacs) : le vêtement du haut du corps comme porté par un
  * mannequin invisible, de face, repassé, manches le long du corps ; les bas à
  * plat, de face ; les chaussures par paire, de trois quarts.
+ *
+ * 24/11, demandé par l'utilisateur sur deux photos de référence (pantalons à
+ * plat, de face, jambes droites) : un PANTALON arrive toujours dans cette pose,
+ * pour qu'on le voie en entier et qu'on le reconnaisse : ceinture en haut,
+ * horizontale ; deux jambes complètes, droites, parallèles et symétriques ;
+ * ourlets à la même hauteur. Jamais de jambe coupée, tordue, croisée, inclinée
+ * ni cachée (une découpe sur photo en montre souvent une).
  */
-export function poseDuDessin(category: Category): string {
+const BAS_JAMBES = ['jean', 'pantalon', 'chino', 'legging', 'short'];
+
+export function poseDuDessin(category: Category, kind?: string | null): string {
   switch (category) {
     case 'chaussures': return 'the pair side by side, three-quarter front view, both shoes fully visible';
     case 'sacs': return 'standing upright, seen straight from the front, handles or strap neatly arranged';
     case 'bijoux': return 'laid flat, seen from above, sharp down to the finest detail (links, clasp, stones)';
     case 'accessoires': return 'seen from the front, neatly arranged, as in a product photo';
-    case 'bas': return 'seen straight from the front, laid flat and neatly pressed, legs or hem straight and symmetrical';
+    case 'bas':
+      if (kind && !BAS_JAMBES.includes(kind)) return 'laid flat and seen straight from the front, neatly pressed, waistband horizontal at the top, hem straight and level, perfectly symmetrical';
+      return 'laid perfectly flat and seen straight from the front, as in an e-commerce flat lay: the waistband at the top, horizontal and fully visible, with its belt loops, button and fly centred; the two legs hang straight down side by side, parallel and perfectly symmetrical around the vertical centre line, fully extended from the waist to the hems, with both hems level at the bottom edge. Both legs complete and fully visible: none cut off, hidden, bent, crossed, folded, twisted or tilted, no diagonal or rotated pose, cuffs and hems never bunched up to hide the leg length. Pressed smooth, with only the natural relief of the fabric, no body shape';
     default: return 'on an invisible mannequin (ghost mannequin), seen straight from the front, with natural volume, neatly pressed and symmetrical, sleeves hanging down along the sides, collar and front closed as worn';
   }
 }
 
-export function fallbackPrompt(t: Pick<Target, 'name' | 'category' | 'where' | 'description' | 'hex'>): string {
-  const shape = poseDuDessin(t.category);
+export function fallbackPrompt(t: Pick<Target, 'name' | 'category' | 'where' | 'description' | 'hex'> & { kind?: string | null }): string {
+  const shape = poseDuDessin(t.category, t.kind);
   return [
     `Reproduce ONLY this item from the reference photo: "${t.name}"${t.where ? `, location in the photo: "${t.where}"` : ''}. Ignore the person and every other item.`,
     t.description ? `What it is: ${t.description}` : '',
@@ -423,7 +434,7 @@ export function colourClause(t: Pick<Target, 'hex'>): string {
 }
 
 /** Les images de référence quand la pièce découpée accompagne la photo. */
-export const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail, logos and lettering). Image 2 is the original photo: use it only for parts hidden or cut off in image 1, and to understand the fabric.';
+export const REFERENCES_CLAUSE = 'Reference images: image 1 is the item itself, already cut out of the photo and placed on the target backdrop: reproduce exactly this item (shape, proportions, colours, every detail, logos and lettering). Image 2 is the original photo: use it only for parts hidden or cut off in image 1, and to understand the fabric. The shape, proportions, colours and details come from image 1; its POSE does not: if the item is tilted, bent, folded, partly hidden or has a part missing (for example one trouser leg cut off or detached), rebuild it complete and in the pose requested above.';
 
 /**
  * La consigne complète du dessin d'une pièce, la même pour l'agent et pour son
@@ -455,7 +466,7 @@ export function consigneGrille(ts: Target[]): string {
   const colors = ts.flatMap((t) => t.colors);
   const hex = ts.flatMap((t) => t.hex ?? []);
   const vides = 4 - ts.length;
-  const lignes = ts.map((t, i) => `- ${CASES_GRILLE[i]} cell: "${t.name}"${t.description ? ` (${t.description})` : ''}, ${poseDuDessin(t.category)}${t.hex?.length ? `; exact colours of the real item: ${t.hex.join(', ')}` : ''}.`);
+  const lignes = ts.map((t, i) => `- ${CASES_GRILLE[i]} cell: "${t.name}"${t.description ? ` (${t.description})` : ''}, ${poseDuDessin(t.category, t.kind)}${t.hex?.length ? `; exact colours of the real item: ${t.hex.join(', ')}` : ''}.`);
   return [
     "Image 1 is a 2 x 2 grid: each cell holds one item cut out of the person's photo (image 2). Produce ONE square image with exactly the same 2 x 2 layout, each cell becoming a photorealistic premium e-commerce catalogue product photo of the exact item it holds:",
     lignes.join('\n'),
